@@ -1,0 +1,7 @@
+{
+  "name": "Mailer",
+  "slug": "mailer",
+  "enabled": false,
+  "version": "1.0.0",
+  "depends": ["core","users","settings"]
+}

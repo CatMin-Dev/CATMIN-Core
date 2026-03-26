@@ -1,0 +1,7 @@
+{
+  "name": "Media",
+  "slug": "media",
+  "enabled": false,
+  "version": "1.0.0",
+  "depends": ["core"]
+}

@@ -1,0 +1,7 @@
+{
+  "name": "Blog",
+  "slug": "blog",
+  "enabled": false,
+  "version": "1.0.0",
+  "depends": ["core","media","seo"]
+}

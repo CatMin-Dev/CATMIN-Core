@@ -1,0 +1,7 @@
+{
+  "name": "Users",
+  "slug": "users",
+  "enabled": false,
+  "version": "1.0.0",
+  "depends": ["core"]
+}

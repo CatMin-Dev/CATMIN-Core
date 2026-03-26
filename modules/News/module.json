@@ -1,0 +1,7 @@
+{
+  "name": "News",
+  "slug": "news",
+  "enabled": false,
+  "version": "1.0.0",
+  "depends": ["core","media","seo"]
+}

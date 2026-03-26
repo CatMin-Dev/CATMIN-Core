@@ -1,0 +1,7 @@
+{
+  "name": "Settings",
+  "slug": "settings",
+  "enabled": false,
+  "version": "1.0.0",
+  "depends": ["core","users"]
+}

@@ -1,0 +1,7 @@
+{
+  "name": "Shop",
+  "slug": "shop",
+  "enabled": false,
+  "version": "1.0.0",
+  "depends": ["core","media","users","settings"]
+}

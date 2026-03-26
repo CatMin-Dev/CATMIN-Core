@@ -1,0 +1,7 @@
+{
+  "name": "Pages",
+  "slug": "pages",
+  "enabled": false,
+  "version": "1.0.0",
+  "depends": ["core","seo"]
+}
