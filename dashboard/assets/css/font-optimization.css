@@ -1,0 +1,34 @@
+@font-face {
+  font-family: "Font Awesome 6 Free";
+  font-display: swap;
+}
+@font-face {
+  font-family: "Font Awesome 6 Brands";
+  font-display: swap;
+}
+@font-face {
+  font-family: "Font Awesome 6 Pro";
+  font-display: swap;
+}
+@font-face {
+  font-family: "FontAwesome";
+  font-display: swap;
+}
+@supports (font-display: swap) {
+  @font-face {
+    font-display: swap !important;
+  }
+}
+.wf-loading .font-loading {
+  visibility: hidden;
+}
+.wf-active .font-loading, .wf-inactive .font-loading {
+  visibility: visible;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+.wf-active body {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}

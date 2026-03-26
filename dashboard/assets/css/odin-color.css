@@ -1,0 +1,288 @@
+/* Odin color palette */
+:root {
+  /* Blues */
+  --palette-blue-50: #eef3ff;  --palette-blue-100: #dae6ff;  --palette-blue-200: #b6ceff;
+  --palette-blue-300: #90b4ff;  --palette-blue-400: #6a99ff;  --palette-blue-500: #497fff;
+  --palette-blue-600: #2f67f4;  --palette-blue-700: #244fcc;  --palette-blue-800: #1b3da3;
+  --palette-blue-900: #132c7a;
+
+  /* Slates */
+  --palette-slate-50: #f4f6f8;  --palette-slate-100: #e7eaee;  --palette-slate-200: #d2d7df;
+  --palette-slate-300: #b5bcc9;  --palette-slate-400: #95a0b2;  --palette-slate-500: #768399;
+  --palette-slate-600: #5d6a80;  --palette-slate-700: #485365;  --palette-slate-800: #323b49;
+  --palette-slate-900: #1f262f;
+
+  /* Emeralds */
+  --palette-emerald-50: #edf9f3;  --palette-emerald-100: #d2f1e0;  --palette-emerald-200: #a7e2c4;
+  --palette-emerald-300: #79d2a7;  --palette-emerald-400: #4cc48d;  --palette-emerald-500: #27b574;
+  --palette-emerald-600: #1f955f;  --palette-emerald-700: #1a7550;  --palette-emerald-800: #145540;
+  --palette-emerald-900: #0d3c2d;
+
+  /* Cyans */
+  --palette-cyan-50: #e6fbff;  --palette-cyan-100: #c1f2ff;  --palette-cyan-200: #95e5ff;
+  --palette-cyan-300: #66d5fa;  --palette-cyan-400: #3bc3ef;  --palette-cyan-500: #18addf;
+  --palette-cyan-600: #0e8cb8;  --palette-cyan-700: #0c6e90;  --palette-cyan-800: #0a5170;
+  --palette-cyan-900: #073849;
+
+  /* Ambers */
+  --palette-amber-50: #fff8eb;  --palette-amber-100: #ffeac2;  --palette-amber-200: #ffd18d;
+  --palette-amber-300: #ffb654;  --palette-amber-400: #ff9d26;  --palette-amber-500: #f88300;
+  --palette-amber-600: #d16400;  --palette-amber-700: #a74c02;  --palette-amber-800: #7c3705;
+  --palette-amber-900: #552406;
+
+  /* Roses */
+  --palette-rose-50: #fff0f3;  --palette-rose-100: #ffd4da;  --palette-rose-200: #ffa8b9;
+  --palette-rose-300: #ff7a96;  --palette-rose-400: #f65279;  --palette-rose-500: #e23561;
+  --palette-rose-600: #c2234d;  --palette-rose-700: #9a1b3d;  --palette-rose-800: #70142d;
+  --palette-rose-900: #4a0d1f;
+
+  /* Sands */
+  --palette-sand-50: #fefbf5;  --palette-sand-100: #f9f1e4;  --palette-sand-200: #efdfc7;
+  --palette-sand-300: #e0c6a0;  --palette-sand-400: #c9a072;  --palette-sand-500: #b07c4f;
+  --palette-sand-600: #8f5f3a;  --palette-sand-700: #70462a;  --palette-sand-800: #522f1e;
+  --palette-sand-900: #371e13;
+
+  /* Graphites */
+  --palette-graphite-50: #f2f4f7;  --palette-graphite-100: #e0e4ea;  --palette-graphite-200: #c4cbd4;
+  --palette-graphite-300: #9fa7b5;  --palette-graphite-400: #7c8697;  --palette-graphite-500: #606a7d;
+  --palette-graphite-600: #495366;  --palette-graphite-700: #343c4c;  --palette-graphite-800: #212636;
+  --palette-graphite-900: #141825;
+
+/* Grays */
+  --palette-gray-50: #f9fafb;  --palette-gray-100: #f3f4f6;  --palette-gray-200: #e5e7eb;
+  --palette-gray-300: #d1d5db;  --palette-gray-400: #9ca3af;  --palette-gray-500: #6b7280;
+  --palette-gray-600: #4b5563;  --palette-gray-700: #374151;  --palette-gray-800: #1f2937;
+  --palette-gray-900: #111827;
+
+  /* Indigo */
+  --palette-indigo-50: #eef2ff;  --palette-indigo-100: #e0e7ff;  --palette-indigo-200: #c7d2fe;
+  --palette-indigo-300: #a5b4fc;  --palette-indigo-400: #818cf8;  --palette-indigo-500: #6366f1;
+  --palette-indigo-600: #4f46e5;  --palette-indigo-700: #4338ca;  --palette-indigo-800: #3730a3;
+  --palette-indigo-900: #312e81;
+
+  /* Orange */
+  --palette-orange-50: #fff7ed;  --palette-orange-100: #ffedd5;  --palette-orange-200: #fed7aa;
+  --palette-orange-300: #fdba74;  --palette-orange-400: #fb923c;  --palette-orange-500: #f97316;
+  --palette-orange-600: #ea580c;  --palette-orange-700: #c2410c;  --palette-orange-800: #9a3412;
+  --palette-orange-900: #7c2d12;
+
+  /* Zinc */
+  --palette-zinc-50:#fafafa; --palette-zinc-100:#f4f4f5; --palette-zinc-200:#e4e4e7;
+  --palette-zinc-300:#d4d4d8; --palette-zinc-400:#a1a1aa; --palette-zinc-500:#71717a;
+  --palette-zinc-600:#52525b; --palette-zinc-700:#3f3f46; --palette-zinc-800:#27272a;
+  --palette-zinc-900:#18181b;
+
+  /* Neutral */
+  --palette-neutral-50:#fafafa; --palette-neutral-100:#f5f5f5; --palette-neutral-200:#e5e5e5;
+  --palette-neutral-300:#d4d4d4; --palette-neutral-400:#a3a3a3; --palette-neutral-500:#737373;
+  --palette-neutral-600:#525252; --palette-neutral-700:#404040; --palette-neutral-800:#262626;
+  --palette-neutral-900:#171717;
+
+  /* Stone */
+  --palette-stone-50:#fafaf9; --palette-stone-100:#f5f5f4; --palette-stone-200:#e7e5e4;
+  --palette-stone-300:#d6d3d1; --palette-stone-400:#a8a29e; --palette-stone-500:#78716c;
+  --palette-stone-600:#57534e; --palette-stone-700:#44403c; --palette-stone-800:#292524;
+  --palette-stone-900:#1c1917;
+
+  /* Red */
+  --palette-red-50:#fef2f2; --palette-red-100:#fee2e2; --palette-red-200:#fecaca;
+  --palette-red-300:#fca5a5; --palette-red-400:#f87171; --palette-red-500:#ef4444;
+  --palette-red-600:#dc2626; --palette-red-700:#b91c1c; --palette-red-800:#991b1b;
+  --palette-red-900:#7f1d1d;
+
+  /* Pink */
+  --palette-pink-50:#fdf2f8; --palette-pink-100:#fce7f3; --palette-pink-200:#fbcfe8;
+  --palette-pink-300:#f9a8d4; --palette-pink-400:#f472b6; --palette-pink-500:#ec4899;
+  --palette-pink-600:#db2777; --palette-pink-700:#be185d; --palette-pink-800:#9d174d;
+  --palette-pink-900:#831843;
+
+  /* Fuchsia */
+  --palette-fuchsia-50:#fdf4ff; --palette-fuchsia-100:#fae8ff; --palette-fuchsia-200:#f5d0fe;
+  --palette-fuchsia-300:#f0abfc; --palette-fuchsia-400:#e879f9; --palette-fuchsia-500:#d946ef;
+  --palette-fuchsia-600:#c026d3; --palette-fuchsia-700:#a21caf; --palette-fuchsia-800:#86198f;
+  --palette-fuchsia-900:#701a75;
+
+  /* Purple */
+  --palette-purple-50:#faf5ff; --palette-purple-100:#f3e8ff; --palette-purple-200:#e9d5ff;
+  --palette-purple-300:#d8b4fe; --palette-purple-400:#c084fc; --palette-purple-500:#a855f7;
+  --palette-purple-600:#9333ea; --palette-purple-700:#7e22ce; --palette-purple-800:#6b21a8;
+  --palette-purple-900:#581c87;
+
+  /* Violet */
+  --palette-violet-50:#f5f3ff; --palette-violet-100:#ede9fe; --palette-violet-200:#ddd6fe;
+  --palette-violet-300:#c4b5fd; --palette-violet-400:#a78bfa; --palette-violet-500:#8b5cf6;
+  --palette-violet-600:#7c3aed; --palette-violet-700:#6d28d9; --palette-violet-800:#5b21b6;
+  --palette-violet-900:#4c1d95;
+
+  /* Yellow */
+  --palette-yellow-50:#fefce8; --palette-yellow-100:#fef9c3; --palette-yellow-200:#fef08a;
+  --palette-yellow-300:#fde047; --palette-yellow-400:#facc15; --palette-yellow-500:#eab308;
+  --palette-yellow-600:#ca8a04; --palette-yellow-700:#a16207; --palette-yellow-800:#854d0e;
+  --palette-yellow-900:#713f12;
+
+  /* Lime */
+  --palette-lime-50:#f7fee7; --palette-lime-100:#ecfccb; --palette-lime-200:#d9f99d;
+  --palette-lime-300:#bef264; --palette-lime-400:#a3e635; --palette-lime-500:#84cc16;
+  --palette-lime-600:#65a30d; --palette-lime-700:#4d7c0f; --palette-lime-800:#3f6212;
+  --palette-lime-900:#365314;
+
+    /* Green */
+  --palette-green-50:#f0fdf4; --palette-green-100:#dcfce7; --palette-green-200:#bbf7d0;
+  --palette-green-300:#86efac; --palette-green-400:#4ade80; --palette-green-500:#22c55e;
+  --palette-green-600:#16a34a; --palette-green-700:#15803d; --palette-green-800:#166534;
+  --palette-green-900:#14532d;
+
+  /* Teal */
+  --palette-teal-50:#f0fdfa; --palette-teal-100:#ccfbf1; --palette-teal-200:#99f6e4;
+  --palette-teal-300:#5eead4; --palette-teal-400:#2dd4bf; --palette-teal-500:#14b8a6;
+  --palette-teal-600:#0d9488; --palette-teal-700:#0f766e; --palette-teal-800:#115e59;
+  --palette-teal-900:#134e4a;
+
+  /* Sky */
+  --palette-sky-50:#f0f9ff; --palette-sky-100:#e0f2fe; --palette-sky-200:#bae6fd;
+  --palette-sky-300:#7dd3fc; --palette-sky-400:#38bdf8; --palette-sky-500:#0ea5e9;
+  --palette-sky-600:#0284c7; --palette-sky-700:#0369a1; --palette-sky-800:#075985;
+  --palette-sky-900:#0c4a6e;
+
+  /* Navy */
+  --palette-navy-50:#f3f5fb; --palette-navy-100:#e6ebf7; --palette-navy-200:#c5cee8;
+  --palette-navy-300:#9faed5; --palette-navy-400:#7083bc; --palette-navy-500:#4c60a3;
+  --palette-navy-600:#394c8a; --palette-navy-700:#2e3c70; --palette-navy-800:#252f59;
+  --palette-navy-900:#1a2140;
+
+  /* Azure */
+  --palette-azure-50:#f0f9ff; --palette-azure-100:#e0f2ff; --palette-azure-200:#b9e6ff;
+  --palette-azure-300:#7dd4ff; --palette-azure-400:#38bdf8; --palette-azure-500:#0ea5e9;
+  --palette-azure-600:#0284c7; --palette-azure-700:#0369a1; --palette-azure-800:#075985;
+  --palette-azure-900:#0c4a6e;
+
+  /* Brown */
+  --palette-brown-50:#fdf8f6; --palette-brown-100:#f4e5d6; --palette-brown-200:#e8cba8;
+  --palette-brown-300:#d9aa6e; --palette-brown-400:#c78c44; --palette-brown-500:#a96a32;
+  --palette-brown-600:#8c5428; --palette-brown-700:#6e4020; --palette-brown-800:#54301a;
+  --palette-brown-900:#3b2314;
+
+  /* Gold */
+  --palette-gold-50:#fffbeb; --palette-gold-100:#fef3c7; --palette-gold-200:#fde68a;
+  --palette-gold-300:#fcd34d; --palette-gold-400:#fbbf24; --palette-gold-500:#f59e0b;
+  --palette-gold-600:#d97706; --palette-gold-700:#b45309; --palette-gold-800:#92400e;
+  --palette-gold-900:#78350f;
+
+  /* Copper */
+  --palette-copper-50:#fff6f2; --palette-copper-100:#ffe8de; --palette-copper-200:#ffccb6;
+  --palette-copper-300:#fba985; --palette-copper-400:#f28b5e; --palette-copper-500:#e66b37;
+  --palette-copper-600:#c8562d; --palette-copper-700:#a24427; --palette-copper-800:#7c3520;
+  --palette-copper-900:#552318;
+
+  /* Mustard */
+  --palette-mustard-50:#fffbeb; --palette-mustard-100:#fef3c7; --palette-mustard-200:#fde68a;
+  --palette-mustard-300:#fcd34d; --palette-mustard-400:#fbbf24; --palette-mustard-500:#eab308;
+  --palette-mustard-600:#ca8a04; --palette-mustard-700:#a16207; --palette-mustard-800:#854d0e;
+  --palette-mustard-900:#713f12;
+
+  /* GrayBlue */
+  --palette-grayblue-50:#f7faff; --palette-grayblue-100:#e9f0fb; --palette-grayblue-200:#cddbef;
+  --palette-grayblue-300:#adc2e1; --palette-grayblue-400:#8ea7cf; --palette-grayblue-500:#728ab8;
+  --palette-grayblue-600:#5a6f9d; --palette-grayblue-700:#465880; --palette-grayblue-800:#334164;
+  --palette-grayblue-900:#222c46;
+
+  /* Magenta */
+  --palette-magenta-50:#fff0fe; --palette-magenta-100:#ffd6fb; --palette-magenta-200:#ffb0f6;
+  --palette-magenta-300:#ff86ee; --palette-magenta-400:#fb5be1; --palette-magenta-500:#e83ccd;
+  --palette-magenta-600:#c927ac; --palette-magenta-700:#a31f8b; --palette-magenta-800:#7e186a;
+  --palette-magenta-900:#59124a;
+
+  /* Aqua */
+  --palette-aqua-50:#eefeff; --palette-aqua-100:#d6fcff; --palette-aqua-200:#adf6fb;
+  --palette-aqua-300:#82ebf2; --palette-aqua-400:#55dce6; --palette-aqua-500:#31c6d3;
+  --palette-aqua-600:#239eac; --palette-aqua-700:#1a7c87; --palette-aqua-800:#165f69;
+  --palette-aqua-900:#11434a;
+
+  /* Mint */
+  --palette-mint-50:#f3fffb; --palette-mint-100:#dffcf2; --palette-mint-200:#baf6e3;
+  --palette-mint-300:#8eedd2; --palette-mint-400:#62e2bf; --palette-mint-500:#3acaa7;
+  --palette-mint-600:#2aa38a; --palette-mint-700:#217f6d; --palette-mint-800:#1b6155;
+  --palette-mint-900:#13433b;
+
+  /* Lavender */
+  --palette-lavender-50:#faf7ff; --palette-lavender-100:#f1eaff; --palette-lavender-200:#dfd0ff;
+  --palette-lavender-300:#c9b0ff; --palette-lavender-400:#b08dfd; --palette-lavender-500:#966ff2;
+  --palette-lavender-600:#7856d0; --palette-lavender-700:#5e44a6; --palette-lavender-800:#48367f;
+  --palette-lavender-900:#332757;
+
+  /* Peach */
+  --palette-peach-50:#fff7f2; --palette-peach-100:#ffe9dc; --palette-peach-200:#ffd0b5;
+  --palette-peach-300:#ffb085; --palette-peach-400:#ff8f5d; --palette-peach-500:#f9733e;
+  --palette-peach-600:#db5a2c; --palette-peach-700:#b24723; --palette-peach-800:#89381d;
+  --palette-peach-900:#612915;
+
+  /* Cream */
+  --palette-cream-50:#fffef7; --palette-cream-100:#fff9e8; --palette-cream-200:#fff1cf;
+  --palette-cream-300:#ffe2a6; --palette-cream-400:#ffd179; --palette-cream-500:#fcb34f;
+  --palette-cream-600:#da8e36; --palette-cream-700:#b06e2b; --palette-cream-800:#895422;
+  --palette-cream-900:#603a18;
+
+  /* Pastel Blue */
+  --palette-pastelblue-50:#f6fbff; --palette-pastelblue-100:#e6f3ff; --palette-pastelblue-200:#cde7ff;
+  --palette-pastelblue-300:#acd5ff; --palette-pastelblue-400:#8cc0ff; --palette-pastelblue-500:#6aa8f0;
+  --palette-pastelblue-600:#4d89cd; --palette-pastelblue-700:#3c6ea8; --palette-pastelblue-800:#305885;
+  --palette-pastelblue-900:#254263;
+
+  /* Pastel Green */
+  --palette-pastelgreen-50:#f3fffa; --palette-pastelgreen-100:#e1fbef; --palette-pastelgreen-200:#c6f4dc;
+  --palette-pastelgreen-300:#99e7bf; --palette-pastelgreen-400:#6ddba5; --palette-pastelgreen-500:#4bc489;
+  --palette-pastelgreen-600:#379e6e; --palette-pastelgreen-700:#2c7d59; --palette-pastelgreen-800:#235f46;
+  --palette-pastelgreen-900:#1a4333;
+
+  /* Pastel Pink */
+  --palette-pastelpink-50:#fff7fb; --palette-pastelpink-100:#ffe9f5; --palette-pastelpink-200:#ffd0eb;
+  --palette-pastelpink-300:#ffaddd; --palette-pastelpink-400:#ff89cb; --palette-pastelpink-500:#f56fb6;
+  --palette-pastelpink-600:#d25297; --palette-pastelpink-700:#a64078; --palette-pastelpink-800:#7f325e;
+  --palette-pastelpink-900:#592445;
+
+  /* Pastel Yellow */
+  --palette-pastelyellow-50:#fffeef; --palette-pastelyellow-100:#fff9cf; --palette-pastelyellow-200:#fff1a6;
+  --palette-pastelyellow-300:#ffe170; --palette-pastelyellow-400:#ffd141; --palette-pastelyellow-500:#f4b92a;
+  --palette-pastelyellow-600:#cf9020; --palette-pastelyellow-700:#a36f1a; --palette-pastelyellow-800:#7c5415;
+  --palette-pastelyellow-900:#573a0f;
+}
+
+/* --- Utility classes: background / text / border using palette variables ---
+   These are the basic color utility classes moved into odin-color.css so
+   authors can use `bg-blue-500`, `text-blue-500`, `border-blue-500`, etc.
+*/
+
+/* Blue */
+.bg-blue-50{background-color:var(--palette-blue-50)}.bg-blue-100{background-color:var(--palette-blue-100)}.bg-blue-200{background-color:var(--palette-blue-200)}.bg-blue-300{background-color:var(--palette-blue-300)}.bg-blue-400{background-color:var(--palette-blue-400)}.bg-blue-500{background-color:var(--palette-blue-500)}.bg-blue-600{background-color:var(--palette-blue-600)}.bg-blue-700{background-color:var(--palette-blue-700)}.bg-blue-800{background-color:var(--palette-blue-800)}.bg-blue-900{background-color:var(--palette-blue-900)}
+.text-blue-50{color:var(--palette-blue-50)}.text-blue-100{color:var(--palette-blue-100)}.text-blue-200{color:var(--palette-blue-200)}.text-blue-300{color:var(--palette-blue-300)}.text-blue-400{color:var(--palette-blue-400)}.text-blue-500{color:var(--palette-blue-500)}.text-blue-600{color:var(--palette-blue-600)}.text-blue-700{color:var(--palette-blue-700)}.text-blue-800{color:var(--palette-blue-800)}.text-blue-900{color:var(--palette-blue-900)}
+.border-blue-50{border-color:var(--palette-blue-50)}.border-blue-100{border-color:var(--palette-blue-100)}.border-blue-200{border-color:var(--palette-blue-200)}.border-blue-300{border-color:var(--palette-blue-300)}.border-blue-400{border-color:var(--palette-blue-400)}.border-blue-500{border-color:var(--palette-blue-500)}.border-blue-600{border-color:var(--palette-blue-600)}.border-blue-700{border-color:var(--palette-blue-700)}.border-blue-800{border-color:var(--palette-blue-800)}.border-blue-900{border-color:var(--palette-blue-900)}
+
+/* Slate */
+.bg-slate-50{background-color:var(--palette-slate-50)}.bg-slate-100{background-color:var(--palette-slate-100)}.bg-slate-200{background-color:var(--palette-slate-200)}.bg-slate-300{background-color:var(--palette-slate-300)}.bg-slate-400{background-color:var(--palette-slate-400)}.bg-slate-500{background-color:var(--palette-slate-500)}.bg-slate-600{background-color:var(--palette-slate-600)}.bg-slate-700{background-color:var(--palette-slate-700)}.bg-slate-800{background-color:var(--palette-slate-800)}.bg-slate-900{background-color:var(--palette-slate-900)}
+.text-slate-50{color:var(--palette-slate-50)}.text-slate-100{color:var(--palette-slate-100)}.text-slate-200{color:var(--palette-slate-200)}.text-slate-300{color:var(--palette-slate-300)}.text-slate-400{color:var(--palette-slate-400)}.text-slate-500{color:var(--palette-slate-500)}.text-slate-600{color:var(--palette-slate-600)}.text-slate-700{color:var(--palette-slate-700)}.text-slate-800{color:var(--palette-slate-800)}.text-slate-900{color:var(--palette-slate-900)}
+.border-slate-50{border-color:var(--palette-slate-50)}.border-slate-100{border-color:var(--palette-slate-100)}.border-slate-200{border-color:var(--palette-slate-200)}.border-slate-300{border-color:var(--palette-slate-300)}.border-slate-400{border-color:var(--palette-slate-400)}.border-slate-500{border-color:var(--palette-slate-500)}.border-slate-600{border-color:var(--palette-slate-600)}.border-slate-700{border-color:var(--palette-slate-700)}.border-slate-800{border-color:var(--palette-slate-800)}.border-slate-900{border-color:var(--palette-slate-900)}
+
+/* Emerald */
+.bg-emerald-50{background-color:var(--palette-emerald-50)}.bg-emerald-100{background-color:var(--palette-emerald-100)}.bg-emerald-200{background-color:var(--palette-emerald-200)}.bg-emerald-300{background-color:var(--palette-emerald-300)}.bg-emerald-400{background-color:var(--palette-emerald-400)}.bg-emerald-500{background-color:var(--palette-emerald-500)}.bg-emerald-600{background-color:var(--palette-emerald-600)}.bg-emerald-700{background-color:var(--palette-emerald-700)}.bg-emerald-800{background-color:var(--palette-emerald-800)}.bg-emerald-900{background-color:var(--palette-emerald-900)}
+.text-emerald-50{color:var(--palette-emerald-50)}.text-emerald-100{color:var(--palette-emerald-100)}.text-emerald-200{color:var(--palette-emerald-200)}.text-emerald-300{color:var(--palette-emerald-300)}.text-emerald-400{color:var(--palette-emerald-400)}.text-emerald-500{color:var(--palette-emerald-500)}.text-emerald-600{color:var(--palette-emerald-600)}.text-emerald-700{color:var(--palette-emerald-700)}.text-emerald-800{color:var(--palette-emerald-800)}.text-emerald-900{color:var(--palette-emerald-900)}
+.border-emerald-50{border-color:var(--palette-emerald-50)}.border-emerald-100{border-color:var(--palette-emerald-100)}.border-emerald-200{border-color:var(--palette-emerald-200)}.border-emerald-300{border-color:var(--palette-emerald-300)}.border-emerald-400{border-color:var(--palette-emerald-400)}.border-emerald-500{border-color:var(--palette-emerald-500)}.border-emerald-600{border-color:var(--palette-emerald-600)}.border-emerald-700{border-color:var(--palette-emerald-700)}.border-emerald-800{border-color:var(--palette-emerald-800)}.border-emerald-900{border-color:var(--palette-emerald-900)}
+
+/* Cyan */
+.bg-cyan-50{background-color:var(--palette-cyan-50)}.bg-cyan-100{background-color:var(--palette-cyan-100)}.bg-cyan-200{background-color:var(--palette-cyan-200)}.bg-cyan-300{background-color:var(--palette-cyan-300)}.bg-cyan-400{background-color:var(--palette-cyan-400)}.bg-cyan-500{background-color:var(--palette-cyan-500)}.bg-cyan-600{background-color:var(--palette-cyan-600)}.bg-cyan-700{background-color:var(--palette-cyan-700)}.bg-cyan-800{background-color:var(--palette-cyan-800)}.bg-cyan-900{background-color:var(--palette-cyan-900)}
+.text-cyan-50{color:var(--palette-cyan-50)}.text-cyan-100{color:var(--palette-cyan-100)}.text-cyan-200{color:var(--palette-cyan-200)}.text-cyan-300{color:var(--palette-cyan-300)}.text-cyan-400{color:var(--palette-cyan-400)}.text-cyan-500{color:var(--palette-cyan-500)}.text-cyan-600{color:var(--palette-cyan-600)}.text-cyan-700{color:var(--palette-cyan-700)}.text-cyan-800{color:var(--palette-cyan-800)}.text-cyan-900{color:var(--palette-cyan-900)}
+.border-cyan-50{border-color:var(--palette-cyan-50)}.border-cyan-100{border-color:var(--palette-cyan-100)}.border-cyan-200{border-color:var(--palette-cyan-200)}.border-cyan-300{border-color:var(--palette-cyan-300)}.border-cyan-400{border-color:var(--palette-cyan-400)}.border-cyan-500{border-color:var(--palette-cyan-500)}.border-cyan-600{border-color:var(--palette-cyan-600)}.border-cyan-700{border-color:var(--palette-cyan-700)}.border-cyan-800{border-color:var(--palette-cyan-800)}.border-cyan-900{border-color:var(--palette-cyan-900)}
+
+/* Amber */
+.bg-amber-50{background-color:var(--palette-amber-50)}.bg-amber-100{background-color:var(--palette-amber-100)}.bg-amber-200{background-color:var(--palette-amber-200)}.bg-amber-300{background-color:var(--palette-amber-300)}.bg-amber-400{background-color:var(--palette-amber-400)}.bg-amber-500{background-color:var(--palette-amber-500)}.bg-amber-600{background-color:var(--palette-amber-600)}.bg-amber-700{background-color:var(--palette-amber-700)}.bg-amber-800{background-color:var(--palette-amber-800)}.bg-amber-900{background-color:var(--palette-amber-900)}
+.text-amber-50{color:var(--palette-amber-50)}.text-amber-100{color:var(--palette-amber-100)}.text-amber-200{color:var(--palette-amber-200)}.text-amber-300{color:var(--palette-amber-300)}.text-amber-400{color:var(--palette-amber-400)}.text-amber-500{color:var(--palette-amber-500)}.text-amber-600{color:var(--palette-amber-600)}.text-amber-700{color:var(--palette-amber-700)}.text-amber-800{color:var(--palette-amber-800)}.text-amber-900{color:var(--palette-amber-900)}
+.border-amber-50{border-color:var(--palette-amber-50)}.border-amber-100{border-color:var(--palette-amber-100)}.border-amber-200{border-color:var(--palette-amber-200)}.border-amber-300{border-color:var(--palette-amber-300)}.border-amber-400{border-color:var(--palette-amber-400)}.border-amber-500{border-color:var(--palette-amber-500)}.border-amber-600{border-color:var(--palette-amber-600)}.border-amber-700{border-color:var(--palette-amber-700)}.border-amber-800{border-color:var(--palette-amber-800)}.border-amber-900{border-color:var(--palette-amber-900)}
+
+/* Rose (danger) */
+.bg-rose-50{background-color:var(--palette-rose-50)}.bg-rose-100{background-color:var(--palette-rose-100)}.bg-rose-200{background-color:var(--palette-rose-200)}.bg-rose-300{background-color:var(--palette-rose-300)}.bg-rose-400{background-color:var(--palette-rose-400)}.bg-rose-500{background-color:var(--palette-rose-500)}.bg-rose-600{background-color:var(--palette-rose-600)}.bg-rose-700{background-color:var(--palette-rose-700)}.bg-rose-800{background-color:var(--palette-rose-800)}.bg-rose-900{background-color:var(--palette-rose-900)}
+.text-rose-50{color:var(--palette-rose-50)}.text-rose-100{color:var(--palette-rose-100)}.text-rose-200{color:var(--palette-rose-200)}.text-rose-300{color:var(--palette-rose-300)}.text-rose-400{color:var(--palette-rose-400)}.text-rose-500{color:var(--palette-rose-500)}.text-rose-600{color:var(--palette-rose-600)}.text-rose-700{color:var(--palette-rose-700)}.text-rose-800{color:var(--palette-rose-800)}.text-rose-900{color:var(--palette-rose-900)}
+.border-rose-50{border-color:var(--palette-rose-50)}.border-rose-100{border-color:var(--palette-rose-100)}.border-rose-200{border-color:var(--palette-rose-200)}.border-rose-300{border-color:var(--palette-rose-300)}.border-rose-400{border-color:var(--palette-rose-400)}.border-rose-500{border-color:var(--palette-rose-500)}.border-rose-600{border-color:var(--palette-rose-600)}.border-rose-700{border-color:var(--palette-rose-700)}.border-rose-800{border-color:var(--palette-rose-800)}.border-rose-900{border-color:var(--palette-rose-900)}
+
+/* Sand */
+.bg-sand-50{background-color:var(--palette-sand-50)}.bg-sand-100{background-color:var(--palette-sand-100)}.bg-sand-200{background-color:var(--palette-sand-200)}.bg-sand-300{background-color:var(--palette-sand-300)}.bg-sand-400{background-color:var(--palette-sand-400)}.bg-sand-500{background-color:var(--palette-sand-500)}.bg-sand-600{background-color:var(--palette-sand-600)}.bg-sand-700{background-color:var(--palette-sand-700)}.bg-sand-800{background-color:var(--palette-sand-800)}.bg-sand-900{background-color:var(--palette-sand-900)}
+.text-sand-50{color:var(--palette-sand-50)}.text-sand-100{color:var(--palette-sand-100)}.text-sand-200{color:var(--palette-sand-200)}.text-sand-300{color:var(--palette-sand-300)}.text-sand-400{color:var(--palette-sand-400)}.text-sand-500{color:var(--palette-sand-500)}.text-sand-600{color:var(--palette-sand-600)}.text-sand-700{color:var(--palette-sand-700)}.text-sand-800{color:var(--palette-sand-800)}.text-sand-900{color:var(--palette-sand-900)}
+.border-sand-50{border-color:var(--palette-sand-50)}.border-sand-100{border-color:var(--palette-sand-100)}.border-sand-200{border-color:var(--palette-sand-200)}.border-sand-300{border-color:var(--palette-sand-300)}.border-sand-400{border-color:var(--palette-sand-400)}.border-sand-500{border-color:var(--palette-sand-500)}.border-sand-600{border-color:var(--palette-sand-600)}.border-sand-700{border-color:var(--palette-sand-700)}.border-sand-800{border-color:var(--palette-sand-800)}.border-sand-900{border-color:var(--palette-sand-900)}
