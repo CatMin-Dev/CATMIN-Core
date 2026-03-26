@@ -175,6 +175,27 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Global Settings System
+    |--------------------------------------------------------------------------
+    |
+    | Defaults used by the settings service. Database values override these
+    | entries, but keeping sane defaults here avoids hard failures during the
+    | initial installation phase.
+    |
+    */
+    'settings' => [
+        'cache_key' => 'catmin.settings',
+        'defaults' => [
+            'site.name' => 'CATMIN',
+            'site.url' => env('APP_URL', 'http://catmin.local'),
+            'admin.theme' => 'catmin-light',
+            'admin.path' => env('CATMIN_ADMIN_PATH', 'admin'),
+            'site.frontend_enabled' => true,
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Features & Flags
     |--------------------------------------------------------------------------
     |
