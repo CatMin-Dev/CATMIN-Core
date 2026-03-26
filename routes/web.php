@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\LegacyPreviewController;
+use App\Http\Controllers\Frontend\HomeController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -36,6 +37,9 @@ Route::get('/dashboard/{page}', function (string $page) {
 
     return redirect('/dashboard/index.php?page=' . $sanitizedPage);
 });
+
+Route::get('/' . config('catmin.frontend.path', 'site'), HomeController::class)
+    ->name('frontend.home');
 
 // ========== ADMIN ROUTES ==========
 

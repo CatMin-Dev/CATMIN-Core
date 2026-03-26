@@ -196,6 +196,28 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Frontend Foundation
+    |--------------------------------------------------------------------------
+    |
+    | Lightweight public frontend settings. The legacy PHP frontend stays in
+    | place, while this configuration prepares a Laravel-native public layer.
+    |
+    */
+    'frontend' => [
+        'enabled' => true,
+        'path' => 'site',
+        'theme' => 'catmin-public',
+        'data_sources' => [
+            'settings' => true,
+            'pages' => true,
+            'contents' => true,
+            'menus' => true,
+            'modules' => true,
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Features & Flags
     |--------------------------------------------------------------------------
     |
