@@ -25,7 +25,8 @@
             "Database\\Seeders\\": "database/seeders/"
         },
         "files": [
-            "app/Helpers/AdminPathHelper.php"
+            "app/Helpers/AdminPathHelper.php",
+            "app/Helpers/CatminHelper.php"
         ]
     },
     "autoload-dev": {
