@@ -10,9 +10,9 @@ use Illuminate\Routing\Controller;
 
 final class AuthController extends Controller
 {
-    public function showLogin(): RedirectResponse
+    public function showLogin()
     {
-        return redirect('/dashboard/login.html');
+        return view('admin.pages.login');
     }
 
     public function login(Request $request): RedirectResponse
@@ -29,7 +29,8 @@ final class AuthController extends Controller
         $isValidPassword = hash_equals($expectedPassword, (string) $data['password']);
 
         if (!$isValidUsername || !$isValidPassword) {
-            return redirect('/admin/errors/403');
+            return redirect(route('error.403.blade'));
+
         }
 
         $request->session()->put('catmin_admin_authenticated', true);

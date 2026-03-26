@@ -78,3 +78,11 @@ Route::prefix($adminPath)->middleware($adminMiddleware)->name('admin.')->group(f
     Route::get('/errors/500', fn () => redirect('/dashboard/page_500.html'))
         ->name('error.500');
 });
+
+// Public error pages (not under /admin prefix)
+Route::get('/admin-error/403', fn () => view('admin.pages.errors.403', ['currentPage' => null]))
+    ->name('error.403.blade');
+Route::get('/admin-error/404', fn () => view('admin.pages.errors.404', ['currentPage' => null]))
+    ->name('error.404.blade');
+Route::get('/admin-error/500', fn () => view('admin.pages.errors.500', ['currentPage' => null]))
+    ->name('error.500.blade');
