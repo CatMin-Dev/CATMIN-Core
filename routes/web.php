@@ -4,6 +4,19 @@ use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\LegacyPreviewController;
 use Illuminate\Support\Facades\Route;
 
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register web routes for your application. These
+| routes are loaded by the RouteServiceProvider within a group which
+| contains the "web" middleware group. Now create something great!
+|
+*/
+
+// ========== PUBLIC / LEGACY ROUTES ==========
+
 Route::get('/', function () {
     return redirect('/frontend/index.php');
 });
@@ -13,39 +26,7 @@ Route::get('/dashboard', function () {
 });
 
 Route::get('/dashboard/{page}', function (string $page) {
-    $allowedPages = [
-        'dashboard',
-        'calendar',
-        'chartjs',
-        'contacts',
-        'e_commerce',
-        'echarts',
-        'fixed_footer',
-        'fixed_sidebar',
-        'form',
-        'form_advanced',
-        'form_buttons',
-        'form_upload',
-        'form_validation',
-        'form_wizards',
-        'general_elements',
-        'icons',
-        'inbox',
-        'invoice',
-        'level2',
-        'map',
-        'media_gallery',
-        'other_charts',
-        'plain_page',
-        'pricing_tables',
-        'profile',
-        'project_detail',
-        'projects',
-        'tables',
-        'tables_dynamic',
-        'typography',
-        'widgets',
-    ];
+    $allowedPages = config('catmin.dashboard.pages_whitelist');
 
     $sanitizedPage = strtolower($page);
 
@@ -56,18 +37,44 @@ Route::get('/dashboard/{page}', function (string $page) {
     return redirect('/dashboard/index.php?page=' . $sanitizedPage);
 });
 
-Route::view('/admin/bridge', 'admin.bridge');
+// ========== ADMIN ROUTES ==========
 
-Route::get('/admin/preview/{page?}', LegacyPreviewController::class);
+$adminConfig = config('catmin.admin');
+$adminPath = $adminConfig['path'];
+$adminMiddleware = $adminConfig['middleware'];
 
-Route::get('/admin/login', [AuthController::class, 'showLogin'])->name('admin.login');
-Route::post('/admin/login', [AuthController::class, 'login'])->name('admin.login.submit');
-Route::post('/admin/logout', [AuthController::class, 'logout'])->name('admin.logout');
+Route::prefix($adminPath)->middleware($adminMiddleware)->name('admin.')->group(function () {
+    
+    // Public admin routes (no auth required)
+    Route::get('/login', [AuthController::class, 'showLogin'])
+        ->withoutMiddleware('catmin.admin')
+        ->name('login');
+    
+    Route::post('/login', [AuthController::class, 'login'])
+        ->withoutMiddleware('catmin.admin')
+        ->name('login.submit');
+    
+    Route::post('/logout', [AuthController::class, 'logout'])
+        ->name('logout');
 
-Route::get('/admin/access', function () {
-    return redirect('/dashboard/index.php?page=dashboard');
-})->middleware('catmin.admin')->name('admin.access');
+    // Admin bridge (temporary debug view)
+    Route::view('/bridge', 'admin.bridge')
+        ->name('bridge');
 
-Route::get('/admin/errors/403', fn () => redirect('/dashboard/page_403.html'))->name('admin.error.403');
-Route::get('/admin/errors/404', fn () => redirect('/dashboard/page_404.html'))->name('admin.error.404');
-Route::get('/admin/errors/500', fn () => redirect('/dashboard/page_500.html'))->name('admin.error.500');
+    // Legacy content preview (authenticated)
+    Route::get('/preview/{page?}', LegacyPreviewController::class)
+        ->name('preview');
+
+    // Dashboard/Home (authenticated)
+    Route::get('/access', function () {
+        return redirect('/dashboard/index.php?page=dashboard');
+    })->name('access');
+
+    // Error pages
+    Route::get('/errors/403', fn () => redirect('/dashboard/page_403.html'))
+        ->name('error.403');
+    Route::get('/errors/404', fn () => redirect('/dashboard/page_404.html'))
+        ->name('error.404');
+    Route::get('/errors/500', fn () => redirect('/dashboard/page_500.html'))
+        ->name('error.500');
+});
