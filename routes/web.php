@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\LegacyPreviewController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -55,3 +56,5 @@ Route::get('/dashboard/{page}', function (string $page) {
 });
 
 Route::view('/admin/bridge', 'admin.bridge');
+
+Route::get('/admin/preview/{page?}', LegacyPreviewController::class);
