@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\LegacyPreviewController;
 use Illuminate\Support\Facades\Route;
 
@@ -58,3 +59,15 @@ Route::get('/dashboard/{page}', function (string $page) {
 Route::view('/admin/bridge', 'admin.bridge');
 
 Route::get('/admin/preview/{page?}', LegacyPreviewController::class);
+
+Route::get('/admin/login', [AuthController::class, 'showLogin'])->name('admin.login');
+Route::post('/admin/login', [AuthController::class, 'login'])->name('admin.login.submit');
+Route::post('/admin/logout', [AuthController::class, 'logout'])->name('admin.logout');
+
+Route::get('/admin/access', function () {
+    return redirect('/dashboard/index.php?page=dashboard');
+})->middleware('catmin.admin')->name('admin.access');
+
+Route::get('/admin/errors/403', fn () => redirect('/dashboard/page_403.html'))->name('admin.error.403');
+Route::get('/admin/errors/404', fn () => redirect('/dashboard/page_404.html'))->name('admin.error.404');
+Route::get('/admin/errors/500', fn () => redirect('/dashboard/page_500.html'))->name('admin.error.500');
