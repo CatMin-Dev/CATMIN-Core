@@ -1,78 +1,97 @@
-@extends('admin.layouts.catmin')
+@extends('admin.layouts.system')
+
+@section('title', '500 - Internal Server Error | CATMIN')
+@section('body_class', 'page-error error-bg')
 
 @section('content')
-<div class="error-page d-flex align-items-center justify-content-center min-vh-100 py-5">
-    <div class="text-center">
-        <div class="display-1 fw-bold text-danger mb-3">
-            <i class="bi bi-bug"></i> 500
-        </div>
-        <h1 class="h2 fw-bold mb-3">Erreur Serveur</h1>
-        <p class="text-muted lead mb-4">
-            Une erreur interne s'est produite. Nos équipes ont été notifiées.
-        </p>
-        <div class="btn-group gap-3">
-            <a href="{{ admin_route('preview', ['page' => 'dashboard']) }}" class="btn btn-primary">
-                <i class="bi bi-arrow-left"></i> Réessayer
-            </a>
-            <a href="/" class="btn btn-secondary">
-                <i class="bi bi-house"></i> Accueil
-            </a>
-        </div>
-        <div class="mt-5">
-            <small class="text-muted d-block">
-                <i class="bi bi-info-circle"></i>
-                Référence: #{{ str_replace('-', '', substr(now()->toDateTimeString(), -19)) }}
-            </small>
+<div class="container-fluid d-flex align-items-center justify-content-center min-vh-100">
+    <div class="row justify-content-center w-100">
+        <div class="col-lg-6 col-md-8 col-sm-10">
+            <div class="card shadow-lg border-0">
+                <div class="card-body text-center p-5">
+                    <div class="text-center mb-4">
+                        <div class="catmin-brand mb-3">
+                            <img src="{{ asset('dashboard/assets/img/logo_color.png') }}" alt="Catmin" class="catmin-brand-logo">
+                            <h3 class="catmin-brand-title mb-0">CATMIN</h3>
+                            <small class="catmin-brand-subtitle">Admin Miaoude Simple</small>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <i class="fas fa-times-circle text-danger mb-3" style="font-size: 6rem;"></i>
+                        <h1 class="display-1 fw-bold text-danger mb-0">500</h1>
+                    </div>
+
+                    <div class="mb-4">
+                        <h2 class="h3 text-dark mb-3">Internal Server Error</h2>
+                        <p class="text-muted lead">Something went wrong on our end. We're working to fix this issue. Please try again later.</p>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-block mb-4">
+                        <a href="{{ admin_route('preview', ['page' => 'dashboard']) }}" class="btn btn-primary btn-lg me-md-2">
+                            <i class="fas fa-home me-2"></i>Go Home
+                        </a>
+                        <button type="button" class="btn btn-outline-secondary btn-lg" onclick="location.reload()">
+                            <i class="fas fa-redo me-2"></i>Try Again
+                        </button>
+                    </div>
+
+                    <div class="border-top pt-4">
+                        <div class="row text-center">
+                            <div class="col-md-4 mb-3">
+                                <div class="d-flex flex-column align-items-center">
+                                    <i class="fas fa-tools text-info fs-1 mb-2"></i>
+                                    <h6 class="text-dark">Fixing</h6>
+                                    <small class="text-muted">Our team is on it</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="d-flex flex-column align-items-center">
+                                    <i class="fas fa-clock text-warning fs-1 mb-2"></i>
+                                    <h6 class="text-dark">Please Wait</h6>
+                                    <small class="text-muted">We'll be back soon</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="d-flex flex-column align-items-center">
+                                    <i class="fas fa-headset text-success fs-1 mb-2"></i>
+                                    <h6 class="text-dark">Support</h6>
+                                    <small class="text-muted">We're here to help</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 p-3 bg-light rounded">
+                        <div class="text-start">
+                            <h6 class="text-muted mb-2">Error Details:</h6>
+                            <small class="text-muted d-block">Error ID: ERR-500-<span id="errorId"></span></small>
+                            <small class="text-muted d-block">Timestamp: <span id="timestamp"></span></small>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
-
-<style>
-    .error-page {
-        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-        min-height: 100vh;
-    }
-
-    .error-page .display-1 {
-        font-size: 128px;
-        line-height: 1;
-        animation: shake 2s infinite;
-    }
-
-    @keyframes shake {
-        0%, 100% { transform: translateX(0); }
-        10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-        20%, 40%, 60%, 80% { transform: translateX(5px); }
-    }
-
-    .btn {
-        padding: 12px 30px;
-        font-weight: 500;
-        border-radius: 6px;
-        transition: all 0.2s ease;
-    }
-
-    .btn-primary {
-        background-color: #2a3f54;
-        border-color: #2a3f54;
-    }
-
-    .btn-primary:hover {
-        background-color: #1f2d3d;
-        border-color: #1f2d3d;
-        transform: translateY(-2px);
-    }
-
-    .text-muted {
-        color: rgba(255,255,255,0.7) !important;
-    }
-
-    .lead {
-        color: rgba(255,255,255,0.9);
-    }
-
-    h1 {
-        color: white;
-    }
-</style>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const errorId = Math.random().toString(36).substring(2, 11).toUpperCase();
+    const timestamp = new Date().toLocaleString();
+
+    const errorElement = document.getElementById('errorId');
+    const timeElement = document.getElementById('timestamp');
+
+    if (errorElement) {
+        errorElement.textContent = errorId;
+    }
+
+    if (timeElement) {
+        timeElement.textContent = timestamp;
+    }
+});
+</script>
+@endpush

@@ -75,11 +75,11 @@ Route::prefix($adminPath)->middleware($adminMiddleware)->name('admin.')->group(f
     })->name('access');
 
     // Error pages
-    Route::get('/errors/403', fn () => redirect('/dashboard/page_403.html'))
+    Route::view('/errors/403', 'admin.pages.errors.403', ['currentPage' => null])
         ->name('error.403');
-    Route::get('/errors/404', fn () => redirect('/dashboard/page_404.html'))
+    Route::view('/errors/404', 'admin.pages.errors.404', ['currentPage' => null])
         ->name('error.404');
-    Route::get('/errors/500', fn () => redirect('/dashboard/page_500.html'))
+    Route::view('/errors/500', 'admin.pages.errors.500', ['currentPage' => null])
         ->name('error.500');
 });
 

@@ -1,71 +1,62 @@
-@extends('admin.layouts.catmin')
+@extends('admin.layouts.system')
+
+@section('title', '403 - Access Forbidden | CATMIN')
+@section('body_class', 'page-error error-bg')
 
 @section('content')
-<div class="error-page d-flex align-items-center justify-content-center min-vh-100 py-5">
-    <div class="text-center">
-        <div class="display-1 fw-bold text-danger mb-3">
-            <i class="bi bi-exclamation-triangle"></i> 403
-        </div>
-        <h1 class="h2 fw-bold mb-3">Accès Refusé</h1>
-        <p class="text-muted lead mb-4">
-            Vous n'avez pas la permission d'accéder à cette ressource.
-        </p>
-        <div class="btn-group gap-3">
-            <a href="{{ admin_route('login') }}" class="btn btn-primary">
-                <i class="bi bi-box-arrow-in-left"></i> Retour à la connexion
-            </a>
-            <a href="/" class="btn btn-secondary">
-                <i class="bi bi-house"></i> Accueil
-            </a>
+<div class="container-fluid d-flex align-items-center justify-content-center min-vh-100">
+    <div class="row justify-content-center w-100">
+        <div class="col-lg-6 col-md-8 col-sm-10">
+            <div class="card shadow-lg border-0">
+                <div class="card-body text-center p-5">
+                    <div class="text-center mb-4">
+                        <div class="catmin-brand mb-3">
+                            <img src="{{ asset('dashboard/assets/img/logo_color.png') }}" alt="Catmin" class="catmin-brand-logo">
+                            <h3 class="catmin-brand-title mb-0">CATMIN</h3>
+                            <small class="catmin-brand-subtitle">Admin Miaoude Simple</small>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <i class="fas fa-lock text-danger mb-3" style="font-size: 6rem;"></i>
+                        <h1 class="display-1 fw-bold text-danger mb-0">403</h1>
+                    </div>
+
+                    <div class="mb-4">
+                        <h2 class="h3 text-dark mb-3">Access Forbidden</h2>
+                        <p class="text-muted lead">You don't have permission to access this resource. Please contact your administrator if you believe this is an error.</p>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-block mb-4">
+                        <a href="{{ admin_route('login') }}" class="btn btn-primary btn-lg me-md-2">
+                            <i class="fas fa-user-shield me-2"></i>Login
+                        </a>
+                        <button type="button" class="btn btn-outline-secondary btn-lg" onclick="history.back()">
+                            <i class="fas fa-arrow-left me-2"></i>Go Back
+                        </button>
+                    </div>
+
+                    <div class="border-top pt-4">
+                        <div class="row text-center">
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex flex-column align-items-center">
+                                    <i class="fas fa-user-shield text-primary fs-1 mb-2"></i>
+                                    <h6 class="text-dark">Authentication Required</h6>
+                                    <small class="text-muted">Please log in to access this content</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex flex-column align-items-center">
+                                    <i class="fas fa-key text-warning fs-1 mb-2"></i>
+                                    <h6 class="text-dark">Insufficient Privileges</h6>
+                                    <small class="text-muted">Contact admin for access rights</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
-
-<style>
-    .error-page {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        min-height: 100vh;
-    }
-
-    .error-page .display-1 {
-        font-size: 128px;
-        line-height: 1;
-        animation: bounce 2s infinite;
-    }
-
-    @keyframes bounce {
-        0%, 100% { transform: translateY(0); }
-        50% { transform: translateY(-20px); }
-    }
-
-    .btn {
-        padding: 12px 30px;
-        font-weight: 500;
-        border-radius: 6px;
-        transition: all 0.2s ease;
-    }
-
-    .btn-primary {
-        background-color: #2a3f54;
-        border-color: #2a3f54;
-    }
-
-    .btn-primary:hover {
-        background-color: #1f2d3d;
-        border-color: #1f2d3d;
-        transform: translateY(-2px);
-    }
-
-    .text-muted {
-        color: rgba(255,255,255,0.7) !important;
-    }
-
-    .lead {
-        color: rgba(255,255,255,0.9);
-    }
-
-    h1 {
-        color: white;
-    }
-</style>
 @endsection
