@@ -1,4 +1,6 @@
 <aside class="col-md-3 left_col" aria-label="Sidebar navigation">
+    @php($navigationSections = \App\Services\AdminNavigationService::sections($currentPage))
+
     <div class="left_col scroll-view">
         <!-- Brand Header -->
         <div class="navbar nav_title border-0">
@@ -29,33 +31,26 @@
 
         <!-- Navigation Menu -->
         <div id="sidebar-menu" class="main_menu_side hidden-print main_menu">
-            <div class="menu_section">
-                <h3 class="heading"><span>Aperçu</span></h3>
-                <ul class="nav side-menu">
-                    <li><a href="{{ admin_route('preview', ['page' => 'dashboard']) }}" class="@if($currentPage === 'dashboard') active @endif"><i class="bi bi-house"></i> Dashboard</a></li>
-                    <li><a href="{{ admin_route('preview', ['page' => 'widgets']) }}" class="@if($currentPage === 'widgets') active @endif"><i class="bi bi-grid"></i> Composants</a></li>
-                </ul>
-            </div>
-            <div class="menu_section">
-                <h3 class="heading"><span>Visuels</span></h3>
-                <ul class="nav side-menu">
-                    <li><a href="{{ admin_route('preview', ['page' => 'chartjs']) }}" class="@if($currentPage === 'chartjs') active @endif"><i class="bi bi-bar-chart"></i> Graphiques</a></li>
-                    <li><a href="{{ admin_route('preview', ['page' => 'table_bootstrap']) }}" class="@if($currentPage === 'table_bootstrap') active @endif"><i class="bi bi-table"></i> Tableaux</a></li>
-                    <li><a href="{{ admin_route('preview', ['page' => 'media_gallery']) }}" class="@if($currentPage === 'media_gallery') active @endif"><i class="bi bi-images"></i> Galerie</a></li>
-                </ul>
-            </div>
-            <div class="menu_section">
-                <h3 class="heading"><span>Formulaires</span></h3>
-                <ul class="nav side-menu">
-                    <li><a href="{{ admin_route('preview', ['page' => 'forms_basic']) }}" class="@if($currentPage === 'forms_basic') active @endif"><i class="bi bi-input-cursor-text"></i> Formulaires de base</a></li>
-                </ul>
-            </div>
-            <div class="menu_section">
-                <h3 class="heading"><span>Legacy</span></h3>
-                <ul class="nav side-menu">
-                    <li><a href="/dashboard/index.php" target="_blank"><i class="bi bi-box-arrow-up-right"></i> Dashboard PHP</a></li>
-                </ul>
-            </div>
+            @foreach($navigationSections as $section)
+                <div class="menu_section">
+                    <h3 class="heading"><span>{{ $section['title'] }}</span></h3>
+                    <ul class="nav side-menu">
+                        @foreach($section['items'] as $item)
+                            <li>
+                                <a href="{{ $item['url'] }}"
+                                   @if(!empty($item['target'])) target="{{ $item['target'] }}" @endif
+                                   class="@if(!empty($item['active'])) active @endif">
+                                    <i class="{{ $item['icon'] }}"></i>
+                                    {{ $item['label'] }}
+                                    @if(!empty($item['badge']))
+                                        <span class="badge bg-secondary float-end mt-1">{{ $item['badge'] }}</span>
+                                    @endif
+                                </a>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endforeach
         </div>
     </div>
 </aside>

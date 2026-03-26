@@ -99,6 +99,82 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Admin Navigation Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Sidebar sections are defined here so the UI is not frozen inside Blade.
+    | Items can target legacy preview pages, admin routes, or external URLs.
+    | Module-backed sections are filtered automatically based on active modules.
+    |
+    */
+    'navigation' => [
+        'sections' => [
+            [
+                'title' => 'Apercu',
+                'items' => [
+                    [
+                        'label' => 'Dashboard',
+                        'icon' => 'bi bi-house',
+                        'legacy_page' => 'dashboard',
+                    ],
+                    [
+                        'label' => 'Composants',
+                        'icon' => 'bi bi-grid',
+                        'legacy_page' => 'widgets',
+                    ],
+                ],
+            ],
+            [
+                'title' => 'Visuels',
+                'items' => [
+                    [
+                        'label' => 'Graphiques',
+                        'icon' => 'bi bi-bar-chart',
+                        'legacy_page' => 'chartjs',
+                    ],
+                    [
+                        'label' => 'Tableaux',
+                        'icon' => 'bi bi-table',
+                        'legacy_page' => 'table_bootstrap',
+                    ],
+                    [
+                        'label' => 'Galerie',
+                        'icon' => 'bi bi-images',
+                        'legacy_page' => 'media_gallery',
+                    ],
+                ],
+            ],
+            [
+                'title' => 'Formulaires',
+                'items' => [
+                    [
+                        'label' => 'Formulaires de base',
+                        'icon' => 'bi bi-input-cursor-text',
+                        'legacy_page' => 'forms_basic',
+                    ],
+                ],
+            ],
+            [
+                'title' => 'Modules actifs',
+                'source' => 'enabled_modules',
+            ],
+            [
+                'title' => 'Legacy',
+                'items' => [
+                    [
+                        'label' => 'Dashboard PHP',
+                        'icon' => 'bi bi-box-arrow-up-right',
+                        'path' => '/dashboard/index.php',
+                        'target' => '_blank',
+                        'feature' => 'legacy_preview_enabled',
+                    ],
+                ],
+            ],
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Features & Flags
     |--------------------------------------------------------------------------
     |
