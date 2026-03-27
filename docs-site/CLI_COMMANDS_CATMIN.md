@@ -23,6 +23,10 @@ Prefixe unique: `catmin:`
 - `php artisan catmin:system:check`
 - `php artisan catmin:system:check --json`
 
+### Sauvegarde
+
+- `php artisan catmin:backup:create [--with-db] [--without-media] [--without-extensions]`
+
 ### Deja disponibles
 
 - `catmin:migrate:extensions`
