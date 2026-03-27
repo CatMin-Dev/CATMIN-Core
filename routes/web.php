@@ -66,7 +66,7 @@ Route::prefix($adminPath)->middleware('web')->name('admin.')->group(function () 
             ->name('modules.index');
 
         Route::get('/content/{module}', [DashboardController::class, 'content'])
-            ->whereIn('module', ['pages', 'blog', 'news', 'media'])
+            ->whereIn('module', ['pages', 'articles', 'blog', 'news', 'media'])
             ->name('content.show');
 
         Route::view('/errors/403', 'admin.pages.errors.403', ['currentPage' => null])
