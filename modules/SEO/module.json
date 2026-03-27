@@ -1,7 +1,16 @@
 {
   "name": "SEO",
   "slug": "seo",
-  "enabled": false,
+  "enabled": true,
   "version": "1.0.0",
+  "description": "Base SEO reutisable pour contenus CATMIN.",
+  "category": "content",
+  "provides": [
+    "meta-title",
+    "meta-description",
+    "meta-robots",
+    "canonical-url",
+    "slug-override"
+  ],
   "depends": ["core"]
 }

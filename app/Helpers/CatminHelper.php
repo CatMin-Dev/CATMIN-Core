@@ -6,6 +6,7 @@ use App\Services\SettingService;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Modules\Pages\Models\Page;
+use Modules\SEO\Models\SeoMeta;
 
 if (!function_exists('setting')) {
     /**
@@ -133,5 +134,26 @@ if (!function_exists('frontend_context')) {
         ];
 
         return array_merge($base, $overrides);
+    }
+}
+
+if (!function_exists('seo_for')) {
+    /**
+     * Retrieve SEO metadata by target type and target id.
+     */
+    function seo_for(string $targetType, int $targetId): ?SeoMeta
+    {
+        if (!ModuleManager::isEnabled('seo')) {
+            return null;
+        }
+
+        if (!Schema::hasTable('seo_meta')) {
+            return null;
+        }
+
+        return SeoMeta::query()
+            ->where('target_type', $targetType)
+            ->where('target_id', $targetId)
+            ->first();
     }
 }
