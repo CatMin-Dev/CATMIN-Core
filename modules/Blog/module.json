@@ -1,7 +1,9 @@
 {
   "name": "Blog",
   "slug": "blog",
-  "enabled": false,
+  "enabled": true,
   "version": "1.0.0",
-  "depends": ["core","media","seo"]
+  "description": "Articles editoriaux long format, distincts des news.",
+  "depends": ["core", "media", "seo"],
+  "provides": ["content", "editorial"]
 }
