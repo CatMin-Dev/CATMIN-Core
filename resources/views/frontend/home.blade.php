@@ -42,6 +42,7 @@
                                     <tr><th>Login admin</th><td>{{ $frontendContext['admin_login_url'] }}</td></tr>
                                     <tr><th>Frontend actif</th><td>{{ $frontendContext['frontend_enabled'] ? 'Oui' : 'Non' }}</td></tr>
                                     <tr><th>Page home publiee</th><td>{{ $homePage?->title ?? 'Aucune page slug=home' }}</td></tr>
+                                    <tr><th>URL page home</th><td>{{ $homePage ? route('frontend.page', ['slug' => $homePage->slug]) : 'n/a' }}</td></tr>
                                 </tbody>
                             </table>
                         </div>

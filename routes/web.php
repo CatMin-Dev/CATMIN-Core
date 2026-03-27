@@ -1,8 +1,9 @@
 <?php
 
 use App\Http\Controllers\Admin\AuthController;
-use App\Http\Controllers\Admin\LegacyPreviewController;
+use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Frontend\HomeController;
+use App\Http\Controllers\Frontend\PageController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -16,30 +17,17 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-// ========== PUBLIC / LEGACY ROUTES ==========
+// ========== PUBLIC ROUTES ==========
 
-Route::get('/', function () {
-    return redirect('/frontend/index.php');
-});
-
-Route::get('/dashboard', function () {
-    return redirect('/dashboard/index.php?page=dashboard');
-});
-
-Route::get('/dashboard/{page}', function (string $page) {
-    $allowedPages = config('catmin.dashboard.pages_whitelist');
-
-    $sanitizedPage = strtolower($page);
-
-    if (!preg_match('/^[a-z0-9_\-]+$/', $sanitizedPage) || !in_array($sanitizedPage, $allowedPages, true)) {
-        $sanitizedPage = 'dashboard';
-    }
-
-    return redirect('/dashboard/index.php?page=' . $sanitizedPage);
-});
+Route::get('/', HomeController::class)
+    ->name('frontend.root');
 
 Route::get('/' . config('catmin.frontend.path', 'site'), HomeController::class)
     ->name('frontend.home');
+
+Route::get('/page/{slug}', PageController::class)
+    ->where('slug', '[A-Za-z0-9\-\/]+')
+    ->name('frontend.page');
 
 // ========== ADMIN ROUTES ==========
 
@@ -47,40 +35,47 @@ $adminConfig = config('catmin.admin');
 $adminPath = $adminConfig['path'];
 $adminMiddleware = $adminConfig['middleware'];
 
-Route::prefix($adminPath)->middleware($adminMiddleware)->name('admin.')->group(function () {
-    
-    // Public admin routes (no auth required)
+Route::prefix($adminPath)->middleware('web')->name('admin.')->group(function () use ($adminMiddleware) {
     Route::get('/login', [AuthController::class, 'showLogin'])
-        ->withoutMiddleware('catmin.admin')
         ->name('login');
-    
+
     Route::post('/login', [AuthController::class, 'login'])
-        ->withoutMiddleware('catmin.admin')
         ->name('login.submit');
-    
-    Route::post('/logout', [AuthController::class, 'logout'])
-        ->name('logout');
 
-    // Admin bridge (temporary debug view)
-    Route::view('/bridge', 'admin.bridge')
-        ->name('bridge');
+    Route::middleware($adminMiddleware)->group(function () {
+        Route::get('/', [DashboardController::class, 'index'])
+            ->name('index');
 
-    // Legacy content preview (authenticated)
-    Route::get('/preview/{page?}', LegacyPreviewController::class)
-        ->name('preview');
+        Route::get('/access', function () {
+            return redirect()->route('admin.index');
+        })->name('access');
 
-    // Dashboard/Home (authenticated)
-    Route::get('/access', function () {
-        return redirect('/dashboard/index.php?page=dashboard');
-    })->name('access');
+        Route::post('/logout', [AuthController::class, 'logout'])
+            ->name('logout');
 
-    // Error pages
-    Route::view('/errors/403', 'admin.pages.errors.403', ['currentPage' => null])
-        ->name('error.403');
-    Route::view('/errors/404', 'admin.pages.errors.404', ['currentPage' => null])
-        ->name('error.404');
-    Route::view('/errors/500', 'admin.pages.errors.500', ['currentPage' => null])
-        ->name('error.500');
+        Route::get('/users', [DashboardController::class, 'users'])
+            ->name('users.index');
+
+        Route::get('/roles', [DashboardController::class, 'roles'])
+            ->name('roles.index');
+
+        Route::get('/settings', [DashboardController::class, 'settings'])
+            ->name('settings.index');
+
+        Route::get('/modules', [DashboardController::class, 'modules'])
+            ->name('modules.index');
+
+        Route::get('/content/{module}', [DashboardController::class, 'content'])
+            ->whereIn('module', ['pages', 'blog', 'news', 'media'])
+            ->name('content.show');
+
+        Route::view('/errors/403', 'admin.pages.errors.403', ['currentPage' => null])
+            ->name('error.403');
+        Route::view('/errors/404', 'admin.pages.errors.404', ['currentPage' => null])
+            ->name('error.404');
+        Route::view('/errors/500', 'admin.pages.errors.500', ['currentPage' => null])
+            ->name('error.500');
+    });
 });
 
 // Public error pages (not under /admin prefix)
@@ -90,3 +85,4 @@ Route::get('/admin-error/404', fn () => view('admin.pages.errors.404', ['current
     ->name('error.404.blade');
 Route::get('/admin-error/500', fn () => view('admin.pages.errors.500', ['currentPage' => null]))
     ->name('error.500.blade');
+
