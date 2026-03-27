@@ -23,12 +23,17 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->report(function (\Throwable $throwable): void {
-            /** @var SystemLogService $logger */
-            $logger = app(SystemLogService::class);
-            $logger->logError($throwable, [
-                'url' => request()?->fullUrl(),
-                'method' => request()?->method(),
-                'ip' => request()?->ip(),
-            ]);
+            try {
+                /** @var SystemLogService $logger */
+                $logger = app(SystemLogService::class);
+                $isConsole = app()->runningInConsole();
+                $logger->logError($throwable, [
+                    'url'    => $isConsole ? null : request()?->fullUrl(),
+                    'method' => $isConsole ? null : request()?->method(),
+                    'ip'     => $isConsole ? null : request()?->ip(),
+                ]);
+            } catch (\Throwable) {
+                // Prevent exception handler from throwing during bootstrap/CLI
+            }
         });
     })->create();
