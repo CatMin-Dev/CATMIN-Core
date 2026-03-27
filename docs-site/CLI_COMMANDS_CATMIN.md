@@ -29,6 +29,8 @@ Prefixe unique: `catmin:`
 - `catmin:update:plan`
 - `catmin:update:apply`
 - `catmin:rbac:sync`
+- `catmin:settings:export`
+- `catmin:settings:import`
 
 ## Notes d'usage
 
