@@ -134,6 +134,12 @@ return [
     'api' => [
         'prefix' => 'api/internal',
         'internal_token' => env('CATMIN_API_INTERNAL_TOKEN', ''),
+        'external' => [
+            'enabled' => env('CATMIN_EXTERNAL_API_ENABLED', true),
+            'prefix' => env('CATMIN_EXTERNAL_API_PREFIX', 'api/v2'),
+            'rate_limit_per_minute' => (int) env('CATMIN_EXTERNAL_API_RATE_LIMIT', 120),
+            'default_scope' => 'external.read',
+        ],
     ],
 
     /*

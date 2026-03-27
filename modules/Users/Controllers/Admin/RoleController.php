@@ -131,6 +131,76 @@ class RoleController extends Controller
             ->with('status', 'Role "' . $name . '" supprime.');
     }
 
+    public function startPreview(Request $request, Role $role): RedirectResponse
+    {
+        $permissions = (array) ($role->permissions ?? []);
+
+        if (empty($permissions)) {
+            return redirect()
+                ->route('admin.roles.manage')
+                ->with('error', 'Impossible de tester ce role: aucune permission definie.');
+        }
+
+        if (!$request->session()->has('catmin_rbac_preview_snapshot')) {
+            $request->session()->put('catmin_rbac_preview_snapshot', [
+                'roles' => (array) $request->session()->get('catmin_rbac_roles', []),
+                'permissions' => (array) $request->session()->get('catmin_rbac_permissions', []),
+                'source' => (string) $request->session()->get('catmin_rbac_source', 'unknown'),
+            ]);
+        }
+
+        $request->session()->put('catmin_rbac_roles', [$role->name]);
+        $request->session()->put('catmin_rbac_permissions', $permissions);
+        $request->session()->put('catmin_rbac_source', 'role-preview');
+        $request->session()->put('catmin_rbac_preview_active', true);
+        $request->session()->put('catmin_rbac_preview_role_id', $role->id);
+        $request->session()->put('catmin_rbac_preview_role_name', (string) ($role->display_name ?: $role->name));
+
+        $this->logAudit('role.preview.started', 'Mode apercu role active', [
+            'role' => $role->name,
+            'role_id' => $role->id,
+            'permissions' => count($permissions),
+        ]);
+
+        return redirect()
+            ->route('admin.index')
+            ->with('status', 'Mode apercu active pour le role "' . ($role->display_name ?: $role->name) . '".');
+    }
+
+    public function stopPreview(Request $request): RedirectResponse
+    {
+        if (!$request->session()->has('catmin_rbac_preview_snapshot')) {
+            $request->session()->forget([
+                'catmin_rbac_preview_active',
+                'catmin_rbac_preview_role_id',
+                'catmin_rbac_preview_role_name',
+            ]);
+
+            return redirect()
+                ->route('admin.index')
+                ->with('status', 'Aucun mode apercu actif.');
+        }
+
+        $snapshot = (array) $request->session()->get('catmin_rbac_preview_snapshot', []);
+
+        $request->session()->put('catmin_rbac_roles', (array) ($snapshot['roles'] ?? []));
+        $request->session()->put('catmin_rbac_permissions', (array) ($snapshot['permissions'] ?? []));
+        $request->session()->put('catmin_rbac_source', (string) ($snapshot['source'] ?? 'unknown'));
+
+        $request->session()->forget([
+            'catmin_rbac_preview_active',
+            'catmin_rbac_preview_role_id',
+            'catmin_rbac_preview_role_name',
+            'catmin_rbac_preview_snapshot',
+        ]);
+
+        $this->logAudit('role.preview.stopped', 'Mode apercu role desactive');
+
+        return redirect()
+            ->route('admin.roles.manage')
+            ->with('status', 'Mode apercu desactive. Contexte RBAC precedent restaure.');
+    }
+
     /**
      * @return array<string, array<int, string>>
      */

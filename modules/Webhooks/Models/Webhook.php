@@ -15,6 +15,9 @@ class Webhook extends Model
         'secret',
         'status',
         'last_triggered_at',
+        'last_delivery_status',
+        'last_delivery_error',
+        'last_delivery_at',
     ];
 
     protected function casts(): array
@@ -22,6 +25,7 @@ class Webhook extends Model
         return [
             'events' => 'array',
             'last_triggered_at' => 'datetime',
+            'last_delivery_at' => 'datetime',
         ];
     }
 

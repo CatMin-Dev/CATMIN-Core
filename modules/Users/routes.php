@@ -56,6 +56,13 @@ Route::middleware(['web', 'catmin.admin'])
             ->middleware('catmin.permission:module.users.config')
             ->name('roles.update');
 
+        Route::post('/roles/{role}/preview', [RoleController::class, 'startPreview'])
+            ->middleware('catmin.permission:module.users.config')
+            ->name('roles.preview.start');
+
+        Route::delete('/roles/preview', [RoleController::class, 'stopPreview'])
+            ->name('roles.preview.stop');
+
         Route::delete('/roles/{role}', [RoleController::class, 'destroy'])
             ->middleware('catmin.permission:module.users.config')
             ->name('roles.destroy');

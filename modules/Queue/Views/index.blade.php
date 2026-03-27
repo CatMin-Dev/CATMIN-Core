@@ -104,18 +104,8 @@
                     @endforeach
                 </tbody>
             </table>
-                        <td>
-                            @if(catmin_can('module.queue.config'))
-                            <form method="POST" action="{{ route('admin.queue.failed.delete', $job->id) }}"
-                                  onsubmit="return confirm('Supprimer ce job ?');">
-                                @csrf
-                                @method('DELETE')
-                                <button class="btn btn-sm btn-outline-danger" type="submit" title="Supprimer">
-                                    <i class="bi bi-trash3"></i>
-                                </button>
-                            </form>
-                            @endif
-                        </td>
+        </div>
     </div>
+    @endif
 </div>
 @endsection

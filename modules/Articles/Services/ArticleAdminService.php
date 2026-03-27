@@ -105,6 +105,15 @@ class ArticleAdminService
             ],
         ]);
 
+        CatminEventBus::dispatch(CatminEventBus::ARTICLE_UPDATED, [
+            'article' => [
+                'id' => $item->id,
+                'title' => $item->title,
+                'slug' => $item->slug,
+                'status' => $item->status,
+            ],
+        ]);
+
         try {
             app(SystemLogService::class)->logAudit(
                 'content.article.updated',
@@ -135,6 +144,17 @@ class ArticleAdminService
         }
 
         $item->save();
+
+        if ($item->status === 'published') {
+            CatminEventBus::dispatch(CatminEventBus::ARTICLE_PUBLISHED, [
+                'article' => [
+                    'id' => $item->id,
+                    'title' => $item->title,
+                    'slug' => $item->slug,
+                    'published_at' => optional($item->published_at)->toIso8601String(),
+                ],
+            ]);
+        }
 
         return $item;
     }

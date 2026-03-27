@@ -24,6 +24,7 @@
                 <th>URL</th>
                 <th>Événements</th>
                 <th>Statut</th>
+                <th>Dernier resultat</th>
                 <th>Dernière exéc.</th>
                 <th></th>
             </tr>
@@ -48,8 +49,24 @@
                             <span class="badge bg-secondary">Inactif</span>
                         @endif
                     </td>
+                    <td class="small">
+                        @if($webhook->last_delivery_status === null)
+                            <span class="text-muted">—</span>
+                        @elseif((int) $webhook->last_delivery_status >= 200 && (int) $webhook->last_delivery_status < 300)
+                            <span class="badge bg-success">{{ $webhook->last_delivery_status }}</span>
+                        @elseif((int) $webhook->last_delivery_status === 0)
+                            <span class="badge bg-danger">Erreur transport</span>
+                        @else
+                            <span class="badge bg-warning text-dark">{{ $webhook->last_delivery_status }}</span>
+                        @endif
+                        @if(!empty($webhook->last_delivery_error))
+                            <div class="text-danger text-truncate" style="max-width:220px;" title="{{ $webhook->last_delivery_error }}">
+                                {{ $webhook->last_delivery_error }}
+                            </div>
+                        @endif
+                    </td>
                     <td class="small text-muted text-nowrap">
-                        {{ $webhook->last_triggered_at?->format('d/m/Y H:i') ?? '—' }}
+                        {{ $webhook->last_delivery_at?->format('d/m/Y H:i') ?? $webhook->last_triggered_at?->format('d/m/Y H:i') ?? '—' }}
                     </td>
                     <td class="text-end text-nowrap">
                         @if(catmin_can('module.webhooks.edit'))

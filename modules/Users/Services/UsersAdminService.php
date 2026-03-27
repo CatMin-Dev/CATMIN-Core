@@ -128,6 +128,14 @@ class UsersAdminService
             // Keep user update resilient if logging fails.
         }
 
+        CatminEventBus::dispatch(CatminEventBus::USER_UPDATED, [
+            'user' => [
+                'id' => $updated->id,
+                'name' => $updated->name,
+                'email' => $updated->email,
+            ],
+        ]);
+
         return $updated;
     }
 
@@ -194,5 +202,12 @@ class UsersAdminService
             );
         } catch (\Throwable) {
         }
+
+        CatminEventBus::dispatch(CatminEventBus::USER_DELETED, [
+            'user' => [
+                'id' => $userId,
+                'email' => $email,
+            ],
+        ]);
     }
 }

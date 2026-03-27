@@ -56,10 +56,22 @@ class WebhookDispatcher
                 ->withBody($body, 'application/json')
                 ->post($webhook->url);
 
-            $webhook->update(['last_triggered_at' => now()]);
+            $webhook->update([
+                'last_triggered_at' => now(),
+                'last_delivery_at' => now(),
+                'last_delivery_status' => $response->status(),
+                'last_delivery_error' => null,
+            ]);
 
             self::logOutgoing($webhook->id, $event, $body, $response->status(), true);
         } catch (\Throwable $e) {
+            $webhook->update([
+                'last_triggered_at' => now(),
+                'last_delivery_at' => now(),
+                'last_delivery_status' => 0,
+                'last_delivery_error' => mb_substr($e->getMessage(), 0, 2000),
+            ]);
+
             self::logOutgoing($webhook->id, $event, $body, 0, false, $e->getMessage());
         }
     }
@@ -76,6 +88,7 @@ class WebhookDispatcher
                     'webhook_id' => $webhookId,
                     'event' => $event,
                     'status_code' => $code,
+                    'payload_size' => strlen($body),
                     'error' => $error,
                 ]),
                 'status_code' => $code,

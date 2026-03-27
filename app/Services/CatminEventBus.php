@@ -17,6 +17,12 @@ class CatminEventBus
     public const CONTENT_CREATED = 'catmin.content.created';
     public const CONTENT_UPDATED = 'catmin.content.updated';
     public const USER_CREATED = 'catmin.user.created';
+    public const USER_UPDATED = 'catmin.user.updated';
+    public const USER_DELETED = 'catmin.user.deleted';
+    public const PAGE_PUBLISHED = 'catmin.page.published';
+    public const PAGE_UPDATED = 'catmin.page.updated';
+    public const ARTICLE_PUBLISHED = 'catmin.article.published';
+    public const ARTICLE_UPDATED = 'catmin.article.updated';
     public const SETTING_UPDATED = 'catmin.setting.updated';
 
     /**

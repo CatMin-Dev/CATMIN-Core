@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Api\V2\PublicContentController;
+use App\Http\Controllers\Api\V2\SystemController as ExternalSystemController;
 use App\Http\Controllers\Api\Internal\InternalPagesController;
 use App\Http\Controllers\Api\Internal\InternalArticlesController;
 use App\Http\Controllers\Api\Internal\InternalSettingsController;
@@ -19,3 +21,20 @@ Route::prefix('internal')->group(function (): void {
         Route::get('/system/health', [InternalSystemController::class, 'health']);
     });
 });
+
+Route::prefix('v2')
+    ->middleware(['throttle:catmin-external-api', 'catmin.external-api-log'])
+    ->group(function (): void {
+        // Public endpoints
+        Route::get('/health', [ExternalSystemController::class, 'health']);
+        Route::get('/version', [ExternalSystemController::class, 'version']);
+        Route::get('/settings/public', [PublicContentController::class, 'settings']);
+        Route::get('/pages/published', [PublicContentController::class, 'pages']);
+        Route::get('/articles/published', [PublicContentController::class, 'articles']);
+        Route::get('/shop/products', [PublicContentController::class, 'shopProducts']);
+
+        // Protected external endpoints
+        Route::middleware('catmin.external-api-key:external.read')->group(function (): void {
+            Route::get('/system/status', [ExternalSystemController::class, 'status']);
+        });
+    });

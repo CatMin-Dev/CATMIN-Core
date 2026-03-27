@@ -92,6 +92,15 @@ class PagesAdminService
             ],
         ]);
 
+        CatminEventBus::dispatch(CatminEventBus::PAGE_UPDATED, [
+            'page' => [
+                'id' => $page->id,
+                'title' => $page->title,
+                'slug' => $page->slug,
+                'status' => $page->status,
+            ],
+        ]);
+
         try {
             app(SystemLogService::class)->logAudit(
                 'content.page.updated',
@@ -121,6 +130,17 @@ class PagesAdminService
         }
 
         $page->save();
+
+        if ($page->status === 'published') {
+            CatminEventBus::dispatch(CatminEventBus::PAGE_PUBLISHED, [
+                'page' => [
+                    'id' => $page->id,
+                    'title' => $page->title,
+                    'slug' => $page->slug,
+                    'published_at' => optional($page->published_at)->toIso8601String(),
+                ],
+            ]);
+        }
 
         return $page;
     }

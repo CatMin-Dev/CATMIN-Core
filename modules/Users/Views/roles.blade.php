@@ -66,6 +66,13 @@
                     @if(catmin_can('module.users.config'))
                         <td>
                             <div class="d-flex justify-content-end gap-2">
+                                <form method="post" action="{{ admin_route('roles.preview.start', ['role' => $role->id]) }}"
+                                      onsubmit="return confirm('Activer le mode apercu pour le role {{ addslashes($role->display_name ?: $role->name) }} ?')">
+                                    @csrf
+                                    <button class="btn btn-sm btn-outline-info" type="submit">
+                                        <i class="bi bi-eye me-1"></i>Tester
+                                    </button>
+                                </form>
                                 <a class="btn btn-sm btn-outline-secondary" href="{{ admin_route('roles.edit', ['role' => $role->id]) }}">
                                     <i class="bi bi-pencil-square me-1"></i>Modifier
                                 </a>
