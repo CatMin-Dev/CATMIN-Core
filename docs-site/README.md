@@ -5,6 +5,7 @@ Point d'entree documentation developpeur:
 - `DEVELOPER_GUIDE.md` guide principal V1
 - `ARCHITECTURE_AVANCEE.md` synthese des briques avancees (addons, RBAC, API, events, update)
 - `CLIENT_INSTALLATION.md` guide d'installation orienté projet client
+- `ROADMAP_V2_LIMITS_V1.md` separation claire V1 stable / evolutions V2
 - `snippets/` notes techniques par lot d'implementation
 
 ## Lecture rapide
