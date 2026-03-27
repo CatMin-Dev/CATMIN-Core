@@ -71,6 +71,9 @@ Route::prefix($adminPath)->middleware('web')->name('admin.')->group(function () 
         Route::post('/modules/{slug}/disable', [DashboardController::class, 'disableModule'])
             ->name('modules.disable');
 
+        Route::post('/modules/{slug}/migrate', [DashboardController::class, 'migrateModule'])
+            ->name('modules.migrate');
+
         Route::get('/content/{module}', [DashboardController::class, 'content'])
             ->whereIn('module', ['pages', 'articles', 'media', 'menus', 'blocks'])
             ->name('content.show');

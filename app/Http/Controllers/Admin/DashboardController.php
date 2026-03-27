@@ -8,6 +8,7 @@ use App\Models\Setting;
 use App\Models\User;
 use App\Services\ModuleLoader;
 use App\Services\ModuleManager;
+use App\Services\ModuleMigrationRunner;
 use App\Services\SettingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -71,11 +72,29 @@ class DashboardController extends Controller
 
     public function modules(): View
     {
+        $allModules = ModuleManager::all();
+
+        // Build per-module migration info (version tracking only — no heavy migrate:status call).
+        $migrationInfo = [];
+        foreach ($allModules as $module) {
+            $slug = (string) $module->slug;
+            $hasMigrationsFolder = is_dir(base_path('modules/' . $module->directory . '/Migrations'));
+            $installedVersion = ModuleMigrationRunner::getInstalledVersion($slug);
+            $currentVersion = (string) ($module->version ?? '');
+            $migrationInfo[$slug] = [
+                'has_migrations' => $hasMigrationsFolder,
+                'installed_version' => $installedVersion,
+                'has_upgrade' => $hasMigrationsFolder && $installedVersion !== '' && $installedVersion !== $currentVersion,
+                'never_migrated' => $hasMigrationsFolder && $installedVersion === '',
+            ];
+        }
+
         return view('admin.pages.modules.index', [
             'currentPage' => 'modules',
-            'modules' => ModuleManager::all(),
+            'modules' => $allModules,
             'stateIssues' => ModuleManager::stateIssues(),
             'routesInfo' => ModuleLoader::getRoutesInfo(),
+            'migrationInfo' => $migrationInfo,
         ]);
     }
 
@@ -142,6 +161,39 @@ class DashboardController extends Controller
             return redirect()->back()->with('success', $message);
         } catch (\Exception $e) {
             $message = 'Erreur lors de l\'activation du module: ' . $e->getMessage();
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $message], 500);
+            }
+            return redirect()->back()->with('error', $message);
+        }
+    }
+
+    public function migrateModule(Request $request, string $slug): JsonResponse|RedirectResponse
+    {
+        try {
+            $module = ModuleManager::find($slug);
+            abort_if(!$module instanceof stdClass, 404);
+
+            if (!ModuleManager::isEnabled($slug)) {
+                $message = "Impossible de migrer {$module->name}: module non actif.";
+                if ($request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => $message], 422);
+                }
+                return redirect()->back()->with('error', $message);
+            }
+
+            $result = ModuleMigrationRunner::runForModule($slug);
+
+            $message = $result['ran'] > 0
+                ? "Module {$module->name}: {$result['ran']} migration(s) appliquée(s)."
+                : "Module {$module->name}: déjà à jour, aucune migration en attente.";
+
+            if ($request->wantsJson()) {
+                return response()->json(['success' => true, 'message' => $message, 'output' => $result['output']]);
+            }
+            return redirect()->back()->with('success', $message);
+        } catch (\Exception $e) {
+            $message = 'Erreur migration: ' . $e->getMessage();
             if ($request->wantsJson()) {
                 return response()->json(['success' => false, 'message' => $message], 500);
             }

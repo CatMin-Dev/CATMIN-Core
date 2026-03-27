@@ -34,11 +34,23 @@
                             $isSystemModule = in_array($module->slug, ['core']);
                             $moduleRouteInfo = ($routesInfo ?? [])[$module->slug] ?? null;
                             $hasRoutes = (bool) ($moduleRouteInfo['has_routes'] ?? false);
+                            $mi = ($migrationInfo ?? [])[$module->slug] ?? [];
+                            $hasMigrations = (bool) ($mi['has_migrations'] ?? false);
+                            $hasUpgrade    = (bool) ($mi['has_upgrade'] ?? false);
+                            $neverMigrated = (bool) ($mi['never_migrated'] ?? false);
+                            $installedVersion = (string) ($mi['installed_version'] ?? '');
                         @endphp
                         <tr>
                             <td>{{ $module->name }}</td>
                             <td>{{ $module->slug }}</td>
-                            <td>{{ $module->version ?? 'n/a' }}</td>
+                            <td>
+                                {{ $module->version ?? 'n/a' }}
+                                @if($hasUpgrade)
+                                    <span class="badge text-bg-warning ms-1" title="Installé: {{ $installedVersion }}">⬆ Update</span>
+                                @elseif($neverMigrated && $module->enabled)
+                                    <span class="badge text-bg-info ms-1">DB ?</span>
+                                @endif
+                            </td>
                             <td>
                                 @if($isSystemModule)
                                     <span class="badge text-bg-dark">Système</span>
@@ -65,6 +77,16 @@
                                             </button>
                                         @endif
                                     </form>
+                                    @if($hasMigrations && $module->enabled)
+                                        <form method="POST" style="display:inline;" onsubmit="return confirm('Exécuter les migrations de {{ addslashes($module->name) }} ?');">
+                                            @csrf
+                                            <button type="submit" formaction="{{ route('admin.modules.migrate', $module->slug) }}"
+                                                class="btn btn-sm {{ $hasUpgrade ? 'btn-warning' : 'btn-outline-secondary' }} ms-1"
+                                                title="{{ $hasUpgrade ? 'Upgrade disponible (v'.$installedVersion.' → v'.($module->version ?? '?').')' : 'Ré-exécuter les migrations (idempotent)' }}">
+                                                <i class="bi bi-database-up"></i> {{ $hasUpgrade ? 'Upgrade DB' : 'Migrer' }}
+                                            </button>
+                                        </form>
+                                    @endif
                                 @else
                                     <span class="text-muted small">—</span>
                                 @endif

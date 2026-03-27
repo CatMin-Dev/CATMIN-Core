@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use stdClass;
 
+// ModuleMigrationRunner loaded via autoloader — forward reference is fine.
+
 /**
  * ModuleManager
  *
@@ -222,6 +224,11 @@ class ModuleManager
 
         // Clear cache
         self::$modulesCache = null;
+
+        // On activation: run all pending migrations so the module is immediately usable.
+        if ($enabled) {
+            ModuleMigrationRunner::runForModule($slug);
+        }
 
         return true;
     }
