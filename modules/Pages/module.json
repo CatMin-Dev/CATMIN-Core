@@ -1,7 +1,16 @@
 {
   "name": "Pages",
   "slug": "pages",
-  "enabled": false,
+  "enabled": true,
   "version": "1.0.0",
+  "description": "Base de gestion des pages simples pour le frontend CATMIN.",
+  "category": "content",
+  "provides": [
+    "pages-list",
+    "pages-create",
+    "pages-edit",
+    "pages-status",
+    "pages-publication-date"
+  ],
   "depends": ["core","seo"]
 }

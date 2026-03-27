@@ -74,8 +74,12 @@ class DashboardController extends Controller
         ]);
     }
 
-    public function content(string $module): View
+    public function content(string $module): View|RedirectResponse
     {
+        if ($module === 'pages') {
+            return redirect()->route('admin.pages.manage');
+        }
+
         $moduleConfig = ModuleManager::find($module);
 
         abort_if(!$moduleConfig instanceof stdClass, 404);
