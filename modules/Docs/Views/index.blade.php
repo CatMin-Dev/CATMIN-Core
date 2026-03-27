@@ -88,8 +88,12 @@
             </div>
         @else
             @php
-                $byModule = collect($items)->groupBy('module');
-                $global = $byModule->pull(null, collect());
+                $byModule = collect($items)->groupBy(function (array $doc): string {
+                    $module = trim((string) ($doc['module'] ?? ''));
+
+                    return $module !== '' ? $module : '__global__';
+                });
+                $global = collect($byModule->pull('__global__', []));
             @endphp
 
             {{-- Global docs (no module) --}}
@@ -110,6 +114,7 @@
 
             {{-- Per-module docs --}}
             @foreach($byModule->sortKeys() as $modSlug => $modDocs)
+            @php($modDocs = collect($modDocs))
             <div class="card mb-3">
                 <div class="card-header bg-white">
                     <h2 class="h6 mb-0">
