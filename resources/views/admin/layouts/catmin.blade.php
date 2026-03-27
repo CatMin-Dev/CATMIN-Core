@@ -2,22 +2,25 @@
 <html lang="fr">
 <head>
     @include('admin.partials.head')
+    <title>CATMIN - @yield('page_title', 'Administration')</title>
 </head>
-<body class="nav-md page-{{ $currentPage ?? 'dashboard' }}@if($currentPage === 'fixed_footer') footer_fixed@endif@if($currentPage === 'dashboard') page-index@endif">
-<div class="container-fluid body">
-    <div class="main_container">
-        @include('admin.partials.aside')
-        @include('admin.partials.topnav')
+<body>
+    <div class="catmin-shell">
+        @include('admin.partials.navigation')
 
-        <main class="right_col" role="main" aria-label="Main content">
-            <!-- Dynamic Content Area -->
-            <div class="clearfix"></div>
-            @yield('content')
-            <div class="clearfix"></div>
-        </main>
+        <div class="catmin-shell-main">
+            @include('admin.partials.topbar')
 
-        @include('admin.partials.footer')
+            <main class="catmin-main" role="main">
+                <div class="catmin-page px-3 px-lg-4 py-4">
+                    @yield('content')
+                </div>
+            </main>
+
+            @include('admin.partials.footer')
+        </div>
     </div>
-</div>
+
+    @stack('scripts')
 </body>
 </html>

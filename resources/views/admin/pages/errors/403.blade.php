@@ -1,58 +1,19 @@
 @extends('admin.layouts.system')
 
-@section('title', '403 - Access Forbidden | CATMIN')
-@section('body_class', 'page-error error-bg')
+@section('title', '403 - Acces refuse | CATMIN')
 
 @section('content')
-<div class="container-fluid d-flex align-items-center justify-content-center min-vh-100">
-    <div class="row justify-content-center w-100">
-        <div class="col-lg-6 col-md-8 col-sm-10">
-            <div class="card shadow-lg border-0">
-                <div class="card-body text-center p-5">
-                    <div class="text-center mb-4">
-                        <div class="catmin-brand mb-3">
-                            <img src="{{ asset('dashboard/assets/img/logo_color.png') }}" alt="Catmin" class="catmin-brand-logo">
-                            <h3 class="catmin-brand-title mb-0">CATMIN</h3>
-                            <small class="catmin-brand-subtitle">Admin Miaoude Simple</small>
-                        </div>
-                    </div>
-
-                    <div class="mb-4">
-                        <i class="fas fa-lock text-danger mb-3" style="font-size: 6rem;"></i>
-                        <h1 class="display-1 fw-bold text-danger mb-0">403</h1>
-                    </div>
-
-                    <div class="mb-4">
-                        <h2 class="h3 text-dark mb-3">Access Forbidden</h2>
-                        <p class="text-muted lead">You don't have permission to access this resource. Please contact your administrator if you believe this is an error.</p>
-                    </div>
-
-                    <div class="d-grid gap-2 d-md-block mb-4">
-                        <a href="{{ admin_route('login') }}" class="btn btn-primary btn-lg me-md-2">
-                            <i class="fas fa-user-shield me-2"></i>Login
-                        </a>
-                        <button type="button" class="btn btn-outline-secondary btn-lg" onclick="history.back()">
-                            <i class="fas fa-arrow-left me-2"></i>Go Back
-                        </button>
-                    </div>
-
-                    <div class="border-top pt-4">
-                        <div class="row text-center">
-                            <div class="col-md-6 mb-3">
-                                <div class="d-flex flex-column align-items-center">
-                                    <i class="fas fa-user-shield text-primary fs-1 mb-2"></i>
-                                    <h6 class="text-dark">Authentication Required</h6>
-                                    <small class="text-muted">Please log in to access this content</small>
-                                </div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <div class="d-flex flex-column align-items-center">
-                                    <i class="fas fa-key text-warning fs-1 mb-2"></i>
-                                    <h6 class="text-dark">Insufficient Privileges</h6>
-                                    <small class="text-muted">Contact admin for access rights</small>
-                                </div>
-                            </div>
-                        </div>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-7">
+            <div class="card shadow-sm">
+                <div class="card-body p-4 p-lg-5 text-center">
+                    <p class="display-3 fw-bold text-danger mb-2">403</p>
+                    <h1 class="h3 mb-3">Acces refuse</h1>
+                    <p class="text-muted mb-4">Tu n'as pas les permissions necessaires pour acceder a cette ressource.</p>
+                    <div class="d-flex flex-column flex-sm-row justify-content-center gap-2">
+                        <a href="{{ admin_route('login') }}" class="btn btn-primary">Connexion</a>
+                        <button type="button" class="btn btn-outline-secondary" onclick="history.back()">Retour</button>
                     </div>
                 </div>
             </div>

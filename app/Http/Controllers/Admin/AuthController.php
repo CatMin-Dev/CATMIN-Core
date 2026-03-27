@@ -12,6 +12,10 @@ final class AuthController extends Controller
 {
     public function showLogin()
     {
+        if (session('catmin_admin_authenticated', false)) {
+            return redirect()->route('admin.index');
+        }
+
         return view('admin.pages.login');
     }
 
@@ -29,14 +33,18 @@ final class AuthController extends Controller
         $isValidPassword = hash_equals($expectedPassword, (string) $data['password']);
 
         if (!$isValidUsername || !$isValidPassword) {
-            return redirect(route('error.403.blade'));
-
+            return back()
+                ->withInput($request->only('username'))
+                ->withErrors([
+                    'username' => 'Identifiants invalides.',
+                ]);
         }
 
+        $request->session()->regenerate();
         $request->session()->put('catmin_admin_authenticated', true);
         $request->session()->put('catmin_admin_username', $data['username']);
 
-        return redirect('/admin/access');
+        return redirect()->route('admin.index');
     }
 
     public function logout(Request $request): RedirectResponse
@@ -45,7 +53,9 @@ final class AuthController extends Controller
             'catmin_admin_authenticated',
             'catmin_admin_username',
         ]);
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
-        return redirect('/admin/login');
+        return redirect()->route('admin.login');
     }
 }

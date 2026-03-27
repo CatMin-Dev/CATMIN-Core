@@ -47,7 +47,7 @@ return [
         | Entry Points (for future)
         */
         'login_route' => '/admin/login',
-        'dashboard_route' => '/admin/access',
+        'dashboard_route' => '/admin',
         'logout_route' => '/admin/logout',
     ],
 
@@ -110,65 +110,75 @@ return [
     'navigation' => [
         'sections' => [
             [
-                'title' => 'Apercu',
+                'title' => 'Administration',
                 'items' => [
                     [
-                        'label' => 'Dashboard',
+                        'label' => 'Tableau de bord',
                         'icon' => 'bi bi-house',
-                        'legacy_page' => 'dashboard',
+                        'route' => 'index',
                     ],
                     [
-                        'label' => 'Composants',
-                        'icon' => 'bi bi-grid',
-                        'legacy_page' => 'widgets',
+                        'label' => 'Utilisateurs',
+                        'icon' => 'bi bi-people',
+                        'route' => 'users.index',
+                        'active_when' => ['users.*'],
+                    ],
+                    [
+                        'label' => 'Roles',
+                        'icon' => 'bi bi-shield-check',
+                        'route' => 'roles.index',
+                        'active_when' => ['roles.*'],
+                    ],
+                    [
+                        'label' => 'Parametres',
+                        'icon' => 'bi bi-sliders',
+                        'route' => 'settings.index',
+                        'active_when' => ['settings.*'],
+                    ],
+                    [
+                        'label' => 'Modules',
+                        'icon' => 'bi bi-puzzle',
+                        'route' => 'modules.index',
+                        'active_when' => ['modules.*'],
                     ],
                 ],
             ],
             [
-                'title' => 'Visuels',
+                'title' => 'CMS',
                 'items' => [
                     [
-                        'label' => 'Graphiques',
-                        'icon' => 'bi bi-bar-chart',
-                        'legacy_page' => 'chartjs',
+                        'label' => 'Pages',
+                        'icon' => 'bi bi-file-earmark-text',
+                        'route' => 'content.show',
+                        'parameters' => ['module' => 'pages'],
+                        'match_module' => 'pages',
                     ],
                     [
-                        'label' => 'Tableaux',
-                        'icon' => 'bi bi-table',
-                        'legacy_page' => 'table_bootstrap',
+                        'label' => 'Blog',
+                        'icon' => 'bi bi-journal-richtext',
+                        'route' => 'content.show',
+                        'parameters' => ['module' => 'blog'],
+                        'match_module' => 'blog',
                     ],
                     [
-                        'label' => 'Galerie',
+                        'label' => 'News',
+                        'icon' => 'bi bi-newspaper',
+                        'route' => 'content.show',
+                        'parameters' => ['module' => 'news'],
+                        'match_module' => 'news',
+                    ],
+                    [
+                        'label' => 'Media',
                         'icon' => 'bi bi-images',
-                        'legacy_page' => 'media_gallery',
-                    ],
-                ],
-            ],
-            [
-                'title' => 'Formulaires',
-                'items' => [
-                    [
-                        'label' => 'Formulaires de base',
-                        'icon' => 'bi bi-input-cursor-text',
-                        'legacy_page' => 'forms_basic',
+                        'route' => 'content.show',
+                        'parameters' => ['module' => 'media'],
+                        'match_module' => 'media',
                     ],
                 ],
             ],
             [
                 'title' => 'Modules actifs',
                 'source' => 'enabled_modules',
-            ],
-            [
-                'title' => 'Legacy',
-                'items' => [
-                    [
-                        'label' => 'Dashboard PHP',
-                        'icon' => 'bi bi-box-arrow-up-right',
-                        'path' => '/dashboard/index.php',
-                        'target' => '_blank',
-                        'feature' => 'legacy_preview_enabled',
-                    ],
-                ],
             ],
         ],
     ],
@@ -207,6 +217,7 @@ return [
         'enabled' => true,
         'path' => 'site',
         'theme' => 'catmin-public',
+        'legacy_path' => 'frontend',
         'data_sources' => [
             'settings' => true,
             'pages' => true,

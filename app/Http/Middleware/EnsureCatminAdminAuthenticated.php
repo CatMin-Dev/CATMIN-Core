@@ -13,7 +13,7 @@ final class EnsureCatminAdminAuthenticated
     public function handle(Request $request, Closure $next): Response
     {
         if (!$request->session()->get('catmin_admin_authenticated', false)) {
-            return redirect('/admin/login');
+            return redirect()->route('admin.login');
         }
 
         return $next($request);
