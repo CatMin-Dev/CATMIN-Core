@@ -19,7 +19,7 @@
 
                 <div class="col-12 col-lg-6">
                     <label class="form-label" for="target_type">Target type</label>
-                    <input id="target_type" name="target_type" type="text" class="form-control @error('target_type') is-invalid @enderror" value="{{ old('target_type') }}" placeholder="pages|news|blog|product...">
+                    <input id="target_type" name="target_type" type="text" class="form-control @error('target_type') is-invalid @enderror" value="{{ old('target_type') }}" placeholder="pages|articles|product|global...">
                     @error('target_type')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 

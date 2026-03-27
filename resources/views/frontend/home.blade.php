@@ -1,9 +1,21 @@
 <!doctype html>
 <html lang="fr">
 <head>
+    @php($seo = seo_meta_payload(null, null, ['title' => $siteName]))
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $siteName }}</title>
+    <title>{{ $seo['title'] }}</title>
+    <meta name="description" content="{{ $seo['description'] }}">
+    <meta name="robots" content="{{ $seo['robots'] }}">
+    <link rel="canonical" href="{{ $seo['canonical'] }}">
+    <meta property="og:title" content="{{ $seo['og']['title'] }}">
+    <meta property="og:description" content="{{ $seo['og']['description'] }}">
+    <meta property="og:type" content="{{ $seo['og']['type'] }}">
+    <meta property="og:url" content="{{ $seo['og']['url'] }}">
+    <meta property="og:site_name" content="{{ $seo['og']['site_name'] }}">
+    @if(!empty($seo['og']['image']))
+        <meta property="og:image" content="{{ $seo['og']['image'] }}">
+    @endif
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-body-tertiary">

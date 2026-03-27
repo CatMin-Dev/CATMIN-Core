@@ -162,6 +162,77 @@ if (!function_exists('seo_for')) {
     }
 }
 
+if (!function_exists('seo_meta_payload')) {
+    /**
+     * Build a lightweight SEO payload with target -> global -> settings fallback.
+     *
+     * @param array<string, mixed> $overrides
+     * @return array<string, mixed>
+     */
+    function seo_meta_payload(?string $targetType = null, ?int $targetId = null, array $overrides = []): array
+    {
+        $siteName = (string) setting('site.name', 'CATMIN');
+        $defaultDescription = (string) setting('site.description', 'CATMIN');
+        $defaultRobots = (string) setting('seo.meta_robots', 'index,follow');
+
+        $targetSeo = null;
+        if ($targetType !== null && $targetId !== null && $targetId > 0) {
+            $targetSeo = seo_for($targetType, $targetId);
+        }
+
+        $globalSeo = null;
+        if (ModuleManager::isEnabled('seo') && Schema::hasTable('seo_meta')) {
+            $globalSeo = SeoMeta::query()
+                ->where(function ($query): void {
+                    $query->whereNull('target_type')
+                        ->whereNull('target_id');
+                })
+                ->orWhere(function ($query): void {
+                    $query->where('target_type', 'global')
+                        ->whereNull('target_id');
+                })
+                ->orderByDesc('id')
+                ->first();
+        }
+
+        $title = (string) ($overrides['title']
+            ?? $targetSeo?->meta_title
+            ?? $globalSeo?->meta_title
+            ?? $siteName);
+        $description = (string) ($overrides['description']
+            ?? $targetSeo?->meta_description
+            ?? $globalSeo?->meta_description
+            ?? $defaultDescription);
+        $robots = (string) ($overrides['robots']
+            ?? $targetSeo?->meta_robots
+            ?? $globalSeo?->meta_robots
+            ?? $defaultRobots);
+        $canonical = (string) ($overrides['canonical']
+            ?? $targetSeo?->canonical_url
+            ?? $globalSeo?->canonical_url
+            ?? url()->current());
+        $ogTitle = (string) ($overrides['og_title'] ?? $title);
+        $ogDescription = (string) ($overrides['og_description'] ?? $description);
+        $ogType = (string) ($overrides['og_type'] ?? ($targetType !== null ? 'article' : 'website'));
+        $ogImage = $overrides['og_image'] ?? null;
+
+        return [
+            'title' => $title,
+            'description' => $description,
+            'robots' => $robots,
+            'canonical' => $canonical,
+            'og' => [
+                'title' => $ogTitle,
+                'description' => $ogDescription,
+                'type' => $ogType,
+                'url' => $canonical,
+                'site_name' => $siteName,
+                'image' => $ogImage,
+            ],
+        ];
+    }
+}
+
 if (!function_exists('editorial_items')) {
     /**
      * Retrieve editorial items from Articles module with simple filtering.
