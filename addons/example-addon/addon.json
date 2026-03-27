@@ -1,0 +1,8 @@
+{
+  "name": "Example Addon",
+  "slug": "example-addon",
+  "version": "1.0.0",
+  "enabled": false,
+  "requires_core": true,
+  "description": "Addon externe de demonstration pour CATMIN V1."
+}

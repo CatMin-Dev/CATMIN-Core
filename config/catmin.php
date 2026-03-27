@@ -99,6 +99,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Addons System Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Addons are external/optional extensions, separate from core modules.
+    |
+    */
+    'addons' => [
+        'path' => 'addons',
+        'auto_load' => true,
+        'auto_discover_routes' => true,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Admin Navigation Configuration
     |--------------------------------------------------------------------------
     |

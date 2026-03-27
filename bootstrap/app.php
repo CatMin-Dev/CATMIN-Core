@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureCatminAdminAuthenticated;
+use App\Services\AddonLoader;
 use App\Services\ModuleLoader;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -14,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
         then: function (): void {
             ModuleLoader::registerRoutes(app('router'));
+            AddonLoader::registerRoutes(app('router'));
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
