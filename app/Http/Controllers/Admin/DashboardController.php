@@ -44,12 +44,9 @@ class DashboardController extends Controller
         return redirect()->route('admin.roles.manage');
     }
 
-    public function settings(): View
+    public function settings(): RedirectResponse
     {
-        return view('admin.pages.settings.index', [
-            'currentPage' => 'settings',
-            'settings' => Setting::query()->orderBy('group')->orderBy('key')->get(),
-        ]);
+        return redirect()->route('admin.settings.manage');
     }
 
     public function modules(): View
