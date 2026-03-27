@@ -15,14 +15,18 @@ class MediaController extends Controller
     {
     }
 
-    public function index(): View
+    public function index(Request $request): View
     {
-        $assets = $this->mediaAdminService->listing();
+        $folder = (string) $request->query('folder', '');
+        $assets = $this->mediaAdminService->listing($folder !== '' ? $folder : null);
+        $folders = $this->mediaAdminService->folders();
 
         return view()->file(base_path('modules/Media/Views/index.blade.php'), [
             'currentPage' => 'content-media',
             'assets' => $assets,
             'mediaService' => $this->mediaAdminService,
+            'folders' => $folders,
+            'currentFolder' => $folder,
         ]);
     }
 
@@ -36,19 +40,28 @@ class MediaController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'file' => ['required', 'file', 'max:10240'],
+            'files' => ['required', 'array', 'min:1', 'max:20'],
+            'files.*' => ['required', 'file', 'max:20480'],
+            'folder' => ['nullable', 'string', 'max:64', 'regex:/^[a-zA-Z0-9_\-]*$/'],
             'alt_text' => ['nullable', 'string', 'max:255'],
             'caption' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $this->mediaAdminService->create(
-            $request->file('file'),
-            $validated['alt_text'] ?? null,
-            $validated['caption'] ?? null,
-        );
+        $folder = (string) ($validated['folder'] ?? '');
+        $count = 0;
 
-        return redirect()->route('admin.media.manage')
-            ->with('status', 'Fichier media ajoute.');
+        foreach ($request->file('files', []) as $file) {
+            $this->mediaAdminService->create(
+                $file,
+                $validated['alt_text'] ?? null,
+                $validated['caption'] ?? null,
+                $folder,
+            );
+            $count++;
+        }
+
+        return redirect()->route('admin.media.manage', $folder !== '' ? ['folder' => $folder] : [])
+            ->with('status', $count . ' fichier(s) uploadé(s).');
     }
 
     public function edit(MediaAsset $asset): View

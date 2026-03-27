@@ -10,20 +10,43 @@ use Modules\Media\Models\MediaAsset;
 
 class MediaAdminService
 {
-    /**
-     * @return \Illuminate\Database\Eloquent\Collection<int, MediaAsset>
-     */
-    public function listing()
+    public function listing(?string $folder = null)
     {
         return MediaAsset::query()
+            ->when(
+                $folder !== null && $folder !== '',
+                fn ($q) => $q->where('path', 'like', 'media/' . $folder . '/%'),
+                fn ($q) => $q
+            )
             ->orderByDesc('id')
             ->get();
     }
 
-    public function create(UploadedFile $file, ?string $altText = null, ?string $caption = null): MediaAsset
+    /**
+     * @return array<int, string>
+     */
+    public function folders(): array
+    {
+        return MediaAsset::query()
+            ->get(['path'])
+            ->map(function (MediaAsset $m) {
+                $rel = str_replace('media/', '', (string) $m->path);
+                $parts = explode('/', $rel);
+
+                return count($parts) > 1 ? $parts[0] : '';
+            })
+            ->filter(fn ($f) => $f !== '')
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
+    }
+
+    public function create(UploadedFile $file, ?string $altText = null, ?string $caption = null, string $folder = ''): MediaAsset
     {
         $disk = 'public';
-        $directory = 'media';
+        $safeFolder = preg_replace('/[^a-zA-Z0-9_\-]/', '', $folder);
+        $directory = $safeFolder !== '' ? 'media/' . $safeFolder : 'media';
         $hashedName = Str::uuid()->toString() . '.' . $file->getClientOriginalExtension();
         $path = $file->storeAs($directory, $hashedName, $disk);
 
