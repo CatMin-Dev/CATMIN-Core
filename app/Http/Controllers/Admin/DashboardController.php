@@ -44,7 +44,7 @@ class DashboardController extends Controller
             ],
             'enabledModules' => $enabledModules->take(8)->values(),
             'recentUsers' => User::with('roles')->latest()->limit(5)->get(),
-            'contentModules' => collect(['pages', 'blog', 'news', 'media'])
+            'contentModules' => collect(['pages', 'articles', 'media'])
                 ->map(fn (string $slug) => ModuleManager::find($slug))
                 ->filter()
                 ->values(),
@@ -80,16 +80,12 @@ class DashboardController extends Controller
             return redirect()->route('admin.pages.manage');
         }
 
-        if ($module === 'blog') {
-            return redirect()->route('admin.blog.manage');
+        if ($module === 'articles' || $module === 'blog' || $module === 'news') {
+            return redirect()->route('admin.articles.manage');
         }
 
         if ($module === 'media') {
             return redirect()->route('admin.media.manage');
-        }
-
-        if ($module === 'news') {
-            return redirect()->route('admin.news.manage');
         }
 
         $moduleConfig = ModuleManager::find($module);

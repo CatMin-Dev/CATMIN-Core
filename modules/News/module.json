@@ -1,18 +1,10 @@
 {
   "name": "News",
   "slug": "news",
-  "enabled": true,
+  "enabled": false,
   "version": "1.0.0",
-  "description": "Actualites courtes et factuelles pour le frontend CATMIN.",
+  "description": "Module fusionne dans Articles (legacy conserve temporairement).",
   "category": "content",
-  "provides": [
-    "news-list",
-    "news-create",
-    "news-edit",
-    "news-status",
-    "news-publication-date",
-    "news-media-link",
-    "news-seo-link"
-  ],
-  "depends": ["core","media","seo"]
+  "provides": ["legacy"],
+  "depends": ["core", "media", "seo"]
 }

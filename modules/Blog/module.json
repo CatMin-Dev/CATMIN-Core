@@ -1,9 +1,9 @@
 {
   "name": "Blog",
   "slug": "blog",
-  "enabled": true,
+  "enabled": false,
   "version": "1.0.0",
-  "description": "Articles editoriaux long format, distincts des news.",
+  "description": "Module fusionne dans Articles (legacy conserve temporairement).",
   "depends": ["core", "media", "seo"],
-  "provides": ["content", "editorial"]
+  "provides": ["legacy"]
 }

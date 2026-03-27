@@ -154,18 +154,11 @@ return [
                         'match_module' => 'pages',
                     ],
                     [
-                        'label' => 'Blog',
-                        'icon' => 'bi bi-journal-richtext',
+                        'label' => 'Articles',
+                        'icon' => 'bi bi-journal-text',
                         'route' => 'content.show',
-                        'parameters' => ['module' => 'blog'],
-                        'match_module' => 'blog',
-                    ],
-                    [
-                        'label' => 'News',
-                        'icon' => 'bi bi-newspaper',
-                        'route' => 'content.show',
-                        'parameters' => ['module' => 'news'],
-                        'match_module' => 'news',
+                        'parameters' => ['module' => 'articles'],
+                        'match_module' => 'articles',
                     ],
                     [
                         'label' => 'Media',
