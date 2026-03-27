@@ -144,6 +144,16 @@ class DashboardController extends Controller
             $module = ModuleManager::find($slug);
             abort_if(!$module instanceof stdClass, 404);
 
+            // Prevent disabling core system modules
+            $systemModules = ['core'];
+            if (in_array($slug, $systemModules)) {
+                $message = "Impossible de désactiver {$module->name}: c'est un module système.";
+                if ($request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => $message], 422);
+                }
+                return redirect()->back()->with('error', $message);
+            }
+
             // Check if other enabled modules depend on this one
             $allModules = ModuleManager::all();
             $dependents = $allModules->filter(function ($m) use ($slug) {
