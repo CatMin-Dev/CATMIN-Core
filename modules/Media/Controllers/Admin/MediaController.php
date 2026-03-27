@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use InvalidArgumentException;
 use Modules\Media\Models\MediaAsset;
 use Modules\Media\Services\MediaAdminService;
 
@@ -39,9 +40,17 @@ class MediaController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $allowedExtensions = (array) config('catmin.uploads.allowed_extensions', [
+            'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg',
+            'pdf', 'txt', 'csv', 'json',
+            'mp4', 'webm', 'mp3',
+            'zip',
+        ]);
+        $maxFileKb = (int) config('catmin.uploads.max_file_kb', 20480);
+
         $validated = $request->validate([
             'files' => ['required', 'array', 'min:1', 'max:20'],
-            'files.*' => ['required', 'file', 'max:20480'],
+            'files.*' => ['required', 'file', 'max:' . $maxFileKb, 'mimes:' . implode(',', $allowedExtensions)],
             'folder' => ['nullable', 'string', 'max:64', 'regex:/^[a-zA-Z0-9_\-]*$/'],
             'alt_text' => ['nullable', 'string', 'max:255'],
             'caption' => ['nullable', 'string', 'max:1000'],
@@ -51,13 +60,19 @@ class MediaController extends Controller
         $count = 0;
 
         foreach ($request->file('files', []) as $file) {
-            $this->mediaAdminService->create(
-                $file,
-                $validated['alt_text'] ?? null,
-                $validated['caption'] ?? null,
-                $folder,
-            );
-            $count++;
+            try {
+                $this->mediaAdminService->create(
+                    $file,
+                    $validated['alt_text'] ?? null,
+                    $validated['caption'] ?? null,
+                    $folder,
+                );
+                $count++;
+            } catch (InvalidArgumentException $e) {
+                return back()
+                    ->withInput()
+                    ->withErrors(['files' => $e->getMessage()]);
+            }
         }
 
         return redirect()->route('admin.media.manage', $folder !== '' ? ['folder' => $folder] : [])

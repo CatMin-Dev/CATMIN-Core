@@ -6,6 +6,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use InvalidArgumentException;
 use Modules\Media\Models\MediaAsset;
 
 class MediaAdminService
@@ -47,8 +48,17 @@ class MediaAdminService
         $disk = 'public';
         $safeFolder = preg_replace('/[^a-zA-Z0-9_\-]/', '', $folder);
         $directory = $safeFolder !== '' ? 'media/' . $safeFolder : 'media';
-        $hashedName = Str::uuid()->toString() . '.' . $file->getClientOriginalExtension();
+
+        $extension = strtolower((string) ($file->guessExtension() ?: $file->getClientOriginalExtension()));
+        $allowed = (array) config('catmin.uploads.allowed_extensions', []);
+
+        if ($extension === '' || !in_array($extension, $allowed, true)) {
+            throw new InvalidArgumentException('Extension de fichier non autorisee.');
+        }
+
+        $hashedName = Str::uuid()->toString() . '.' . $extension;
         $path = $file->storeAs($directory, $hashedName, $disk);
+        $detectedMime = (string) ($file->getMimeType() ?: $file->getClientMimeType() ?: 'application/octet-stream');
 
         /** @var MediaAsset $asset */
         $asset = MediaAsset::query()->create([
@@ -56,8 +66,8 @@ class MediaAdminService
             'path' => $path,
             'filename' => $hashedName,
             'original_name' => $file->getClientOriginalName(),
-            'mime_type' => $file->getClientMimeType(),
-            'extension' => $file->getClientOriginalExtension(),
+            'mime_type' => $detectedMime,
+            'extension' => $extension,
             'size_bytes' => $file->getSize() ?: 0,
             'alt_text' => $altText,
             'caption' => $caption,

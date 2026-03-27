@@ -20,6 +20,10 @@
                 <div class="col-12">
                     <label class="form-label" for="files">Fichiers <span class="text-muted small">(sélection multiple autorisée)</span></label>
                     <input id="files" name="files[]" type="file" class="form-control @error('files') is-invalid @enderror @error('files.*') is-invalid @enderror" multiple required>
+                    <div class="form-text">
+                        Types autorises: {{ implode(', ', (array) config('catmin.uploads.allowed_extensions', [])) }}.
+                        Taille max: {{ (int) config('catmin.uploads.max_file_kb', 20480) / 1024 }} MB par fichier.
+                    </div>
                     @error('files')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     @error('files.*')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
