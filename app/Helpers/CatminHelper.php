@@ -3,8 +3,12 @@
 use App\Services\AdminNavigationService;
 use App\Services\ModuleManager;
 use App\Services\SettingService;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
+use Modules\Articles\Models\Article;
+use Modules\Media\Models\MediaAsset;
 use Modules\Pages\Models\Page;
 use Modules\SEO\Models\SeoMeta;
 
@@ -155,5 +159,102 @@ if (!function_exists('seo_for')) {
             ->where('target_type', $targetType)
             ->where('target_id', $targetId)
             ->first();
+    }
+}
+
+if (!function_exists('editorial_items')) {
+    /**
+     * Retrieve editorial items from Articles module with simple filtering.
+     *
+     * @return Collection<int, Article>
+     */
+    function editorial_items(
+        string $type = 'article',
+        int $limit = 10,
+        string $orderBy = 'published_at',
+        string $direction = 'desc',
+        bool $onlyPublished = true
+    ): Collection {
+        if (!ModuleManager::isEnabled('articles') || !Schema::hasTable('articles')) {
+            return collect();
+        }
+
+        $safeLimit = max(1, min($limit, 100));
+        $safeDirection = strtolower($direction) === 'asc' ? 'asc' : 'desc';
+        $allowedOrderBy = ['published_at', 'created_at', 'updated_at', 'title'];
+        $safeOrderBy = in_array($orderBy, $allowedOrderBy, true) ? $orderBy : 'published_at';
+
+        $query = Article::query()->where('content_type', $type);
+
+        if ($onlyPublished) {
+            $query->where('status', 'published');
+        }
+
+        return $query
+            ->orderBy($safeOrderBy, $safeDirection)
+            ->limit($safeLimit)
+            ->get();
+    }
+}
+
+if (!function_exists('news_items')) {
+    /**
+     * Retrieve a frontend-ready list of news items.
+     *
+     * @return Collection<int, Article>
+     */
+    function news_items(int $limit = 5, string $orderBy = 'published_at', string $direction = 'desc'): Collection
+    {
+        return editorial_items('news', $limit, $orderBy, $direction, true);
+    }
+}
+
+if (!function_exists('blog_posts')) {
+    /**
+     * Retrieve a frontend-ready list of blog posts.
+     *
+     * @return Collection<int, Article>
+     */
+    function blog_posts(int $limit = 5, string $orderBy = 'published_at', string $direction = 'desc'): Collection
+    {
+        return editorial_items('article', $limit, $orderBy, $direction, true);
+    }
+}
+
+if (!function_exists('media_asset')) {
+    /**
+     * Retrieve a media asset by id.
+     */
+    function media_asset(?int $id): ?MediaAsset
+    {
+        if ($id === null || $id <= 0) {
+            return null;
+        }
+
+        if (!ModuleManager::isEnabled('media') || !Schema::hasTable('media_assets')) {
+            return null;
+        }
+
+        return MediaAsset::query()->find($id);
+    }
+}
+
+if (!function_exists('media_url')) {
+    /**
+     * Resolve a public URL for a media asset id or model.
+     */
+    function media_url(int|MediaAsset|null $media, ?string $fallback = null): ?string
+    {
+        $asset = $media instanceof MediaAsset ? $media : media_asset($media);
+
+        if (!$asset) {
+            return $fallback;
+        }
+
+        try {
+            return Storage::url($asset->path);
+        } catch (\Throwable $e) {
+            return $fallback;
+        }
     }
 }

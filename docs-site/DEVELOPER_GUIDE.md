@@ -154,6 +154,10 @@ Helpers disponibles dans `app/Helpers/CatminHelper.php`:
 - `admin_url_safe('route_name')`
 - `page_by_slug('slug')`
 - `frontend_context()`
+- `news_items($limit = 5, $orderBy = 'published_at', $direction = 'desc')`
+- `blog_posts($limit = 5, $orderBy = 'published_at', $direction = 'desc')`
+- `media_asset($id)`
+- `media_url($assetOrId, $fallback = null)`
 
 Exemple simple:
 
@@ -161,7 +165,16 @@ Exemple simple:
 $siteName = setting('site.name', 'CATMIN');
 $homePage = page_by_slug('home');
 $adminLogin = admin_url_safe('login');
+$latestNews = news_items(3);
+$latestBlog = blog_posts(6, 'published_at', 'desc');
 ```
+
+Limites V1:
+
+- helpers editoriaux bases sur `articles` (`content_type = news|article`)
+- uniquement les contenus publies sont retournes
+- tri limite a `published_at`, `created_at`, `updated_at`, `title`
+- limite bornee entre 1 et 100
 
 ## 10. Frontend libre de base
 
