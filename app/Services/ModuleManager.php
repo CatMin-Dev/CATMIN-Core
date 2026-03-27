@@ -406,6 +406,9 @@ class ModuleManager
             $config->directory = basename($directory);
             $config->path = $directory;
             $config->namespace = 'Modules\\' . Str::studly($config->slug ?? basename($directory));
+            $config->version_raw = (string) ($config->version ?? '');
+            $config->version = VersioningService::normalize($config->version_raw);
+            $config->version_valid = VersioningService::isValid($config->version_raw);
 
             return $config;
         } catch (\Exception $e) {

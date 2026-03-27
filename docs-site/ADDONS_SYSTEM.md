@@ -44,6 +44,8 @@ Un addon doit contenir au minimum:
 }
 ```
 
+Version attendue: semver simple `major.minor.patch` (ex: `1.0.0`).
+
 ## Compatibilite distribution
 
 Le systeme est pense pour une installation projet par projet:

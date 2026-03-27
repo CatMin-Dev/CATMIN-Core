@@ -44,7 +44,7 @@ class ModuleMigrationRunner
         $output = Artisan::output();
 
         if ($exitCode === 0) {
-            self::storeInstalledVersion($slug, (string) ($module->version ?? ''));
+            self::storeInstalledVersion($slug, VersioningService::normalize((string) ($module->version ?? '')));
         }
 
         $ran = substr_count($output, 'DONE') + substr_count($output, 'Running');
@@ -96,14 +96,16 @@ class ModuleMigrationRunner
             return false;
         }
 
-        $currentVersion = (string) ($module->version ?? '');
-        $installedVersion = self::getInstalledVersion($slug);
+        $currentVersion = VersioningService::normalize((string) ($module->version ?? ''));
+        $installedVersionRaw = self::getInstalledVersion($slug);
 
-        if ($installedVersion === '') {
+        if ($installedVersionRaw === '') {
             return false;
         }
 
-        return $installedVersion !== $currentVersion;
+        $installedVersion = VersioningService::normalize($installedVersionRaw);
+
+        return VersioningService::isUpgrade($installedVersion, $currentVersion);
     }
 
     /**
@@ -128,9 +130,7 @@ class ModuleMigrationRunner
      */
     public static function storeInstalledVersion(string $slug, string $version): void
     {
-        if ($version === '') {
-            return;
-        }
+        $version = VersioningService::normalize($version);
 
         try {
             SettingService::put(

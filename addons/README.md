@@ -41,3 +41,4 @@ addons/<nom-addon>/
 - Pas de multi-instance/multisite.
 - Detection + chargement routes seulement (base stable, evolutive).
 - Un addon desactive n'est pas charge.
+- Version au format semver simple `x.y.z` (ex: `1.0.0`).

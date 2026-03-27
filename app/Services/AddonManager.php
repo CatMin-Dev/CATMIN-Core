@@ -174,6 +174,9 @@ class AddonManager
             $config->path = $directory;
             $config->namespace = 'Addons\\' . Str::studly((string) $config->slug);
             $config->requires_core = (bool) ($config->requires_core ?? true);
+            $config->version_raw = (string) ($config->version ?? '');
+            $config->version = VersioningService::normalize($config->version_raw);
+            $config->version_valid = VersioningService::isValid($config->version_raw);
 
             return $config;
         } catch (\Throwable) {
