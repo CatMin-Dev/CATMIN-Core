@@ -1,0 +1,36 @@
+# Commandes CLI CATMIN (V1)
+
+## Nomenclature
+
+Prefixe unique: `catmin:`
+
+## Commandes principales
+
+### Modules
+
+- `php artisan catmin:modules:list`
+- `php artisan catmin:module:enable <slug>`
+- `php artisan catmin:module:disable <slug>`
+
+### Addons
+
+- `php artisan catmin:addons:list`
+- `php artisan catmin:addon:install <slug> [--no-enable] [--no-migrate]`
+
+### Sante systeme
+
+- `php artisan catmin:system:check`
+- `php artisan catmin:system:check --json`
+
+### Deja disponibles
+
+- `catmin:migrate:extensions`
+- `catmin:update:plan`
+- `catmin:update:apply`
+- `catmin:rbac:sync`
+
+## Notes d'usage
+
+- Commandes pragmatiques, sans magie.
+- Toutes les operations restent compatibles avec le workflow GitHub.
+- `catmin:addon:install` suppose un addon deja present dans `addons/`.

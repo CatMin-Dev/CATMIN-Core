@@ -71,6 +71,16 @@ class AddonManager
         return self::find($slug) !== null;
     }
 
+    public static function enable(string $slug): bool
+    {
+        return self::setEnabled($slug, true);
+    }
+
+    public static function disable(string $slug): bool
+    {
+        return self::setEnabled($slug, false);
+    }
+
     public static function getRoutesPath(string $slug): ?string
     {
         $addon = self::find($slug);
@@ -194,5 +204,30 @@ class AddonManager
         } catch (\Throwable) {
             return null;
         }
+    }
+
+    protected static function setEnabled(string $slug, bool $enabled): bool
+    {
+        $addon = self::find($slug);
+        if ($addon === null) {
+            return false;
+        }
+
+        $configPath = $addon->path . '/addon.json';
+        if (!File::exists($configPath)) {
+            return false;
+        }
+
+        $config = json_decode(File::get($configPath), true);
+        if (!is_array($config)) {
+            return false;
+        }
+
+        $config['enabled'] = $enabled;
+        File::put($configPath, json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+
+        self::clearCache();
+
+        return true;
     }
 }
