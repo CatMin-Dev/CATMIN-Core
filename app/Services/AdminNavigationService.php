@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Route;
+
 class AdminNavigationService
 {
     /**
@@ -52,11 +54,42 @@ class AdminNavigationService
             return false;
         }
 
-        if (!empty($item['module']) && !ModuleManager::isEnabled((string) $item['module'])) {
+        $requiredModule = self::resolveRequiredModule($item);
+
+        if ($requiredModule !== null && !ModuleManager::isEnabled($requiredModule)) {
             return false;
         }
 
         return true;
+    }
+
+    /**
+     * Infer the module requirement for an item to keep sidebar visibility
+     * synchronized with enabled modules without duplicating config rules.
+     *
+     * @param array<string, mixed> $item
+     */
+    protected static function resolveRequiredModule(array $item): ?string
+    {
+        if (!empty($item['module'])) {
+            return (string) $item['module'];
+        }
+
+        if (!empty($item['match_module'])) {
+            return (string) $item['match_module'];
+        }
+
+        if (!empty($item['parameters']['module'])) {
+            return (string) $item['parameters']['module'];
+        }
+
+        $routeName = (string) ($item['route'] ?? '');
+
+        return match ($routeName) {
+            'users.index', 'users.manage', 'users.create', 'users.store', 'users.edit', 'users.update', 'users.toggle_active', 'roles.index', 'roles.manage' => 'users',
+            'settings.index', 'settings.manage', 'settings.update' => 'settings',
+            default => null,
+        };
     }
 
     /**
@@ -66,12 +99,34 @@ class AdminNavigationService
     protected static function normalizeItem(array $item, ?string $currentPage): array
     {
         $page = $item['legacy_page'] ?? null;
+        $routeName = $item['route'] ?? null;
+        $hasModuleMatch = !empty($item['match_module']);
+        $active = $page !== null && $page === $currentPage;
+
+        // When multiple items share the same route (ex: content.show),
+        // defer active detection to match_module to avoid activating all items.
+        if (!$active && is_string($routeName) && !$hasModuleMatch) {
+            $active = request()->routeIs('admin.' . $routeName);
+        }
+
+        if (!$active && !empty($item['active_when'])) {
+            foreach ((array) $item['active_when'] as $pattern) {
+                if (request()->routeIs('admin.' . $pattern)) {
+                    $active = true;
+                    break;
+                }
+            }
+        }
+
+        if (!$active && !empty($item['match_module']) && request()->routeIs('admin.content.show')) {
+            $active = request()->route('module') === $item['match_module'];
+        }
 
         return [
             'label' => $item['label'] ?? 'Untitled',
             'icon' => $item['icon'] ?? 'bi bi-circle',
             'url' => self::resolveUrl($item),
-            'active' => $page !== null && $page === $currentPage,
+            'active' => $active,
             'target' => $item['target'] ?? null,
             'badge' => $item['badge'] ?? null,
         ];
@@ -87,6 +142,12 @@ class AdminNavigationService
         }
 
         if (!empty($item['route'])) {
+            $resolvedRoute = 'admin.' . (string) $item['route'];
+
+            if (!Route::has($resolvedRoute)) {
+                return null;
+            }
+
             return admin_route((string) $item['route'], $item['parameters'] ?? []);
         }
 
@@ -106,7 +167,7 @@ class AdminNavigationService
             ->map(fn ($module) => [
                 'label' => $module->name ?? ucfirst($module->slug),
                 'icon' => 'bi bi-puzzle',
-                'url' => admin_route('bridge'),
+                'url' => admin_route('modules.index'),
                 'active' => false,
                 'target' => null,
                 'badge' => $module->version ?? null,
