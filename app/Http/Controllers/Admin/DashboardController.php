@@ -47,7 +47,7 @@ class DashboardController extends Controller
             ],
             'enabledModules' => $enabledModules->take(8)->values(),
             'recentUsers' => User::with('roles')->latest()->limit(5)->get(),
-            'contentModules' => collect(['pages', 'articles', 'media'])
+            'contentModules' => collect(['pages', 'articles', 'media', 'menus', 'blocks'])
                 ->map(fn (string $slug) => ModuleManager::find($slug))
                 ->filter()
                 ->values(),
@@ -95,6 +95,10 @@ class DashboardController extends Controller
 
         if ($module === 'menus') {
             return redirect()->route('admin.menus.manage');
+        }
+
+        if ($module === 'blocks') {
+            return redirect()->route('admin.blocks.manage');
         }
 
         $moduleConfig = ModuleManager::find($module);

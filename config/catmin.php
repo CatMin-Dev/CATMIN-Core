@@ -179,6 +179,15 @@ return [
                         'active_when' => ['content.show', 'menus.*'],
                         'module' => 'menus',
                     ],
+                    [
+                        'label' => 'Blocks',
+                        'icon' => 'bi bi-grid-3x3-gap',
+                        'route' => 'content.show',
+                        'parameters' => ['module' => 'blocks'],
+                        'match_module' => 'blocks',
+                        'active_when' => ['content.show', 'blocks.*'],
+                        'module' => 'blocks',
+                    ],
                 ],
             ],
             [

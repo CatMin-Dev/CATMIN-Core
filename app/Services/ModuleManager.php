@@ -49,6 +49,7 @@ class ModuleManager
         'pages' => ['core', 'seo'],
         'articles' => ['core', 'media', 'seo'],
         'menus' => ['core', 'pages'],
+        'blocks' => ['core', 'pages'],
     ];
 
     /**

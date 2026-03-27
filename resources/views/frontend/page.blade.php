@@ -61,7 +61,7 @@
                         <hr>
 
                         <div class="mt-3">
-                            {!! nl2br(e((string) $page->content)) !!}
+                            {!! nl2br(e((string) ($renderedContent ?? $page->content))) !!}
                         </div>
                     </div>
                 </article>

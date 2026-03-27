@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Modules\Articles\Models\Article;
+use Modules\Blocks\Services\BlockAdminService;
 use Modules\Media\Models\MediaAsset;
 use Modules\Menus\Services\MenuAdminService;
 use Modules\Pages\Models\Page;
@@ -351,5 +352,41 @@ if (!function_exists('menu_tree')) {
         $service = app(MenuAdminService::class);
 
         return $service->frontendTree($location);
+    }
+}
+
+if (!function_exists('block_content')) {
+    /**
+     * Resolve active block content by slug.
+     */
+    function block_content(string $slug, string $fallback = ''): string
+    {
+        if (!ModuleManager::isEnabled('blocks')) {
+            return $fallback;
+        }
+
+        if (!Schema::hasTable('blocks')) {
+            return $fallback;
+        }
+
+        /** @var BlockAdminService $service */
+        $service = app(BlockAdminService::class);
+        $block = $service->findActiveBySlug(trim($slug));
+
+        return $block?->content !== null ? (string) $block->content : $fallback;
+    }
+}
+
+if (!function_exists('inject_blocks')) {
+    /**
+     * Replace placeholders like {{ block:hero }} in content.
+     */
+    function inject_blocks(string $content): string
+    {
+        return (string) preg_replace_callback('/\{\{\s*block:([a-zA-Z0-9\-_\.]+)\s*\}\}/', function (array $matches): string {
+            $slug = (string) ($matches[1] ?? '');
+
+            return block_content($slug, '');
+        }, $content);
     }
 }
