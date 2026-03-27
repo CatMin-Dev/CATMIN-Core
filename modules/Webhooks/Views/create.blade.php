@@ -6,8 +6,11 @@
 <x-admin.crud.page-header
     title="Nouveau webhook"
     subtitle="Ajouter un endpoint sortant déclenché sur des événements CATMIN."
-    :actions="[['label' => 'Retour', 'url' => route('admin.webhooks.index'), 'icon' => 'bi bi-arrow-left', 'style' => 'outline-secondary']]"
-/>
+>
+    <a href="{{ route('admin.webhooks.index') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Retour
+    </a>
+</x-admin.crud.page-header>
 
 <div class="catmin-page-body">
     <x-admin.crud.flash-messages />

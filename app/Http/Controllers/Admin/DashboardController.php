@@ -74,18 +74,30 @@ class DashboardController extends Controller
     {
         $allModules = ModuleManager::all();
 
-        // Build per-module migration info (version tracking only — no heavy migrate:status call).
+        // Build per-module migration info based on real migration files.
         $migrationInfo = [];
+        $migratableEnabledCount = 0;
         foreach ($allModules as $module) {
             $slug = (string) $module->slug;
-            $hasMigrationsFolder = is_dir(base_path('modules/' . $module->directory . '/Migrations'));
+            $migrationsPath = base_path('modules/' . $module->directory . '/Migrations');
+            $hasMigrationsFolder = is_dir($migrationsPath);
+            $migrationFilesCount = $hasMigrationsFolder
+                ? (int) count(glob($migrationsPath . '/*.php') ?: [])
+                : 0;
+            $hasMigrations = $migrationFilesCount > 0;
             $installedVersion = ModuleMigrationRunner::getInstalledVersion($slug);
             $currentVersion = (string) ($module->version ?? '');
+
+            if ($module->enabled && $hasMigrations) {
+                $migratableEnabledCount++;
+            }
+
             $migrationInfo[$slug] = [
-                'has_migrations' => $hasMigrationsFolder,
+                'has_migrations' => $hasMigrations,
+                'migrations_count' => $migrationFilesCount,
                 'installed_version' => $installedVersion,
-                'has_upgrade' => $hasMigrationsFolder && $installedVersion !== '' && $installedVersion !== $currentVersion,
-                'never_migrated' => $hasMigrationsFolder && $installedVersion === '',
+                'has_upgrade' => $hasMigrations && $installedVersion !== '' && $installedVersion !== $currentVersion,
+                'never_migrated' => $hasMigrations && $installedVersion === '',
             ];
         }
 
@@ -95,7 +107,51 @@ class DashboardController extends Controller
             'stateIssues' => ModuleManager::stateIssues(),
             'routesInfo' => ModuleLoader::getRoutesInfo(),
             'migrationInfo' => $migrationInfo,
+            'migratableEnabledCount' => $migratableEnabledCount,
         ]);
+    }
+
+    public function migrateEnabledModules(Request $request): JsonResponse|RedirectResponse
+    {
+        $migrated = 0;
+        $skipped = 0;
+        $failed = [];
+
+        foreach (ModuleManager::enabled() as $module) {
+            $slug = (string) $module->slug;
+            $migrationsPath = base_path('modules/' . $module->directory . '/Migrations');
+            $hasMigrations = is_dir($migrationsPath) && count(glob($migrationsPath . '/*.php') ?: []) > 0;
+
+            if (!$hasMigrations) {
+                $skipped++;
+                continue;
+            }
+
+            try {
+                ModuleMigrationRunner::runForModule($slug);
+                $migrated++;
+            } catch (\Throwable $e) {
+                $failed[] = $slug . ': ' . $e->getMessage();
+            }
+        }
+
+        $message = "Migrations globales terminées: {$migrated} module(s) traité(s), {$skipped} ignoré(s).";
+
+        if (!empty($failed)) {
+            $message .= ' Erreurs: ' . implode(' | ', $failed);
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => empty($failed),
+                'message' => $message,
+                'migrated' => $migrated,
+                'skipped' => $skipped,
+                'failed' => $failed,
+            ], empty($failed) ? 200 : 500);
+        }
+
+        return redirect()->back()->with(empty($failed) ? 'success' : 'error', $message);
     }
 
     public function content(string $module): View|RedirectResponse

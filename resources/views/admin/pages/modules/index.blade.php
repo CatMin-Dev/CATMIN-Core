@@ -23,7 +23,17 @@
     <div class="card">
         <div class="card-header bg-white d-flex justify-content-between align-items-center">
             <h2 class="h6 mb-0">Etat des modules</h2>
-            <span class="badge text-bg-light">{{ $modules->count() }}</span>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge text-bg-light">{{ $modules->count() }}</span>
+                @if(($migratableEnabledCount ?? 0) > 0)
+                    <form method="POST" action="{{ route('admin.modules.migrate-enabled') }}" onsubmit="return confirm('Lancer les migrations sur tous les modules actifs qui possèdent des migrations ?');" class="d-inline">
+                        @csrf
+                        <button type="submit" class="btn btn-sm btn-primary">
+                            <i class="bi bi-database-gear me-1"></i>Migrer tout ({{ $migratableEnabledCount }})
+                        </button>
+                    </form>
+                @endif
+            </div>
         </div>
         <div class="table-responsive catmin-table-scroll">
             <table class="table table-striped table-hover align-middle mb-0">

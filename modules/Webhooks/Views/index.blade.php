@@ -6,14 +6,17 @@
 <x-admin.crud.page-header
     title="Webhooks sortants"
     subtitle="Envoyer des notifications HTTP signées HMAC-SHA256 vers des services tiers."
-    :actions="[['label' => 'Nouveau webhook', 'url' => route('admin.webhooks.create'), 'icon' => 'bi bi-plus-lg', 'style' => 'primary']]"
-/>
+>
+    <a href="{{ route('admin.webhooks.create') }}" class="btn btn-primary btn-sm">
+        <i class="bi bi-plus-lg me-1"></i>Nouveau webhook
+    </a>
+</x-admin.crud.page-header>
 
 <div class="catmin-page-body">
     <x-admin.crud.flash-messages />
 
     <x-admin.crud.table-card title="Webhooks enregistrés ({{ $webhooks->total() }})">
-        <thead class="table-light">
+        <x-slot:head>
             <tr>
                 <th>Nom</th>
                 <th>URL</th>
@@ -22,53 +25,47 @@
                 <th>Dernière exéc.</th>
                 <th></th>
             </tr>
-        </thead>
-        <tbody>
-            @forelse($webhooks as $webhook)
-            <tr>
-                <td class="fw-semibold">{{ $webhook->name }}</td>
-                <td class="small text-muted" style="max-width:220px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;" title="{{ $webhook->url }}">
-                    {{ $webhook->url }}
-                </td>
-                <td>
-                    @foreach($webhook->events ?? [] as $event)
-                        <span class="badge bg-light text-dark border me-1">{{ $event }}</span>
-                    @endforeach
-                </td>
-                <td>
-                    @if($webhook->status === 'active')
-                        <span class="badge bg-success">Actif</span>
-                    @else
-                        <span class="badge bg-secondary">Inactif</span>
-                    @endif
-                </td>
-                <td class="small text-muted text-nowrap">
-                    {{ $webhook->last_triggered_at?->format('d/m/Y H:i') ?? '—' }}
-                </td>
-                <td class="text-end text-nowrap">
-                    <a href="{{ route('admin.webhooks.edit', $webhook->id) }}"
-                       class="btn btn-sm btn-outline-secondary me-1" title="Modifier">
-                        <i class="bi bi-pencil"></i>
-                    </a>
-                    <form class="d-inline" method="POST" action="{{ route('admin.webhooks.destroy', $webhook->id) }}"
-                          onsubmit="return confirm('Supprimer le webhook « {{ addslashes($webhook->name) }} » ?');">
-                        @csrf
-                        @method('DELETE')
-                        <button class="btn btn-sm btn-outline-danger" title="Supprimer">
-                            <i class="bi bi-trash3"></i>
-                        </button>
-                    </form>
-                </td>
-            </tr>
-            @empty
-            <tr>
-                <td colspan="6" class="text-center text-muted py-4">
-                    Aucun webhook configuré.
-                    <a href="{{ route('admin.webhooks.create') }}">En créer un ?</a>
-                </td>
-            </tr>
-            @endforelse
-        </tbody>
+        </x-slot:head>
+
+        <x-slot:rows>
+            @foreach($webhooks as $webhook)
+                <tr>
+                    <td class="fw-semibold">{{ $webhook->name }}</td>
+                    <td class="small text-muted" style="max-width:220px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;" title="{{ $webhook->url }}">
+                        {{ $webhook->url }}
+                    </td>
+                    <td>
+                        @foreach($webhook->events ?? [] as $event)
+                            <span class="badge bg-light text-dark border me-1">{{ $event }}</span>
+                        @endforeach
+                    </td>
+                    <td>
+                        @if($webhook->status === 'active')
+                            <span class="badge bg-success">Actif</span>
+                        @else
+                            <span class="badge bg-secondary">Inactif</span>
+                        @endif
+                    </td>
+                    <td class="small text-muted text-nowrap">
+                        {{ $webhook->last_triggered_at?->format('d/m/Y H:i') ?? '—' }}
+                    </td>
+                    <td class="text-end text-nowrap">
+                        <a href="{{ route('admin.webhooks.edit', $webhook->id) }}"
+                           class="btn btn-sm btn-outline-secondary me-1" title="Modifier">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <form class="d-inline" method="POST" action="{{ route('admin.webhooks.destroy', $webhook->id) }}"
+                              onsubmit="return confirm('Supprimer le webhook « {{ addslashes($webhook->name) }} » ?');">
+                            @csrf
+                            @method('DELETE')
+                            <button class="btn btn-sm btn-outline-danger" title="Supprimer">
+                                <i class="bi bi-trash3"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            @endforeach
+        </x-slot:rows>
     </x-admin.crud.table-card>
 
     @if($webhooks->hasPages())

@@ -24,7 +24,7 @@
                     @forelse($blocks as $block)
                         <tr>
                             <td>{{ $block->name }}</td>
-                            <td><code>{{ '{{ block:' . $block->slug . ' }}' }}</code></td>
+                            <td><code>@{{ block:{{ $block->slug }} }}</code></td>
                             <td><span class="badge {{ $block->status === 'active' ? 'text-bg-success' : 'text-bg-secondary' }}">{{ $block->status }}</span></td>
                             <td>{{ \Illuminate\Support\Str::limit($block->content, 60) }}</td>
                             <td class="d-flex gap-2">

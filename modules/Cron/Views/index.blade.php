@@ -74,43 +74,39 @@
 
     {{-- Execution logs --}}
     <x-admin.crud.table-card title="Historique d'exécution (50 derniers)">
-        <thead class="table-light">
+        <x-slot:head>
             <tr>
                 <th>Date</th>
                 <th>Tâche</th>
                 <th>Statut</th>
                 <th>Sortie</th>
             </tr>
-        </thead>
-        <tbody>
-            @forelse($logs as $log)
-            <tr>
-                <td class="text-nowrap small text-muted">
-                    {{ \Carbon\Carbon::parse($log->created_at)->format('d/m/Y H:i:s') }}
-                </td>
-                <td><code>{{ $log->message }}</code></td>
-                <td>
-                    @if($log->level === 'error')
-                        <span class="badge bg-danger">erreur</span>
-                    @else
-                        <span class="badge bg-success">ok</span>
-                    @endif
-                </td>
-                <td>
-                    @if($log->context)
-                        @php $ctx = is_string($log->context) ? json_decode($log->context, true) : (array) $log->context; @endphp
-                        <small class="text-muted font-monospace">{{ $ctx['output'] ?? '' }}</small>
-                    @else
-                        —
-                    @endif
-                </td>
-            </tr>
-            @empty
-            <tr>
-                <td colspan="4" class="text-center text-muted py-4">Aucune exécution enregistrée.</td>
-            </tr>
-            @endforelse
-        </tbody>
+        </x-slot:head>
+        <x-slot:rows>
+            @foreach($logs as $log)
+                <tr>
+                    <td class="text-nowrap small text-muted">
+                        {{ \Carbon\Carbon::parse($log->created_at)->format('d/m/Y H:i:s') }}
+                    </td>
+                    <td><code>{{ $log->message }}</code></td>
+                    <td>
+                        @if($log->level === 'error')
+                            <span class="badge bg-danger">erreur</span>
+                        @else
+                            <span class="badge bg-success">ok</span>
+                        @endif
+                    </td>
+                    <td>
+                        @if($log->context)
+                            @php $ctx = is_string($log->context) ? json_decode($log->context, true) : (array) $log->context; @endphp
+                            <small class="text-muted font-monospace">{{ $ctx['output'] ?? '' }}</small>
+                        @else
+                            —
+                        @endif
+                    </td>
+                </tr>
+            @endforeach
+        </x-slot:rows>
     </x-admin.crud.table-card>
 </div>
 @endsection
