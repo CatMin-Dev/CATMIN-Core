@@ -14,7 +14,7 @@
             <h2 class="h6 mb-0">Comptes</h2>
             <span class="badge text-bg-light">{{ $users->count() }}</span>
         </div>
-        <div class="table-responsive">
+        <div class="table-responsive catmin-table-scroll">
             <table class="table table-striped table-hover align-middle mb-0">
                 <thead><tr><th>ID</th><th>Nom</th><th>Email</th><th>Roles</th><th>Inscrit le</th></tr></thead>
                 <tbody>

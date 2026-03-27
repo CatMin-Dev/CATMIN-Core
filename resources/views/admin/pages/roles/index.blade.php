@@ -14,7 +14,7 @@
             <h2 class="h6 mb-0">Roles definis</h2>
             <span class="badge text-bg-light">{{ $roles->count() }}</span>
         </div>
-        <div class="table-responsive">
+        <div class="table-responsive catmin-table-scroll">
             <table class="table table-striped table-hover align-middle mb-0">
                 <thead><tr><th>Nom</th><th>Affichage</th><th>Priorite</th><th>Utilisateurs</th><th>Systeme</th><th>Actif</th></tr></thead>
                 <tbody>

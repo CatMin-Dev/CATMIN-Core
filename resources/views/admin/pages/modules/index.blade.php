@@ -14,7 +14,7 @@
             <h2 class="h6 mb-0">Etat des modules</h2>
             <span class="badge text-bg-light">{{ $modules->count() }}</span>
         </div>
-        <div class="table-responsive">
+        <div class="table-responsive catmin-table-scroll">
             <table class="table table-striped table-hover align-middle mb-0">
                 <thead><tr><th>Nom</th><th>Slug</th><th>Version</th><th>Type</th><th>Etat</th><th>Dependances</th><th>Actions</th></tr></thead>
                 <tbody>

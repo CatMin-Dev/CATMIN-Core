@@ -120,7 +120,7 @@
                 </div>
             </div>
 
-            <div class="card h-100">
+            <div class="card">
                 <div class="card-header bg-white"><h2 class="h6 mb-0">Utilisateurs recents</h2></div>
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">

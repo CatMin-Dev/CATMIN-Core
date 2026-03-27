@@ -17,7 +17,7 @@
 <div class="catmin-page-body">
     <div class="row g-4">
         <div class="col-12 col-lg-8">
-            <div class="card h-100">
+            <div class="card">
                 <div class="card-header bg-white"><h2 class="h6 mb-0">Informations</h2></div>
                 <div class="card-body">
                     <dl class="row mb-0">
@@ -31,7 +31,7 @@
             </div>
         </div>
         <div class="col-12 col-lg-4">
-            <div class="card h-100">
+            <div class="card">
                 <div class="card-header bg-white"><h2 class="h6 mb-0">Actions</h2></div>
                 <div class="card-body d-grid gap-2">
                     <a class="btn btn-outline-primary" href="{{ admin_route('modules.index') }}">Retour modules</a>
