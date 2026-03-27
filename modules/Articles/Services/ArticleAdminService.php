@@ -2,6 +2,7 @@
 
 namespace Modules\Articles\Services;
 
+use App\Services\CatminEventBus;
 use Illuminate\Support\Str;
 use Modules\Articles\Models\Article;
 
@@ -39,6 +40,16 @@ class ArticleAdminService
             'taxonomy_snapshot' => ['category' => null, 'tags' => []],
         ]);
 
+        CatminEventBus::dispatch(CatminEventBus::CONTENT_CREATED, [
+            'content' => [
+                'type' => 'article',
+                'id' => $item->id,
+                'title' => $item->title,
+                'slug' => $item->slug,
+                'status' => $item->status,
+            ],
+        ]);
+
         return $item;
     }
 
@@ -65,6 +76,16 @@ class ArticleAdminService
         ]);
 
         $item->save();
+
+        CatminEventBus::dispatch(CatminEventBus::CONTENT_UPDATED, [
+            'content' => [
+                'type' => 'article',
+                'id' => $item->id,
+                'title' => $item->title,
+                'slug' => $item->slug,
+                'status' => $item->status,
+            ],
+        ]);
 
         return $item;
     }

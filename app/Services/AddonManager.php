@@ -83,6 +83,18 @@ class AddonManager
         return File::exists($path) ? $path : null;
     }
 
+    public static function getHooksPath(string $slug): ?string
+    {
+        $addon = self::find($slug);
+        if ($addon === null) {
+            return null;
+        }
+
+        $path = $addon->path . '/hooks.php';
+
+        return File::exists($path) ? $path : null;
+    }
+
     /**
      * Detect missing required addon structure items.
      *

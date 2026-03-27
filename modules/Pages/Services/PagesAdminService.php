@@ -2,6 +2,7 @@
 
 namespace Modules\Pages\Services;
 
+use App\Services\CatminEventBus;
 use Illuminate\Support\Str;
 use Modules\Pages\Models\Page;
 
@@ -34,6 +35,16 @@ class PagesAdminService
             'published_at' => $this->normalizePublishedAt($payload),
         ]);
 
+        CatminEventBus::dispatch(CatminEventBus::CONTENT_CREATED, [
+            'content' => [
+                'type' => 'page',
+                'id' => $page->id,
+                'title' => $page->title,
+                'slug' => $page->slug,
+                'status' => $page->status,
+            ],
+        ]);
+
         return $page;
     }
 
@@ -53,6 +64,16 @@ class PagesAdminService
         ]);
 
         $page->save();
+
+        CatminEventBus::dispatch(CatminEventBus::CONTENT_UPDATED, [
+            'content' => [
+                'type' => 'page',
+                'id' => $page->id,
+                'title' => $page->title,
+                'slug' => $page->slug,
+                'status' => $page->status,
+            ],
+        ]);
 
         return $page;
     }

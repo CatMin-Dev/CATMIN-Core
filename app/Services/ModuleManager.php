@@ -228,6 +228,21 @@ class ModuleManager
         // On activation: run all pending migrations so the module is immediately usable.
         if ($enabled) {
             ModuleMigrationRunner::runForModule($slug);
+            CatminEventBus::dispatch(CatminEventBus::MODULE_ENABLED, [
+                'module' => [
+                    'slug' => (string) $module->slug,
+                    'name' => (string) ($module->name ?? $slug),
+                    'version' => (string) ($module->version ?? ''),
+                ],
+            ]);
+        } else {
+            CatminEventBus::dispatch(CatminEventBus::MODULE_DISABLED, [
+                'module' => [
+                    'slug' => (string) $module->slug,
+                    'name' => (string) ($module->name ?? $slug),
+                    'version' => (string) ($module->version ?? ''),
+                ],
+            ]);
         }
 
         return true;
@@ -378,6 +393,21 @@ class ModuleManager
         }
 
         $path = base_path(self::$modulesPath . '/' . $module->directory . '/routes.php');
+        return File::exists($path) ? $path : null;
+    }
+
+    /**
+     * Get module hooks file path.
+     */
+    public static function getHooksPath(string $slug): ?string
+    {
+        $module = self::find($slug);
+        if (!$module) {
+            return null;
+        }
+
+        $path = base_path(self::$modulesPath . '/' . $module->directory . '/hooks.php');
+
         return File::exists($path) ? $path : null;
     }
 

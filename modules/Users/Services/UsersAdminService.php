@@ -4,6 +4,7 @@ namespace Modules\Users\Services;
 
 use App\Models\Role;
 use App\Models\User;
+use App\Services\CatminEventBus;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -59,6 +60,14 @@ class UsersAdminService
 
             return $user;
         });
+
+        CatminEventBus::dispatch(CatminEventBus::USER_CREATED, [
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+            ],
+        ]);
 
         return $user;
     }

@@ -4,6 +4,7 @@ use App\Http\Middleware\EnsureCatminAdminAuthenticated;
 use App\Http\Middleware\EnsureCatminApiToken;
 use App\Http\Middleware\EnsureCatminPermission;
 use App\Services\AddonLoader;
+use App\Services\CatminHookLoader;
 use App\Services\ModuleLoader;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -19,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
         then: function (): void {
             ModuleLoader::registerRoutes(app('router'));
             AddonLoader::registerRoutes(app('router'));
+            CatminHookLoader::load();
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {

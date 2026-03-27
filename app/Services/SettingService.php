@@ -53,6 +53,16 @@ class SettingService
 
         self::forgetCache();
 
+        CatminEventBus::dispatch(CatminEventBus::SETTING_UPDATED, [
+            'setting' => [
+                'key' => $setting->key,
+                'value' => $setting->value,
+                'type' => $setting->type,
+                'group' => $setting->group,
+                'is_public' => (bool) $setting->is_public,
+            ],
+        ]);
+
         return $setting;
     }
 
