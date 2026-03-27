@@ -1,0 +1,10 @@
+{
+  "name": "Queue",
+  "slug": "queue",
+  "enabled": true,
+  "version": "1.0.0",
+  "description": "Surveillance de la file de jobs Laravel (jobs, failed_jobs) et envoi d'e-mails en file.",
+  "category": "system",
+  "provides": ["queue-monitor", "mail-queue"],
+  "depends": ["core"]
+}
