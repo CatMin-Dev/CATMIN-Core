@@ -390,3 +390,110 @@ if (!function_exists('inject_blocks')) {
         }, $content);
     }
 }
+
+if (!function_exists('menu_items')) {
+    /**
+     * Frontend convenience helper returning menu tree as plain array.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    function menu_items(string $location = 'primary'): array
+    {
+        return menu_tree($location)->values()->all();
+    }
+}
+
+if (!function_exists('news_cards')) {
+    /**
+     * Frontend-ready payload for news listing snippets.
+     *
+     * @return Collection<int, array<string, mixed>>
+     */
+    function news_cards(int $limit = 5): Collection
+    {
+        return news_items($limit)
+            ->map(fn (Article $item): array => [
+                'id' => $item->id,
+                'title' => $item->title,
+                'slug' => $item->slug,
+                'excerpt' => (string) ($item->excerpt ?? ''),
+                'published_at' => $item->published_at,
+                'media_url' => media_url($item->media_asset_id),
+            ])
+            ->values();
+    }
+}
+
+if (!function_exists('blog_cards')) {
+    /**
+     * Frontend-ready payload for blog listing snippets.
+     *
+     * @return Collection<int, array<string, mixed>>
+     */
+    function blog_cards(int $limit = 5): Collection
+    {
+        return blog_posts($limit)
+            ->map(fn (Article $item): array => [
+                'id' => $item->id,
+                'title' => $item->title,
+                'slug' => $item->slug,
+                'excerpt' => (string) ($item->excerpt ?? ''),
+                'published_at' => $item->published_at,
+                'media_url' => media_url($item->media_asset_id),
+            ])
+            ->values();
+    }
+}
+
+if (!function_exists('render_block')) {
+    /**
+     * Resolve and render a block by slug with optional fallback.
+     */
+    function render_block(string $slug, string $fallback = ''): string
+    {
+        return inject_blocks(block_content($slug, $fallback));
+    }
+}
+
+if (!function_exists('media_img_tag')) {
+    /**
+     * Generate a lightweight IMG tag from a media id or model.
+     *
+     * @param array<string, string> $attributes
+     */
+    function media_img_tag(int|MediaAsset|null $media, array $attributes = [], ?string $fallbackUrl = null): string
+    {
+        $url = media_url($media, $fallbackUrl);
+        if ($url === null || $url === '') {
+            return '';
+        }
+
+        $attrs = [
+            'src' => $url,
+            'alt' => (string) ($attributes['alt'] ?? ''),
+            'loading' => (string) ($attributes['loading'] ?? 'lazy'),
+        ];
+
+        foreach ($attributes as $key => $value) {
+            if ($key !== '' && !array_key_exists($key, $attrs)) {
+                $attrs[$key] = (string) $value;
+            }
+        }
+
+        $parts = collect($attrs)
+            ->map(fn ($value, $key) => $key . '="' . e((string) $value) . '"')
+            ->implode(' ');
+
+        return '<img ' . $parts . '>';
+    }
+}
+
+if (!function_exists('setting_text')) {
+    /**
+     * Read setting as plain string for frontend snippets.
+     */
+    function setting_text(string $key, string $default = ''): string
+    {
+        return (string) setting($key, $default);
+    }
+}
