@@ -3,15 +3,14 @@
 @section('page_title', 'Edition utilisateur')
 
 @section('content')
-<header class="catmin-page-header d-flex flex-wrap gap-3 justify-content-between align-items-start">
-    <div>
-        <h1 class="h3 mb-1">Modifier un utilisateur</h1>
-        <p class="text-muted mb-0">Mets a jour les infos du compte et ses roles.</p>
-    </div>
+<x-admin.crud.page-header
+    title="Modifier un utilisateur"
+    subtitle="Mets a jour les infos du compte et ses roles."
+>
     <a class="btn btn-outline-secondary" href="{{ admin_route('users.manage') }}">
         <i class="bi bi-arrow-left me-1"></i>Retour liste
     </a>
-</header>
+</x-admin.crud.page-header>
 
 <div class="catmin-page-body">
     <div class="card">

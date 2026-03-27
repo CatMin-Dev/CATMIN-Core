@@ -3,15 +3,13 @@
 @section('page_title', 'Parametres')
 
 @section('content')
-<header class="catmin-page-header">
-    <h1 class="h3 mb-1">Parametres</h1>
-    <p class="text-muted mb-0">Configuration essentielle du site et des options generales.</p>
-</header>
+<x-admin.crud.page-header
+    title="Parametres"
+    subtitle="Configuration essentielle du site et des options generales."
+/>
 
 <div class="catmin-page-body d-grid gap-4">
-    @if(session('status'))
-        <div class="alert alert-success" role="status">{{ session('status') }}</div>
-    @endif
+    <x-admin.crud.flash-messages />
 
     <div class="card">
         <div class="card-header bg-white">
@@ -70,14 +68,13 @@
         </div>
     </div>
 
-    <div class="card">
-        <div class="card-header bg-white d-flex justify-content-between align-items-center">
-            <h2 class="h6 mb-0">Valeurs stockees</h2>
-            <span class="badge text-bg-light">{{ $trackedSettings->count() }}</span>
-        </div>
-        <div class="table-responsive">
-            <table class="table table-striped table-hover align-middle mb-0">
-                <thead>
+    <x-admin.crud.table-card
+        title="Valeurs stockees"
+        :count="$trackedSettings->count()"
+        :empty-colspan="5"
+        empty-message="Aucune valeur enregistree."
+    >
+        <x-slot:head>
                     <tr>
                         <th>Groupe</th>
                         <th>Cle</th>
@@ -85,22 +82,19 @@
                         <th>Type</th>
                         <th>Public</th>
                     </tr>
-                </thead>
-                <tbody>
-                    @forelse($trackedSettings as $setting)
-                        <tr>
-                            <td>{{ $setting->group ?: 'general' }}</td>
-                            <td>{{ $setting->key }}</td>
-                            <td>{{ is_scalar($setting->value) ? $setting->value : json_encode($setting->value) }}</td>
-                            <td>{{ $setting->type ?: 'string' }}</td>
-                            <td><span class="badge {{ $setting->is_public ? 'text-bg-success' : 'text-bg-secondary' }}">{{ $setting->is_public ? 'Oui' : 'Non' }}</span></td>
-                        </tr>
-                    @empty
-                        <tr><td colspan="5" class="text-center text-muted py-4">Aucune valeur enregistree.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-    </div>
+        </x-slot:head>
+
+        <x-slot:rows>
+            @foreach($trackedSettings as $setting)
+                <tr>
+                    <td>{{ $setting->group ?: 'general' }}</td>
+                    <td>{{ $setting->key }}</td>
+                    <td>{{ is_scalar($setting->value) ? $setting->value : json_encode($setting->value) }}</td>
+                    <td>{{ $setting->type ?: 'string' }}</td>
+                    <td><span class="badge {{ $setting->is_public ? 'text-bg-success' : 'text-bg-secondary' }}">{{ $setting->is_public ? 'Oui' : 'Non' }}</span></td>
+                </tr>
+            @endforeach
+        </x-slot:rows>
+    </x-admin.crud.table-card>
 </div>
 @endsection
