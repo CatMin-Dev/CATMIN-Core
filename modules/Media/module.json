@@ -1,7 +1,16 @@
 {
   "name": "Media",
   "slug": "media",
-  "enabled": false,
+  "enabled": true,
   "version": "1.0.0",
+  "description": "Base de mediatheque CATMIN pour images et documents reutilisables.",
+  "category": "content",
+  "provides": [
+    "media-upload",
+    "media-listing",
+    "media-preview",
+    "media-delete",
+    "media-metadata"
+  ],
   "depends": ["core"]
 }

@@ -80,6 +80,10 @@ class DashboardController extends Controller
             return redirect()->route('admin.pages.manage');
         }
 
+        if ($module === 'media') {
+            return redirect()->route('admin.media.manage');
+        }
+
         $moduleConfig = ModuleManager::find($module);
 
         abort_if(!$moduleConfig instanceof stdClass, 404);
