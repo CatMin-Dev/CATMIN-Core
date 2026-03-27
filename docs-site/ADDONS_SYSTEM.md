@@ -55,3 +55,11 @@ Le systeme est pense pour une installation projet par projet:
 - le runtime detecte et charge automatiquement
 
 Pas de registre central ni marketplace en V1.
+
+## Packaging et distribution
+
+Une commande de packaging est disponible:
+
+- `php artisan catmin:addon:package <slug>`
+
+Voir le guide detaille: `ADDONS_PACKAGING.md`.

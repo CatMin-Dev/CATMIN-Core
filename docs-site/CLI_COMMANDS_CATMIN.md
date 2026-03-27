@@ -16,6 +16,7 @@ Prefixe unique: `catmin:`
 
 - `php artisan catmin:addons:list`
 - `php artisan catmin:addon:install <slug> [--no-enable] [--no-migrate]`
+- `php artisan catmin:addon:package <slug> [--output=...] [--format=zip]`
 
 ### Sante systeme
 
@@ -34,3 +35,4 @@ Prefixe unique: `catmin:`
 - Commandes pragmatiques, sans magie.
 - Toutes les operations restent compatibles avec le workflow GitHub.
 - `catmin:addon:install` suppose un addon deja present dans `addons/`.
+- `catmin:addon:package` genere une archive zip distribuable d'un addon existant.
