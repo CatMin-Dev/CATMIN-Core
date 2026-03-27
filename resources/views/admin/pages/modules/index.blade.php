@@ -58,32 +58,37 @@
     @endif
 </div>
 
-<script>
-    @if(session('success'))
-        document.addEventListener('DOMContentLoaded', function() {
-            // Bootstrap toast or alert notification
-            const alert = document.createElement('div');
-            alert.className = 'alert alert-success alert-dismissible fade show';
-            alert.setAttribute('role', 'alert');
-            alert.innerHTML = `
-                {{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            `;
-            document.querySelector('.catmin-page-body').insertAdjacentElement('beforebegin', alert);
-        });
-    @endif
+@if(session('success'))
+    <div class="mt-3">
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const alert = document.createElement('div');
+                alert.className = 'alert alert-success alert-dismissible fade show';
+                alert.setAttribute('role', 'alert');
+                alert.innerHTML = `
+                    {!! session('success') !!}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                `;
+                document.querySelector('.catmin-page-body').insertAdjacentElement('beforebegin', alert);
+            });
+        </script>
+    </div>
+@endif
 
-    @if(session('error'))
-        document.addEventListener('DOMContentLoaded', function() {
-            const alert = document.createElement('div');
-            alert.className = 'alert alert-danger alert-dismissible fade show';
-            alert.setAttribute('role', 'alert');
-            alert.innerHTML = `
-                {{ session('error') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            `;
-            document.querySelector('.catmin-page-body').insertAdjacentElement('beforebegin', alert);
-        });
-    @endif
-</script>
+@if(session('error'))
+    <div class="mt-3">
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const alert = document.createElement('div');
+                alert.className = 'alert alert-danger alert-dismissible fade show';
+                alert.setAttribute('role', 'alert');
+                alert.innerHTML = `
+                    {!! session('error') !!}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                `;
+                document.querySelector('.catmin-page-body').insertAdjacentElement('beforebegin', alert);
+            });
+        </script>
+    </div>
+@endif
 @endsection
