@@ -27,6 +27,10 @@ Prefixe unique: `catmin:`
 
 - `php artisan catmin:backup:create [--with-db] [--without-media] [--without-extensions]`
 
+### Maintenance
+
+- `php artisan catmin:maintenance <on|off|status>`
+
 ### Deja disponibles
 
 - `catmin:migrate:extensions`

@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\EnsureCatminAdminAuthenticated;
 use App\Http\Middleware\EnsureCatminApiToken;
+use App\Http\Middleware\EnsureCatminFrontendAvailable;
 use App\Http\Middleware\EnsureCatminPermission;
 use App\Services\AddonLoader;
 use App\Services\CatminHookLoader;
@@ -28,6 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'catmin.admin' => EnsureCatminAdminAuthenticated::class,
             'catmin.permission' => EnsureCatminPermission::class,
             'catmin.api-token' => EnsureCatminApiToken::class,
+            'catmin.frontend.available' => EnsureCatminFrontendAvailable::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

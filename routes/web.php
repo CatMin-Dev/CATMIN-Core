@@ -19,15 +19,17 @@ use Illuminate\Support\Facades\Route;
 
 // ========== PUBLIC ROUTES ==========
 
-Route::get('/', HomeController::class)
-    ->name('frontend.root');
+Route::middleware('catmin.frontend.available')->group(function (): void {
+    Route::get('/', HomeController::class)
+        ->name('frontend.root');
 
-Route::get('/' . config('catmin.frontend.path', 'site'), HomeController::class)
-    ->name('frontend.home');
+    Route::get('/' . config('catmin.frontend.path', 'site'), HomeController::class)
+        ->name('frontend.home');
 
-Route::get('/page/{slug}', PageController::class)
-    ->where('slug', '[A-Za-z0-9\-\/]+')
-    ->name('frontend.page');
+    Route::get('/page/{slug}', PageController::class)
+        ->where('slug', '[A-Za-z0-9\-\/]+')
+        ->name('frontend.page');
+});
 
 // ========== ADMIN ROUTES ==========
 
