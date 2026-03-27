@@ -1,7 +1,7 @@
 {
   "name": "Shop",
   "slug": "shop",
-  "enabled": false,
+  "enabled": true,
   "version": "1.0.0",
   "description": "Base e-commerce leger CATMIN (produits simples sans paiement V1).",
   "category": "commerce",
