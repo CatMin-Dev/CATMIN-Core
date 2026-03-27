@@ -9,6 +9,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
+use Modules\Logger\Services\SystemLogService;
 
 class UsersAdminService
 {
@@ -69,6 +70,22 @@ class UsersAdminService
             ],
         ]);
 
+        try {
+            app(SystemLogService::class)->logAudit(
+                'user.created',
+                'Utilisateur cree',
+                [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                    'roles_count' => $user->roles()->count(),
+                ],
+                'info',
+                (string) session('catmin_admin_username', '')
+            );
+        } catch (\Throwable) {
+            // Keep user creation resilient if logging fails.
+        }
+
         return $user;
     }
 
@@ -96,6 +113,21 @@ class UsersAdminService
             return $user;
         });
 
+        try {
+            app(SystemLogService::class)->logAudit(
+                'user.updated',
+                'Utilisateur modifie',
+                [
+                    'user_id' => $updated->id,
+                    'email' => $updated->email,
+                ],
+                'info',
+                (string) session('catmin_admin_username', '')
+            );
+        } catch (\Throwable) {
+            // Keep user update resilient if logging fails.
+        }
+
         return $updated;
     }
 
@@ -106,8 +138,26 @@ class UsersAdminService
         }
 
         $user->is_active = !(bool) $user->is_active;
+        $saved = $user->save();
 
-        return $user->save();
+        if ($saved) {
+            try {
+                app(SystemLogService::class)->logAudit(
+                    'user.toggled_active',
+                    'Activation utilisateur modifiee',
+                    [
+                        'user_id' => $user->id,
+                        'is_active' => (bool) $user->is_active,
+                    ],
+                    'warning',
+                    (string) session('catmin_admin_username', '')
+                );
+            } catch (\Throwable) {
+                // Keep activation toggle resilient if logging fails.
+            }
+        }
+
+        return $saved;
     }
 
     /**

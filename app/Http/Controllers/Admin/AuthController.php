@@ -8,6 +8,7 @@ use App\Services\RbacPermissionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Modules\Logger\Services\SystemLogService;
 
 final class AuthController extends Controller
 {
@@ -50,11 +51,38 @@ final class AuthController extends Controller
         $request->session()->put('catmin_rbac_permissions', $rbacContext['permissions']);
         $request->session()->put('catmin_rbac_source', $rbacContext['source']);
 
+        try {
+            /** @var SystemLogService $logger */
+            $logger = app(SystemLogService::class);
+            $logger->logAudit(
+                'auth.login',
+                'Connexion admin reussie',
+                [
+                    'rbac_source' => $rbacContext['source'],
+                    'roles' => $rbacContext['roles'],
+                ],
+                'info',
+                (string) $data['username']
+            );
+        } catch (\Throwable) {
+            // Never break login flow due to audit logging failure.
+        }
+
         return redirect()->route('admin.index');
     }
 
     public function logout(Request $request): RedirectResponse
     {
+        $username = (string) $request->session()->get('catmin_admin_username', '');
+
+        try {
+            /** @var SystemLogService $logger */
+            $logger = app(SystemLogService::class);
+            $logger->logAudit('auth.logout', 'Deconnexion admin', [], 'info', $username);
+        } catch (\Throwable) {
+            // Never break logout flow due to audit logging failure.
+        }
+
         $request->session()->forget([
             'catmin_admin_authenticated',
             'catmin_admin_username',

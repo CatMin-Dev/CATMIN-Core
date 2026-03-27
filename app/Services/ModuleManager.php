@@ -235,6 +235,22 @@ class ModuleManager
                     'version' => (string) ($module->version ?? ''),
                 ],
             ]);
+
+            try {
+                app(\Modules\Logger\Services\SystemLogService::class)->logAudit(
+                    'module.enabled',
+                    'Module active',
+                    [
+                        'module' => (string) $module->slug,
+                        'name' => (string) ($module->name ?? $slug),
+                        'version' => (string) ($module->version ?? ''),
+                    ],
+                    'info',
+                    (string) session('catmin_admin_username', '')
+                );
+            } catch (\Throwable) {
+                // Keep module activation flow resilient.
+            }
         } else {
             CatminEventBus::dispatch(CatminEventBus::MODULE_DISABLED, [
                 'module' => [
@@ -243,6 +259,22 @@ class ModuleManager
                     'version' => (string) ($module->version ?? ''),
                 ],
             ]);
+
+            try {
+                app(\Modules\Logger\Services\SystemLogService::class)->logAudit(
+                    'module.disabled',
+                    'Module desactive',
+                    [
+                        'module' => (string) $module->slug,
+                        'name' => (string) ($module->name ?? $slug),
+                        'version' => (string) ($module->version ?? ''),
+                    ],
+                    'warning',
+                    (string) session('catmin_admin_username', '')
+                );
+            } catch (\Throwable) {
+                // Keep module deactivation flow resilient.
+            }
         }
 
         return true;

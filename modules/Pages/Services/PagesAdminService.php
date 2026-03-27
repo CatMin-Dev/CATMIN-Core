@@ -4,6 +4,7 @@ namespace Modules\Pages\Services;
 
 use App\Services\CatminEventBus;
 use Illuminate\Support\Str;
+use Modules\Logger\Services\SystemLogService;
 use Modules\Pages\Models\Page;
 
 class PagesAdminService
@@ -45,6 +46,22 @@ class PagesAdminService
             ],
         ]);
 
+        try {
+            app(SystemLogService::class)->logAudit(
+                'content.page.created',
+                'Page creee',
+                [
+                    'id' => $page->id,
+                    'slug' => $page->slug,
+                    'status' => $page->status,
+                ],
+                'info',
+                (string) session('catmin_admin_username', '')
+            );
+        } catch (\Throwable) {
+            // Keep content creation resilient if logging fails.
+        }
+
         return $page;
     }
 
@@ -74,6 +91,22 @@ class PagesAdminService
                 'status' => $page->status,
             ],
         ]);
+
+        try {
+            app(SystemLogService::class)->logAudit(
+                'content.page.updated',
+                'Page modifiee',
+                [
+                    'id' => $page->id,
+                    'slug' => $page->slug,
+                    'status' => $page->status,
+                ],
+                'info',
+                (string) session('catmin_admin_username', '')
+            );
+        } catch (\Throwable) {
+            // Keep content update resilient if logging fails.
+        }
 
         return $page;
     }

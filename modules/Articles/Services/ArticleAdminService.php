@@ -4,6 +4,7 @@ namespace Modules\Articles\Services;
 
 use App\Services\CatminEventBus;
 use Illuminate\Support\Str;
+use Modules\Logger\Services\SystemLogService;
 use Modules\Articles\Models\Article;
 
 class ArticleAdminService
@@ -50,6 +51,23 @@ class ArticleAdminService
             ],
         ]);
 
+        try {
+            app(SystemLogService::class)->logAudit(
+                'content.article.created',
+                'Article cree',
+                [
+                    'id' => $item->id,
+                    'slug' => $item->slug,
+                    'status' => $item->status,
+                    'content_type' => $item->content_type,
+                ],
+                'info',
+                (string) session('catmin_admin_username', '')
+            );
+        } catch (\Throwable) {
+            // Keep content creation resilient if logging fails.
+        }
+
         return $item;
     }
 
@@ -86,6 +104,23 @@ class ArticleAdminService
                 'status' => $item->status,
             ],
         ]);
+
+        try {
+            app(SystemLogService::class)->logAudit(
+                'content.article.updated',
+                'Article modifie',
+                [
+                    'id' => $item->id,
+                    'slug' => $item->slug,
+                    'status' => $item->status,
+                    'content_type' => $item->content_type,
+                ],
+                'info',
+                (string) session('catmin_admin_username', '')
+            );
+        } catch (\Throwable) {
+            // Keep content update resilient if logging fails.
+        }
 
         return $item;
     }

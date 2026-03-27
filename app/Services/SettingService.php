@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Setting;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Modules\Logger\Services\SystemLogService;
 
 class SettingService
 {
@@ -62,6 +63,25 @@ class SettingService
                 'is_public' => (bool) $setting->is_public,
             ],
         ]);
+
+        try {
+            /** @var SystemLogService $logger */
+            $logger = app(SystemLogService::class);
+            $logger->logAudit(
+                'setting.updated',
+                'Setting mise a jour',
+                [
+                    'key' => $setting->key,
+                    'type' => $setting->type,
+                    'group' => $setting->group,
+                    'is_public' => (bool) $setting->is_public,
+                ],
+                'info',
+                (string) session('catmin_admin_username', '')
+            );
+        } catch (\Throwable) {
+            // Do not block setting updates if audit logging fails.
+        }
 
         return $setting;
     }

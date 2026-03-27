@@ -12,6 +12,25 @@ class SystemLogService
     /**
      * @param array<string, mixed> $context
      */
+    public function logAudit(string $event, string $message, array $context = [], string $level = 'info', ?string $adminUsername = null): void
+    {
+        if (!$this->canWrite()) {
+            return;
+        }
+
+        $this->write([
+            'channel' => 'audit',
+            'level' => $level,
+            'event' => $event,
+            'message' => $message,
+            'context' => $this->sanitizeContext($context),
+            'admin_username' => $adminUsername ?? '',
+        ]);
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
     public function logError(Throwable $throwable, array $context = []): void
     {
         if (!$this->canWrite()) {
@@ -107,5 +126,35 @@ class SystemLogService
         }
 
         return ModuleManager::isEnabled('logger');
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     * @return array<string, mixed>
+     */
+    private function sanitizeContext(array $context): array
+    {
+        $sensitiveKeys = [
+            'password',
+            'password_confirmation',
+            'token',
+            'api_token',
+            'secret',
+            'authorization',
+        ];
+
+        foreach ($context as $key => $value) {
+            $normalized = strtolower((string) $key);
+            if (in_array($normalized, $sensitiveKeys, true)) {
+                $context[$key] = '[redacted]';
+                continue;
+            }
+
+            if (is_array($value)) {
+                $context[$key] = $this->sanitizeContext($value);
+            }
+        }
+
+        return $context;
     }
 }

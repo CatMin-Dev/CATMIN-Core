@@ -27,7 +27,7 @@ class LogController extends Controller
             'selectedLevel' => $level,
             'selectedChannel' => $channel,
             'levels' => ['info', 'warning', 'error'],
-            'channels' => ['admin', 'application'],
+            'channels' => ['admin', 'application', 'audit'],
         ]);
     }
 }
