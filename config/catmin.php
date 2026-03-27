@@ -205,7 +205,7 @@ return [
                     [
                         'label' => 'Roles',
                         'icon' => 'bi bi-shield-check',
-                        'route' => 'roles.index',
+                        'route' => 'roles.manage',
                         'active_when' => ['roles.*'],
                         'permission' => 'module.users.config',
                     ],
@@ -229,6 +229,7 @@ return [
                         'route' => 'logger.index',
                         'active_when' => ['logger.*'],
                         'module' => 'logger',
+                        'permission' => 'module.logger.menu',
                     ],
                     [
                         'label' => 'Cache',
@@ -236,6 +237,7 @@ return [
                         'route' => 'cache.index',
                         'active_when' => ['cache.*'],
                         'module' => 'cache',
+                        'permission' => 'module.cache.menu',
                     ],
                     [
                         'label' => 'Planificateur',
@@ -243,6 +245,7 @@ return [
                         'route' => 'cron.index',
                         'active_when' => ['cron.*'],
                         'module' => 'cron',
+                        'permission' => 'module.cron.menu',
                     ],
                     [
                         'label' => 'Queue',
@@ -250,6 +253,7 @@ return [
                         'route' => 'queue.index',
                         'active_when' => ['queue.*'],
                         'module' => 'queue',
+                        'permission' => 'module.queue.menu',
                     ],
                 ],
             ],
@@ -262,6 +266,7 @@ return [
                         'route' => 'webhooks.index',
                         'active_when' => ['webhooks.*'],
                         'module' => 'webhooks',
+                        'permission' => 'module.webhooks.menu',
                     ],
                 ],
             ],
@@ -303,6 +308,7 @@ return [
                         'match_module' => 'menus',
                         'active_when' => ['content.show', 'menus.*'],
                         'module' => 'menus',
+                        'permission' => 'module.menus.menu',
                     ],
                     [
                         'label' => 'Blocks',
@@ -312,6 +318,7 @@ return [
                         'match_module' => 'blocks',
                         'active_when' => ['content.show', 'blocks.*'],
                         'module' => 'blocks',
+                        'permission' => 'module.blocks.menu',
                     ],
                 ],
             ],
@@ -324,6 +331,7 @@ return [
                         'route' => 'shop.manage',
                         'active_when' => ['shop.*'],
                         'module' => 'shop',
+                        'permission' => 'module.shop.menu',
                     ],
                 ],
             ],

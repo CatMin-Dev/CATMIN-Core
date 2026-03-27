@@ -173,4 +173,26 @@ class UsersAdminService
 
         $user->roles()->sync($normalizedRoleIds);
     }
+
+    public function deleteUser(User $user): void
+    {
+        $userId = $user->id;
+        $email  = $user->email;
+
+        DB::transaction(function () use ($user): void {
+            $user->roles()->detach();
+            $user->delete();
+        });
+
+        try {
+            app(SystemLogService::class)->logAudit(
+                'user.deleted',
+                'Utilisateur supprime',
+                ['user_id' => $userId, 'email' => $email],
+                'warning',
+                (string) session('catmin_admin_username', '')
+            );
+        } catch (\Throwable) {
+        }
+    }
 }

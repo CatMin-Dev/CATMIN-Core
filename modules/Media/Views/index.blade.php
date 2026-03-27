@@ -7,9 +7,11 @@
     title="Media"
     subtitle="Fichiers reutilisables pour Pages, Articles, Shop."
 >
-    <a class="btn btn-primary" href="{{ admin_route('media.create') }}">
-        <i class="bi bi-upload me-1"></i>Uploader
-    </a>
+    @if(catmin_can('module.media.create'))
+        <a class="btn btn-primary" href="{{ admin_route('media.create') }}">
+            <i class="bi bi-upload me-1"></i>Uploader
+        </a>
+    @endif
 </x-admin.crud.page-header>
 
 <div class="catmin-page-body">
@@ -95,7 +97,10 @@
                     <td>{{ optional($asset->created_at)->format('d/m/Y H:i') ?: 'n/a' }}</td>
                     <td>
                         <div class="d-flex justify-content-end gap-2">
-                            <a class="btn btn-sm btn-outline-secondary" href="{{ admin_route('media.edit', ['asset' => $asset->id]) }}">Modifier</a>
+                            @if(catmin_can('module.media.edit'))
+                                <a class="btn btn-sm btn-outline-secondary" href="{{ admin_route('media.edit', ['asset' => $asset->id]) }}">Modifier</a>
+                            @endif
+                            @if(catmin_can('module.media.delete'))
                             <form method="post" action="{{ admin_route('media.destroy', ['asset' => $asset->id]) }}" onsubmit="return confirm('Supprimer définitivement « ' + '{{ addslashes($asset->original_name) }}' + ' » ?');">
                                 @csrf
                                 @method('DELETE')
@@ -103,6 +108,7 @@
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </form>
+                            @endif
                         </div>
                     </td>
                 </tr>

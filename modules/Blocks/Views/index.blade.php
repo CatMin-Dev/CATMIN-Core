@@ -8,7 +8,9 @@
         <h1 class="h3 mb-1">Blocks</h1>
         <p class="text-muted mb-0">Blocs reutilisables injectables dans les pages.</p>
     </div>
+    @if(catmin_can('module.blocks.create'))
     <a class="btn btn-primary" href="{{ route('admin.blocks.create') }}">Nouveau bloc</a>
+    @endif
 </header>
 
 <div class="catmin-page-body">
@@ -28,12 +30,14 @@
                             <td><span class="badge {{ $block->status === 'active' ? 'text-bg-success' : 'text-bg-secondary' }}">{{ $block->status }}</span></td>
                             <td>{{ \Illuminate\Support\Str::limit($block->content, 60) }}</td>
                             <td class="d-flex gap-2">
+                                @if(catmin_can('module.blocks.edit'))
                                 <a class="btn btn-sm btn-outline-primary" href="{{ route('admin.blocks.edit', $block) }}">Editer</a>
                                 <form method="POST" action="{{ route('admin.blocks.toggle_status', $block) }}">
                                     @csrf
                                     @method('PATCH')
                                     <button type="submit" class="btn btn-sm btn-outline-secondary">Toggle</button>
                                 </form>
+                                @endif
                             </td>
                         </tr>
                     @empty

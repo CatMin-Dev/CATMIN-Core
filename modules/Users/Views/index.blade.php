@@ -7,9 +7,11 @@
     title="Utilisateurs"
     subtitle="Gestion des comptes dashboard et de leurs roles associes."
 >
-    <a class="btn btn-primary" href="{{ admin_route('users.create') }}">
-        <i class="bi bi-person-plus me-1"></i>Nouveau compte
-    </a>
+    @if(catmin_can('module.users.create'))
+        <a class="btn btn-primary" href="{{ admin_route('users.create') }}">
+            <i class="bi bi-person-plus me-1"></i>Nouveau compte
+        </a>
+    @endif
 </x-admin.crud.page-header>
 
 <div class="catmin-page-body">
@@ -50,16 +52,28 @@
                     @endif
                     <td>
                         <div class="d-flex justify-content-end gap-2">
-                            <a class="btn btn-sm btn-outline-secondary" href="{{ admin_route('users.edit', ['user' => $user->id]) }}">
-                                <i class="bi bi-pencil-square me-1"></i>Modifier
-                            </a>
-                            @if($supportsActivation)
+                            @if(catmin_can('module.users.edit'))
+                                <a class="btn btn-sm btn-outline-secondary" href="{{ admin_route('users.edit', ['user' => $user->id]) }}">
+                                    <i class="bi bi-pencil-square me-1"></i>Modifier
+                                </a>
+                            @endif
+                            @if($supportsActivation && catmin_can('module.users.config'))
                                 <form method="post" action="{{ admin_route('users.toggle_active', ['user' => $user->id]) }}">
                                     @csrf
                                     @method('PATCH')
                                     <button class="btn btn-sm {{ $user->is_active ? 'btn-outline-warning' : 'btn-outline-success' }}" type="submit">
                                         <i class="bi {{ $user->is_active ? 'bi-pause-circle' : 'bi-play-circle' }} me-1"></i>
                                         {{ $user->is_active ? 'Desactiver' : 'Activer' }}
+                                    </button>
+                                </form>
+                            @endif
+                            @if(catmin_can('module.users.delete'))
+                                <form method="post" action="{{ admin_route('users.destroy', ['user' => $user->id]) }}"
+                                      onsubmit="return confirm('Supprimer l\'utilisateur {{ addslashes($user->name) }} ?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button class="btn btn-sm btn-outline-danger" type="submit">
+                                        <i class="bi bi-trash me-1"></i>Supprimer
                                     </button>
                                 </form>
                             @endif

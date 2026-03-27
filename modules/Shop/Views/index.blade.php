@@ -8,7 +8,9 @@
         <h1 class="h3 mb-1">Shop</h1>
         <p class="text-muted mb-0">Catalogue des produits simples.</p>
     </div>
+    @if(catmin_can('module.shop.create'))
     <a class="btn btn-primary" href="{{ route('admin.shop.create') }}">Nouveau produit</a>
+    @endif
 </header>
 
 <div class="catmin-page-body">
@@ -28,12 +30,14 @@
                             <td>{{ number_format((float) $product->price, 2, '.', ' ') }}</td>
                             <td><span class="badge {{ $product->status === 'active' ? 'text-bg-success' : 'text-bg-secondary' }}">{{ $product->status }}</span></td>
                             <td class="d-flex gap-2">
+                                @if(catmin_can('module.shop.edit'))
                                 <a class="btn btn-sm btn-outline-primary" href="{{ route('admin.shop.edit', $product) }}">Editer</a>
                                 <form method="POST" action="{{ route('admin.shop.toggle_status', $product) }}">
                                     @csrf
                                     @method('PATCH')
                                     <button type="submit" class="btn btn-sm btn-outline-secondary">Toggle</button>
                                 </form>
+                                @endif
                             </td>
                         </tr>
                     @empty

@@ -7,7 +7,9 @@
     title="Articles"
     subtitle="Module unifie pour les contenus editoriaux et actualites."
 >
-    <a class="btn btn-primary" href="{{ admin_route('articles.create') }}">Nouvel article</a>
+    @if(catmin_can('module.articles.create'))
+        <a class="btn btn-primary" href="{{ admin_route('articles.create') }}">Nouvel article</a>
+    @endif
 </x-admin.crud.page-header>
 
 <div class="catmin-page-body">
@@ -46,14 +48,18 @@
                     <td>M{{ $item->media_asset_id ?: '-' }} / S{{ $item->seo_meta_id ?: '-' }}</td>
                     <td>
                         <div class="d-flex justify-content-end gap-2">
-                            <a class="btn btn-sm btn-outline-secondary" href="{{ admin_route('articles.edit', ['article' => $item->id]) }}">Modifier</a>
-                            <form method="post" action="{{ admin_route('articles.toggle_status', ['article' => $item->id]) }}">
+                            @if(catmin_can('module.articles.edit'))
+                                <a class="btn btn-sm btn-outline-secondary" href="{{ admin_route('articles.edit', ['article' => $item->id]) }}">Modifier</a>
+                            @endif
+                            @if(catmin_can('module.articles.edit'))
+                                <form method="post" action="{{ admin_route('articles.toggle_status', ['article' => $item->id]) }}">
                                 @csrf
                                 @method('PATCH')
                                 <button class="btn btn-sm {{ $item->status === 'published' ? 'btn-outline-warning' : 'btn-outline-success' }}" type="submit">
                                     {{ $item->status === 'published' ? 'Depublier' : 'Publier' }}
                                 </button>
-                            </form>
+                                </form>
+                            @endif
                         </div>
                     </td>
                 </tr>

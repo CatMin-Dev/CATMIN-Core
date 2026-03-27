@@ -49,6 +49,7 @@
             <h2 class="h6 mb-0">
                 <i class="bi bi-x-octagon text-danger me-1"></i>Jobs en échec (20 derniers)
             </h2>
+            @if(catmin_can('module.queue.config'))
             <form method="POST" action="{{ route('admin.queue.failed.clear') }}"
                   onsubmit="return confirm('Supprimer TOUS les jobs en échec ?');">
                 @csrf
@@ -57,6 +58,7 @@
                     <i class="bi bi-trash3 me-1"></i>Tout supprimer
                 </button>
             </form>
+            @endif
         </div>
         <div class="table-responsive">
             <table class="table table-sm table-hover mb-0">
@@ -102,16 +104,18 @@
                     @endforeach
                 </tbody>
             </table>
-        </div>
-    </div>
-    @endif
-
-    <div class="card">
-        <div class="card-header bg-white"><h2 class="h6 mb-0">À propos</h2></div>
-        <div class="card-body">
-            <p class="small text-muted mb-2">Pour traiter la file de jobs, lancez le worker :</p>
-            <pre class="bg-light rounded p-3 small mb-0">php artisan queue:work --tries=3 --timeout=60</pre>
-        </div>
+                        <td>
+                            @if(catmin_can('module.queue.config'))
+                            <form method="POST" action="{{ route('admin.queue.failed.delete', $job->id) }}"
+                                  onsubmit="return confirm('Supprimer ce job ?');">
+                                @csrf
+                                @method('DELETE')
+                                <button class="btn btn-sm btn-outline-danger" type="submit" title="Supprimer">
+                                    <i class="bi bi-trash3"></i>
+                                </button>
+                            </form>
+                            @endif
+                        </td>
     </div>
 </div>
 @endsection

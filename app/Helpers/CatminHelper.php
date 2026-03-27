@@ -2,6 +2,7 @@
 
 use App\Services\AdminNavigationService;
 use App\Services\ModuleManager;
+use App\Services\RbacPermissionService;
 use App\Services\SettingService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route;
@@ -13,6 +14,17 @@ use Modules\Media\Models\MediaAsset;
 use Modules\Menus\Services\MenuAdminService;
 use Modules\Pages\Models\Page;
 use Modules\SEO\Models\SeoMeta;
+
+if (!function_exists('catmin_can')) {
+    /**
+     * Check if the current admin session has the given RBAC permission.
+     * Returns true for super-admin (wildcard '*') and when RBAC is disabled.
+     */
+    function catmin_can(string $permission): bool
+    {
+        return RbacPermissionService::allows(request(), $permission);
+    }
+}
 
 if (!function_exists('setting')) {
     /**

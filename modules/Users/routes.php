@@ -32,7 +32,31 @@ Route::middleware(['web', 'catmin.admin'])
             ->middleware('catmin.permission:module.users.config')
             ->name('users.toggle_active');
 
+        Route::delete('/users/{user}', [UserController::class, 'destroy'])
+            ->middleware('catmin.permission:module.users.delete')
+            ->name('users.destroy');
+
         Route::get('/roles/manage', [RoleController::class, 'index'])
             ->middleware('catmin.permission:module.users.config')
             ->name('roles.manage');
+
+        Route::get('/roles/create', [RoleController::class, 'create'])
+            ->middleware('catmin.permission:module.users.config')
+            ->name('roles.create');
+
+        Route::post('/roles', [RoleController::class, 'store'])
+            ->middleware('catmin.permission:module.users.config')
+            ->name('roles.store');
+
+        Route::get('/roles/{role}/edit', [RoleController::class, 'edit'])
+            ->middleware('catmin.permission:module.users.config')
+            ->name('roles.edit');
+
+        Route::put('/roles/{role}', [RoleController::class, 'update'])
+            ->middleware('catmin.permission:module.users.config')
+            ->name('roles.update');
+
+        Route::delete('/roles/{role}', [RoleController::class, 'destroy'])
+            ->middleware('catmin.permission:module.users.config')
+            ->name('roles.destroy');
     });

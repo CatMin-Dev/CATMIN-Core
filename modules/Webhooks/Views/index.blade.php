@@ -7,9 +7,11 @@
     title="Webhooks sortants"
     subtitle="Envoyer des notifications HTTP signées HMAC-SHA256 vers des services tiers."
 >
+    @if(catmin_can('module.webhooks.create'))
     <a href="{{ route('admin.webhooks.create') }}" class="btn btn-primary btn-sm">
         <i class="bi bi-plus-lg me-1"></i>Nouveau webhook
     </a>
+    @endif
 </x-admin.crud.page-header>
 
 <div class="catmin-page-body">
@@ -50,10 +52,13 @@
                         {{ $webhook->last_triggered_at?->format('d/m/Y H:i') ?? '—' }}
                     </td>
                     <td class="text-end text-nowrap">
+                        @if(catmin_can('module.webhooks.edit'))
                         <a href="{{ route('admin.webhooks.edit', $webhook->id) }}"
                            class="btn btn-sm btn-outline-secondary me-1" title="Modifier">
                             <i class="bi bi-pencil"></i>
                         </a>
+                        @endif
+                        @if(catmin_can('module.webhooks.delete'))
                         <form class="d-inline" method="POST" action="{{ route('admin.webhooks.destroy', $webhook->id) }}"
                               onsubmit="return confirm('Supprimer le webhook « {{ addslashes($webhook->name) }} » ?');">
                             @csrf
@@ -62,6 +67,7 @@
                                 <i class="bi bi-trash3"></i>
                             </button>
                         </form>
+                        @endif
                     </td>
                 </tr>
             @endforeach

@@ -67,6 +67,7 @@
                         </div>
                     </div>
                 </div>
+                @if(catmin_can('module.cache.config'))
                 <div class="col-12 col-md-6 col-lg-3">
                     <div class="card border-warning h-100">
                         <div class="card-body text-center">
@@ -98,6 +99,7 @@
                     </div>
                 </div>
             </div>
+            @endif
         </div>
     </div>
 </div>

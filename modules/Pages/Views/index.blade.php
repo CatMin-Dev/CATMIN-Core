@@ -7,9 +7,11 @@
     title="Pages"
     subtitle="Gestion des pages simples du frontend CATMIN."
 >
-    <a class="btn btn-primary" href="{{ admin_route('pages.create') }}">
-        <i class="bi bi-plus-circle me-1"></i>Nouvelle page
-    </a>
+    @if(catmin_can('module.pages.create'))
+        <a class="btn btn-primary" href="{{ admin_route('pages.create') }}">
+            <i class="bi bi-plus-circle me-1"></i>Nouvelle page
+        </a>
+    @endif
 </x-admin.crud.page-header>
 
 <div class="catmin-page-body">
@@ -48,17 +50,19 @@
                     <td>{{ optional($page->updated_at)->format('d/m/Y H:i') ?: 'n/a' }}</td>
                     <td>
                         <div class="d-flex justify-content-end gap-2">
-                            <a class="btn btn-sm btn-outline-secondary" href="{{ admin_route('pages.edit', ['page' => $page->id]) }}">
-                                <i class="bi bi-pencil-square me-1"></i>Modifier
-                            </a>
-                            <form method="post" action="{{ admin_route('pages.toggle_status', ['page' => $page->id]) }}">
+                            @if(catmin_can('module.pages.edit'))
+                                <a class="btn btn-sm btn-outline-secondary" href="{{ admin_route('pages.edit', ['page' => $page->id]) }}">
+                                    <i class="bi bi-pencil-square me-1"></i>Modifier
+                                </a>
+                                <form method="post" action="{{ admin_route('pages.toggle_status', ['page' => $page->id]) }}">
                                 @csrf
                                 @method('PATCH')
                                 <button class="btn btn-sm {{ $page->status === 'published' ? 'btn-outline-warning' : 'btn-outline-success' }}" type="submit">
                                     <i class="bi {{ $page->status === 'published' ? 'bi-pause-circle' : 'bi-check2-circle' }} me-1"></i>
                                     {{ $page->status === 'published' ? 'Depublier' : 'Publier' }}
                                 </button>
-                            </form>
+                                </form>
+                            @endif
                         </div>
                     </td>
                 </tr>

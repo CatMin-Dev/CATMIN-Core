@@ -7,7 +7,9 @@
     title="Mailer"
     subtitle="Base V1: configuration d'envoi, templates, historique minimal. Queue a venir."
 >
-    <a class="btn btn-primary" href="{{ admin_route('mailer.templates.create') }}">Nouveau template</a>
+    @if(catmin_can('module.mailer.create'))
+        <a class="btn btn-primary" href="{{ admin_route('mailer.templates.create') }}">Nouveau template</a>
+    @endif
 </x-admin.crud.page-header>
 
 <div class="catmin-page-body">
@@ -53,7 +55,11 @@
                     <td>{{ $template->name }}</td>
                     <td>{{ $template->subject }}</td>
                     <td><span class="badge {{ $template->is_enabled ? 'text-bg-success' : 'text-bg-secondary' }}">{{ $template->is_enabled ? 'Oui' : 'Non' }}</span></td>
-                    <td class="text-end"><a class="btn btn-sm btn-outline-secondary" href="{{ admin_route('mailer.templates.edit', ['template' => $template->id]) }}">Modifier</a></td>
+                    <td class="text-end">
+                        @if(catmin_can('module.mailer.edit'))
+                            <a class="btn btn-sm btn-outline-secondary" href="{{ admin_route('mailer.templates.edit', ['template' => $template->id]) }}">Modifier</a>
+                        @endif
+                    </td>
                 </tr>
             @endforeach
         </x-slot:rows>

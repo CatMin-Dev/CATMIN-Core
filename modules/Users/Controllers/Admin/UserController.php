@@ -104,4 +104,14 @@ class UserController extends Controller
             ->route('admin.users.manage')
             ->with('status', 'Statut utilisateur mis a jour.');
     }
+
+    public function destroy(User $user): RedirectResponse
+    {
+        $name = $user->name;
+        $this->usersAdminService->deleteUser($user);
+
+        return redirect()
+            ->route('admin.users.manage')
+            ->with('status', 'Utilisateur "' . $name . '" supprime.');
+    }
 }

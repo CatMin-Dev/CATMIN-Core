@@ -8,7 +8,9 @@
         <h1 class="h3 mb-1">Menus</h1>
         <p class="text-muted mb-0">Gestion des menus dynamiques frontend.</p>
     </div>
+    @if(catmin_can('module.menus.create'))
     <a class="btn btn-primary" href="{{ route('admin.menus.create') }}">Nouveau menu</a>
+    @endif
 </header>
 
 <div class="catmin-page-body">
@@ -29,12 +31,14 @@
                             <td><span class="badge {{ $menu->status === 'active' ? 'text-bg-success' : 'text-bg-secondary' }}">{{ $menu->status }}</span></td>
                             <td>{{ $menu->items_count }}</td>
                             <td class="d-flex gap-2">
+                                @if(catmin_can('module.menus.edit'))
                                 <a class="btn btn-sm btn-outline-primary" href="{{ route('admin.menus.edit', $menu) }}">Editer</a>
                                 <form method="POST" action="{{ route('admin.menus.toggle_status', $menu) }}">
                                     @csrf
                                     @method('PATCH')
                                     <button type="submit" class="btn btn-sm btn-outline-secondary">Toggle</button>
                                 </form>
+                                @endif
                             </td>
                         </tr>
                     @empty

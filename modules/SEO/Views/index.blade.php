@@ -7,7 +7,9 @@
     title="SEO"
     subtitle="Base simple de metadonnees SEO reutilisables."
 >
-    <a class="btn btn-primary" href="{{ admin_route('seo.create') }}">Nouvelle entree SEO</a>
+    @if(catmin_can('module.seo.create'))
+        <a class="btn btn-primary" href="{{ admin_route('seo.create') }}">Nouvelle entree SEO</a>
+    @endif
 </x-admin.crud.page-header>
 
 <div class="catmin-page-body">
@@ -40,7 +42,11 @@
                     <td>{{ $record->meta_description ? \Illuminate\Support\Str::limit($record->meta_description, 80) : 'n/a' }}</td>
                     <td>{{ $record->meta_robots ?: 'n/a' }}</td>
                     <td>{{ $record->canonical_url ?: 'n/a' }}</td>
-                    <td class="text-end"><a class="btn btn-sm btn-outline-secondary" href="{{ admin_route('seo.edit', ['seoMeta' => $record->id]) }}">Modifier</a></td>
+                    <td class="text-end">
+                        @if(catmin_can('module.seo.edit'))
+                            <a class="btn btn-sm btn-outline-secondary" href="{{ admin_route('seo.edit', ['seoMeta' => $record->id]) }}">Modifier</a>
+                        @endif
+                    </td>
                 </tr>
             @endforeach
         </x-slot:rows>

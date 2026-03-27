@@ -19,6 +19,7 @@
         </div>
         <div class="card-body">
             <div class="row g-2">
+                @if(catmin_can('module.cron.config'))
                 @foreach($tasks as $key => $label)
                 <div class="col-12 col-sm-6 col-md-4">
                     <form method="POST" action="{{ route('admin.cron.run', $key) }}"
@@ -105,7 +106,8 @@
                         @endif
                     </td>
                 </tr>
-            @endforeach
+                @endforeach
+                @endif
         </x-slot:rows>
     </x-admin.crud.table-card>
 </div>
