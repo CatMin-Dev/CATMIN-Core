@@ -1,0 +1,62 @@
+@extends('admin.layouts.catmin')
+
+@section('page_title', 'News')
+
+@section('content')
+<x-admin.crud.page-header
+    title="News"
+    subtitle="Actualites courtes, factuelles, orientees informations rapides."
+>
+    <a class="btn btn-primary" href="{{ admin_route('news.create') }}">Nouvelle actualite</a>
+</x-admin.crud.page-header>
+
+<div class="catmin-page-body">
+    <x-admin.crud.flash-messages />
+
+    <x-admin.crud.table-card
+        title="Actualites"
+        :count="$items->count()"
+        :empty-colspan="8"
+        empty-message="Aucune actualite."
+    >
+        <x-slot:head>
+            <tr>
+                <th>ID</th>
+                <th>Titre</th>
+                <th>Slug</th>
+                <th>Resume</th>
+                <th>Statut</th>
+                <th>Publication</th>
+                <th>Media/SEO</th>
+                <th class="text-end">Actions</th>
+            </tr>
+        </x-slot:head>
+
+        <x-slot:rows>
+            @foreach($items as $item)
+                <tr>
+                    <td>{{ $item->id }}</td>
+                    <td>{{ $item->title }}</td>
+                    <td>{{ $item->slug }}</td>
+                    <td>{{ \Illuminate\Support\Str::limit($item->summary ?: '', 60) ?: 'n/a' }}</td>
+                    <td><span class="badge {{ $item->status === 'published' ? 'text-bg-success' : 'text-bg-secondary' }}">{{ $item->status === 'published' ? 'Publie' : 'Brouillon' }}</span></td>
+                    <td>{{ optional($item->published_at)->format('d/m/Y H:i') ?: 'n/a' }}</td>
+                    <td>M{{ $item->media_asset_id ?: '-' }} / S{{ $item->seo_meta_id ?: '-' }}</td>
+                    <td>
+                        <div class="d-flex justify-content-end gap-2">
+                            <a class="btn btn-sm btn-outline-secondary" href="{{ admin_route('news.edit', ['newsItem' => $item->id]) }}">Modifier</a>
+                            <form method="post" action="{{ admin_route('news.toggle_status', ['newsItem' => $item->id]) }}">
+                                @csrf
+                                @method('PATCH')
+                                <button class="btn btn-sm {{ $item->status === 'published' ? 'btn-outline-warning' : 'btn-outline-success' }}" type="submit">
+                                    {{ $item->status === 'published' ? 'Depublier' : 'Publier' }}
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            @endforeach
+        </x-slot:rows>
+    </x-admin.crud.table-card>
+</div>
+@endsection

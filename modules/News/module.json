@@ -1,7 +1,18 @@
 {
   "name": "News",
   "slug": "news",
-  "enabled": false,
+  "enabled": true,
   "version": "1.0.0",
+  "description": "Actualites courtes et factuelles pour le frontend CATMIN.",
+  "category": "content",
+  "provides": [
+    "news-list",
+    "news-create",
+    "news-edit",
+    "news-status",
+    "news-publication-date",
+    "news-media-link",
+    "news-seo-link"
+  ],
   "depends": ["core","media","seo"]
 }
