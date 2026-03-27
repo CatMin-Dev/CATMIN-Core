@@ -114,6 +114,113 @@ Fichiers cles:
 - `modules/Pages/Controllers/Admin/PageController.php`
 - `modules/Pages/Views/*.blade.php`
 
+## 6.1 Module Media
+
+Role:
+
+- mediatheque reutilisable pour contenus editoriaux
+- stockage des metadonnees fichier (nom, mime, taille, alt, caption)
+
+Routes utiles:
+
+- `admin/media/manage`
+- `admin/media/create`
+- `admin/media/{asset}/edit`
+
+Exemple simple en Blade:
+
+```php
+$hero = media_asset(12);
+$heroUrl = media_url($hero, asset('assets/img/placeholder.png'));
+```
+
+## 6.2 Module SEO
+
+Role:
+
+- stocker des metadonnees SEO reutilisables par module
+- rattachement par `target_type` + `target_id`
+
+Usage simple:
+
+```php
+$seo = seo_for('page', $page->id);
+```
+
+## 6.3 Module Articles (fusion News + Blog)
+
+Role:
+
+- unifier News et Blog dans une seule base admin
+- differencier les types via `content_type` (`news` ou `article`)
+
+Notes V1:
+
+- modules legacy `News` et `Blog` conserves mais desactives
+- les donnees existantes ont ete migrees vers `articles`
+- dependances standard: `core`, `media`, `seo`
+
+Statut legacy explicite:
+
+- `News`: desactive, redirige fonctionnellement vers `Articles`
+- `Blog`: desactive, redirige fonctionnellement vers `Articles`
+
+Exemple helper frontend:
+
+```php
+$latestNews = news_items(5);
+$latestPosts = blog_posts(5);
+```
+
+## 6.4 Module Mailer
+
+Role:
+
+- base d'envoi d'emails systeme
+- point d'appui pour futures notifications/campagnes
+
+Perimetre V1:
+
+- pas de builder de campagne avance
+- pas de suivi analytics email avance
+
+## 6.5 Module Manager admin
+
+Page admin dediee: `admin/modules`
+
+Ce qui est affiche:
+
+- nom, slug, version, type (systeme/optionnel)
+- etat actif/desactive
+- dependances
+- disponibilite routes (via `ModuleLoader::getRoutesInfo()`)
+
+Actions disponibles:
+
+- activer un module
+- desactiver un module (si securite OK)
+
+## 6.6 Activation, dependances et securites (V1)
+
+Regles appliquees:
+
+- `core` est protege et non desactivable
+- impossible d'activer un module si une dependance est absente/desactivee
+- impossible de desactiver un module requis par un autre module actif
+- seuls les modules en etat coherent sont consideres "enabled" effectivement
+
+Dependances minimales forcees (fallback V1):
+
+- `pages` -> `core`, `seo`
+- `news` -> `core`, `media`, `seo`
+- `blog` -> `core`, `media`, `seo`
+- `articles` -> `core`, `media`, `seo`
+
+Objectif:
+
+- eviter les etats incoherents evidents
+- garder une logique simple et maintenable
+
 ## 7. Navigation admin
 
 La sidebar est generee par service, pas codee en dur partout.
@@ -206,12 +313,12 @@ Exemple minimal de `module.json`:
 
 ```json
 {
-  "name": "News",
-  "slug": "news",
+  "name": "Shop",
+  "slug": "shop",
   "enabled": true,
   "version": "1.0.0",
-  "depends": ["core"],
-  "description": "Base module news"
+  "depends": ["core", "users", "settings", "media"],
+  "description": "Base module ecommerce"
 }
 ```
 
