@@ -65,6 +65,12 @@ Route::prefix($adminPath)->middleware('web')->name('admin.')->group(function () 
         Route::get('/modules', [DashboardController::class, 'modules'])
             ->name('modules.index');
 
+        Route::post('/modules/{slug}/enable', [DashboardController::class, 'enableModule'])
+            ->name('modules.enable');
+
+        Route::post('/modules/{slug}/disable', [DashboardController::class, 'disableModule'])
+            ->name('modules.disable');
+
         Route::get('/content/{module}', [DashboardController::class, 'content'])
             ->whereIn('module', ['pages', 'articles', 'blog', 'news', 'media'])
             ->name('content.show');

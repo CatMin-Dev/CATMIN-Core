@@ -16,7 +16,7 @@
         </div>
         <div class="table-responsive">
             <table class="table table-striped table-hover align-middle mb-0">
-                <thead><tr><th>Nom</th><th>Slug</th><th>Version</th><th>Etat</th><th>Dependances</th></tr></thead>
+                <thead><tr><th>Nom</th><th>Slug</th><th>Version</th><th>Etat</th><th>Dependances</th><th>Actions</th></tr></thead>
                 <tbody>
                     @forelse($modules as $module)
                         <tr>
@@ -25,13 +25,65 @@
                             <td>{{ $module->version ?? 'n/a' }}</td>
                             <td><span class="badge {{ $module->enabled ? 'text-bg-success' : 'text-bg-secondary' }}">{{ $module->enabled ? 'Actif' : 'Desactive' }}</span></td>
                             <td>{{ collect($module->depends ?? [])->join(', ') ?: 'Aucune' }}</td>
+                            <td>
+                                <form method="POST" style="display:inline;" onsubmit="return confirm('Êtes-vous sûr?');">
+                                    @csrf
+                                    @if($module->enabled)
+                                        <button type="submit" formaction="{{ route('admin.modules.disable', $module->slug) }}" class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-power"></i> Desactiver
+                                        </button>
+                                    @else
+                                        <button type="submit" formaction="{{ route('admin.modules.enable', $module->slug) }}" class="btn btn-sm btn-outline-success">
+                                            <i class="bi bi-check-circle"></i> Activer
+                                        </button>
+                                    @endif
+                                </form>
+                            </td>
                         </tr>
                     @empty
-                        <tr><td colspan="5" class="text-center text-muted py-4">Aucun module.</td></tr>
+                        <tr><td colspan="6" class="text-center text-muted py-4">Aucun module.</td></tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
     </div>
+
+    @if($errors->any())
+        <div class="alert alert-danger mt-3" role="alert">
+            <strong>Erreur:</strong>
+            @foreach($errors->all() as $error)
+                <div>{{ $error }}</div>
+            @endforeach
+        </div>
+    @endif
 </div>
+
+<script>
+    @if(session('success'))
+        document.addEventListener('DOMContentLoaded', function() {
+            // Bootstrap toast or alert notification
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-success alert-dismissible fade show';
+            alert.setAttribute('role', 'alert');
+            alert.innerHTML = `
+                {{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            document.querySelector('.catmin-page-body').insertAdjacentElement('beforebegin', alert);
+        });
+    @endif
+
+    @if(session('error'))
+        document.addEventListener('DOMContentLoaded', function() {
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-danger alert-dismissible fade show';
+            alert.setAttribute('role', 'alert');
+            alert.innerHTML = `
+                {{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            document.querySelector('.catmin-page-body').insertAdjacentElement('beforebegin', alert);
+        });
+    @endif
+</script>
 @endsection

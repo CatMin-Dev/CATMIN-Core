@@ -8,7 +8,9 @@ use App\Models\Setting;
 use App\Models\User;
 use App\Services\ModuleManager;
 use App\Services\SettingService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 use stdClass;
 
@@ -96,5 +98,80 @@ class DashboardController extends Controller
             'currentPage' => 'content-' . $module,
             'module' => $moduleConfig,
         ]);
+    }
+
+    public function enableModule(Request $request, string $slug): JsonResponse|RedirectResponse
+    {
+        try {
+            $module = ModuleManager::find($slug);
+            abort_if(!$module instanceof stdClass, 404);
+
+            // Check for circular dependencies
+            $allModules = ModuleManager::all();
+            $enabledModules = ModuleManager::enabled();
+            $dependenciesNeeded = $module->depends ?? [];
+
+            foreach ($dependenciesNeeded as $depSlug) {
+                $dep = $allModules->firstWhere('slug', $depSlug);
+                if (!$dep || !$dep->enabled) {
+                    $message = "Impossible d'activer {$module->name}: la dépendance '{$depSlug}' est désactivée.";
+                    if ($request->wantsJson()) {
+                        return response()->json(['success' => false, 'message' => $message], 422);
+                    }
+                    return redirect()->back()->with('error', $message);
+                }
+            }
+
+            ModuleManager::enable($slug);
+
+            $message = "Module {$module->name} activé avec succès.";
+            if ($request->wantsJson()) {
+                return response()->json(['success' => true, 'message' => $message]);
+            }
+            return redirect()->back()->with('success', $message);
+        } catch (\Exception $e) {
+            $message = 'Erreur lors de l\'activation du module: ' . $e->getMessage();
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $message], 500);
+            }
+            return redirect()->back()->with('error', $message);
+        }
+    }
+
+    public function disableModule(Request $request, string $slug): JsonResponse|RedirectResponse
+    {
+        try {
+            $module = ModuleManager::find($slug);
+            abort_if(!$module instanceof stdClass, 404);
+
+            // Check if other enabled modules depend on this one
+            $allModules = ModuleManager::all();
+            $dependents = $allModules->filter(function ($m) use ($slug) {
+                return $m->enabled && collect($m->depends ?? [])->contains($slug);
+            });
+
+            if ($dependents->isNotEmpty()) {
+                $dependentNames = $dependents->pluck('name')->join(', ');
+                $message = "Impossible de désactiver {$module->name}: les modules suivants en dépendent: {$dependentNames}.";
+                if ($request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => $message], 422);
+                }
+                return redirect()->back()->with('error', $message);
+            }
+
+            ModuleManager::disable($slug);
+
+            $message = "Module {$module->name} désactivé avec succès.";
+            if ($request->wantsJson()) {
+                return response()->json(['success' => true, 'message' => $message]);
+            }
+            return redirect()->back()->with('success', $message);
+        } catch (\Exception $e) {
+            $message = 'Erreur lors de la désactivation du module: ' . $e->getMessage();
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $message], 500);
+            }
+            return redirect()->back()->with('error', $message);
+        }
     }
 }
