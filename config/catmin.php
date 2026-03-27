@@ -152,6 +152,7 @@ return [
                         'route' => 'content.show',
                         'parameters' => ['module' => 'pages'],
                         'match_module' => 'pages',
+                        'active_when' => ['content.show', 'pages.*'],
                     ],
                     [
                         'label' => 'Articles',
@@ -159,6 +160,7 @@ return [
                         'route' => 'content.show',
                         'parameters' => ['module' => 'articles'],
                         'match_module' => 'articles',
+                        'active_when' => ['content.show', 'articles.*'],
                     ],
                     [
                         'label' => 'Media',
@@ -166,6 +168,7 @@ return [
                         'route' => 'content.show',
                         'parameters' => ['module' => 'media'],
                         'match_module' => 'media',
+                        'active_when' => ['content.show', 'media.*'],
                     ],
                 ],
             ],

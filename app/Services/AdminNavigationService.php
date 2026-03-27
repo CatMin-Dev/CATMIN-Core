@@ -109,8 +109,23 @@ class AdminNavigationService
             $active = request()->routeIs('admin.' . $routeName);
         }
 
+        // Check active_when patterns with module context
         if (!$active && !empty($item['active_when'])) {
             foreach ((array) $item['active_when'] as $pattern) {
+                // For content routes with match_module, check if we're on that module's routes
+                if ($hasModuleMatch && $pattern === 'content.show' && request()->routeIs('admin.content.show')) {
+                    $active = request()->route('module') === $item['match_module'];
+                    if ($active) break;
+                }
+                // For module-specific routes (pages.*, articles.*, etc)
+                if ($hasModuleMatch && strpos($pattern, '*') !== false) {
+                    $modulePrefix = substr($pattern, 0, strpos($pattern, '.'));
+                    if ($modulePrefix === $item['match_module'] && request()->routeIs('admin.' . $pattern)) {
+                        $active = true;
+                        break;
+                    }
+                }
+                // Generic pattern matching
                 if (request()->routeIs('admin.' . $pattern)) {
                     $active = true;
                     break;
@@ -118,6 +133,7 @@ class AdminNavigationService
             }
         }
 
+        // Legacy fallback for match_module on content.show route
         if (!$active && !empty($item['match_module']) && request()->routeIs('admin.content.show')) {
             $active = request()->route('module') === $item['match_module'];
         }
