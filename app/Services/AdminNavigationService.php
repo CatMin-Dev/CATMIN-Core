@@ -54,6 +54,10 @@ class AdminNavigationService
             return false;
         }
 
+        if (!empty($item['permission']) && !RbacPermissionService::allows(request(), (string) $item['permission'])) {
+            return false;
+        }
+
         $requiredModule = self::resolveRequiredModule($item);
 
         if ($requiredModule !== null && !ModuleManager::isEnabled($requiredModule)) {

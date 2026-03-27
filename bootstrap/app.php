@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureCatminAdminAuthenticated;
+use App\Http\Middleware\EnsureCatminPermission;
 use App\Services\AddonLoader;
 use App\Services\ModuleLoader;
 use Illuminate\Foundation\Application;
@@ -21,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'catmin.admin' => EnsureCatminAdminAuthenticated::class,
+            'catmin.permission' => EnsureCatminPermission::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

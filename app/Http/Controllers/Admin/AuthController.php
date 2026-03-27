@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
+use App\Services\RbacPermissionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -44,6 +45,11 @@ final class AuthController extends Controller
         $request->session()->put('catmin_admin_authenticated', true);
         $request->session()->put('catmin_admin_username', $data['username']);
 
+        $rbacContext = RbacPermissionService::resolveContextForUsername((string) $data['username']);
+        $request->session()->put('catmin_rbac_roles', $rbacContext['roles']);
+        $request->session()->put('catmin_rbac_permissions', $rbacContext['permissions']);
+        $request->session()->put('catmin_rbac_source', $rbacContext['source']);
+
         return redirect()->route('admin.index');
     }
 
@@ -52,6 +58,9 @@ final class AuthController extends Controller
         $request->session()->forget([
             'catmin_admin_authenticated',
             'catmin_admin_username',
+            'catmin_rbac_roles',
+            'catmin_rbac_permissions',
+            'catmin_rbac_source',
         ]);
         $request->session()->invalidate();
         $request->session()->regenerateToken();

@@ -113,6 +113,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | RBAC Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Progressive RBAC: legacy admin keeps '*' permission, while routes/menu
+    | can progressively declare fine-grained permissions.
+    |
+    */
+    'rbac' => [
+        'enabled' => true,
+        'convention' => 'module.<slug>.<action>',
+        'actions' => ['menu', 'list', 'create', 'edit', 'delete', 'config'],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Admin Navigation Configuration
     |--------------------------------------------------------------------------
     |
@@ -136,24 +151,28 @@ return [
                         'icon' => 'bi bi-people',
                         'route' => 'users.index',
                         'active_when' => ['users.*'],
+                        'permission' => 'module.users.menu',
                     ],
                     [
                         'label' => 'Roles',
                         'icon' => 'bi bi-shield-check',
                         'route' => 'roles.index',
                         'active_when' => ['roles.*'],
+                        'permission' => 'module.users.config',
                     ],
                     [
                         'label' => 'Parametres',
                         'icon' => 'bi bi-sliders',
                         'route' => 'settings.index',
                         'active_when' => ['settings.*'],
+                        'permission' => 'module.settings.menu',
                     ],
                     [
                         'label' => 'Modules',
                         'icon' => 'bi bi-puzzle',
                         'route' => 'modules.index',
                         'active_when' => ['modules.*'],
+                        'permission' => 'module.core.config',
                     ],
                     [
                         'label' => 'Logs',
@@ -207,6 +226,7 @@ return [
                         'parameters' => ['module' => 'pages'],
                         'match_module' => 'pages',
                         'active_when' => ['content.show', 'pages.*'],
+                        'permission' => 'module.pages.menu',
                     ],
                     [
                         'label' => 'Articles',
@@ -215,6 +235,7 @@ return [
                         'parameters' => ['module' => 'articles'],
                         'match_module' => 'articles',
                         'active_when' => ['content.show', 'articles.*'],
+                        'permission' => 'module.articles.menu',
                     ],
                     [
                         'label' => 'Media',
@@ -223,6 +244,7 @@ return [
                         'parameters' => ['module' => 'media'],
                         'match_module' => 'media',
                         'active_when' => ['content.show', 'media.*'],
+                        'permission' => 'module.media.menu',
                     ],
                     [
                         'label' => 'Menus',
