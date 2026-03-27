@@ -3,5 +3,8 @@
   "slug": "shop",
   "enabled": false,
   "version": "1.0.0",
-  "depends": ["core","media","users","settings"]
+  "description": "Base e-commerce leger CATMIN (produits simples sans paiement V1).",
+  "category": "commerce",
+  "provides": ["products-list", "products-create", "products-edit", "products-status"],
+  "depends": ["core", "media", "users", "settings"]
 }

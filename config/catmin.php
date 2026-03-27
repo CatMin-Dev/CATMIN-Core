@@ -173,6 +173,18 @@ return [
                 ],
             ],
             [
+                'title' => 'Commerce',
+                'items' => [
+                    [
+                        'label' => 'Shop',
+                        'icon' => 'bi bi-bag',
+                        'route' => 'shop.manage',
+                        'active_when' => ['shop.*'],
+                        'module' => 'shop',
+                    ],
+                ],
+            ],
+            [
                 'title' => 'Modules actifs',
                 'source' => 'enabled_modules',
             ],
