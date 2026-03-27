@@ -1,9 +1,0 @@
-{
-  "name": "Blog",
-  "slug": "blog",
-  "enabled": false,
-  "version": "1.0.0",
-  "description": "Module fusionne dans Articles (legacy conserve temporairement).",
-  "depends": ["core", "media", "seo"],
-  "provides": ["legacy"]
-}

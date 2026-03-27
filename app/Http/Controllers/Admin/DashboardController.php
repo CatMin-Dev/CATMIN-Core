@@ -85,7 +85,7 @@ class DashboardController extends Controller
             return redirect()->route('admin.pages.manage');
         }
 
-        if ($module === 'articles' || $module === 'blog' || $module === 'news') {
+        if ($module === 'articles') {
             return redirect()->route('admin.articles.manage');
         }
 
