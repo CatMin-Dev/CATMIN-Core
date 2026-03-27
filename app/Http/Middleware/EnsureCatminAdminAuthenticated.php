@@ -6,6 +6,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Modules\Logger\Services\SystemLogService;
 use Symfony\Component\HttpFoundation\Response;
 
 final class EnsureCatminAdminAuthenticated
@@ -16,6 +17,12 @@ final class EnsureCatminAdminAuthenticated
             return redirect()->route('admin.login');
         }
 
-        return $next($request);
+        $response = $next($request);
+
+        /** @var SystemLogService $logger */
+        $logger = app(SystemLogService::class);
+        $logger->logAdminAction($request, $response->getStatusCode());
+
+        return $response;
     }
 }

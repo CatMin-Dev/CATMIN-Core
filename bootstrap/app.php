@@ -5,6 +5,7 @@ use App\Services\ModuleLoader;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Modules\Logger\Services\SystemLogService;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -21,5 +22,13 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->report(function (\Throwable $throwable): void {
+            /** @var SystemLogService $logger */
+            $logger = app(SystemLogService::class);
+            $logger->logError($throwable, [
+                'url' => request()?->fullUrl(),
+                'method' => request()?->method(),
+                'ip' => request()?->ip(),
+            ]);
+        });
     })->create();

@@ -141,6 +141,13 @@ return [
                         'route' => 'modules.index',
                         'active_when' => ['modules.*'],
                     ],
+                    [
+                        'label' => 'Logs',
+                        'icon' => 'bi bi-journal-code',
+                        'route' => 'logger.index',
+                        'active_when' => ['logger.*'],
+                        'module' => 'logger',
+                    ],
                 ],
             ],
             [
