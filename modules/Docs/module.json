@@ -1,0 +1,9 @@
+{
+  "name": "Docs",
+  "slug": "docs",
+  "enabled": true,
+  "version": "1.0.0",
+  "description": "Documentation embarquee Markdown avec aide contextuelle par module.",
+  "depends": ["core"],
+  "provides": ["docs", "help"]
+}

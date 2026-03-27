@@ -86,4 +86,12 @@ Route::middleware(['web', 'catmin.admin'])
         Route::get('/shop/invoices/{invoice}', [InvoiceController::class, 'show'])
             ->middleware('catmin.permission:module.shop.list')
             ->name('shop.invoices.show');
+
+        Route::get('/shop/invoice-settings', [InvoiceController::class, 'settingsIndex'])
+            ->middleware('catmin.permission:module.shop.config')
+            ->name('shop.invoices.settings');
+
+        Route::put('/shop/invoice-settings', [InvoiceController::class, 'settingsUpdate'])
+            ->middleware('catmin.permission:module.shop.config')
+            ->name('shop.invoices.settings.update');
     });

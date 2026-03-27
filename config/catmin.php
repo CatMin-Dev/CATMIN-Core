@@ -261,11 +261,27 @@ return [
                         'module' => 'queue',
                         'permission' => 'module.queue.menu',
                     ],
+                        [
+                            'label' => 'Documentation',
+                            'icon' => 'bi bi-book',
+                            'route' => 'docs.index',
+                            'active_when' => ['docs.*'],
+                            'module' => 'docs',
+                            'permission' => 'module.docs.list',
+                        ],
                 ],
             ],
             [
                 'title' => 'Intégrations',
                 'items' => [
+                    [
+                        'label' => 'Mailer',
+                        'icon' => 'bi bi-envelope',
+                        'route' => 'mailer.manage',
+                        'active_when' => ['mailer.*'],
+                        'module' => 'mailer',
+                        'permission' => 'module.mailer.menu',
+                    ],
                     [
                         'label' => 'Webhooks',
                         'icon' => 'bi bi-send',
@@ -339,6 +355,14 @@ return [
                         'module' => 'shop',
                         'permission' => 'module.shop.menu',
                     ],
+                        [
+                            'label' => 'Factures — Config',
+                            'icon' => 'bi bi-receipt',
+                            'route' => 'shop.invoices.settings',
+                            'active_when' => ['shop.invoices.settings*'],
+                            'module' => 'shop',
+                            'permission' => 'module.shop.config',
+                        ],
                 ],
             ],
             [
