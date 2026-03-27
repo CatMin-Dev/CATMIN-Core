@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Services\AddonManager;
+use App\Services\HealthCheckService;
 use App\Services\MigrationCollisionService;
 use App\Services\ModuleManager;
 use Illuminate\Console\Command;
@@ -15,25 +16,34 @@ class CatminSystemCheckCommand extends Command
 
     public function handle(): int
     {
+        $health = HealthCheckService::run();
+
         $report = [
+            'health' => $health,
             'modules' => ModuleManager::summary(),
             'addons' => AddonManager::summary(),
             'module_state_issues' => ModuleManager::stateIssues(),
             'migration_collisions' => MigrationCollisionService::detectBasenameCollisions(),
-            'storage_writable' => is_writable(storage_path()),
-            'cache_writable' => is_writable(storage_path('framework/cache')),
         ];
 
         if ((bool) $this->option('json')) {
             $this->line(json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
-            return empty($report['module_state_issues']) && empty($report['migration_collisions']) ? self::SUCCESS : self::FAILURE;
+            $healthy = $health['ok']
+                && empty($report['module_state_issues'])
+                && empty($report['migration_collisions']);
+
+            return $healthy ? self::SUCCESS : self::FAILURE;
         }
 
         $this->info('CATMIN system check');
         $this->line('- Modules: ' . $report['modules']['enabled'] . '/' . $report['modules']['total'] . ' actifs');
         $this->line('- Addons: ' . $report['addons']['enabled'] . '/' . $report['addons']['total'] . ' actifs');
-        $this->line('- storage writable: ' . ($report['storage_writable'] ? 'yes' : 'no'));
-        $this->line('- cache writable: ' . ($report['cache_writable'] ? 'yes' : 'no'));
+
+        $this->line('- Health checks: ' . $health['summary']['ok'] . '/' . $health['summary']['total'] . ' OK');
+        foreach ($health['checks'] as $check) {
+            $status = $check['ok'] ? 'OK' : 'NOK';
+            $this->line("  [{$status}] {$check['label']} - {$check['details']}");
+        }
 
         if (!empty($report['module_state_issues'])) {
             $this->warn('Issues modules detectees:');
@@ -52,7 +62,9 @@ class CatminSystemCheckCommand extends Command
             }
         }
 
-        $healthy = empty($report['module_state_issues']) && empty($report['migration_collisions']) && $report['storage_writable'] && $report['cache_writable'];
+        $healthy = $health['ok']
+            && empty($report['module_state_issues'])
+            && empty($report['migration_collisions']);
 
         if ($healthy) {
             $this->info('Etat systeme: OK');

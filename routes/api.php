@@ -16,5 +16,6 @@ Route::prefix('internal')->group(function (): void {
     Route::middleware('catmin.api-token')->group(function (): void {
         Route::get('/system/status', [InternalSystemController::class, 'status']);
         Route::get('/system/version', [InternalSystemController::class, 'version']);
+        Route::get('/system/health', [InternalSystemController::class, 'health']);
     });
 });

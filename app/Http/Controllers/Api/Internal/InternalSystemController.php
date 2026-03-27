@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Internal;
 
 use App\Http\Controllers\Controller;
+use App\Services\HealthCheckService;
 use App\Services\SettingService;
 use Illuminate\Http\JsonResponse;
 
@@ -37,5 +38,18 @@ class InternalSystemController extends Controller
                 'laravel_version' => app()->version(),
             ],
         ]);
+    }
+
+    /**
+     * GET /api/internal/system/health (protected)
+     */
+    public function health(): JsonResponse
+    {
+        $health = HealthCheckService::run();
+
+        return response()->json([
+            'success' => true,
+            'data' => $health,
+        ], $health['ok'] ? 200 : 503);
     }
 }
