@@ -33,6 +33,81 @@
         <div class="col-12 col-sm-6 col-xxl-3"><div class="card h-100"><div class="card-body"><p class="text-muted mb-1">Modules actifs</p><p class="display-6 mb-0">{{ $stats['modules_enabled'] }}/{{ $stats['modules_total'] }}</p></div></div></div>
     </div>
 
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-lg-4">
+            <div class="card h-100">
+                <div class="card-header bg-white"><h2 class="h6 mb-0">Sante plateforme</h2></div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between py-2 border-bottom"><span>Erreurs (24h)</span><strong>{{ $health['recent_errors'] }}</strong></div>
+                    <div class="d-flex justify-content-between py-2 border-bottom"><span>Jobs en echec</span><strong>{{ $health['failed_jobs'] }}</strong></div>
+                    <div class="d-flex justify-content-between py-2 border-bottom"><span>Mails envoyes</span><strong>{{ $health['mailer_sent'] }}</strong></div>
+                    <div class="d-flex justify-content-between py-2"><span>Mails en echec</span><strong>{{ $health['mailer_failed'] }}</strong></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-8">
+            <div class="card h-100">
+                <div class="card-header bg-white"><h2 class="h6 mb-0">Activite des 7 derniers jours</h2></div>
+                <div class="card-body">
+                    @php
+                        $maxUsers = max(1, max($activity['users']));
+                        $maxContent = max(1, max($activity['content']));
+                        $maxErrors = max(1, max($activity['errors']));
+                    @endphp
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Jour</th>
+                                    <th>Utilisateurs</th>
+                                    <th>Contenu publie</th>
+                                    <th>Erreurs</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($activity['labels'] as $i => $label)
+                                    @php
+                                        $usersWidth = (int) round(($activity['users'][$i] / $maxUsers) * 100);
+                                        $contentWidth = (int) round(($activity['content'][$i] / $maxContent) * 100);
+                                        $errorsWidth = (int) round(($activity['errors'][$i] / $maxErrors) * 100);
+                                    @endphp
+                                    <tr>
+                                        <td class="fw-semibold">{{ $label }}</td>
+                                        <td style="min-width: 180px;">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="progress flex-grow-1" role="progressbar" aria-valuemin="0" aria-valuemax="{{ $maxUsers }}" aria-valuenow="{{ $activity['users'][$i] }}">
+                                                    <div class="progress-bar js-progress-width" data-progress-width="{{ $usersWidth }}"></div>
+                                                </div>
+                                                <span class="small text-muted">{{ $activity['users'][$i] }}</span>
+                                            </div>
+                                        </td>
+                                        <td style="min-width: 180px;">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="progress flex-grow-1" role="progressbar" aria-valuemin="0" aria-valuemax="{{ $maxContent }}" aria-valuenow="{{ $activity['content'][$i] }}">
+                                                    <div class="progress-bar bg-success js-progress-width" data-progress-width="{{ $contentWidth }}"></div>
+                                                </div>
+                                                <span class="small text-muted">{{ $activity['content'][$i] }}</span>
+                                            </div>
+                                        </td>
+                                        <td style="min-width: 180px;">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="progress flex-grow-1" role="progressbar" aria-valuemin="0" aria-valuemax="{{ $maxErrors }}" aria-valuenow="{{ $activity['errors'][$i] }}">
+                                                    <div class="progress-bar bg-danger js-progress-width" data-progress-width="{{ $errorsWidth }}"></div>
+                                                </div>
+                                                <span class="small text-muted">{{ $activity['errors'][$i] }}</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row g-4">
         <div class="col-12 col-xl-8">
             <div class="card mb-4">
@@ -100,6 +175,35 @@
                     </div>
                 </div>
             </div>
+
+            <div class="card mt-4">
+                <div class="card-header bg-white"><h2 class="h6 mb-0">Etat du contenu</h2></div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-12 col-md-4">
+                            <div class="border rounded p-3 h-100">
+                                <p class="text-muted mb-2">Pages</p>
+                                <div class="d-flex justify-content-between"><span>Publiees</span><strong>{{ $contentStatus['pages']['published'] }}</strong></div>
+                                <div class="d-flex justify-content-between"><span>Brouillons/autres</span><strong>{{ $contentStatus['pages']['draft'] }}</strong></div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <div class="border rounded p-3 h-100">
+                                <p class="text-muted mb-2">Articles</p>
+                                <div class="d-flex justify-content-between"><span>Publies</span><strong>{{ $contentStatus['articles']['published'] }}</strong></div>
+                                <div class="d-flex justify-content-between"><span>Brouillons/autres</span><strong>{{ $contentStatus['articles']['draft'] }}</strong></div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <div class="border rounded p-3 h-100">
+                                <p class="text-muted mb-2">Produits shop</p>
+                                <div class="d-flex justify-content-between"><span>Actifs</span><strong>{{ $contentStatus['products']['active'] }}</strong></div>
+                                <div class="d-flex justify-content-between"><span>Inactifs/autres</span><strong>{{ $contentStatus['products']['inactive'] }}</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="col-12 col-xl-4">
@@ -143,3 +247,15 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.js-progress-width').forEach(function (element) {
+        var value = Number(element.getAttribute('data-progress-width') || 0);
+        var clamped = Math.max(0, Math.min(100, value));
+        element.style.width = clamped + '%';
+    });
+});
+</script>
+@endpush

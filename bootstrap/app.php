@@ -10,6 +10,10 @@ use App\Services\ModuleLoader;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Exceptions\InvalidSignatureException;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Cache\RateLimiting\Limit;
 use Modules\Logger\Services\SystemLogService;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -33,6 +37,30 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        // 419 — CSRF token mismatch → render admin error page
+        $exceptions->render(function (\Illuminate\Session\TokenMismatchException $e, Request $request) {
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'Session expiree (CSRF).'], 419);
+            }
+            return response()->view('admin.pages.errors.419', [], 419);
+        });
+
+        // 401 — Unauthenticated
+        $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, Request $request) {
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'Non authentifie.'], 401);
+            }
+            return response()->view('admin.pages.errors.401', [], 401);
+        });
+
+        // 403 — Authorization
+        $exceptions->render(function (\Illuminate\Auth\Access\AuthorizationException $e, Request $request) {
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'Acces refuse.'], 403);
+            }
+            return response()->view('admin.pages.errors.403', [], 403);
+        });
+
         $exceptions->report(function (\Throwable $throwable): void {
             try {
                 /** @var SystemLogService $logger */
@@ -48,3 +76,17 @@ return Application::configure(basePath: dirname(__DIR__))
             }
         });
     })->create();
+
+// Register rate limiters (called early in app boot via RouteServiceProvider-equivalent)
+app()->booted(function () {
+    RateLimiter::for('catmin-login', function (Request $request) {
+        return Limit::perMinute(5)->by($request->ip())->response(function () {
+            return redirect()->route('admin.login')
+                ->withErrors(['username' => 'Trop de tentatives. Attendez 1 minute.']);
+        });
+    });
+
+    RateLimiter::for('catmin-api', function (Request $request) {
+        return Limit::perMinute(60)->by($request->ip());
+    });
+});

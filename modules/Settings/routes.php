@@ -8,8 +8,10 @@ Route::middleware(['web', 'catmin.admin'])
     ->name('admin.')
     ->group(function (): void {
         Route::get('/settings/manage', [SettingsController::class, 'index'])
+            ->middleware('catmin.permission:module.settings.list')
             ->name('settings.manage');
 
         Route::put('/settings/manage', [SettingsController::class, 'update'])
+            ->middleware('catmin.permission:module.settings.config')
             ->name('settings.update');
     });

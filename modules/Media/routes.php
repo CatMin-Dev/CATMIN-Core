@@ -8,20 +8,26 @@ Route::middleware(['web', 'catmin.admin'])
     ->name('admin.')
     ->group(function (): void {
         Route::get('/media/manage', [MediaController::class, 'index'])
+            ->middleware('catmin.permission:module.media.list')
             ->name('media.manage');
 
         Route::get('/media/create', [MediaController::class, 'create'])
+            ->middleware('catmin.permission:module.media.create')
             ->name('media.create');
 
         Route::post('/media', [MediaController::class, 'store'])
+            ->middleware('catmin.permission:module.media.create')
             ->name('media.store');
 
         Route::get('/media/{asset}/edit', [MediaController::class, 'edit'])
+            ->middleware('catmin.permission:module.media.edit')
             ->name('media.edit');
 
         Route::put('/media/{asset}', [MediaController::class, 'update'])
+            ->middleware('catmin.permission:module.media.edit')
             ->name('media.update');
 
         Route::delete('/media/{asset}', [MediaController::class, 'destroy'])
+            ->middleware('catmin.permission:module.media.delete')
             ->name('media.destroy');
     });

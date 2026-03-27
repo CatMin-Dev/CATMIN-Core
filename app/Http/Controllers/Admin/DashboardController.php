@@ -10,6 +10,10 @@ use App\Services\ModuleLoader;
 use App\Services\ModuleManager;
 use App\Services\ModuleMigrationRunner;
 use App\Services\SettingService;
+use Carbon\Carbon;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,6 +28,9 @@ class DashboardController extends Controller
         $enabledModules = ModuleManager::enabled();
         $siteName = (string) SettingService::get('site.name', 'CATMIN');
         $siteUrl = (string) SettingService::get('site.url', config('app.url'));
+        $activity = $this->buildWeeklyActivity();
+        $health = $this->buildSystemHealth();
+        $contentStatus = $this->buildContentStatus();
 
         return view('admin.pages.dashboard', [
             'currentPage' => 'dashboard',
@@ -48,6 +55,9 @@ class DashboardController extends Controller
             ],
             'enabledModules' => $enabledModules->take(8)->values(),
             'recentUsers' => User::with('roles')->latest()->limit(5)->get(),
+            'activity' => $activity,
+            'health' => $health,
+            'contentStatus' => $contentStatus,
             'contentModules' => collect(['pages', 'articles', 'media', 'menus', 'blocks'])
                 ->map(fn (string $slug) => ModuleManager::find($slug))
                 ->filter()
@@ -293,5 +303,150 @@ class DashboardController extends Controller
             }
             return redirect()->back()->with('error', $message);
         }
+    }
+
+    private function buildWeeklyActivity(): array
+    {
+        $labels = collect(range(6, 0))
+            ->map(fn (int $daysAgo) => Carbon::today()->subDays($daysAgo))
+            ->values();
+
+        $fromDate = $labels->first()?->copy()->startOfDay() ?? Carbon::now()->subDays(6)->startOfDay();
+
+        $usersSeries = $this->countByDay('users', 'created_at', $labels, $fromDate);
+        $errorsSeries = $this->countErrorLogsByDay($labels, $fromDate);
+        $pagesPublishedSeries = $this->countByDay('pages', 'published_at', $labels, $fromDate, fn ($q) => $q->where('status', 'published'));
+        $articlesPublishedSeries = $this->countByDay('articles', 'published_at', $labels, $fromDate, fn ($q) => $q->where('status', 'published'));
+
+        $contentSeries = [];
+        foreach ($labels as $index => $labelDate) {
+            $contentSeries[] = ($pagesPublishedSeries[$index] ?? 0) + ($articlesPublishedSeries[$index] ?? 0);
+        }
+
+        return [
+            'labels' => $labels->map(fn (Carbon $date) => $date->format('d/m'))->values()->all(),
+            'users' => $usersSeries,
+            'content' => $contentSeries,
+            'errors' => $errorsSeries,
+        ];
+    }
+
+    private function buildSystemHealth(): array
+    {
+        $mailerSent = $this->safeCount('mailer_history', function ($query): void {
+            $query->where('status', 'sent');
+        });
+
+        $mailerFailed = $this->safeCount('mailer_history', function ($query): void {
+            $query->where('status', 'failed');
+        });
+
+        $recentErrors = $this->safeCount('system_logs', function ($query): void {
+            $query->whereIn('level', ['error', 'critical', 'alert', 'emergency'])
+                ->where('created_at', '>=', now()->subDay());
+        });
+
+        $failedJobs = Schema::hasTable('failed_jobs') ? DB::table('failed_jobs')->count() : 0;
+
+        return [
+            'mailer_sent' => $mailerSent,
+            'mailer_failed' => $mailerFailed,
+            'recent_errors' => $recentErrors,
+            'failed_jobs' => $failedJobs,
+        ];
+    }
+
+    private function buildContentStatus(): array
+    {
+        return [
+            'pages' => [
+                'published' => $this->safeCount('pages', function ($query): void {
+                    $query->where('status', 'published');
+                }),
+                'draft' => $this->safeCount('pages', function ($query): void {
+                    $query->where('status', '!=', 'published');
+                }),
+            ],
+            'articles' => [
+                'published' => $this->safeCount('articles', function ($query): void {
+                    $query->where('status', 'published');
+                }),
+                'draft' => $this->safeCount('articles', function ($query): void {
+                    $query->where('status', '!=', 'published');
+                }),
+            ],
+            'products' => [
+                'active' => $this->safeCount('shop_products', function ($query): void {
+                    $query->where('status', 'active');
+                }),
+                'inactive' => $this->safeCount('shop_products', function ($query): void {
+                    $query->where('status', '!=', 'active');
+                }),
+            ],
+        ];
+    }
+
+    private function countByDay(
+        string $table,
+        string $column,
+        Collection $days,
+        Carbon $fromDate,
+        ?callable $constraint = null
+    ): array {
+        if (!Schema::hasTable($table) || !Schema::hasColumn($table, $column)) {
+            return $days->map(fn () => 0)->all();
+        }
+
+        $query = DB::table($table)
+            ->selectRaw("DATE($column) as day, COUNT(*) as total")
+            ->whereNotNull($column)
+            ->where($column, '>=', $fromDate)
+            ->groupBy('day');
+
+        if ($constraint !== null) {
+            $constraint($query);
+        }
+
+        $counts = $query
+            ->pluck('total', 'day')
+            ->map(fn ($value) => (int) $value);
+
+        return $days
+            ->map(fn (Carbon $date) => (int) ($counts[$date->toDateString()] ?? 0))
+            ->all();
+    }
+
+    private function countErrorLogsByDay(Collection $days, Carbon $fromDate): array
+    {
+        if (!Schema::hasTable('system_logs') || !Schema::hasColumn('system_logs', 'created_at') || !Schema::hasColumn('system_logs', 'level')) {
+            return $days->map(fn () => 0)->all();
+        }
+
+        $counts = DB::table('system_logs')
+            ->selectRaw('DATE(created_at) as day, COUNT(*) as total')
+            ->where('created_at', '>=', $fromDate)
+            ->whereIn('level', ['error', 'critical', 'alert', 'emergency'])
+            ->groupBy('day')
+            ->pluck('total', 'day')
+            ->map(fn ($value) => (int) $value);
+
+        return $days
+            ->map(fn (Carbon $date) => (int) ($counts[$date->toDateString()] ?? 0))
+            ->all();
+    }
+
+    private function safeCount(string $table, ?callable $constraint = null): int
+    {
+        if (!Schema::hasTable($table)) {
+            return 0;
+        }
+
+        $query = DB::table($table);
+
+        if ($constraint !== null) {
+            $constraint($query);
+        }
+
+        return (int) $query->count();
     }
 }

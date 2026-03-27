@@ -138,6 +138,30 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Two-Factor Authentication (212)
+    |--------------------------------------------------------------------------
+    | CATMIN_2FA_ENABLED=true  active la 2FA sur la connexion admin.
+    | CATMIN_2FA_SECRET        secret TOTP 32 chars (généré via setup page).
+    */
+    'two_factor' => [
+        'enabled' => env('CATMIN_2FA_ENABLED', false),
+        'secret'  => env('CATMIN_2FA_SECRET', ''),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Webhooks
+    |--------------------------------------------------------------------------
+    */
+    'webhooks' => [
+        // Token dans l'URL pour les webhooks entrants (/webhooks/incoming/{token})
+        'incoming_token'  => env('CATMIN_WEBHOOK_INCOMING_TOKEN', ''),
+        // Secret HMAC optionnel — si défini, la signature X-Hub-Signature-256 sera vérifiée (218)
+        'incoming_secret' => env('CATMIN_WEBHOOK_INCOMING_SECRET', ''),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Uploads Security
     |--------------------------------------------------------------------------
     */

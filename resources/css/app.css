@@ -1,1 +1,12 @@
+@import url('https://rsms.me/inter/inter.css');
 @import 'bootstrap/dist/css/bootstrap.min.css';
+
+:root {
+    --bs-font-sans-serif: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --bs-body-font-family: var(--bs-font-sans-serif);
+}
+
+html,
+body {
+    font-family: var(--bs-body-font-family);
+}

@@ -7,6 +7,10 @@ Route::middleware(['web', 'catmin.admin'])
     ->prefix(config('catmin.admin.path', 'admin'))
     ->name('admin.')
     ->group(function (): void {
-        Route::get('/cron', [CronController::class, 'index'])->name('cron.index');
-        Route::post('/cron/run/{task}', [CronController::class, 'runTask'])->name('cron.run');
+        Route::get('/cron', [CronController::class, 'index'])
+            ->middleware('catmin.permission:module.cron.list')
+            ->name('cron.index');
+        Route::post('/cron/run/{task}', [CronController::class, 'runTask'])
+            ->middleware('catmin.permission:module.cron.config')
+            ->name('cron.run');
     });

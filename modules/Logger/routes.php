@@ -8,5 +8,6 @@ Route::middleware(['web', 'catmin.admin'])
     ->name('admin.')
     ->group(function (): void {
         Route::get('/logs', [LogController::class, 'index'])
+            ->middleware('catmin.permission:module.logger.list')
             ->name('logger.index');
     });

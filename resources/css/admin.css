@@ -1,7 +1,10 @@
+@import url('https://rsms.me/inter/inter.css');
 @import 'bootstrap/dist/css/bootstrap.min.css';
 @import 'bootstrap-icons/font/bootstrap-icons.css';
 
 :root {
+    --bs-font-sans-serif: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --bs-body-font-family: var(--bs-font-sans-serif);
     --catmin-sidebar-width: 288px;
     --catmin-topbar-height: 72px;
     --catmin-shell-bg: #f5f6f8;
@@ -14,6 +17,7 @@
 
 html,
 body {
+    font-family: var(--bs-body-font-family);
     height: 100%;
     min-height: 100%;
 }

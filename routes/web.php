@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\TwoFactorController;
 use App\Http\Controllers\Frontend\HomeController;
 use App\Http\Controllers\Frontend\PageController;
 use Illuminate\Support\Facades\Route;
@@ -42,9 +43,18 @@ Route::prefix($adminPath)->middleware('web')->name('admin.')->group(function () 
         ->name('login');
 
     Route::post('/login', [AuthController::class, 'login'])
+        ->middleware('throttle:catmin-login')
         ->name('login.submit');
 
+    // 2FA routes — accessibles sans auth complète mais seulement si pending
+    Route::get('/2fa/verify', [TwoFactorController::class, 'showVerify'])
+        ->name('2fa.verify');
+    Route::post('/2fa/verify', [TwoFactorController::class, 'verify'])
+        ->name('2fa.verify.submit');
+
     Route::middleware($adminMiddleware)->group(function () {
+        Route::get('/2fa/setup', [TwoFactorController::class, 'showSetup'])
+            ->name('2fa.setup');
         Route::get('/', [DashboardController::class, 'index'])
             ->name('index');
 
