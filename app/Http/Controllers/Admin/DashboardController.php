@@ -73,6 +73,7 @@ class DashboardController extends Controller
         return view('admin.pages.modules.index', [
             'currentPage' => 'modules',
             'modules' => ModuleManager::all(),
+            'stateIssues' => ModuleManager::stateIssues(),
         ]);
     }
 
@@ -106,23 +107,23 @@ class DashboardController extends Controller
             $module = ModuleManager::find($slug);
             abort_if(!$module instanceof stdClass, 404);
 
-            // Check for circular dependencies
-            $allModules = ModuleManager::all();
-            $enabledModules = ModuleManager::enabled();
-            $dependenciesNeeded = $module->depends ?? [];
-
-            foreach ($dependenciesNeeded as $depSlug) {
-                $dep = $allModules->firstWhere('slug', $depSlug);
-                if (!$dep || !$dep->enabled) {
-                    $message = "Impossible d'activer {$module->name}: la dépendance '{$depSlug}' est désactivée.";
-                    if ($request->wantsJson()) {
-                        return response()->json(['success' => false, 'message' => $message], 422);
-                    }
-                    return redirect()->back()->with('error', $message);
+            $validation = ModuleManager::canEnable($slug);
+            if (!$validation['allowed']) {
+                $message = $validation['message'];
+                if ($request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => $message], 422);
                 }
+                return redirect()->back()->with('error', $message);
             }
 
-            ModuleManager::enable($slug);
+            $updated = ModuleManager::enable($slug);
+            if (!$updated) {
+                $message = "Erreur lors de l'activation du module {$module->name}.";
+                if ($request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => $message], 500);
+                }
+                return redirect()->back()->with('error', $message);
+            }
 
             $message = "Module {$module->name} activé avec succès.";
             if ($request->wantsJson()) {
@@ -144,32 +145,23 @@ class DashboardController extends Controller
             $module = ModuleManager::find($slug);
             abort_if(!$module instanceof stdClass, 404);
 
-            // Prevent disabling core system modules
-            $systemModules = ['core'];
-            if (in_array($slug, $systemModules)) {
-                $message = "Impossible de désactiver {$module->name}: c'est un module système.";
+            $validation = ModuleManager::canDisable($slug);
+            if (!$validation['allowed']) {
+                $message = $validation['message'];
                 if ($request->wantsJson()) {
                     return response()->json(['success' => false, 'message' => $message], 422);
                 }
                 return redirect()->back()->with('error', $message);
             }
 
-            // Check if other enabled modules depend on this one
-            $allModules = ModuleManager::all();
-            $dependents = $allModules->filter(function ($m) use ($slug) {
-                return $m->enabled && collect($m->depends ?? [])->contains($slug);
-            });
-
-            if ($dependents->isNotEmpty()) {
-                $dependentNames = $dependents->pluck('name')->join(', ');
-                $message = "Impossible de désactiver {$module->name}: les modules suivants en dépendent: {$dependentNames}.";
+            $updated = ModuleManager::disable($slug);
+            if (!$updated) {
+                $message = "Erreur lors de la désactivation du module {$module->name}.";
                 if ($request->wantsJson()) {
-                    return response()->json(['success' => false, 'message' => $message], 422);
+                    return response()->json(['success' => false, 'message' => $message], 500);
                 }
                 return redirect()->back()->with('error', $message);
             }
-
-            ModuleManager::disable($slug);
 
             $message = "Module {$module->name} désactivé avec succès.";
             if ($request->wantsJson()) {

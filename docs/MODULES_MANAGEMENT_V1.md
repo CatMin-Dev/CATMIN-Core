@@ -16,11 +16,21 @@ La première version de la gestion des modules (V1) fournit une interface admini
 **Activation d'un module :**
 - Vérifie que toutes les dépendances sont activées
 - Retourne une erreur explicite si une dépendance est manquante
+- Applique des dépendances minimales de sécurité même si elles ne sont pas déclarées (V1):
+- Pages -> Core + SEO
+- News -> Core + Media + SEO
+- Blog -> Core + Media + SEO
+- Articles -> Core + Media + SEO
 
 **Désactivation d'un module :**
 - Vérifie qu'aucun module activé ne dépend du module à désactiver
 - Empêche la désactivation des modules système critiques (core)
 - Retourne une erreur explicite si des modules dépendent du module
+
+**Etat effectif des modules :**
+- Seuls les modules avec dépendances satisfaites sont considérés activés effectivement
+- Les modules en état invalide sont exclus du chargement des routes et de la navigation
+- L'admin voit les incohérences restantes dans la page Modules
 
 ### Persistance
 - Les changements d'état sont persistés dans les fichiers `module.json` de chaque module
@@ -45,9 +55,10 @@ La première version de la gestion des modules (V1) fournit une interface admini
 - La config de base n'est pas sauvegardée avant modification
 - L'admin est responsable de la gestion de version via Git
 
-### Pas de validation d'état au démarrage
-- Si un module est marqué comme activé mais essentiel manque, le système ne le détecte pas automatiquement
-- Dépend de la vigilance de l'admin lors du démarrage
+### Validation d'état volontairement minimale
+- Le système détecte les incohérences évidentes (Core désactivé, dépendance absente/désactivée)
+- Les corrections automatiques ne sont pas appliquées en V1 (pas de réparation automatique des fichiers)
+- L'admin garde le contrôle des activations/désactivations
 
 ## Comportement attendu
 
@@ -79,6 +90,9 @@ La première version de la gestion des modules (V1) fournit une interface admini
 - `ModuleManager::disable($slug)` — Désactive un module
 - `ModuleManager::all()` — Liste tous les modules
 - `ModuleManager::enabled()` — Liste les modules activés
+- `ModuleManager::canEnable($slug)` — Vérifie les dépendances avant activation
+- `ModuleManager::canDisable($slug)` — Empêche les désactivations dangereuses
+- `ModuleManager::stateIssues()` — Liste les incohérences de dépendances
 
 ### Vue
 - `resources/views/admin/pages/modules/index.blade.php` — Interface de gestion
@@ -93,4 +107,4 @@ La première version de la gestion des modules (V1) fournit une interface admini
 
 ## Archivage
 
-Cette documentation est généricte avec le prompt 046 : Activation/désactivation des modules depuis l'admin.
+Cette documentation couvre les prompts 046 et 047: activation/désactivation des modules, dépendances minimales et sécurités V1.

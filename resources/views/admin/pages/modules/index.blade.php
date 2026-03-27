@@ -9,6 +9,17 @@
 </header>
 
 <div class="catmin-page-body">
+    @if(!empty($stateIssues ?? []))
+        <div class="alert alert-warning" role="alert">
+            <strong>Etat modules a surveiller :</strong>
+            <ul class="mb-0 mt-2">
+                @foreach(($stateIssues ?? []) as $issue)
+                    <li>{{ $issue['message'] }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <div class="card">
         <div class="card-header bg-white d-flex justify-content-between align-items-center">
             <h2 class="h6 mb-0">Etat des modules</h2>
