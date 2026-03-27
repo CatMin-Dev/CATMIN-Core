@@ -9,6 +9,7 @@ La première version de la gestion des modules (V1) fournit une interface admini
 - Liste complète de tous les modules déclarés
 - État d'activation/désactivation visible pour chaque module
 - Colonne "Type" distinguant les modules système des modules optionnels
+- Colonne "Routes" basée sur `ModuleLoader::getRoutesInfo()`
 - Colonne "Dépendances" listant les modules requis
 - Colonne "Actions" avec boutons d'activation/désactivation
 

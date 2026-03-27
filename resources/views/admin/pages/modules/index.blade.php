@@ -27,11 +27,13 @@
         </div>
         <div class="table-responsive catmin-table-scroll">
             <table class="table table-striped table-hover align-middle mb-0">
-                <thead><tr><th>Nom</th><th>Slug</th><th>Version</th><th>Type</th><th>Etat</th><th>Dependances</th><th>Actions</th></tr></thead>
+                <thead><tr><th>Nom</th><th>Slug</th><th>Version</th><th>Type</th><th>Etat</th><th>Routes</th><th>Dependances</th><th>Actions</th></tr></thead>
                 <tbody>
                     @forelse($modules as $module)
                         @php
                             $isSystemModule = in_array($module->slug, ['core']);
+                            $moduleRouteInfo = ($routesInfo ?? [])[$module->slug] ?? null;
+                            $hasRoutes = (bool) ($moduleRouteInfo['has_routes'] ?? false);
                         @endphp
                         <tr>
                             <td>{{ $module->name }}</td>
@@ -45,6 +47,9 @@
                                 @endif
                             </td>
                             <td><span class="badge {{ $module->enabled ? 'text-bg-success' : 'text-bg-secondary' }}">{{ $module->enabled ? 'Actif' : 'Desactive' }}</span></td>
+                            <td>
+                                <span class="badge {{ $hasRoutes ? 'text-bg-info' : 'text-bg-light text-dark' }}">{{ $hasRoutes ? 'Chargeables' : 'Aucune' }}</span>
+                            </td>
                             <td>{{ collect($module->depends ?? [])->join(', ') ?: 'Aucune' }}</td>
                             <td>
                                 @if(!$isSystemModule)
@@ -66,7 +71,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="7" class="text-center text-muted py-4">Aucun module.</td></tr>
+                        <tr><td colspan="8" class="text-center text-muted py-4">Aucun module.</td></tr>
                     @endforelse
                 </tbody>
             </table>

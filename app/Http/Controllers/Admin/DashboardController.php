@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Role;
 use App\Models\Setting;
 use App\Models\User;
+use App\Services\ModuleLoader;
 use App\Services\ModuleManager;
 use App\Services\SettingService;
 use Illuminate\Http\JsonResponse;
@@ -74,6 +75,7 @@ class DashboardController extends Controller
             'currentPage' => 'modules',
             'modules' => ModuleManager::all(),
             'stateIssues' => ModuleManager::stateIssues(),
+            'routesInfo' => ModuleLoader::getRoutesInfo(),
         ]);
     }
 
