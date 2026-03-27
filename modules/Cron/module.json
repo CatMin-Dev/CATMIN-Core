@@ -1,0 +1,10 @@
+{
+  "name": "Cron",
+  "slug": "cron",
+  "enabled": true,
+  "version": "1.0.0",
+  "description": "Planificateur de taches (Laravel Scheduler) avec historique d'execution.",
+  "category": "system",
+  "provides": ["cron-scheduler", "cron-logs"],
+  "depends": ["core", "logger"]
+}

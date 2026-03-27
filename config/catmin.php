@@ -148,6 +148,39 @@ return [
                         'active_when' => ['logger.*'],
                         'module' => 'logger',
                     ],
+                    [
+                        'label' => 'Cache',
+                        'icon' => 'bi bi-lightning-charge',
+                        'route' => 'cache.index',
+                        'active_when' => ['cache.*'],
+                        'module' => 'cache',
+                    ],
+                    [
+                        'label' => 'Planificateur',
+                        'icon' => 'bi bi-clock-history',
+                        'route' => 'cron.index',
+                        'active_when' => ['cron.*'],
+                        'module' => 'cron',
+                    ],
+                    [
+                        'label' => 'Queue',
+                        'icon' => 'bi bi-stack',
+                        'route' => 'queue.index',
+                        'active_when' => ['queue.*'],
+                        'module' => 'queue',
+                    ],
+                ],
+            ],
+            [
+                'title' => 'Intégrations',
+                'items' => [
+                    [
+                        'label' => 'Webhooks',
+                        'icon' => 'bi bi-send',
+                        'route' => 'webhooks.index',
+                        'active_when' => ['webhooks.*'],
+                        'module' => 'webhooks',
+                    ],
                 ],
             ],
             [
