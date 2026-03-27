@@ -15,6 +15,10 @@ Route::middleware(['web', 'catmin.admin'])
             ->middleware('catmin.permission:module.mailer.config')
             ->name('mailer.config.update');
 
+        Route::post('/mailer/test', [MailerController::class, 'testTemplate'])
+            ->middleware('catmin.permission:module.mailer.config')
+            ->name('mailer.test');
+
         Route::get('/mailer/templates/create', [MailerController::class, 'createTemplate'])
             ->middleware('catmin.permission:module.mailer.create')
             ->name('mailer.templates.create');

@@ -16,7 +16,10 @@ class MailerConfig extends Model
         'is_enabled',
     ];
 
-    protected $casts = [
-        'is_enabled' => 'boolean',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'is_enabled' => 'boolean',
+        ];
+    }
 }

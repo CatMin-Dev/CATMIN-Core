@@ -18,11 +18,14 @@ class MailerController extends Controller
 
     public function index(): View
     {
+        $templates = $this->mailerAdminService->templateListing();
+
         return view()->file(base_path('modules/Mailer/Views/index.blade.php'), [
             'currentPage' => 'module-mailer',
             'config' => $this->mailerAdminService->getOrCreateConfig(),
-            'templates' => $this->mailerAdminService->templateListing(),
+            'templates' => $templates,
             'history' => $this->mailerAdminService->historyListing(),
+            'defaultTemplateId' => $templates->first()?->id,
         ]);
     }
 
@@ -53,20 +56,12 @@ class MailerController extends Controller
 
     public function storeTemplate(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'code' => ['nullable', 'string', 'max:120'],
-            'name' => ['required', 'string', 'max:255'],
-            'subject' => ['required', 'string', 'max:255'],
-            'body_html' => ['nullable', 'string'],
-            'body_text' => ['nullable', 'string'],
-            'is_enabled' => ['nullable', 'boolean'],
-        ]);
-
+        $validated = $this->validateTemplate($request);
         $validated['is_enabled'] = $request->boolean('is_enabled', true);
 
-        $this->mailerAdminService->createTemplate($validated);
+        $template = $this->mailerAdminService->createTemplate($validated);
 
-        return redirect()->route('admin.mailer.manage')
+        return redirect()->route('admin.mailer.templates.edit', ['template' => $template->id])
             ->with('status', 'Template Mailer cree.');
     }
 
@@ -75,25 +70,57 @@ class MailerController extends Controller
         return view()->file(base_path('modules/Mailer/Views/template-edit.blade.php'), [
             'currentPage' => 'module-mailer',
             'template' => $template,
+            'preview' => $this->mailerAdminService->previewTemplate($template),
         ]);
     }
 
     public function updateTemplate(Request $request, MailerTemplate $template): RedirectResponse
     {
-        $validated = $request->validate([
-            'code' => ['nullable', 'string', 'max:120'],
-            'name' => ['required', 'string', 'max:255'],
-            'subject' => ['required', 'string', 'max:255'],
-            'body_html' => ['nullable', 'string'],
-            'body_text' => ['nullable', 'string'],
-            'is_enabled' => ['nullable', 'boolean'],
-        ]);
-
+        $validated = $this->validateTemplate($request);
         $validated['is_enabled'] = $request->boolean('is_enabled');
 
         $this->mailerAdminService->updateTemplate($template, $validated);
 
-        return redirect()->route('admin.mailer.manage')
+        return redirect()->route('admin.mailer.templates.edit', ['template' => $template->id])
             ->with('status', 'Template Mailer mis a jour.');
+    }
+
+    public function testTemplate(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'template_id' => ['required', 'integer', 'exists:mailer_templates,id'],
+            'recipient' => ['required', 'email', 'max:255'],
+            'sample_payload' => ['nullable', 'string'],
+            'queue' => ['nullable', 'boolean'],
+        ]);
+
+        $template = MailerTemplate::query()->findOrFail((int) $validated['template_id']);
+        $history = $this->mailerAdminService->sendTestTemplate(
+            $template,
+            (string) $validated['recipient'],
+            $this->mailerAdminService->normalizePayload($validated['sample_payload'] ?? ''),
+            $request->boolean('queue')
+        );
+
+        return redirect()->route('admin.mailer.manage')
+            ->with('status', 'Email de test lance avec statut ' . $history->status . '.');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function validateTemplate(Request $request): array
+    {
+        return $request->validate([
+            'code' => ['nullable', 'string', 'max:120'],
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'subject' => ['required', 'string', 'max:255'],
+            'body_html' => ['nullable', 'string'],
+            'body_text' => ['nullable', 'string'],
+            'available_variables' => ['nullable'],
+            'sample_payload' => ['nullable'],
+            'is_enabled' => ['nullable', 'boolean'],
+        ]);
     }
 }

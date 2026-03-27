@@ -11,13 +11,21 @@ class MailerTemplate extends Model
     protected $fillable = [
         'code',
         'name',
+        'description',
         'subject',
         'body_html',
         'body_text',
+        'available_variables',
+        'sample_payload',
         'is_enabled',
     ];
 
-    protected $casts = [
-        'is_enabled' => 'boolean',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'available_variables' => 'array',
+            'sample_payload' => 'array',
+            'is_enabled' => 'boolean',
+        ];
+    }
 }

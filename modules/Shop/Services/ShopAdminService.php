@@ -5,8 +5,8 @@ namespace Modules\Shop\Services;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 use Modules\Logger\Services\SystemLogService;
+use Modules\Mailer\Services\MailerAdminService;
 use Modules\Shop\Models\Category;
 use Modules\Shop\Models\Customer;
 use Modules\Shop\Models\Invoice;
@@ -462,21 +462,39 @@ class ShopAdminService
                 return;
             }
 
-            Mail::raw(
-                "Commande {$order->order_number} - {$reason}\nStatut: {$order->status}\nTotal: {$order->grand_total} {$order->currency}",
-                function ($message) use ($order, $reason): void {
-                    $message->to($order->customer_email, $order->customer_name)
-                        ->subject('CATMIN Shop - commande ' . $order->order_number . ' (' . $reason . ')');
-                }
+            $templateCode = str_starts_with($reason, 'status:') ? 'shop_order_status' : 'shop_order_created';
+
+            app(MailerAdminService::class)->dispatchTemplate(
+                $templateCode,
+                $order->customer_email,
+                $order->customer_name,
+                [
+                    'customer' => [
+                        'name' => $order->customer_name,
+                        'email' => $order->customer_email,
+                    ],
+                    'order' => [
+                        'number' => $order->order_number,
+                        'status' => $order->status,
+                        'total' => number_format((float) $order->grand_total, 2, '.', ''),
+                        'currency' => $order->currency,
+                        'reason' => $reason,
+                    ],
+                ],
+                [
+                    'queue' => true,
+                    'trigger_source' => 'shop.' . $reason,
+                ]
             );
 
-            $this->logAudit('shop.mail.sent', 'Email commande envoye', [
+            $this->logAudit('shop.mail.sent', 'Email commande delegue au mailer', [
                 'order_id' => $order->id,
                 'reason' => $reason,
                 'email' => $order->customer_email,
+                'template_code' => $templateCode,
             ]);
         } catch (\Throwable $throwable) {
-            $this->logAudit('shop.mail.failed', 'Echec envoi email commande', [
+            $this->logAudit('shop.mail.failed', 'Echec delegation email commande', [
                 'order_id' => $order->id,
                 'reason' => $reason,
                 'error' => $throwable->getMessage(),
