@@ -170,6 +170,15 @@ return [
                         'match_module' => 'media',
                         'active_when' => ['content.show', 'media.*'],
                     ],
+                    [
+                        'label' => 'Menus',
+                        'icon' => 'bi bi-list',
+                        'route' => 'content.show',
+                        'parameters' => ['module' => 'menus'],
+                        'match_module' => 'menus',
+                        'active_when' => ['content.show', 'menus.*'],
+                        'module' => 'menus',
+                    ],
                 ],
             ],
             [

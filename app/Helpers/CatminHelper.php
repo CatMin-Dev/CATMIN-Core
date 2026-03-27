@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Modules\Articles\Models\Article;
 use Modules\Media\Models\MediaAsset;
+use Modules\Menus\Services\MenuAdminService;
 use Modules\Pages\Models\Page;
 use Modules\SEO\Models\SeoMeta;
 
@@ -327,5 +328,28 @@ if (!function_exists('media_url')) {
         } catch (\Throwable $e) {
             return $fallback;
         }
+    }
+}
+
+if (!function_exists('menu_tree')) {
+    /**
+     * Resolve active frontend menu tree by location.
+     *
+     * @return Collection<int, array<string, mixed>>
+     */
+    function menu_tree(string $location = 'primary'): Collection
+    {
+        if (!ModuleManager::isEnabled('menus')) {
+            return collect();
+        }
+
+        if (!Schema::hasTable('menus') || !Schema::hasTable('menu_items')) {
+            return collect();
+        }
+
+        /** @var MenuAdminService $service */
+        $service = app(MenuAdminService::class);
+
+        return $service->frontendTree($location);
     }
 }

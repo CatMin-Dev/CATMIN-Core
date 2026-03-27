@@ -48,6 +48,7 @@ class ModuleManager
     protected static array $fallbackDependencies = [
         'pages' => ['core', 'seo'],
         'articles' => ['core', 'media', 'seo'],
+        'menus' => ['core', 'pages'],
     ];
 
     /**
