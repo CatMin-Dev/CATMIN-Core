@@ -1,0 +1,10 @@
+{
+  "name": "Webhooks",
+  "slug": "webhooks",
+  "enabled": true,
+  "version": "1.0.0",
+  "description": "Gestion des webhooks sortants (HMAC-SHA256) et endpoint entrant avec journalisation.",
+  "category": "integrations",
+  "provides": ["webhooks-outgoing", "webhooks-incoming"],
+  "depends": ["core", "logger"]
+}
