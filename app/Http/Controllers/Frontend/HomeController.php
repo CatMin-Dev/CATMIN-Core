@@ -11,12 +11,16 @@ class HomeController extends Controller
 {
     public function __invoke(): View
     {
+        $context = frontend_context();
+
         return view('frontend.home', [
-            'siteName' => SettingService::get('site.name', 'CATMIN'),
-            'siteUrl' => SettingService::get('site.url', config('app.url')),
+            'siteName' => $context['site_name'],
+            'siteUrl' => $context['site_url'],
             'frontendConfig' => config('catmin.frontend'),
             'enabledModules' => ModuleManager::enabled(),
             'siteSettings' => SettingService::group('site'),
+            'frontendContext' => $context,
+            'homePage' => page_by_slug('home'),
         ]);
     }
 }
