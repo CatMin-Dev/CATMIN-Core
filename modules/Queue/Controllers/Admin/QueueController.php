@@ -4,6 +4,7 @@ namespace Modules\Queue\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
@@ -35,6 +36,44 @@ class QueueController extends Controller
 
         return redirect()->route('admin.queue.index')
             ->with('success', 'Job supprimé.');
+    }
+
+    public function retryFailedJob(int $id): RedirectResponse
+    {
+        try {
+            $exitCode = Artisan::call('queue:retry', ['id' => [$id]]);
+
+            if ($exitCode !== 0) {
+                return redirect()->route('admin.queue.index')->with('error', 'Relance échouée.');
+            }
+        } catch (\Throwable) {
+            return redirect()->route('admin.queue.index')->with('error', 'Relance échouée.');
+        }
+
+        return redirect()->route('admin.queue.index')
+            ->with('success', 'Job relancé.');
+    }
+
+    public function retryAllFailed(): RedirectResponse
+    {
+        try {
+            $ids = DB::table('failed_jobs')->pluck('id')->map(fn ($id) => (string) $id)->all();
+
+            if ($ids === []) {
+                return redirect()->route('admin.queue.index')->with('success', 'Aucun job à relancer.');
+            }
+
+            $exitCode = Artisan::call('queue:retry', ['id' => $ids]);
+
+            if ($exitCode !== 0) {
+                return redirect()->route('admin.queue.index')->with('error', 'Relance globale échouée.');
+            }
+        } catch (\Throwable) {
+            return redirect()->route('admin.queue.index')->with('error', 'Relance globale échouée.');
+        }
+
+        return redirect()->route('admin.queue.index')
+            ->with('success', 'Tous les jobs en échec ont été relancés.');
     }
 
     public function clearFailed(): RedirectResponse

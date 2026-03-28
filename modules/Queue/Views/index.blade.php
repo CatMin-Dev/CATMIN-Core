@@ -50,14 +50,23 @@
                 <i class="bi bi-x-octagon text-danger me-1"></i>Jobs en échec (20 derniers)
             </h2>
             @if(catmin_can('module.queue.config'))
-            <form method="POST" action="{{ route('admin.queue.failed.clear') }}"
-                  onsubmit="return confirm('Supprimer TOUS les jobs en échec ?');">
-                @csrf
-                @method('DELETE')
-                <button class="btn btn-sm btn-danger" type="submit">
-                    <i class="bi bi-trash3 me-1"></i>Tout supprimer
-                </button>
-            </form>
+            <div class="d-flex gap-2">
+                <form method="POST" action="{{ route('admin.queue.failed.retry-all') }}"
+                      onsubmit="return confirm('Relancer TOUS les jobs en échec ?');">
+                    @csrf
+                    <button class="btn btn-sm btn-outline-primary" type="submit">
+                        <i class="bi bi-arrow-repeat me-1"></i>Tout relancer
+                    </button>
+                </form>
+                <form method="POST" action="{{ route('admin.queue.failed.clear') }}"
+                      onsubmit="return confirm('Supprimer TOUS les jobs en échec ?');">
+                    @csrf
+                    @method('DELETE')
+                    <button class="btn btn-sm btn-danger" type="submit">
+                        <i class="bi bi-trash3 me-1"></i>Tout supprimer
+                    </button>
+                </form>
+            </div>
             @endif
         </div>
         <div class="table-responsive">
@@ -91,14 +100,23 @@
                             {{ \Carbon\Carbon::parse($job->failed_at)->format('d/m/Y H:i') }}
                         </td>
                         <td>
-                            <form method="POST" action="{{ route('admin.queue.failed.delete', $job->id) }}"
-                                  onsubmit="return confirm('Supprimer ce job ?');">
-                                @csrf
-                                @method('DELETE')
-                                <button class="btn btn-sm btn-outline-danger" type="submit" title="Supprimer">
-                                    <i class="bi bi-trash3"></i>
-                                </button>
-                            </form>
+                            <div class="d-flex gap-2">
+                                <form method="POST" action="{{ route('admin.queue.failed.retry', $job->id) }}"
+                                      onsubmit="return confirm('Relancer ce job ?');">
+                                    @csrf
+                                    <button class="btn btn-sm btn-outline-primary" type="submit" title="Relancer">
+                                        <i class="bi bi-arrow-repeat"></i>
+                                    </button>
+                                </form>
+                                <form method="POST" action="{{ route('admin.queue.failed.delete', $job->id) }}"
+                                      onsubmit="return confirm('Supprimer ce job ?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button class="btn btn-sm btn-outline-danger" type="submit" title="Supprimer">
+                                        <i class="bi bi-trash3"></i>
+                                    </button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                     @endforeach
