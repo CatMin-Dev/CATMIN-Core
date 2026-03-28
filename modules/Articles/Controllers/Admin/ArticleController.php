@@ -16,11 +16,14 @@ class ArticleController extends Controller
     {
     }
 
-    public function index(): View
+    public function index(Request $request): View
     {
+        $search = trim((string) $request->query('q', ''));
+
         return view()->file(base_path('modules/Articles/Views/index.blade.php'), [
             'currentPage' => 'content-articles',
-            'items' => $this->articleAdminService->listing(),
+            'items' => $this->articleAdminService->listing($search),
+            'search' => $search,
         ]);
     }
 

@@ -17,9 +17,18 @@ class PagesAdminService
     /**
      * @return \Illuminate\Database\Eloquent\Collection<int, Page>
      */
-    public function listing()
+    public function listing(?string $search = null)
     {
+        $term = trim((string) $search);
+
         return Page::query()
+            ->when($term !== '', function ($query) use ($term) {
+                $query->where(function ($inner) use ($term) {
+                    $inner->where('title', 'like', '%' . $term . '%')
+                        ->orWhere('slug', 'like', '%' . $term . '%')
+                        ->orWhere('excerpt', 'like', '%' . $term . '%');
+                });
+            })
             ->orderByDesc('published_at')
             ->orderByDesc('updated_at')
             ->get();

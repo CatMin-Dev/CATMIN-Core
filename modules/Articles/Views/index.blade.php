@@ -7,6 +7,23 @@
     title="Articles"
     subtitle="Module unifie pour les contenus editoriaux et actualites."
 >
+    <form method="get" action="{{ admin_route('articles.manage') }}" class="d-flex gap-2 align-items-center">
+        <input
+            type="search"
+            name="q"
+            class="form-control form-control-sm"
+            placeholder="Recherche articles..."
+            value="{{ $search ?? '' }}"
+            style="min-width: 240px;"
+        >
+        <button class="btn btn-sm btn-outline-secondary" type="submit">
+            <i class="bi bi-search me-1"></i>Rechercher
+        </button>
+        @if(!empty($search))
+            <a class="btn btn-sm btn-outline-light border" href="{{ admin_route('articles.manage') }}">Reset</a>
+        @endif
+    </form>
+
     @if(catmin_can('module.articles.create'))
         <a class="btn btn-primary" href="{{ admin_route('articles.create') }}">Nouvel article</a>
     @endif

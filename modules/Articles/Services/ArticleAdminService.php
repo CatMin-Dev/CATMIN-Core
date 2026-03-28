@@ -17,9 +17,19 @@ class ArticleAdminService
     /**
      * @return \Illuminate\Database\Eloquent\Collection<int, Article>
      */
-    public function listing()
+    public function listing(?string $search = null)
     {
+        $term = trim((string) $search);
+
         return Article::query()
+            ->when($term !== '', function ($query) use ($term) {
+                $query->where(function ($inner) use ($term) {
+                    $inner->where('title', 'like', '%' . $term . '%')
+                        ->orWhere('slug', 'like', '%' . $term . '%')
+                        ->orWhere('excerpt', 'like', '%' . $term . '%')
+                        ->orWhere('content_type', 'like', '%' . $term . '%');
+                });
+            })
             ->orderByDesc('published_at')
             ->orderByDesc('updated_at')
             ->get();

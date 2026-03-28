@@ -16,11 +16,14 @@ class PageController extends Controller
     {
     }
 
-    public function index(): View
+    public function index(Request $request): View
     {
+        $search = trim((string) $request->query('q', ''));
+
         return view()->file(base_path('modules/Pages/Views/index.blade.php'), [
             'currentPage' => 'content-pages',
-            'pages' => $this->pagesAdminService->listing(),
+            'pages' => $this->pagesAdminService->listing($search),
+            'search' => $search,
         ]);
     }
 
