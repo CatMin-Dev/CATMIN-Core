@@ -17,6 +17,11 @@ use Illuminate\Support\Facades\File;
 class ModuleLoader
 {
     /**
+     * @var array<string, bool>
+     */
+    protected static array $loadedRoutes = [];
+
+    /**
      * Register all enabled module routes
      *
      * @param Router $router
@@ -24,6 +29,10 @@ class ModuleLoader
      */
     public static function registerRoutes(Router $router): int
     {
+        if (!config('catmin.modules.auto_load', true) || !config('catmin.modules.auto_discover_routes', true)) {
+            return 0;
+        }
+
         $loaded = 0;
         $modules = ModuleManager::enabled();
 
@@ -45,18 +54,27 @@ class ModuleLoader
      */
     public static function loadModuleRoutes(Router $router, object $module): bool
     {
-        $routesPath = ModuleManager::getRoutesPath($module->slug);
+        $slug = (string) ($module->slug ?? '');
+        if ($slug === '') {
+            return false;
+        }
+
+        if (isset(self::$loadedRoutes[$slug])) {
+            return true;
+        }
+
+        $routesPath = ModuleManager::getRoutesPath($slug);
 
         if (!$routesPath) {
             return false;
         }
 
         try {
-            // Load the routes file without polluting global namespace
-            require $routesPath;
+            require_once $routesPath;
+            self::$loadedRoutes[$slug] = true;
             return true;
-        } catch (\Exception $e) {
-            \Log::warning("Failed to load routes for module {$module->slug}: {$e->getMessage()}");
+        } catch (\Throwable $e) {
+            \Log::warning("Failed to load routes for module {$slug}: {$e->getMessage()}");
             return false;
         }
     }
