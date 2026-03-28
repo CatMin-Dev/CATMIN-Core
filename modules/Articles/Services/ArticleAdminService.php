@@ -4,6 +4,7 @@ namespace Modules\Articles\Services;
 
 use App\Services\CatminEventBus;
 use App\Services\ContentSanitizerService;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Str;
 use Modules\Logger\Services\SystemLogService;
 use Modules\Articles\Models\Article;
@@ -14,10 +15,7 @@ class ArticleAdminService
     {
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Collection<int, Article>
-     */
-    public function listing(?string $search = null)
+    public function listing(?string $search = null, int $perPage = 25): LengthAwarePaginator
     {
         $term = trim((string) $search);
 
@@ -32,7 +30,7 @@ class ArticleAdminService
             })
             ->orderByDesc('published_at')
             ->orderByDesc('updated_at')
-            ->get();
+                ->paginate($perPage);
     }
 
     /**

@@ -7,18 +7,19 @@
     title="Pages"
     subtitle="Gestion des pages simples du frontend CATMIN."
 >
-    <form method="get" action="{{ admin_route('pages.manage') }}" class="d-flex gap-2 align-items-center">
-        <input
-            type="search"
-            name="q"
-            class="form-control form-control-sm"
-            placeholder="Recherche pages..."
-            value="{{ $search ?? '' }}"
-            style="min-width: 240px;"
-        >
-        <button class="btn btn-sm btn-outline-secondary" type="submit">
-            <i class="bi bi-search me-1"></i>Rechercher
-        </button>
+    <form method="get" action="{{ admin_route('pages.manage') }}" class="d-flex align-items-center gap-2">
+        <div class="input-group input-group-sm" style="min-width: 280px;">
+            <input
+                type="search"
+                name="q"
+                class="form-control"
+                placeholder="Recherche pages..."
+                value="{{ $search ?? '' }}"
+            >
+            <button class="btn btn-outline-secondary" type="submit" aria-label="Rechercher">
+                <i class="bi bi-search"></i>
+            </button>
+        </div>
         @if(!empty($search))
             <a class="btn btn-sm btn-outline-light border" href="{{ admin_route('pages.manage') }}">Reset</a>
         @endif
@@ -36,7 +37,7 @@
 
     <x-admin.crud.table-card
         title="Pages publiees et brouillons"
-        :count="$pages->count()"
+        :count="$pages->total()"
         :empty-colspan="7"
         empty-message="Aucune page pour le moment."
     >
@@ -86,5 +87,11 @@
             @endforeach
         </x-slot:rows>
     </x-admin.crud.table-card>
+
+    @if($pages->hasPages())
+        <div class="mt-3">
+            <x-admin.crud.pagination :paginator="$pages" />
+        </div>
+    @endif
 </div>
 @endsection

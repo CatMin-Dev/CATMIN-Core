@@ -19,10 +19,13 @@ class ArticleController extends Controller
     public function index(Request $request): View
     {
         $search = trim((string) $request->query('q', ''));
+        $items = $this->articleAdminService
+            ->listing($search)
+            ->appends($request->query());
 
         return view()->file(base_path('modules/Articles/Views/index.blade.php'), [
             'currentPage' => 'content-articles',
-            'items' => $this->articleAdminService->listing($search),
+            'items' => $items,
             'search' => $search,
         ]);
     }
