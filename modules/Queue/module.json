@@ -2,8 +2,16 @@
   "name": "Queue",
   "slug": "queue",
   "enabled": true,
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Surveillance de la file de jobs Laravel (jobs, failed_jobs) et envoi d'e-mails en file.",
+  "assets": {
+    "css": [
+      "modules/queue/queue.css"
+    ],
+    "js": [
+      "modules/queue/queue.js"
+    ]
+  },
   "category": "system",
   "provides": ["queue-monitor", "mail-queue"],
   "depends": ["core"]

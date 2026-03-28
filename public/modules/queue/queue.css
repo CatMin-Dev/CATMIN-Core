@@ -1,0 +1,4 @@
+/* Queue module scoped visual tweaks */
+.catmin-page .queue-stat-card .h3 {
+  letter-spacing: 0.02em;
+}

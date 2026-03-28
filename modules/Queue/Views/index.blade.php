@@ -13,7 +13,7 @@
 
     <div class="row g-3 mb-4">
         <div class="col-12 col-md-4">
-            <div class="card h-100">
+            <div class="card h-100 queue-stat-card">
                 <div class="card-body text-center">
                     <i class="bi bi-stack fs-2 text-primary mb-2"></i>
                     <h2 class="h6 text-muted">Jobs en attente</h2>
@@ -22,7 +22,7 @@
             </div>
         </div>
         <div class="col-12 col-md-4">
-            <div class="card h-100">
+            <div class="card h-100 queue-stat-card">
                 <div class="card-body text-center">
                     <i class="bi bi-x-octagon fs-2 text-danger mb-2"></i>
                     <h2 class="h6 text-muted">Jobs en échec</h2>
@@ -33,7 +33,7 @@
             </div>
         </div>
         <div class="col-12 col-md-4">
-            <div class="card h-100">
+            <div class="card h-100 queue-stat-card">
                 <div class="card-body text-center">
                     <i class="bi bi-plug fs-2 text-info mb-2"></i>
                     <h2 class="h6 text-muted">Connexion</h2>

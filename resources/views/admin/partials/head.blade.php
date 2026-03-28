@@ -6,4 +6,5 @@
 <link rel="shortcut icon" href="{{ asset('assets/img/icon.png') }}">
 <link rel="apple-touch-icon" href="{{ asset('assets/img/icon.png') }}">
 @vite(['resources/css/admin.css', 'resources/js/admin.js'])
+@catminModuleCss
 @stack('head')

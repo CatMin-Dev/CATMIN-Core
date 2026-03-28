@@ -48,6 +48,7 @@
 
     @catminHook('after:admin.body')
 
+    @catminModuleJs
     @stack('scripts')
 </body>
 </html>
