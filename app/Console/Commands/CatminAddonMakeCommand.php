@@ -18,6 +18,8 @@ class CatminAddonMakeCommand extends Command
         {--category=feature : Type/categorie addon}
         {--author=CATMIN Team : Auteur de l\'addon}
         {--enable : Activer immediatement l\'addon}
+        {--with-events : Generer stubs Events et Listeners}
+        {--with-ui-hooks : Generer un exemple de hook UI admin}
         {--path= : Repertoire cible (defaut: config catmin.addons.path)}
         {--force : Ecraser si le dossier existe deja}';
 
@@ -32,6 +34,8 @@ class CatminAddonMakeCommand extends Command
         $category = trim((string) $this->option('category'));
         $author = trim((string) $this->option('author'));
         $enabled = (bool) $this->option('enable');
+        $withEvents = (bool) $this->option('with-events');
+        $withUiHooks = (bool) $this->option('with-ui-hooks');
 
         if (!$this->isValidSlug($slug)) {
             $this->error('Slug invalide. Format attendu: kebab-case (ex: my-addon).');
@@ -68,7 +72,14 @@ class CatminAddonMakeCommand extends Command
         $viewNamespace = 'addon_' . str_replace('-', '_', $slug);
         $routeName = 'admin.addon.' . str_replace('-', '_', $slug) . '.index';
 
-        $this->createDirectories($addonPath);
+        $this->createDirectories($addonPath, $withEvents);
+
+        $emittedEvents = [
+            'addon.' . str_replace('-', '_', $slug) . '.configured',
+        ];
+        $listenedEvents = ['setting.updated'];
+        $uiHooks = $withUiHooks ? ['after:admin.topbar'] : [];
+
         $this->writeFile($addonPath . '/addon.json', $this->buildAddonJson(
             name: $name,
             slug: $slug,
@@ -77,19 +88,30 @@ class CatminAddonMakeCommand extends Command
             author: $author,
             enabled: $enabled,
             depends: $depends,
-            category: $category
+            category: $category,
+            emittedEvents: $emittedEvents,
+            listenedEvents: $listenedEvents,
+            uiHooks: $uiHooks
         ));
         $this->writeFile($addonPath . '/routes.php', $this->buildRoutesPhp($slug, $classBase, $controllerClass, $viewNamespace));
         $this->writeFile($addonPath . '/Controllers/Admin/' . $controllerClass . '.php', $this->buildControllerPhp($classBase, $controllerClass, $viewNamespace, $name, $slug));
         $this->writeFile($addonPath . '/Views/admin/index.blade.php', $this->buildAdminView($name, $slug, $category, $version));
         $this->writeFile($addonPath . '/Services/' . $classBase . 'Service.php', $this->buildServicePhp($classBase, $name, $slug));
         $this->writeFile($addonPath . '/config.php', $this->buildConfigPhp($slug, $category));
-        $this->writeFile($addonPath . '/hooks.php', $this->buildHooksPhp($name, $slug));
-        $this->writeFile($addonPath . '/Docs/README.md', $this->buildDocsReadme($name, $slug, $description, $depends, $category, $routeName));
+        $this->writeFile($addonPath . '/hooks.php', $this->buildHooksPhp($name, $slug, $withUiHooks));
+        $this->writeFile($addonPath . '/Docs/README.md', $this->buildDocsReadme($name, $slug, $description, $depends, $category, $routeName, $emittedEvents, $listenedEvents, $uiHooks));
         $this->writeFile($addonPath . '/Assets/css/addon.css', "/* {$slug} addon styles */\n");
         $this->writeFile($addonPath . '/Assets/js/addon.js', "// {$slug} addon scripts\n");
         $this->writeFile($addonPath . '/Migrations/.gitkeep', "\n");
         $this->writeFile($addonPath . '/Models/.gitkeep', "\n");
+
+        if ($withEvents) {
+            $eventClass = $classBase . 'ConfiguredEvent';
+            $listenerClass = 'Log' . $classBase . 'ConfiguredListener';
+
+            $this->writeFile($addonPath . '/Events/' . $eventClass . '.php', $this->buildEventClassPhp($classBase, $eventClass, $slug));
+            $this->writeFile($addonPath . '/Listeners/' . $listenerClass . '.php', $this->buildListenerClassPhp($classBase, $eventClass, $listenerClass));
+        }
 
         $customPath = trim((string) $this->option('path'));
         if ($customPath === '') {
@@ -140,7 +162,7 @@ class CatminAddonMakeCommand extends Command
             ->all();
     }
 
-    protected function createDirectories(string $addonPath): void
+    protected function createDirectories(string $addonPath, bool $withEvents): void
     {
         $directories = [
             'Controllers/Admin',
@@ -153,6 +175,11 @@ class CatminAddonMakeCommand extends Command
             'Docs',
         ];
 
+        if ($withEvents) {
+            $directories[] = 'Events';
+            $directories[] = 'Listeners';
+        }
+
         foreach ($directories as $directory) {
             File::ensureDirectoryExists($addonPath . '/' . $directory);
         }
@@ -160,6 +187,9 @@ class CatminAddonMakeCommand extends Command
 
     /**
      * @param array<int, string> $depends
+     * @param array<int, string> $emittedEvents
+     * @param array<int, string> $listenedEvents
+     * @param array<int, string> $uiHooks
      */
     protected function buildAddonJson(
         string $name,
@@ -169,7 +199,10 @@ class CatminAddonMakeCommand extends Command
         string $author,
         bool $enabled,
         array $depends,
-        string $category
+        string $category,
+        array $emittedEvents,
+        array $listenedEvents,
+        array $uiHooks
     ): string {
         $manifest = [
             'name' => $name,
@@ -186,6 +219,9 @@ class CatminAddonMakeCommand extends Command
             'has_assets' => true,
             'has_views' => true,
             'requires_core' => true,
+            'events_emitted' => $emittedEvents,
+            'events_listens' => $listenedEvents,
+            'ui_hooks' => $uiHooks,
         ];
 
         return json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n";
@@ -299,12 +335,13 @@ return [
 PHP;
     }
 
-    protected function buildHooksPhp(string $name, string $slug): string
+    protected function buildHooksPhp(string $name, string $slug, bool $withUiHooks): string
     {
         $template = <<<'PHP'
 <?php
 
 use App\Services\CatminEventBus;
+use App\Services\CatminHookRegistry;
 
 CatminEventBus::listen(CatminEventBus::SETTING_UPDATED, function (array $payload): void {
     \Log::info('Addon listener __ADDON_SLUG__ recu', [
@@ -317,17 +354,83 @@ CatminEventBus::listen(CatminEventBus::SETTING_UPDATED, function (array $payload
         ),
     ]);
 });
+
+__UI_HOOK_BLOCK__
+PHP;
+
+        $uiHookBlock = $withUiHooks
+            ? "CatminHookRegistry::after('admin.topbar', function (): string {\n    return '<span style=\"margin-left:12px;color:#0f766e;font-size:12px;\">addon __ADDON_SLUG__ hook actif</span>';\n});"
+            : '// UI hook generation disabled (--with-ui-hooks not provided).';
+
+        return str_replace(
+            ['__ADDON_SLUG__', '__ADDON_NAME__', '__UI_HOOK_BLOCK__'],
+            [$slug, addslashes($name), $uiHookBlock],
+            $template
+        );
+    }
+
+    protected function buildEventClassPhp(string $classBase, string $eventClass, string $slug): string
+    {
+        $template = <<<'PHP'
+<?php
+
+namespace Addons\\__CLASS_BASE__\\Events;
+
+class __EVENT_CLASS__
+{
+    /**
+     * @param array<string, mixed> $payload
+     */
+    public function __construct(
+        public array $payload = []
+    ) {
+        if ($this->payload === []) {
+            $this->payload = [
+                'addon' => '__ADDON_SLUG__',
+                'occurred_at' => now()->toISOString(),
+            ];
+        }
+    }
+}
 PHP;
 
         return str_replace(
-            ['__ADDON_SLUG__', '__ADDON_NAME__'],
-            [$slug, addslashes($name)],
+            ['__CLASS_BASE__', '__EVENT_CLASS__', '__ADDON_SLUG__'],
+            [$classBase, $eventClass, $slug],
+            $template
+        );
+    }
+
+    protected function buildListenerClassPhp(string $classBase, string $eventClass, string $listenerClass): string
+    {
+        $template = <<<'PHP'
+<?php
+
+namespace Addons\\__CLASS_BASE__\\Listeners;
+
+use Addons\\__CLASS_BASE__\\Events\\__EVENT_CLASS__;
+
+class __LISTENER_CLASS__
+{
+    public function handle(__EVENT_CLASS__ $event): void
+    {
+        \Log::info('Addon event handled', $event->payload);
+    }
+}
+PHP;
+
+        return str_replace(
+            ['__CLASS_BASE__', '__EVENT_CLASS__', '__LISTENER_CLASS__'],
+            [$classBase, $eventClass, $listenerClass],
             $template
         );
     }
 
     /**
      * @param array<int, string> $depends
+     * @param array<int, string> $emittedEvents
+     * @param array<int, string> $listenedEvents
+     * @param array<int, string> $uiHooks
      */
     protected function buildDocsReadme(
         string $name,
@@ -335,9 +438,15 @@ PHP;
         string $description,
         array $depends,
         string $category,
-        string $routeName
+        string $routeName,
+        array $emittedEvents,
+        array $listenedEvents,
+        array $uiHooks
     ): string {
         $dependsText = $depends === [] ? '- aucune' : '- ' . implode("\n- ", $depends);
+        $emittedText = $emittedEvents === [] ? '- aucun' : '- ' . implode("\n- ", $emittedEvents);
+        $listenedText = $listenedEvents === [] ? '- aucun' : '- ' . implode("\n- ", $listenedEvents);
+        $hooksText = $uiHooks === [] ? '- aucun' : '- ' . implode("\n- ", $uiHooks);
 
         return <<<MD
 # {$name}
@@ -355,6 +464,14 @@ PHP;
 
 ## Categorie
 - {$category}
+
+## Extension points
+- Events emis:
+{$emittedText}
+- Events ecoutes:
+{$listenedText}
+- Hooks UI:
+{$hooksText}
 
 ## Prochaines etapes
 - Ajouter les ecrans metier dans `Views/admin`.
