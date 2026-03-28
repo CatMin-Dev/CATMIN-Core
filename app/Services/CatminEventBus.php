@@ -38,6 +38,8 @@ class CatminEventBus
     public const AUTH_LOGIN_SUCCEEDED = 'catmin.auth.login.succeeded';
     public const AUTH_LOGIN_FAILED = 'catmin.auth.login.failed';
     public const AUTH_LOGOUT = 'catmin.auth.logout';
+    public const AUTH_PASSWORD_RESET_REQUESTED = 'catmin.auth.password.reset.requested';
+    public const AUTH_PASSWORD_RESET_COMPLETED = 'catmin.auth.password.reset.completed';
     public const AUTH_2FA_CHALLENGE_PASSED = 'catmin.auth.2fa.challenge.passed';
     public const AUTH_2FA_CHALLENGE_FAILED = 'catmin.auth.2fa.challenge.failed';
     public const SECURITY_RATE_LIMIT_HIT = 'catmin.security.rate_limit.hit';

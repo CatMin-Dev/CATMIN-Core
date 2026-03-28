@@ -38,6 +38,11 @@ return Application::configure(basePath: dirname(__DIR__))
                 return Limit::perMinute(60)->by($request->ip());
             });
 
+            RateLimiter::for('catmin-password-reset', function (Request $request) {
+                $email = strtolower((string) $request->input('email', ''));
+                return Limit::perMinute(5)->by($request->ip() . '|' . $email);
+            });
+
             RateLimiter::for('catmin-external-api', function (Request $request) {
                 $identity = 'ip:' . $request->ip();
                 $auth = (string) $request->header('Authorization', '');

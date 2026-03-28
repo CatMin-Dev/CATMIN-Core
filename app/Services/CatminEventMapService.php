@@ -200,6 +200,8 @@ class CatminEventMapService
             'auth.login.succeeded',
             'auth.login.failed',
             'auth.logout',
+            'auth.password.reset.requested',
+            'auth.password.reset.completed',
             'auth.2fa.challenge.passed',
             'auth.2fa.challenge.failed',
             'security.rate_limit.hit',

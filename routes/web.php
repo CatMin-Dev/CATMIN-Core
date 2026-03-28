@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\AddonMarketplaceController;
+use App\Http\Controllers\Admin\AdminPasswordResetController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\TwoFactorController;
 use App\Http\Controllers\Frontend\HomeController;
@@ -46,6 +47,17 @@ Route::prefix($adminPath)->middleware('web')->name('admin.')->group(function () 
     Route::post('/login', [AuthController::class, 'login'])
         ->middleware('throttle:catmin-login')
         ->name('login.submit');
+
+    Route::get('/forgot-password', [AdminPasswordResetController::class, 'showRequestForm'])
+        ->name('password.request');
+    Route::post('/forgot-password', [AdminPasswordResetController::class, 'sendResetLink'])
+        ->middleware('throttle:catmin-password-reset')
+        ->name('password.email');
+    Route::get('/reset-password/{token}', [AdminPasswordResetController::class, 'showResetForm'])
+        ->name('password.reset');
+    Route::post('/reset-password', [AdminPasswordResetController::class, 'resetPassword'])
+        ->middleware('throttle:catmin-password-reset')
+        ->name('password.update');
 
     // 2FA routes — accessibles sans auth complète mais seulement si pending
     Route::get('/2fa/verify', [TwoFactorController::class, 'showVerify'])

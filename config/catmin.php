@@ -49,6 +49,7 @@ return [
         'login_route' => '/admin/login',
         'dashboard_route' => '/admin',
         'logout_route' => '/admin/logout',
+        'password_reset_expire_minutes' => (int) env('CATMIN_ADMIN_PASSWORD_RESET_EXPIRE', 60),
     ],
 
     /*

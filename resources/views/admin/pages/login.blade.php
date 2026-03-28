@@ -30,7 +30,10 @@
                         <button type="submit" class="btn btn-primary w-100">Se connecter</button>
                     </form>
 
-                    <div class="text-center mt-4"><a href="{{ url('/') }}" class="small text-decoration-none">Retour au site</a></div>
+                    <div class="text-center mt-3">
+                        <a href="{{ admin_route('password.request') }}" class="small text-decoration-none">Mot de passe oublie ?</a>
+                    </div>
+                    <div class="text-center mt-2"><a href="{{ url('/') }}" class="small text-decoration-none">Retour au site</a></div>
                 </div>
             </div>
         </div>

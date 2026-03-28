@@ -194,6 +194,10 @@ class RbacAuditService
             return true;
         }
 
+        if (str_contains($name, '.password.') || str_contains($uri, '/forgot-password') || str_contains($uri, '/reset-password')) {
+            return true;
+        }
+
         if (str_contains($name, '.2fa.') || str_contains($uri, '/2fa/')) {
             return true;
         }
