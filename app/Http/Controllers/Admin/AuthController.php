@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
+use App\Services\AdminAuthService;
 use App\Services\RbacPermissionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -29,20 +30,32 @@ final class AuthController extends Controller
             'password' => ['required', 'string', 'max:255'],
         ]);
 
-        $expectedUsername = (string) config('catmin.admin.username', 'admin');
-        $expectedPassword = (string) config('catmin.admin.password', 'admin12345');
+        // Rate limit login attempts per IP
+        $rateLimitKey = 'catmin-login|' . $request->ip();
+        if (RateLimiter::tooManyAttempts($rateLimitKey, 10)) {
+            $seconds = RateLimiter::availableIn($rateLimitKey);
+            return back()
+                ->withErrors(['username' => "Trop de tentatives. Réessayez dans {$seconds} secondes."])
+                ->withInput($request->only('username'));
+        }
 
-        $isValidUsername = hash_equals($expectedUsername, (string) $data['username']);
-        $isValidPassword = hash_equals($expectedPassword, (string) $data['password']);
+        RateLimiter::hit($rateLimitKey, 900); // 15 minutes
 
-        if (!$isValidUsername || !$isValidPassword) {
+        // Attempt authentication via AdminAuthService (DB-based)
+        $authService = app(AdminAuthService::class);
+        $result = $authService->attempt(
+            (string) $data['username'],
+            (string) $data['password']
+        );
+
+        if (!$result['success']) {
             // Log failed attempt — sans révéler lequel des deux champs est incorrect (217)
             try {
                 /** @var SystemLogService $logger */
                 $logger = app(SystemLogService::class);
                 $logger->logAudit(
                     'auth.login.failed',
-                    'Tentative de connexion echouee',
+                    'Tentative de connexion échouée',
                     ['ip' => $request->ip()],
                     'warning',
                     (string) $data['username']
@@ -52,13 +65,11 @@ final class AuthController extends Controller
             // Message générique — ne révèle pas si c'est username ou password (217)
             return back()
                 ->withInput($request->only('username'))
-                ->withErrors([
-                    'username' => 'Identifiants incorrects.',
-                ]);
+                ->withErrors(['username' => $result['error'] ?? 'Identifiants invalides.']);
         }
 
         // Clear rate limiter on successful login (214)
-        RateLimiter::clear('catmin-login|' . $request->ip());
+        RateLimiter::clear($rateLimitKey);
 
         $request->session()->regenerate();
 
@@ -68,7 +79,7 @@ final class AuthController extends Controller
 
         if ($twoFactorEnabled && $twoFactorSecret !== '') {
             $request->session()->put('catmin_2fa_pending', true);
-            $request->session()->put('catmin_2fa_pending_username', $data['username']);
+            $request->session()->put('catmin_2fa_pending_user_id', $result['user']->id);
 
             // Pré-charger le contexte RBAC en session pour l'avoir après 2FA
             $rbacContext = RbacPermissionService::resolveContextForUsername((string) $data['username']);
@@ -90,11 +101,12 @@ final class AuthController extends Controller
         }
 
         $request->session()->put('catmin_admin_authenticated', true);
-        $request->session()->put('catmin_admin_username', $data['username']);
+        $request->session()->put('catmin_admin_user_id', $result['user']->id);
+        $request->session()->put('catmin_admin_username', $result['user']->username);
         // Record absolute session start time for timeout enforcement (213)
         $request->session()->put('catmin_admin_login_at', now()->timestamp);
 
-        $rbacContext = RbacPermissionService::resolveContextForUsername((string) $data['username']);
+        $rbacContext = RbacPermissionService::resolveContextForUsername($result['user']->username);
         $request->session()->put('catmin_rbac_roles', $rbacContext['roles']);
         $request->session()->put('catmin_rbac_permissions', $rbacContext['permissions']);
         $request->session()->put('catmin_rbac_source', $rbacContext['source']);
@@ -104,14 +116,14 @@ final class AuthController extends Controller
             $logger = app(SystemLogService::class);
             $logger->logAudit(
                 'auth.login',
-                'Connexion admin reussie',
+                'Connexion admin réussie',
                 [
                     'rbac_source' => $rbacContext['source'],
                     'roles'      => $rbacContext['roles'],
                     'ip'         => $request->ip(),
                 ],
                 'info',
-                (string) $data['username']
+                $result['user']->username
             );
         } catch (\Throwable) {
             // Never break login flow due to audit logging failure.
