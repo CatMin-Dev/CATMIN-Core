@@ -152,7 +152,7 @@
                             <div class="border rounded p-3 h-100 bg-light">
                                 <p class="text-muted mb-1">Panel Admin</p>
                                 <p class="h5 mb-0">
-                                    <span class="badge badge-info">{{ $systemInfo['dashboard_version'] }}</span>
+                                    <span class="badge rounded-pill catmin-version-pill">{{ $systemInfo['dashboard_version'] }}</span>
                                 </p>
                             </div>
                         </div>
@@ -160,7 +160,7 @@
                             <div class="border rounded p-3 h-100 bg-light">
                                 <p class="text-muted mb-1">Phase de developpement</p>
                                 <p class="h5 mb-0">
-                                    <span class="badge badge-warning">{{ $systemInfo['development_phase'] }}</span>
+                                    <span class="badge rounded-pill catmin-phase-pill">{{ $systemInfo['development_phase'] }}</span>
                                 </p>
                             </div>
                         </div>
@@ -209,7 +209,7 @@
                                     <div class="border rounded p-3 h-100 bg-light">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <span class="fw-semibold">{{ $module['name'] }}</span>
-                                            <span class="badge badge-info">{{ $module['version'] }}</span>
+                                            <span class="badge rounded-pill catmin-version-pill">{{ $module['version'] }}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -345,4 +345,20 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 </script>
+@endpush
+
+@push('styles')
+<style>
+.catmin-version-pill {
+    background-color: #0d6efd;
+    color: #fff;
+    font-weight: 700;
+}
+
+.catmin-phase-pill {
+    background-color: #f59e0b;
+    color: #111827;
+    font-weight: 700;
+}
+</style>
 @endpush

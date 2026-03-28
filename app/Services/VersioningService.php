@@ -5,8 +5,8 @@ namespace App\Services;
 /**
  * VersioningService
  *
- * Shared V1 versioning rules for modules and addons.
- * Format retained: simple semver "major.minor.patch" (e.g. 1.2.0).
+ * Shared versioning rules for modules and addons.
+ * Supports semver and prerelease tags (e.g. 1.2.0, 2.0.0-dev, 2.1.0-beta1).
  */
 class VersioningService
 {
@@ -14,7 +14,7 @@ class VersioningService
 
     public static function isValid(string $version): bool
     {
-        return (bool) preg_match('/^\d+\.\d+\.\d+$/', trim($version));
+        return (bool) preg_match('/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/', trim($version));
     }
 
     public static function normalize(?string $version): string

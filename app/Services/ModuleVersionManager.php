@@ -49,8 +49,9 @@ class ModuleVersionManager
         $json = json_decode(File::get($moduleJsonPath), true);
         $currentVersion = $json['version'] ?? '1.0.0';
 
-        // Parse current version
-        $parts = explode('.', str_replace(['-dev', '-beta1', '-alpha'], '', $currentVersion));
+        // Parse current version base (strip any prerelease suffix)
+        $baseVersion = preg_replace('/-.+$/', '', (string) $currentVersion) ?: '1.0.0';
+        $parts = explode('.', $baseVersion);
         $major = (int) ($parts[0] ?? 1);
         $minor = (int) ($parts[1] ?? 0);
         $patch = (int) ($parts[2] ?? 0);
@@ -96,7 +97,7 @@ class ModuleVersionManager
             return false;
         }
 
-        if (!VersioningService::isValid(str_replace(['-dev', '-beta1', '-alpha'], '', $version))) {
+        if (!VersioningService::isValid($version)) {
             return false;
         }
 
@@ -177,7 +178,7 @@ class ModuleVersionManager
      */
     public static function setDashboardVersion(string $version): void
     {
-        if (!VersioningService::isValid(str_replace(['-dev', '-beta1', '-alpha'], '', $version))) {
+        if (!VersioningService::isValid($version)) {
             return;
         }
 

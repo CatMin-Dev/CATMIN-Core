@@ -54,7 +54,8 @@
                             <td>{{ $module->name }}</td>
                             <td>{{ $module->slug }}</td>
                             <td>
-                                {{ $module->version ?? 'n/a' }}
+                                @php $versionValue = (string) ($module->version ?? 'n/a'); @endphp
+                                <span class="badge {{ str_contains($versionValue, '-') ? 'text-bg-primary' : 'text-bg-light text-dark' }}">{{ $versionValue }}</span>
                                 @if($hasUpgrade)
                                     <span class="badge text-bg-warning ms-1" title="Installé: {{ $installedVersion }}">⬆ Update</span>
                                 @elseif($neverMigrated && $module->enabled)
