@@ -10,11 +10,10 @@ class VersionModuleCommand extends Command
     protected $signature = 'module:version 
                             {action : increment|set|show|matrix}
                             {module? : Module slug (e.g., shop)}
-                            {--type=patch : Increment type (patch|minor|major)}
-                            {--to= : Target version for set action (e.g., 2.0.0)}
-                            {--tag= : Beta tag (e.g., dev, beta1)}';
+                            {--type=minor : Increment type by convention (minor|beta|stable)}
+                            {--to= : Target module version A.B.C (e.g., 1.1.0)}';
 
-    protected $description = 'Manage module and dashboard versions during development';
+    protected $description = 'Manage module versions using A.B.C convention';
 
     public function handle(): int
     {
@@ -38,10 +37,8 @@ class VersionModuleCommand extends Command
             return 1;
         }
 
-        $type = $this->option('type') ?? 'patch';
-        $tag = $this->option('tag') ?? (config('app.development_phase') === 'v2-dev' ? 'dev' : null);
-
-        $newVersion = ModuleVersionManager::increment($module, $type, $tag);
+        $type = $this->option('type') ?? 'minor';
+        $newVersion = ModuleVersionManager::increment($module, $type);
 
         if ($newVersion) {
             $this->info("✓ Module '{$module}' incremented to: {$newVersion}");

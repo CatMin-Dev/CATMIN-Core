@@ -2,7 +2,7 @@
     "name": "Docs",
     "slug": "docs",
     "enabled": true,
-    "version": "2.0.0-dev",
+    "version": "1.1.0",
     "description": "Documentation embarquee Markdown avec aide contextuelle par module.",
     "depends": [
         "core"
@@ -11,5 +11,5 @@
         "docs",
         "help"
     ],
-    "updated_at": "2026-03-28T09:03:13+00:00"
+    "updated_at": "2026-03-28T09:57:29+00:00"
 }

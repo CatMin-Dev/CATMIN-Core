@@ -8,9 +8,9 @@ use Carbon\Carbon;
 /**
  * ModuleVersionManager
  *
- * Manages semantic versioning for modules during development.
+ * Manages module versioning (A.B.C) during development.
  * Tracks modification dates and automatically increments versions.
- * Supports V2-dev tagging for beta features.
+ * Dashboard global version uses Vx[-.5]-dev convention.
  */
 class ModuleVersionManager
 {
@@ -31,14 +31,13 @@ class ModuleVersionManager
     }
 
     /**
-     * Increment module to next version (patch/minor/major).
-     *
-     * @param string $moduleName Module slug (lowercase, e.g., 'shop')
-     * @param string $type 'patch' | 'minor' | 'major' (default: 'patch')
-     * @param string|null $tag Beta tag (e.g., 'dev', 'beta1')
-     * @return string New version or null on error
+     * Increment module version by convention:
+     * - stable: A+1, reset B/C
+     * - beta:   B+1, reset C
+     * - minor:  C+1
+     * Backward aliases accepted: major=>stable, minor=>beta, patch=>minor.
      */
-    public static function increment(string $moduleName, string $type = 'patch', ?string $tag = null): ?string
+    public static function increment(string $moduleName, string $type = 'minor', ?string $tag = null): ?string
     {
         $moduleJsonPath = self::getModuleJsonPath($moduleName);
 
@@ -49,26 +48,26 @@ class ModuleVersionManager
         $json = json_decode(File::get($moduleJsonPath), true);
         $currentVersion = $json['version'] ?? '1.0.0';
 
-        // Parse current version base (strip any prerelease suffix)
-        $baseVersion = preg_replace('/-.+$/', '', (string) $currentVersion) ?: '1.0.0';
-        $parts = explode('.', $baseVersion);
+        $parts = explode('.', (string) $currentVersion);
         $major = (int) ($parts[0] ?? 1);
         $minor = (int) ($parts[1] ?? 0);
         $patch = (int) ($parts[2] ?? 0);
 
-        // Increment based on type
-        match ($type) {
-            'major' => $major++,
-            'minor' => [$minor++, $patch = 0],
-            'patch' => $patch++,
+        // Normalize aliases for backward compatibility.
+        $level = match ($type) {
+            'major', 'stable' => 'stable',
+            'minor', 'beta' => 'beta',
+            'patch', 'fix' => 'minor',
+            default => 'minor',
+        };
+
+        match ($level) {
+            'stable' => [$major++, $minor = 0, $patch = 0],
+            'beta' => [$minor++, $patch = 0],
+            'minor' => $patch++,
         };
 
         $newVersion = "{$major}.{$minor}.{$patch}";
-
-        // Add tag if specified (e.g., 2.0.0-dev)
-        if ($tag) {
-            $newVersion .= "-{$tag}";
-        }
 
         // Update module.json
         $json['version'] = $newVersion;
@@ -83,10 +82,10 @@ class ModuleVersionManager
     }
 
     /**
-     * Set module to specific version with optional tag.
+        * Set module to specific A.B.C version.
      *
      * @param string $moduleName Module slug
-     * @param string $version Target version (e.g., '2.0.0', '2.0.0-dev')
+    * @param string $version Target version (e.g., '1.1.0')
      * @return bool Success status
      */
     public static function set(string $moduleName, string $version): bool
@@ -170,7 +169,7 @@ class ModuleVersionManager
      */
     public static function getDashboardVersion(): string
     {
-        return config('app.dashboard_version', '1.0.0');
+        return config('app.dashboard_version', 'V2.5-dev');
     }
 
     /**
@@ -178,7 +177,7 @@ class ModuleVersionManager
      */
     public static function setDashboardVersion(string $version): void
     {
-        if (!VersioningService::isValid($version)) {
+        if (!VersioningService::isDashboardVersionValid($version)) {
             return;
         }
 

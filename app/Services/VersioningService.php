@@ -5,16 +5,28 @@ namespace App\Services;
 /**
  * VersioningService
  *
- * Shared versioning rules for modules and addons.
- * Supports semver and prerelease tags (e.g. 1.2.0, 2.0.0-dev, 2.1.0-beta1).
+ * Shared versioning rules for modules/addons (A.B.C only)
+ * and dashboard global version (Vx[-.5]-dev).
  */
 class VersioningService
 {
     public const DEFAULT_VERSION = '0.1.0';
 
+    /**
+     * Module/addon convention: A.B.C (no suffix).
+     * A = stable production train, B = beta major iteration, C = minor fixes.
+     */
     public static function isValid(string $version): bool
     {
-        return (bool) preg_match('/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/', trim($version));
+        return (bool) preg_match('/^\d+\.\d+\.\d+$/', trim($version));
+    }
+
+    /**
+     * Dashboard global convention examples: V2-dev, V2.5-dev, V3-dev.
+     */
+    public static function isDashboardVersionValid(string $version): bool
+    {
+        return (bool) preg_match('/^V\d+(?:\.5)?-dev$/i', trim($version));
     }
 
     public static function normalize(?string $version): string
