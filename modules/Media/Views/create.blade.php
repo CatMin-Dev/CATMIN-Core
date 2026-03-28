@@ -19,13 +19,19 @@
 
                 <div class="col-12">
                     <label class="form-label" for="files">Fichiers <span class="text-muted small">(sélection multiple autorisée)</span></label>
-                    <input id="files" name="files[]" type="file" class="form-control @error('files') is-invalid @enderror @error('files.*') is-invalid @enderror" multiple required>
+                    <div class="catmin-media-dropzone" data-media-dropzone>
+                        <input id="files" name="files[]" type="file" class="@error('files') is-invalid @enderror @error('files.*') is-invalid @enderror" multiple required>
+                        <p class="mb-1 fw-semibold">Glissez-déposez vos fichiers ici</p>
+                        <p class="mb-2 small text-muted">ou cliquez pour parcourir vos dossiers.</p>
+                        <button class="btn btn-sm btn-outline-primary" type="button" data-media-dropzone-browse>Parcourir</button>
+                        <p class="small text-muted mt-2 mb-0" data-media-dropzone-feedback>Aucun fichier selectionne.</p>
+                    </div>
                     <div class="form-text">
                         Types autorises: {{ implode(', ', (array) config('catmin.uploads.allowed_extensions', [])) }}.
                         Taille max: {{ (int) config('catmin.uploads.max_file_kb', 20480) / 1024 }} MB par fichier.
                     </div>
-                    @error('files')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    @error('files.*')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    @error('files')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                    @error('files.*')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
                 </div>
 
                 <div class="col-12 col-lg-4">
