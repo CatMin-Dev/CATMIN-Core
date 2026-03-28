@@ -1,7 +1,10 @@
 <?php
 
 use App\Services\CatminEventBus;
+use App\Services\CatminHookRegistry;
 use Modules\Webhooks\Services\WebhookDispatcher;
+
+CatminHookRegistry::after('admin.footer', '<!-- catmin:webhooks hooks ready -->');
 
 CatminEventBus::listen(CatminEventBus::USER_CREATED, function (array $payload): void {
     WebhookDispatcher::dispatch('user.created', $payload);

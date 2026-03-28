@@ -5,15 +5,20 @@
     <title>CATMIN - @yield('page_title', 'Administration')</title>
 </head>
 <body>
+    @catminHook('before:admin.body')
     <div class="catmin-shell">
         @include('admin.partials.navigation')
 
         <div class="catmin-shell-main">
+            @catminHook('before:admin.topbar')
             @include('admin.partials.topbar')
+            @catminHook('after:admin.topbar')
 
             <main class="catmin-main" role="main">
                 <div class="catmin-page px-3 px-lg-4 py-4">
+                    @catminHook('before:admin.content')
                     @yield('content')
+                    @catminHook('after:admin.content')
                 </div>
             </main>
 
@@ -37,8 +42,11 @@
             @endif
 
             @include('admin.partials.footer')
+            @catminHook('after:admin.footer')
         </div>
     </div>
+
+    @catminHook('after:admin.body')
 
     @stack('scripts')
 </body>
