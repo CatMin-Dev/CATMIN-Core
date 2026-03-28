@@ -1,10 +1,21 @@
 {
-  "name": "Shop",
-  "slug": "shop",
-  "enabled": true,
-  "version": "1.0.0",
-  "description": "Base e-commerce leger CATMIN (produits simples sans paiement V1).",
-  "category": "commerce",
-  "provides": ["products-list", "products-create", "products-edit", "products-status"],
-  "depends": ["core", "media", "users", "settings"]
+    "name": "Shop",
+    "slug": "shop",
+    "enabled": true,
+    "version": "2.0.0-dev",
+    "description": "Base e-commerce leger CATMIN (produits simples sans paiement V1).",
+    "category": "commerce",
+    "provides": [
+        "products-list",
+        "products-create",
+        "products-edit",
+        "products-status"
+    ],
+    "depends": [
+        "core",
+        "media",
+        "users",
+        "settings"
+    ],
+    "updated_at": "2026-03-28T09:03:12+00:00"
 }

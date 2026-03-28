@@ -123,4 +123,18 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Versioning Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Version tracking for modules and admin dashboard during development.
+    | Supports semantic versioning with optional tags (dev, beta1, alpha, etc.)
+    |
+    */
+
+    'dashboard_version' => env('DASHBOARD_VERSION', '2.0.0-dev'),
+
+    'development_phase' => env('DEVELOPMENT_PHASE', 'v2-dev'),
+
 ];

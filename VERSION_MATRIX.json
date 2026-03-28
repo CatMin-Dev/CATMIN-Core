@@ -1,0 +1,32 @@
+{
+  "generated_at": "2026-03-28T09:03:00+00:00",
+  "development_phase": "v2-dev",
+  "dashboard_version": "2.0.0-dev",
+  "modules": {
+    "articles": "1.0.0",
+    "blocks": "1.0.0",
+    "cache": "1.0.0",
+    "core": "1.0.0",
+    "cron": "1.0.0",
+    "docs": "2.0.0-dev",
+    "logger": "1.0.0",
+    "mailer": "2.0.0-dev",
+    "media": "1.1.0",
+    "menus": "1.0.0",
+    "pages": "1.0.0",
+    "queue": "1.0.0",
+    "seo": "1.0.0",
+    "settings": "1.0.0",
+    "shop": "2.0.0-dev",
+    "users": "2.0.0-dev",
+    "webhooks": "1.0.0"
+  },
+  "total_modules": 17,
+  "modules_v2_dev": ["docs", "mailer", "shop", "users"],
+  "summary": {
+    "v1_stable": 13,
+    "v2_dev": 4,
+    "total": 17,
+    "coverage_percentage": "23.5%"
+  }
+}

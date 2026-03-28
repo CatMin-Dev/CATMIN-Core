@@ -1,16 +1,19 @@
 {
-  "name": "Users",
-  "slug": "users",
-  "enabled": true,
-  "version": "1.0.0",
-  "description": "Gestion de base des utilisateurs du dashboard CATMIN.",
-  "category": "administration",
-  "provides": [
-    "users-list",
-    "users-create",
-    "users-edit",
-    "users-activation",
-    "users-roles-binding"
-  ],
-  "depends": ["core"]
+    "name": "Users",
+    "slug": "users",
+    "enabled": true,
+    "version": "2.0.0-dev",
+    "description": "Gestion de base des utilisateurs du dashboard CATMIN.",
+    "category": "administration",
+    "provides": [
+        "users-list",
+        "users-create",
+        "users-edit",
+        "users-activation",
+        "users-roles-binding"
+    ],
+    "depends": [
+        "core"
+    ],
+    "updated_at": "2026-03-28T09:03:13+00:00"
 }

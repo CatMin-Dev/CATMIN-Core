@@ -1,9 +1,17 @@
 {
-  "name": "Mailer",
-  "slug": "mailer",
-  "enabled": true,
-  "version": "1.0.0",
-  "description": "Base d'envoi e-mail systeme et mailing futur (V1).",
-  "depends": ["core", "users", "settings"],
-  "provides": ["communication", "system"]
+    "name": "Mailer",
+    "slug": "mailer",
+    "enabled": true,
+    "version": "2.0.0-dev",
+    "description": "Base d'envoi e-mail systeme et mailing futur (V1).",
+    "depends": [
+        "core",
+        "users",
+        "settings"
+    ],
+    "provides": [
+        "communication",
+        "system"
+    ],
+    "updated_at": "2026-03-28T09:03:12+00:00"
 }
