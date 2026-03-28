@@ -183,21 +183,6 @@
         });
     }
 
-    const tabFields = {
-        'tab-content': ['title', 'slug', 'excerpt', 'content', 'content_type'],
-        'tab-publish': ['status', 'published_at'],
-        'tab-seo': ['meta_title', 'meta_description'],
-        'tab-media': ['media_asset_id'],
-    };
-    const errorKeys = {!! json_encode(array_keys($errors->messages()), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!};
-    if (errorKeys.length > 0) {
-        for (const [tabId, fields] of Object.entries(tabFields)) {
-            if (fields.some(f => errorKeys.includes(f))) {
-                bootstrap.Tab.getOrCreateInstance(document.querySelector('[data-bs-target="#' + tabId + '"]')).show();
-                break;
-            }
-        }
-    }
 }());
 </script>
 @endpush
