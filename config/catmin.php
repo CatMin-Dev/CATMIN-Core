@@ -175,6 +175,20 @@ return [
         'incoming_token'  => env('CATMIN_WEBHOOK_INCOMING_TOKEN', ''),
         // Secret HMAC optionnel — si défini, la signature X-Hub-Signature-256 sera vérifiée (218)
         'incoming_secret' => env('CATMIN_WEBHOOK_INCOMING_SECRET', ''),
+        // Optional incoming webhook row id used for anti-replay/idempotence state tracking.
+        'incoming_webhook_id' => env('CATMIN_WEBHOOK_INCOMING_ID', null),
+    ],
+
+    'logs' => [
+        'retention_days' => (int) env('CATMIN_LOG_RETENTION_DAYS', 14),
+        'archive_retention_days' => (int) env('CATMIN_LOG_ARCHIVE_RETENTION_DAYS', 90),
+    ],
+
+    'alerting' => [
+        // Optional email recipient for warning/critical operational alerts.
+        'email_to' => env('CATMIN_ALERT_EMAIL_TO', ''),
+        // Optional webhook endpoint receiving warning/critical operational alerts.
+        'webhook_url' => env('CATMIN_ALERT_WEBHOOK_URL', ''),
     ],
 
     /*

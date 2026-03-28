@@ -104,6 +104,46 @@
         </x-slot:rows>
     </x-admin.crud.table-card>
 
+    <div class="card mb-3 border-warning">
+        <div class="card-header bg-warning-subtle">
+            <h2 class="h6 mb-0">Purge sélective</h2>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ route('admin.logger.purge') }}" class="row g-2 align-items-end" onsubmit="return confirm('Supprimer définitivement les logs correspondants ?');">
+                @csrf
+                <div class="col-12 col-md-3">
+                    <label class="form-label" for="purge-level">Niveau</label>
+                    <select id="purge-level" name="level" class="form-select">
+                        <option value="">Tous</option>
+                        @foreach($levels as $level)
+                            <option value="{{ $level }}">{{ strtoupper($level) }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label" for="purge-channel">Canal</label>
+                    <select id="purge-channel" name="channel" class="form-select">
+                        <option value="">Tous</option>
+                        @foreach($channels as $channel)
+                            <option value="{{ $channel }}">{{ $channel }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label" for="purge-from">Du</label>
+                    <input id="purge-from" name="from" type="date" class="form-control">
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label" for="purge-to">Au</label>
+                    <input id="purge-to" name="to" type="date" class="form-control">
+                </div>
+                <div class="col-12 col-md-2 d-grid">
+                    <button type="submit" class="btn btn-outline-danger">Purger</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <x-admin.crud.table-card title="Entrees" :count="$logs->count()" :empty-colspan="8" empty-message="Aucun log enregistre.">
         <x-slot:head>
             <tr>

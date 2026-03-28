@@ -3,13 +3,19 @@
 namespace Modules\Logger\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Modules\Logger\Models\SystemLog;
 use Modules\Logger\Models\SystemAlert;
+use Modules\Logger\Services\LogMaintenanceService;
 
 class LogController extends Controller
 {
+    public function __construct(private readonly LogMaintenanceService $maintenance)
+    {
+    }
+
     public function index(Request $request): View
     {
         $level = (string) $request->query('level', '');
@@ -121,5 +127,24 @@ class LogController extends Controller
             'alertSummary' => $alertSummary,
             'recentAlerts' => $recentAlerts,
         ]);
+    }
+
+    public function purge(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'level' => ['nullable', 'string', 'max:32'],
+            'channel' => ['nullable', 'string', 'max:32'],
+            'from' => ['nullable', 'date'],
+            'to' => ['nullable', 'date'],
+        ]);
+
+        $deleted = $this->maintenance->purge([
+            'level' => (string) ($validated['level'] ?? ''),
+            'channel' => (string) ($validated['channel'] ?? ''),
+            'from' => (string) ($validated['from'] ?? ''),
+            'to' => (string) ($validated['to'] ?? ''),
+        ]);
+
+        return redirect()->route('admin.logger.index')->with('success', $deleted . ' log(s) supprimé(s).');
     }
 }

@@ -12,6 +12,10 @@ Route::middleware(['web', 'catmin.admin'])
             ->middleware('catmin.permission:module.logger.list')
             ->name('logger.index');
 
+        Route::post('/logs/purge', [LogController::class, 'purge'])
+            ->middleware('catmin.permission:module.logger.list')
+            ->name('logger.purge');
+
         Route::get('/logs/alerts', [AlertController::class, 'index'])
             ->middleware('catmin.permission:module.logger.list')
             ->name('logger.alerts.index');

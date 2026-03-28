@@ -18,6 +18,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Exceptions\InvalidSignatureException;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Cache\RateLimiting\Limit;
+use Modules\Logger\Services\AlertingService;
 use Modules\Logger\Services\SystemLogService;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -144,6 +145,18 @@ return Application::configure(basePath: dirname(__DIR__))
                     'method' => $isConsole ? null : request()?->method(),
                     'ip'     => $isConsole ? null : request()?->ip(),
                 ]);
+
+                if (!app()->runningUnitTests()) {
+                    app(AlertingService::class)->alertCriticalError(
+                        $throwable->getMessage() !== '' ? $throwable->getMessage() : get_class($throwable),
+                        (string) $throwable->getFile(),
+                        (int) $throwable->getLine(),
+                        [
+                            'exception' => get_class($throwable),
+                            'code' => $throwable->getCode(),
+                        ]
+                    );
+                }
             } catch (\Throwable) {
                 // Prevent exception handler from throwing during bootstrap/CLI
             }

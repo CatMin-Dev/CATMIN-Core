@@ -8,7 +8,9 @@ use App\Services\ModuleAssetLoader;
 use App\Services\SuperAdminGuardService;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\ServiceProvider;
+use Modules\Logger\Services\AlertingService;
 use Modules\Logger\Services\SystemLogService;
 
 class AppServiceProvider extends ServiceProvider
@@ -132,6 +134,23 @@ class AppServiceProvider extends ServiceProvider
                 );
             } catch (\Throwable) {
                 // Avoid breaking request flow if logging fails.
+            }
+        });
+
+        Queue::failing(function ($event): void {
+            try {
+                $jobName = method_exists($event->job, 'resolveName')
+                    ? (string) $event->job->resolveName()
+                    : 'queue.job';
+
+                $errorMessage = $event->exception?->getMessage() ?: 'Job failed without message';
+
+                app(AlertingService::class)->alertJobFailed($jobName, $errorMessage, [
+                    'connection' => (string) ($event->connectionName ?? ''),
+                    'queue' => method_exists($event->job, 'getQueue') ? (string) $event->job->getQueue() : '',
+                ]);
+            } catch (\Throwable) {
+                // Never break queue flow on alerting failure.
             }
         });
     }
