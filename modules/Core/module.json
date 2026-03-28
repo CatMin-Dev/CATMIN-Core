@@ -1,16 +1,16 @@
 {
-  "name": "Core",
-  "slug": "core",
-  "enabled": true,
-  "version": "1.0.21",
-  "description": "Noyau minimal CATMIN: services transversaux, acces settings, etat modules et contexte admin.",
-  "category": "system",
-  "provides": [
-    "kernel",
-    "shared-services",
-    "settings-access",
-    "modules-state",
-    "admin-context"
-  ],
-  "depends": []
+    "name": "Core",
+    "slug": "core",
+    "enabled": true,
+    "version": "1.0.22",
+    "description": "Noyau minimal CATMIN: services transversaux, acces settings, etat modules et contexte admin.",
+    "category": "system",
+    "provides": [
+        "kernel",
+        "shared-services",
+        "settings-access",
+        "modules-state",
+        "admin-context"
+    ],
+    "depends": []
 }

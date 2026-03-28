@@ -9,6 +9,8 @@
 />
 
 <div class="catmin-page-body d-grid gap-4">
+    @php($canUpdateSettings = catmin_can('module.settings.config'))
+
     <x-admin.crud.flash-messages />
 
     <div class="card">
@@ -22,47 +24,53 @@
 
                 <div class="col-12 col-lg-6">
                     <label class="form-label" for="site_name">Nom du site</label>
-                    <input id="site_name" name="site_name" type="text" class="form-control @error('site_name') is-invalid @enderror" value="{{ old('site_name', $essentials['site_name']) }}" required>
+                    <input id="site_name" name="site_name" type="text" class="form-control @error('site_name') is-invalid @enderror" value="{{ old('site_name', $essentials['site_name']) }}" required @disabled(!$canUpdateSettings)>
                     @error('site_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
                 <div class="col-12 col-lg-6">
                     <label class="form-label" for="site_url">URL du site</label>
-                    <input id="site_url" name="site_url" type="url" class="form-control @error('site_url') is-invalid @enderror" value="{{ old('site_url', $essentials['site_url']) }}" required>
+                    <input id="site_url" name="site_url" type="url" class="form-control @error('site_url') is-invalid @enderror" value="{{ old('site_url', $essentials['site_url']) }}" required @disabled(!$canUpdateSettings)>
                     @error('site_url')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
                 <div class="col-12 col-lg-6">
                     <label class="form-label" for="admin_path">Chemin admin</label>
-                    <input id="admin_path" name="admin_path" type="text" class="form-control @error('admin_path') is-invalid @enderror" value="{{ old('admin_path', $essentials['admin_path']) }}" required>
+                    <input id="admin_path" name="admin_path" type="text" class="form-control @error('admin_path') is-invalid @enderror" value="{{ old('admin_path', $essentials['admin_path']) }}" required @disabled(!$canUpdateSettings)>
                     <div class="form-text">Valeur stockee pour la configuration admin future (sans slash initial).</div>
                     @error('admin_path')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
                 <div class="col-12 col-lg-6">
                     <label class="form-label" for="admin_theme">Theme admin</label>
-                    <input id="admin_theme" name="admin_theme" type="text" class="form-control @error('admin_theme') is-invalid @enderror" value="{{ old('admin_theme', $essentials['admin_theme']) }}" required>
+                    <input id="admin_theme" name="admin_theme" type="text" class="form-control @error('admin_theme') is-invalid @enderror" value="{{ old('admin_theme', $essentials['admin_theme']) }}" required @disabled(!$canUpdateSettings)>
                     @error('admin_theme')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
                 <div class="col-12 col-lg-6">
                     <div class="form-check mt-2">
-                        <input class="form-check-input" type="checkbox" id="site_frontend_enabled" name="site_frontend_enabled" value="1" @checked(old('site_frontend_enabled', $essentials['site_frontend_enabled']))>
+                        <input class="form-check-input" type="checkbox" id="site_frontend_enabled" name="site_frontend_enabled" value="1" @checked(old('site_frontend_enabled', $essentials['site_frontend_enabled'])) @disabled(!$canUpdateSettings)>
                         <label class="form-check-label" for="site_frontend_enabled">Frontend public actif</label>
                     </div>
                 </div>
 
                 <div class="col-12 col-lg-6">
                     <div class="form-check mt-2">
-                        <input class="form-check-input" type="checkbox" id="registration_open" name="registration_open" value="1" @checked(old('registration_open', $essentials['registration_open']))>
+                        <input class="form-check-input" type="checkbox" id="registration_open" name="registration_open" value="1" @checked(old('registration_open', $essentials['registration_open'])) @disabled(!$canUpdateSettings)>
                         <label class="form-check-label" for="registration_open">Inscriptions publiques autorisees</label>
                     </div>
                 </div>
 
                 <div class="col-12">
-                    <button class="btn btn-primary" type="submit">
-                        <i class="bi bi-save me-1"></i>Enregistrer les parametres
-                    </button>
+                    @if($canUpdateSettings)
+                        <button class="btn btn-primary" type="submit">
+                            <i class="bi bi-save me-1"></i>Enregistrer les parametres
+                        </button>
+                    @else
+                        <div class="alert alert-secondary mb-0 py-2" role="alert">
+                            Lecture seule: permission <code>module.settings.config</code> requise pour modifier ces parametres.
+                        </div>
+                    @endif
                 </div>
             </form>
         </div>

@@ -9,6 +9,8 @@
 </header>
 
 <div class="catmin-page-body">
+    @php($canManageModules = catmin_can('module.core.config'))
+
     @if(!empty($stateIssues ?? []))
         <div class="alert alert-warning" role="alert">
             <strong>Etat modules a surveiller :</strong>
@@ -25,7 +27,7 @@
             <h2 class="h6 mb-0">Etat des modules</h2>
             <div class="d-flex align-items-center gap-2">
                 <span class="badge text-bg-light">{{ $modules->count() }}</span>
-                @if(($migratableEnabledCount ?? 0) > 0)
+                @if(($migratableEnabledCount ?? 0) > 0 && $canManageModules)
                     <form method="POST" action="{{ route('admin.modules.migrate-enabled') }}" onsubmit="return confirm('Lancer les migrations sur tous les modules actifs qui possèdent des migrations ?');" class="d-inline">
                         @csrf
                         <button type="submit" class="btn btn-sm btn-primary">
@@ -76,7 +78,7 @@
                             </td>
                             <td>{{ collect($module->depends ?? [])->join(', ') ?: 'Aucune' }}</td>
                             <td>
-                                @if(!$isSystemModule)
+                                @if(!$isSystemModule && $canManageModules)
                                     <form method="POST" style="display:inline;" onsubmit="return confirm('Êtes-vous sûr?');">
                                         @csrf
                                         @if($module->enabled)

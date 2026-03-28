@@ -67,15 +67,19 @@ Route::prefix($adminPath)->middleware('web')->name('admin.')->group(function () 
             ->name('logout');
 
         Route::get('/users', [DashboardController::class, 'users'])
+            ->middleware('catmin.permission:module.users.list')
             ->name('users.index');
 
         Route::get('/roles', [DashboardController::class, 'roles'])
+            ->middleware('catmin.permission:module.users.config')
             ->name('roles.index');
 
         Route::get('/settings', [DashboardController::class, 'settings'])
+            ->middleware('catmin.permission:module.settings.list')
             ->name('settings.index');
 
         Route::get('/modules', [DashboardController::class, 'modules'])
+            ->middleware('catmin.permission:module.core.list')
             ->name('modules.index');
 
         Route::get('/addons/marketplace', [AddonMarketplaceController::class, 'index'])
@@ -87,21 +91,27 @@ Route::prefix($adminPath)->middleware('web')->name('admin.')->group(function () 
             ->name('addons.marketplace.rebuild');
 
         Route::get('/modules/{slug}/config', [DashboardController::class, 'moduleConfig'])
+            ->middleware('catmin.permission:module.core.config')
             ->name('modules.config');
 
         Route::post('/modules/{slug}/config', [DashboardController::class, 'updateModuleConfig'])
+            ->middleware('catmin.permission:module.core.config')
             ->name('modules.config.update');
 
         Route::post('/modules/{slug}/enable', [DashboardController::class, 'enableModule'])
+            ->middleware('catmin.permission:module.core.config')
             ->name('modules.enable');
 
         Route::post('/modules/{slug}/disable', [DashboardController::class, 'disableModule'])
+            ->middleware('catmin.permission:module.core.config')
             ->name('modules.disable');
 
         Route::post('/modules/{slug}/migrate', [DashboardController::class, 'migrateModule'])
+            ->middleware('catmin.permission:module.core.config')
             ->name('modules.migrate');
 
         Route::post('/modules/migrate-enabled', [DashboardController::class, 'migrateEnabledModules'])
+            ->middleware('catmin.permission:module.core.config')
             ->name('modules.migrate-enabled');
 
         Route::get('/content/{module}', [DashboardController::class, 'content'])

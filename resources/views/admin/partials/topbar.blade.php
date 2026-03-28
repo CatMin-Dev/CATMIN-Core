@@ -22,8 +22,12 @@
                     {{ $adminUsername }}
                 </button>
                 <div class="dropdown-menu dropdown-menu-end shadow-sm">
-                    <a class="dropdown-item" href="{{ admin_route('users.index') }}">Profil</a>
-                    <a class="dropdown-item" href="{{ admin_route('settings.index') }}">Parametres</a>
+                    @if(catmin_can('module.users.list'))
+                        <a class="dropdown-item" href="{{ admin_route('users.index') }}">Profil</a>
+                    @endif
+                    @if(catmin_can('module.settings.list'))
+                        <a class="dropdown-item" href="{{ admin_route('settings.index') }}">Parametres</a>
+                    @endif
                     <div class="dropdown-divider"></div>
                     <form action="{{ admin_route('logout') }}" method="POST" class="m-0">
                         @csrf

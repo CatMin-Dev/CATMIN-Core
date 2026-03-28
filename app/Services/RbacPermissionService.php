@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 
 class RbacPermissionService
 {
+    public const SUPER_ADMIN_ROLE = 'super-admin';
+
     /**
      * Permission convention: module.<slug>.<action>
      * Actions: menu, list, create, edit, delete, config
@@ -85,8 +87,22 @@ class RbacPermissionService
 
         $user->loadMissing('roles');
 
+        $roles = $user->roles
+            ->pluck('name')
+            ->map(fn ($r) => (string) $r)
+            ->values()
+            ->all();
+
+        if (in_array(self::SUPER_ADMIN_ROLE, $roles, true)) {
+            return [
+                'roles' => $roles,
+                'permissions' => ['*'],
+                'source' => 'users-module-super-admin',
+            ];
+        }
+
         return [
-            'roles' => $user->roles->pluck('name')->map(fn ($r) => (string) $r)->values()->all(),
+            'roles' => $roles,
             'permissions' => self::permissionsForUser($user),
             'source' => 'users-module',
         ];
@@ -106,6 +122,10 @@ class RbacPermissionService
             return true;
         }
 
+        if (self::isSuperAdminRequest($request)) {
+            return true;
+        }
+
         $permissions = self::permissionsFromRequest($request);
 
         if (in_array('*', $permissions, true)) {
@@ -113,5 +133,17 @@ class RbacPermissionService
         }
 
         return in_array($permission, $permissions, true);
+    }
+
+    public static function isSuperAdminRequest(Request $request): bool
+    {
+        $permissions = self::permissionsFromRequest($request);
+        if (in_array('*', $permissions, true)) {
+            return true;
+        }
+
+        $roles = (array) $request->session()->get('catmin_rbac_roles', []);
+
+        return in_array(self::SUPER_ADMIN_ROLE, $roles, true);
     }
 }

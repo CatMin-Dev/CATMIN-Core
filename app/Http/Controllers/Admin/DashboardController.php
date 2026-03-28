@@ -13,6 +13,7 @@ use App\Services\ModuleMigrationRunner;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -56,16 +57,28 @@ class DashboardController extends Controller
 
     public function users(): RedirectResponse
     {
+        if (!Route::has('admin.users.manage')) {
+            return redirect()->route('admin.index')->with('error', 'Route utilisateurs indisponible: module users inactif.');
+        }
+
         return redirect()->route('admin.users.manage');
     }
 
     public function roles(): RedirectResponse
     {
+        if (!Route::has('admin.roles.manage')) {
+            return redirect()->route('admin.index')->with('error', 'Route roles indisponible: module users inactif.');
+        }
+
         return redirect()->route('admin.roles.manage');
     }
 
     public function settings(): RedirectResponse
     {
+        if (!Route::has('admin.settings.manage')) {
+            return redirect()->route('admin.index')->with('error', 'Route settings indisponible: module settings inactif.');
+        }
+
         return redirect()->route('admin.settings.manage');
     }
 
