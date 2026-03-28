@@ -22,7 +22,7 @@ class AlertController extends Controller
             ->when($state === 'open', fn ($query) => $query->where('acknowledged', false))
             ->when($state === 'ack', fn ($query) => $query->where('acknowledged', true))
             ->orderByDesc('id')
-            ->paginate(50)
+            ->paginate(20)
             ->withQueryString();
 
         $types = SystemAlert::query()

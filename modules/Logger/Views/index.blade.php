@@ -193,12 +193,9 @@
         </x-slot:rows>
     </x-admin.crud.table-card>
 
-    @if(method_exists($logs, 'links'))
-        <div class="mt-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <small class="text-muted">
-                Affichage de {{ $logs->firstItem() ?? 0 }} à {{ $logs->lastItem() ?? 0 }} sur {{ $logs->total() }} entrées
-            </small>
-            {{ $logs->links() }}
+    @if($logs->hasPages())
+        <div class="mt-3">
+            <x-admin.crud.pagination :paginator="$logs" />
         </div>
     @endif
 

@@ -26,14 +26,14 @@ class LogController extends Controller
         $from = (string) $request->query('from', '');
         $to = (string) $request->query('to', '');
         $status = trim((string) $request->query('status', ''));
-        $perPageInput = strtolower(trim((string) $request->query('per_page', '50')));
+        $perPageInput = strtolower(trim((string) $request->query('per_page', '20')));
         $perPage = match ($perPageInput) {
             '20' => 20,
             '50' => 50,
             '100' => 100,
             '250' => 250,
             'all' => 1000,
-            default => 50,
+            default => 20,
         };
 
         $logs = SystemLog::query()

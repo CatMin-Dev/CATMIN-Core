@@ -114,8 +114,13 @@
 
         <div class="mt-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
             <button type="submit" class="btn btn-warning">Acquitter la sélection</button>
-            {{ $alerts->links() }}
         </div>
+
+        @if($alerts->hasPages())
+            <div class="mt-2">
+                <x-admin.crud.pagination :paginator="$alerts" />
+            </div>
+        @endif
     </form>
 </div>
 
