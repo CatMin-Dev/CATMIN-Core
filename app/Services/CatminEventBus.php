@@ -12,6 +12,11 @@ use Illuminate\Support\Facades\Event;
  */
 class CatminEventBus
 {
+    /**
+     * @var array<string, int>
+     */
+    protected static array $listenerCounts = [];
+
     public const ADDON_INSTALLED = 'catmin.addon.installed';
     public const ADDON_ENABLED = 'catmin.addon.enabled';
     public const ADDON_DISABLED = 'catmin.addon.disabled';
@@ -34,9 +39,32 @@ class CatminEventBus
      */
     public static function listen(string $eventName, callable $listener): void
     {
+        self::$listenerCounts[$eventName] = (self::$listenerCounts[$eventName] ?? 0) + 1;
+
         Event::listen($eventName, function ($payload) use ($listener): void {
             $listener((array) $payload);
         });
+    }
+
+    /**
+     * Register multiple listeners in one pass.
+     *
+     * @param array<string, callable|array<int, callable>> $listeners
+     */
+    public static function subscribe(array $listeners): void
+    {
+        foreach ($listeners as $eventName => $eventListeners) {
+            if (is_callable($eventListeners)) {
+                self::listen($eventName, $eventListeners);
+                continue;
+            }
+
+            foreach ($eventListeners as $listener) {
+                if (is_callable($listener)) {
+                    self::listen($eventName, $listener);
+                }
+            }
+        }
     }
 
     /**
@@ -47,5 +75,37 @@ class CatminEventBus
     public static function dispatch(string $eventName, array $payload = []): void
     {
         Event::dispatch($eventName, $payload);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public static function events(): array
+    {
+        $reflection = new \ReflectionClass(static::class);
+
+        return collect($reflection->getConstants())
+            ->filter(fn ($value) => is_string($value) && str_starts_with($value, 'catmin.'))
+            ->values()
+            ->all();
+    }
+
+    public static function listenersCount(string $eventName): int
+    {
+        return self::$listenerCounts[$eventName] ?? 0;
+    }
+
+    /**
+     * @return array<int, array{name: string, listeners: int}>
+     */
+    public static function registry(): array
+    {
+        return collect(self::events())
+            ->map(fn (string $eventName) => [
+                'name' => $eventName,
+                'listeners' => self::listenersCount($eventName),
+            ])
+            ->values()
+            ->all();
     }
 }
