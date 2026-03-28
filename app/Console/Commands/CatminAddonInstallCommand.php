@@ -32,6 +32,12 @@ class CatminAddonInstallCommand extends Command
             return self::FAILURE;
         }
 
+        $validation = AddonManager::canEnable($slug);
+        if (!$validation['allowed']) {
+            $this->error($validation['message']);
+            return self::FAILURE;
+        }
+
         if (!(bool) $this->option('no-enable')) {
             if (!AddonManager::enable($slug)) {
                 $this->error('Impossible d\'activer l\'addon.');

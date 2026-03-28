@@ -62,6 +62,7 @@ class AddonLoader
                 'version' => $addon->version ?? 'unknown',
                 'enabled' => (bool) ($addon->enabled ?? false),
                 'requires_core' => (bool) ($addon->requires_core ?? true),
+                'depends_modules' => (array) ($addon->depends_modules ?? []),
             ])
             ->values()
             ->toArray();
@@ -77,12 +78,15 @@ class AddonLoader
         foreach (AddonManager::enabled() as $addon) {
             $missing = AddonManager::missingStructure($addon);
             $routesPath = AddonManager::getRoutesPath((string) $addon->slug);
+            $dependencyCheck = AddonManager::canEnable((string) $addon->slug);
 
             $info[(string) $addon->slug] = [
                 'type' => 'addon',
                 'has_routes' => $routesPath !== null,
                 'routes_path' => $routesPath,
                 'missing_structure' => $missing,
+                'depends_modules' => (array) ($addon->depends_modules ?? []),
+                'missing_modules' => $dependencyCheck['missing'],
             ];
         }
 

@@ -54,6 +54,17 @@ class AddonManager
     {
         return self::all()
             ->filter(fn ($addon) => (bool) ($addon->enabled ?? false))
+            ->filter(function ($addon) {
+                $slug = Str::lower((string) ($addon->slug ?? ''));
+
+                foreach (self::dependenciesFor($slug) as $dependency) {
+                    if (!ModuleManager::exists($dependency) || !ModuleManager::isDeclaredEnabled($dependency)) {
+                        return false;
+                    }
+                }
+
+                return true;
+            })
             ->values();
     }
 
@@ -79,6 +90,62 @@ class AddonManager
     public static function disable(string $slug): bool
     {
         return self::setEnabled($slug, false);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public static function dependenciesFor(string $slug): array
+    {
+        $addon = self::find($slug);
+
+        if ($addon === null) {
+            return [];
+        }
+
+        return collect((array) ($addon->depends_modules ?? []))
+            ->map(fn ($dependency) => Str::lower((string) $dependency))
+            ->filter(fn ($dependency) => $dependency !== '')
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array{allowed: bool, message: string, missing: array<int, string>}
+     */
+    public static function canEnable(string $slug): array
+    {
+        $addon = self::find($slug);
+
+        if ($addon === null) {
+            return [
+                'allowed' => false,
+                'message' => "Addon '{$slug}' introuvable.",
+                'missing' => [],
+            ];
+        }
+
+        $missing = [];
+        foreach (self::dependenciesFor($slug) as $dependency) {
+            if (!ModuleManager::exists($dependency) || !ModuleManager::isDeclaredEnabled($dependency)) {
+                $missing[] = $dependency;
+            }
+        }
+
+        if ($missing !== []) {
+            return [
+                'allowed' => false,
+                'message' => "Impossible d'activer {$addon->name}: dependances modules manquantes ou desactivees (" . implode(', ', $missing) . ').',
+                'missing' => $missing,
+            ];
+        }
+
+        return [
+            'allowed' => true,
+            'message' => "Addon {$addon->name} activable.",
+            'missing' => [],
+        ];
     }
 
     public static function getRoutesPath(string $slug): ?string
@@ -153,6 +220,7 @@ class AddonManager
                 'version' => $addon->version ?? 'unknown',
                 'enabled' => (bool) ($addon->enabled ?? false),
                 'required_core' => (bool) ($addon->requires_core ?? true),
+                'depends_modules' => (array) ($addon->depends_modules ?? []),
             ])->toArray(),
         ];
     }
@@ -196,6 +264,18 @@ class AddonManager
             $config->path = $directory;
             $config->namespace = 'Addons\\' . Str::studly((string) $config->slug);
             $config->requires_core = (bool) ($config->requires_core ?? true);
+            $declaredDependencies = collect((array) ($config->depends_modules ?? $config->depends ?? []))
+                ->map(fn ($dependency) => Str::lower((string) $dependency))
+                ->filter(fn ($dependency) => $dependency !== '');
+
+            if ($config->requires_core) {
+                $declaredDependencies->push('core');
+            }
+
+            $config->depends_modules = $declaredDependencies
+                ->unique()
+                ->values()
+                ->all();
             $config->version_raw = (string) ($config->version ?? '');
             $config->version = VersioningService::normalize($config->version_raw);
             $config->version_valid = VersioningService::isValid($config->version_raw);
@@ -211,6 +291,13 @@ class AddonManager
         $addon = self::find($slug);
         if ($addon === null) {
             return false;
+        }
+
+        if ($enabled) {
+            $validation = self::canEnable($slug);
+            if (!$validation['allowed']) {
+                return false;
+            }
         }
 
         $configPath = $addon->path . '/addon.json';
