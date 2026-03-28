@@ -17,6 +17,9 @@ class HealthCheckService
             self::checkStorage(),
             self::checkUploads(),
             self::checkCriticalModules(),
+            self::checkModulesStatus(),
+            self::checkQueueStatus(),
+            self::checkApiStatus(),
             self::checkMinimumConfig(),
         ];
 
@@ -151,6 +154,92 @@ class HealthCheckService
             'label' => 'Configuration minimale valide',
             'ok' => $errors === [],
             'details' => $errors === [] ? 'Configuration minimale OK.' : implode('; ', $errors),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected static function checkModulesStatus(): array
+    {
+        $issues = ModuleManager::stateIssues();
+        $critical = collect($issues)->where('level', 'critical')->count();
+        $enabled = ModuleManager::enabledCount();
+        $total = ModuleManager::all()->count();
+
+        return [
+            'key' => 'modules_status',
+            'label' => 'Etat des modules',
+            'ok' => $critical === 0,
+            'details' => sprintf('%d/%d modules actifs, %d probleme(s) critique(s).', $enabled, $total, $critical),
+            'metrics' => [
+                'enabled' => $enabled,
+                'total' => $total,
+                'critical_issues' => $critical,
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected static function checkQueueStatus(): array
+    {
+        $connection = (string) config('queue.default', 'sync');
+        $failedJobs = 0;
+
+        try {
+            $failedJobs = DB::table((string) config('queue.failed.table', 'failed_jobs'))->count();
+        } catch (\Throwable) {
+            // Ignore if table is missing in early setup.
+        }
+
+        $threshold = (int) config('catmin.health.failed_jobs_threshold', 50);
+        $ok = $failedJobs <= $threshold;
+
+        return [
+            'key' => 'queue_status',
+            'label' => 'Etat de la queue',
+            'ok' => $ok,
+            'details' => sprintf('Driver=%s, failed_jobs=%d (seuil=%d).', $connection, $failedJobs, $threshold),
+            'metrics' => [
+                'connection' => $connection,
+                'failed_jobs' => $failedJobs,
+                'threshold' => $threshold,
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected static function checkApiStatus(): array
+    {
+        $internalPrefix = (string) config('catmin.api.prefix', 'api/internal');
+        $externalEnabled = (bool) config('catmin.api.external.enabled', true);
+        $externalPrefix = (string) config('catmin.api.external.prefix', 'api/v2');
+
+        $errors = [];
+        if ($internalPrefix === '') {
+            $errors[] = 'prefix API interne vide';
+        }
+
+        if ($externalEnabled && $externalPrefix === '') {
+            $errors[] = 'prefix API externe vide';
+        }
+
+        return [
+            'key' => 'api_status',
+            'label' => 'Etat des APIs',
+            'ok' => $errors === [],
+            'details' => $errors === []
+                ? sprintf('Interne=%s, Externe=%s (%s).', $internalPrefix, $externalEnabled ? 'on' : 'off', $externalPrefix)
+                : implode('; ', $errors),
+            'metrics' => [
+                'internal_prefix' => $internalPrefix,
+                'external_enabled' => $externalEnabled,
+                'external_prefix' => $externalPrefix,
+            ],
         ];
     }
 }

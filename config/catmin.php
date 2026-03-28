@@ -142,6 +142,10 @@ return [
         ],
     ],
 
+    'health' => [
+        'failed_jobs_threshold' => (int) env('CATMIN_HEALTH_FAILED_JOBS_THRESHOLD', 50),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Two-Factor Authentication (212)
