@@ -126,7 +126,17 @@
             </div>
 
             <div class="tab-pane fade" id="tab-media" role="tabpanel">
-                <p class="text-muted">Les fonctionnalités média avancées seront disponibles dans les prochaines versions.</p>
+                <div class="row g-3">
+                    <div class="col-12 col-lg-8">
+                        <x-admin.media.picker-field
+                            input-name="media_asset_id"
+                            input-id="page_media_asset_id"
+                            label="Image de couverture"
+                            :value="old('media_asset_id')"
+                            help-text="Choisissez un media de la bibliotheque pour illustrer cette page."
+                        />
+                    </div>
+                </div>
             </div>
 
         </div>
@@ -139,6 +149,8 @@
         </div>
     </form>
 </div>
+
+<x-admin.media.picker-modal />
 @endsection
 
 @push('scripts')

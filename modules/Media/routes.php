@@ -15,6 +15,14 @@ Route::middleware(['web', 'catmin.admin'])
             ->middleware('catmin.permission:module.media.create')
             ->name('media.create');
 
+        Route::get('/media/picker', [MediaController::class, 'picker'])
+            ->middleware('catmin.permission:module.media.list')
+            ->name('media.picker');
+
+        Route::get('/media/{asset}/picker-item', [MediaController::class, 'pickerItem'])
+            ->middleware('catmin.permission:module.media.list')
+            ->name('media.picker_item');
+
         Route::post('/media', [MediaController::class, 'store'])
             ->middleware('catmin.permission:module.media.create')
             ->name('media.store');

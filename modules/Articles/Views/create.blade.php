@@ -135,17 +135,14 @@
 
             <div class="tab-pane fade" id="tab-media" role="tabpanel">
                 <div class="row g-3">
-                    <div class="col-12 col-lg-4">
-                        <label class="form-label fw-semibold" for="media_asset_id">Image de couverture</label>
-                        <input id="media_asset_id" name="media_asset_id" type="number" min="1"
-                               class="form-control @error('media_asset_id') is-invalid @enderror"
-                               value="{{ old('media_asset_id') }}"
-                               placeholder="ID de l'asset média">
-                        @error('media_asset_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        <div class="form-text text-muted">
-                            Saisissez l'ID d'un asset existant dans la médiathèque.
-                            Un picker visuel sera disponible dans une prochaine version.
-                        </div>
+                    <div class="col-12 col-lg-8">
+                        <x-admin.media.picker-field
+                            input-name="media_asset_id"
+                            input-id="article_media_asset_id"
+                            label="Image de couverture"
+                            :value="old('media_asset_id')"
+                            help-text="Selectionnez une image ou un fichier de couverture depuis la bibliotheque."
+                        />
                     </div>
                 </div>
             </div>
@@ -160,6 +157,8 @@
         </div>
     </form>
 </div>
+
+<x-admin.media.picker-modal />
 @endsection
 
 @push('scripts')

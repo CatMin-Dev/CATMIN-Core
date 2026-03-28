@@ -46,6 +46,7 @@ class PageController extends Controller
             'content'          => ['nullable', 'string'],
             'status'           => ['required', Rule::in(['draft', 'published'])],
             'published_at'     => ['nullable', 'date'],
+            'media_asset_id'   => ['nullable', 'integer', 'min:1'],
             'meta_title'       => ['nullable', 'string', 'max:255'],
             'meta_description' => ['nullable', 'string', 'max:320'],
         ]);
@@ -73,6 +74,7 @@ class PageController extends Controller
             'content'          => ['nullable', 'string'],
             'status'           => ['required', Rule::in(['draft', 'published'])],
             'published_at'     => ['nullable', 'date'],
+            'media_asset_id'   => ['nullable', 'integer', 'min:1'],
             'meta_title'       => ['nullable', 'string', 'max:255'],
             'meta_description' => ['nullable', 'string', 'max:320'],
         ]);

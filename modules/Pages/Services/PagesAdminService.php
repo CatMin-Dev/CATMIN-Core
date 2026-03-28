@@ -47,6 +47,7 @@ class PagesAdminService
             'content'          => $this->sanitizer->sanitize((string) ($payload['content'] ?? '')),
             'status'           => (string) ($payload['status'] ?? 'draft'),
             'published_at'     => $this->normalizePublishedAt($payload),
+            'media_asset_id'   => $payload['media_asset_id'] ?: null,
             'meta_title'       => (string) ($payload['meta_title'] ?? ''),
             'meta_description' => (string) ($payload['meta_description'] ?? ''),
         ]);
@@ -94,6 +95,7 @@ class PagesAdminService
             'content'          => $this->sanitizer->sanitize((string) ($payload['content'] ?? '')),
             'status'           => (string) ($payload['status'] ?? 'draft'),
             'published_at'     => $this->normalizePublishedAt($payload),
+            'media_asset_id'   => $payload['media_asset_id'] ?: null,
             'meta_title'       => (string) ($payload['meta_title'] ?? ''),
             'meta_description' => (string) ($payload['meta_description'] ?? ''),
         ]);

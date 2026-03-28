@@ -41,6 +41,11 @@
                     <i class="bi bi-search me-1"></i>SEO
                 </button>
             </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-media-btn" data-bs-toggle="tab" data-bs-target="#tab-media" type="button" role="tab">
+                    <i class="bi bi-image me-1"></i>Médias
+                </button>
+            </li>
         </ul>
 
         <div class="tab-content border border-top-0 rounded-bottom p-4 bg-white mb-4">
@@ -121,6 +126,20 @@
                 </div>
             </div>
 
+            <div class="tab-pane fade" id="tab-media" role="tabpanel">
+                <div class="row g-3">
+                    <div class="col-12 col-lg-8">
+                        <x-admin.media.picker-field
+                            input-name="media_asset_id"
+                            input-id="page_media_asset_id"
+                            label="Image de couverture"
+                            :value="old('media_asset_id', $page->media_asset_id)"
+                            help-text="Remplacez ou retirez le media de couverture de cette page."
+                        />
+                    </div>
+                </div>
+            </div>
+
         </div>
 
         <div class="d-flex gap-2">
@@ -131,6 +150,7 @@
         </div>
     </form>
 </div>
+<x-admin.media.picker-modal />
 @endsection
 
 @push('scripts')

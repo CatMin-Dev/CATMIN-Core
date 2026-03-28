@@ -2,6 +2,7 @@
 
 namespace Modules\Media\Services;
 
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
@@ -11,16 +12,28 @@ use Modules\Media\Models\MediaAsset;
 
 class MediaAdminService
 {
-    public function listing(?string $folder = null)
+    /**
+     * @param array<string, mixed> $filters
+     */
+    public function listing(array $filters = [], int $perPage = 24): LengthAwarePaginator
     {
-        return MediaAsset::query()
-            ->when(
-                $folder !== null && $folder !== '',
-                fn ($q) => $q->where('path', 'like', 'media/' . $folder . '/%'),
-                fn ($q) => $q
-            )
-            ->orderByDesc('id')
-            ->get();
+        $query = $this->buildListingQuery($filters);
+
+        return $query
+            ->paginate($perPage)
+            ->withQueryString();
+    }
+
+    /**
+     * @param array<string, mixed> $filters
+     */
+    public function pickerListing(array $filters = [], int $perPage = 12): LengthAwarePaginator
+    {
+        $query = $this->buildListingQuery($filters);
+
+        return $query
+            ->paginate($perPage)
+            ->withQueryString();
     }
 
     /**
@@ -81,6 +94,28 @@ class MediaAdminService
     }
 
     /**
+     * @return array<string, mixed>
+     */
+    public function toPickerItem(MediaAsset $asset): array
+    {
+        return [
+            'id' => (int) $asset->id,
+            'original_name' => (string) $asset->original_name,
+            'filename' => (string) $asset->filename,
+            'mime_type' => (string) ($asset->mime_type ?? ''),
+            'extension' => (string) ($asset->extension ?? ''),
+            'size_bytes' => (int) $asset->size_bytes,
+            'size_human' => $this->humanSize((int) $asset->size_bytes),
+            'folder' => $this->folderFromPath((string) $asset->path),
+            'kind' => $this->assetKind($asset),
+            'preview_url' => $this->previewUrl($asset),
+            'created_at' => optional($asset->created_at)?->toIso8601String(),
+            'caption' => (string) ($asset->caption ?? ''),
+            'alt_text' => (string) ($asset->alt_text ?? ''),
+        ];
+    }
+
+    /**
      * @param array<string, mixed> $payload
      */
     public function update(MediaAsset $asset, array $payload): MediaAsset
@@ -128,5 +163,114 @@ class MediaAdminService
         }
 
         return round($bytes / (1024 * 1024), 1) . ' MB';
+    }
+
+    public function folderFromPath(string $path): string
+    {
+        if (!str_starts_with($path, 'media/')) {
+            return '';
+        }
+
+        $rel = substr($path, strlen('media/'));
+        $parts = explode('/', $rel);
+
+        return count($parts) > 1 ? (string) $parts[0] : '';
+    }
+
+    public function assetKind(MediaAsset $asset): string
+    {
+        $mimeType = (string) ($asset->mime_type ?? '');
+
+        if (str_starts_with($mimeType, 'image/')) {
+            return 'image';
+        }
+
+        if (str_starts_with($mimeType, 'video/')) {
+            return 'video';
+        }
+
+        if (str_starts_with($mimeType, 'audio/')) {
+            return 'audio';
+        }
+
+        if (
+            str_starts_with($mimeType, 'text/')
+            || str_contains($mimeType, 'pdf')
+            || str_contains($mimeType, 'officedocument')
+            || str_contains($mimeType, 'msword')
+            || str_contains($mimeType, 'spreadsheet')
+            || str_contains($mimeType, 'presentation')
+        ) {
+            return 'document';
+        }
+
+        return 'other';
+    }
+
+    /**
+     * @param array<string, mixed> $filters
+     */
+    private function buildListingQuery(array $filters)
+    {
+        $folder = trim((string) ($filters['folder'] ?? ''));
+        $search = trim((string) ($filters['q'] ?? ''));
+        $kind = trim((string) ($filters['kind'] ?? ''));
+        $from = trim((string) ($filters['from'] ?? ''));
+        $to = trim((string) ($filters['to'] ?? ''));
+        $sort = trim((string) ($filters['sort'] ?? 'newest'));
+
+        $query = MediaAsset::query()
+            ->when(
+                $folder !== '',
+                fn ($builder) => $builder->where('path', 'like', 'media/' . $folder . '/%')
+            )
+            ->when($search !== '', function ($builder) use ($search): void {
+                $builder->where(function ($q) use ($search): void {
+                    $q->where('original_name', 'like', '%' . $search . '%')
+                        ->orWhere('filename', 'like', '%' . $search . '%')
+                        ->orWhere('alt_text', 'like', '%' . $search . '%')
+                        ->orWhere('caption', 'like', '%' . $search . '%')
+                        ->orWhere('path', 'like', '%' . $search . '%')
+                        ->orWhere('mime_type', 'like', '%' . $search . '%')
+                        ->orWhere('extension', 'like', '%' . $search . '%');
+                });
+            })
+            ->when($kind === 'image', fn ($builder) => $builder->where('mime_type', 'like', 'image/%'))
+            ->when($kind === 'video', fn ($builder) => $builder->where('mime_type', 'like', 'video/%'))
+            ->when($kind === 'audio', fn ($builder) => $builder->where('mime_type', 'like', 'audio/%'))
+            ->when($kind === 'document', function ($builder): void {
+                $builder->where(function ($q): void {
+                    $q->where('mime_type', 'like', 'text/%')
+                        ->orWhere('mime_type', 'like', '%pdf%')
+                        ->orWhere('mime_type', 'like', '%officedocument%')
+                        ->orWhere('mime_type', 'like', '%msword%')
+                        ->orWhere('mime_type', 'like', '%spreadsheet%')
+                        ->orWhere('mime_type', 'like', '%presentation%');
+                });
+            })
+            ->when($kind === 'other', function ($builder): void {
+                $builder->where(function ($q): void {
+                    $q->where(function ($inner): void {
+                        $inner->where('mime_type', 'not like', 'image/%')
+                            ->where('mime_type', 'not like', 'video/%')
+                            ->where('mime_type', 'not like', 'audio/%')
+                            ->where('mime_type', 'not like', 'text/%')
+                            ->where('mime_type', 'not like', '%pdf%')
+                            ->where('mime_type', 'not like', '%officedocument%')
+                            ->where('mime_type', 'not like', '%msword%')
+                            ->where('mime_type', 'not like', '%spreadsheet%')
+                            ->where('mime_type', 'not like', '%presentation%');
+                    })->orWhereNull('mime_type');
+                });
+            })
+            ->when($from !== '', fn ($builder) => $builder->whereDate('created_at', '>=', $from))
+            ->when($to !== '', fn ($builder) => $builder->whereDate('created_at', '<=', $to));
+
+        return match ($sort) {
+            'oldest' => $query->orderBy('id'),
+            'name' => $query->orderBy('original_name')->orderByDesc('id'),
+            'type' => $query->orderBy('mime_type')->orderBy('extension')->orderByDesc('id'),
+            default => $query->orderByDesc('id'),
+        };
     }
 }

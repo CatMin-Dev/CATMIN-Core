@@ -15,11 +15,13 @@ class Page extends Model
         'content',
         'status',
         'published_at',
+        'media_asset_id',
         'meta_title',
         'meta_description',
     ];
 
     protected $casts = [
         'published_at' => 'datetime',
+        'media_asset_id' => 'integer',
     ];
 }

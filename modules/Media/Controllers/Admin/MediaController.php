@@ -3,6 +3,7 @@
 namespace Modules\Media\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -18,8 +19,26 @@ class MediaController extends Controller
 
     public function index(Request $request): View
     {
-        $folder = (string) $request->query('folder', '');
-        $assets = $this->mediaAdminService->listing($folder !== '' ? $folder : null);
+        $folder = trim((string) $request->query('folder', ''));
+        $kind = trim((string) $request->query('kind', ''));
+        $query = trim((string) $request->query('q', ''));
+        $from = trim((string) $request->query('from', ''));
+        $to = trim((string) $request->query('to', ''));
+        $sort = trim((string) $request->query('sort', 'newest'));
+        $perPageInput = trim((string) $request->query('per_page', '24'));
+        $perPage = in_array($perPageInput, ['12', '24', '48', '96'], true)
+            ? (int) $perPageInput
+            : 24;
+
+        $assets = $this->mediaAdminService->listing([
+            'folder' => $folder,
+            'kind' => $kind,
+            'q' => $query,
+            'from' => $from,
+            'to' => $to,
+            'sort' => $sort,
+        ], $perPage);
+
         $folders = $this->mediaAdminService->folders();
 
         return view()->file(base_path('modules/Media/Views/index.blade.php'), [
@@ -28,6 +47,56 @@ class MediaController extends Controller
             'mediaService' => $this->mediaAdminService,
             'folders' => $folders,
             'currentFolder' => $folder,
+            'search' => $query,
+            'selectedKind' => $kind,
+            'selectedFrom' => $from,
+            'selectedTo' => $to,
+            'selectedSort' => $sort,
+            'selectedPerPage' => (string) $perPage,
+        ]);
+    }
+
+    public function picker(Request $request): JsonResponse
+    {
+        $folder = trim((string) $request->query('folder', ''));
+        $kind = trim((string) $request->query('kind', ''));
+        $query = trim((string) $request->query('q', ''));
+        $perPageInput = trim((string) $request->query('per_page', '12'));
+        $perPage = in_array($perPageInput, ['12', '24', '48'], true)
+            ? (int) $perPageInput
+            : 12;
+
+        $assets = $this->mediaAdminService->pickerListing([
+            'folder' => $folder,
+            'kind' => $kind,
+            'q' => $query,
+            'sort' => 'newest',
+        ], $perPage);
+
+        $items = array_map(
+            fn (MediaAsset $asset): array => $this->mediaAdminService->toPickerItem($asset),
+            $assets->items()
+        );
+
+        return response()->json([
+            'data' => array_values($items),
+            'meta' => [
+                'current_page' => $assets->currentPage(),
+                'last_page' => $assets->lastPage(),
+                'per_page' => $assets->perPage(),
+                'total' => $assets->total(),
+            ],
+            'links' => [
+                'next' => $assets->nextPageUrl(),
+                'prev' => $assets->previousPageUrl(),
+            ],
+        ]);
+    }
+
+    public function pickerItem(MediaAsset $asset): JsonResponse
+    {
+        return response()->json([
+            'data' => $this->mediaAdminService->toPickerItem($asset),
         ]);
     }
 
