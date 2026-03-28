@@ -2,10 +2,6 @@
 
 @section('page_title', 'Nouvelle page')
 
-@push('head')
-<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-bs5.min.css" rel="stylesheet">
-@endpush
-
 @section('content')
 <x-admin.crud.page-header
     title="Créer une page"
@@ -76,11 +72,13 @@
                                   placeholder="Court résumé affiché dans les listings (500 car. max)">{{ old('excerpt') }}</textarea>
                         @error('excerpt')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
-                    @include('admin.components.content-editor-mode', [
-                        'contentValue' => old('content'),
-                        'defaultMode' => old('editor_mode', 'summernote'),
-                        'builderPayload' => old('builder_payload', ''),
-                    ])
+                    <div class="col-12">
+                        <label class="form-label fw-semibold" for="content">Contenu</label>
+                        <textarea id="content" name="content" rows="12"
+                                  class="form-control @error('content') is-invalid @enderror"
+                                  placeholder="Contenu HTML ou texte">{{ old('content') }}</textarea>
+                        @error('content')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
                 </div>
             </div>
 
@@ -144,9 +142,6 @@
 @endsection
 
 @push('scripts')
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-bs5.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/lang/summernote-fr-FR.min.js"></script>
 <script>
 (function () {
     const titleInput = document.getElementById('title');
@@ -166,14 +161,21 @@
             slugInput.dataset.manual = '1';
         });
     }
+
+    const tabFields = {
+        'tab-content': ['title', 'slug', 'excerpt', 'content'],
+        'tab-publish': ['status', 'published_at'],
+        'tab-seo': ['meta_title', 'meta_description'],
+    };
+    const errorKeys = {!! json_encode(array_keys($errors->messages()), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!};
+    if (errorKeys.length > 0) {
+        for (const [tabId, fields] of Object.entries(tabFields)) {
+            if (fields.some(f => errorKeys.includes(f))) {
+                bootstrap.Tab.getOrCreateInstance(document.querySelector('[data-bs-target="#' + tabId + '"]')).show();
+                break;
+            }
+        }
+    }
 }());
 </script>
-@include('admin.components.content-editor-mode-script', [
-    'formId' => 'page-form',
-    'tabFields' => [
-        'tab-content' => ['title', 'slug', 'excerpt', 'content', 'editor_mode', 'builder_payload'],
-        'tab-publish' => ['status', 'published_at'],
-        'tab-seo' => ['meta_title', 'meta_description'],
-    ],
-])
 @endpush
