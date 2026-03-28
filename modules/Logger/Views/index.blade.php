@@ -20,7 +20,11 @@
             <tr>
                 <td>
                     <form method="GET" action="{{ route('admin.logger.index') }}" class="row g-2 align-items-end">
-                        <div class="col-12 col-md-4">
+                        <div class="col-12 col-md-3">
+                            <label for="filter-q" class="form-label">Recherche</label>
+                            <input id="filter-q" name="q" type="text" class="form-control" value="{{ $searchQuery }}" placeholder="message, event, url">
+                        </div>
+                        <div class="col-12 col-md-3">
                             <label for="filter-level" class="form-label">Niveau</label>
                             <select id="filter-level" name="level" class="form-select">
                                 <option value="">Tous</option>
@@ -29,7 +33,7 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-12 col-md-4">
+                        <div class="col-12 col-md-3">
                             <label for="filter-channel" class="form-label">Canal</label>
                             <select id="filter-channel" name="channel" class="form-select">
                                 <option value="">Tous</option>
@@ -38,7 +42,37 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-12 col-md-4 d-flex gap-2">
+                        <div class="col-12 col-md-3">
+                            <label for="filter-event" class="form-label">Evenement</label>
+                            <select id="filter-event" name="event" class="form-select">
+                                <option value="">Tous</option>
+                                @foreach($events as $event)
+                                    <option value="{{ $event }}" @selected($selectedEvent === $event)>{{ $event }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-3">
+                            <label for="filter-admin" class="form-label">Admin</label>
+                            <select id="filter-admin" name="admin" class="form-select">
+                                <option value="">Tous</option>
+                                @foreach($admins as $admin)
+                                    <option value="{{ $admin }}" @selected($selectedAdmin === $admin)>{{ $admin }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <label for="filter-from" class="form-label">Du</label>
+                            <input id="filter-from" name="from" type="date" class="form-control" value="{{ $selectedFrom }}">
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <label for="filter-to" class="form-label">Au</label>
+                            <input id="filter-to" name="to" type="date" class="form-control" value="{{ $selectedTo }}">
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <label for="filter-status" class="form-label">HTTP</label>
+                            <input id="filter-status" name="status" type="number" min="100" max="599" class="form-control" value="{{ $selectedStatus }}" placeholder="500">
+                        </div>
+                        <div class="col-6 col-md-3 d-flex gap-2">
                             <button class="btn btn-primary" type="submit">Filtrer</button>
                             <a class="btn btn-outline-secondary" href="{{ route('admin.logger.index') }}">Reset</a>
                         </div>

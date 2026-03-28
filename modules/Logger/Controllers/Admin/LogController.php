@@ -13,21 +13,89 @@ class LogController extends Controller
     {
         $level = (string) $request->query('level', '');
         $channel = (string) $request->query('channel', '');
+        $event = (string) $request->query('event', '');
+        $admin = (string) $request->query('admin', '');
+        $query = trim((string) $request->query('q', ''));
+        $from = (string) $request->query('from', '');
+        $to = (string) $request->query('to', '');
+        $status = trim((string) $request->query('status', ''));
 
         $logs = SystemLog::query()
             ->when($level !== '', fn ($query) => $query->where('level', $level))
             ->when($channel !== '', fn ($query) => $query->where('channel', $channel))
+            ->when($event !== '', fn ($query) => $query->where('event', $event))
+            ->when($admin !== '', fn ($query) => $query->where('admin_username', $admin))
+            ->when($status !== '' && is_numeric($status), fn ($query) => $query->where('status_code', (int) $status))
+            ->when($query !== '', function ($builder) use ($query): void {
+                $builder->where(function ($q) use ($query): void {
+                    $q->where('message', 'like', '%' . $query . '%')
+                        ->orWhere('event', 'like', '%' . $query . '%')
+                        ->orWhere('url', 'like', '%' . $query . '%');
+                });
+            })
+            ->when($from !== '', fn ($query) => $query->where('created_at', '>=', $from . ' 00:00:00'))
+            ->when($to !== '', fn ($query) => $query->where('created_at', '<=', $to . ' 23:59:59'))
             ->orderByDesc('id')
             ->limit(300)
             ->get();
+
+        $levels = SystemLog::query()
+            ->select('level')
+            ->whereNotNull('level')
+            ->groupBy('level')
+            ->orderBy('level')
+            ->pluck('level')
+            ->map(fn ($item) => (string) $item)
+            ->values()
+            ->all();
+
+        $channels = SystemLog::query()
+            ->select('channel')
+            ->whereNotNull('channel')
+            ->groupBy('channel')
+            ->orderBy('channel')
+            ->pluck('channel')
+            ->map(fn ($item) => (string) $item)
+            ->values()
+            ->all();
+
+        $events = SystemLog::query()
+            ->select('event')
+            ->whereNotNull('event')
+            ->groupBy('event')
+            ->orderBy('event')
+            ->limit(100)
+            ->pluck('event')
+            ->map(fn ($item) => (string) $item)
+            ->values()
+            ->all();
+
+        $admins = SystemLog::query()
+            ->select('admin_username')
+            ->where('admin_username', '!=', '')
+            ->groupBy('admin_username')
+            ->orderBy('admin_username')
+            ->limit(100)
+            ->pluck('admin_username')
+            ->map(fn ($item) => (string) $item)
+            ->values()
+            ->all();
 
         return view()->file(base_path('modules/Logger/Views/index.blade.php'), [
             'currentPage' => 'logger',
             'logs' => $logs,
             'selectedLevel' => $level,
             'selectedChannel' => $channel,
-            'levels' => ['info', 'warning', 'error'],
-            'channels' => ['admin', 'application', 'audit'],
+            'selectedEvent' => $event,
+            'selectedAdmin' => $admin,
+            'searchQuery' => $query,
+            'selectedFrom' => $from,
+            'selectedTo' => $to,
+            'selectedStatus' => $status,
+            'levels' => $levels,
+            'channels' => $channels,
+            'events' => $events,
+            'admins' => $admins,
         ]);
     }
 }
