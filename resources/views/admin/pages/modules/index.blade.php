@@ -9,7 +9,9 @@
 </header>
 
 <div class="catmin-page-body">
-    @php($canManageModules = catmin_can('module.core.config'))
+    @php
+        $canManageModules = catmin_can('module.core.config');
+    @endphp
 
     @if(!empty($stateIssues ?? []))
         <div class="alert alert-warning" role="alert">
