@@ -6,6 +6,7 @@ use App\Services\AddonManager;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use RuntimeException;
 
 class CatminAddonMakeCommand extends Command
 {
@@ -17,6 +18,7 @@ class CatminAddonMakeCommand extends Command
         {--depends=core : Dependances modules (liste separee par virgules)}
         {--category=feature : Type/categorie addon}
         {--author=CATMIN Team : Auteur de l\'addon}
+        {--permissions= : Permissions addon (liste separee par virgules)}
         {--enable : Activer immediatement l\'addon}
         {--with-events : Generer stubs Events et Listeners}
         {--with-ui-hooks : Generer un exemple de hook UI admin}
@@ -36,6 +38,8 @@ class CatminAddonMakeCommand extends Command
         $enabled = (bool) $this->option('enable');
         $withEvents = (bool) $this->option('with-events');
         $withUiHooks = (bool) $this->option('with-ui-hooks');
+        $defaultPermission = 'addon.' . str_replace('-', '_', $slug) . '.menu';
+        $permissions = $this->parseDepends((string) ($this->option('permissions') ?: $defaultPermission));
 
         if (!$this->isValidSlug($slug)) {
             $this->error('Slug invalide. Format attendu: kebab-case (ex: my-addon).');
@@ -91,7 +95,8 @@ class CatminAddonMakeCommand extends Command
             category: $category,
             emittedEvents: $emittedEvents,
             listenedEvents: $listenedEvents,
-            uiHooks: $uiHooks
+            uiHooks: $uiHooks,
+            permissions: $permissions
         ));
         $this->writeFile($addonPath . '/routes.php', $this->buildRoutesPhp($slug, $classBase, $controllerClass, $viewNamespace));
         $this->writeFile($addonPath . '/Controllers/Admin/' . $controllerClass . '.php', $this->buildControllerPhp($classBase, $controllerClass, $viewNamespace, $name, $slug));
@@ -99,7 +104,7 @@ class CatminAddonMakeCommand extends Command
         $this->writeFile($addonPath . '/Services/' . $classBase . 'Service.php', $this->buildServicePhp($classBase, $name, $slug));
         $this->writeFile($addonPath . '/config.php', $this->buildConfigPhp($slug, $category));
         $this->writeFile($addonPath . '/hooks.php', $this->buildHooksPhp($name, $slug, $withUiHooks));
-        $this->writeFile($addonPath . '/Docs/README.md', $this->buildDocsReadme($name, $slug, $description, $depends, $category, $routeName, $emittedEvents, $listenedEvents, $uiHooks));
+        $this->writeFile($addonPath . '/Docs/README.md', $this->buildDocsReadme($name, $slug, $description, $version, $depends, $category, $routeName, $permissions, $emittedEvents, $listenedEvents, $uiHooks));
         $this->writeFile($addonPath . '/Assets/css/addon.css', "/* {$slug} addon styles */\n");
         $this->writeFile($addonPath . '/Assets/js/addon.js', "// {$slug} addon scripts\n");
         $this->writeFile($addonPath . '/Migrations/.gitkeep', "\n");
@@ -190,6 +195,7 @@ class CatminAddonMakeCommand extends Command
      * @param array<int, string> $emittedEvents
      * @param array<int, string> $listenedEvents
      * @param array<int, string> $uiHooks
+     * @param array<int, string> $permissions
      */
     protected function buildAddonJson(
         string $name,
@@ -202,7 +208,8 @@ class CatminAddonMakeCommand extends Command
         string $category,
         array $emittedEvents,
         array $listenedEvents,
-        array $uiHooks
+        array $uiHooks,
+        array $permissions
     ): string {
         $manifest = [
             'name' => $name,
@@ -222,6 +229,7 @@ class CatminAddonMakeCommand extends Command
             'events_emitted' => $emittedEvents,
             'events_listens' => $listenedEvents,
             'ui_hooks' => $uiHooks,
+            'permissions' => $permissions,
         ];
 
         return json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n";
@@ -428,6 +436,7 @@ PHP;
 
     /**
      * @param array<int, string> $depends
+     * @param array<int, string> $permissions
      * @param array<int, string> $emittedEvents
      * @param array<int, string> $listenedEvents
      * @param array<int, string> $uiHooks
@@ -436,49 +445,56 @@ PHP;
         string $name,
         string $slug,
         string $description,
+        string $version,
         array $depends,
         string $category,
         string $routeName,
+        array $permissions,
         array $emittedEvents,
         array $listenedEvents,
         array $uiHooks
     ): string {
         $dependsText = $depends === [] ? '- aucune' : '- ' . implode("\n- ", $depends);
+        $permissionsText = $permissions === [] ? '- aucune' : '- ' . implode("\n- ", $permissions);
         $emittedText = $emittedEvents === [] ? '- aucun' : '- ' . implode("\n- ", $emittedEvents);
         $listenedText = $listenedEvents === [] ? '- aucun' : '- ' . implode("\n- ", $listenedEvents);
         $hooksText = $uiHooks === [] ? '- aucun' : '- ' . implode("\n- ", $uiHooks);
+        $configText = "- slug\n- category";
 
-        return <<<MD
-# {$name}
+        $templatePath = base_path('core/templates/addon-doc-template.md');
+        if (!File::exists($templatePath)) {
+            throw new RuntimeException('Template de documentation addon introuvable: ' . $templatePath);
+        }
 
-## Role
-{$description}
+        $template = (string) File::get($templatePath);
 
-## Point d'entree
-- Route admin: `{$routeName}`
-- Fichier routes: `routes.php`
-- Controleur: `Controllers/Admin/*AdminController.php`
-
-## Dependances modules
-{$dependsText}
-
-## Categorie
-- {$category}
-
-## Extension points
-- Events emis:
-{$emittedText}
-- Events ecoutes:
-{$listenedText}
-- Hooks UI:
-{$hooksText}
-
-## Prochaines etapes
-- Ajouter les ecrans metier dans `Views/admin`.
-- Ajouter les services metier dans `Services`.
-- Ajouter les migrations necessaires dans `Migrations`.
-- Connecter les hooks/events via `hooks.php`.
-MD;
+        return str_replace([
+            '__ADDON_NAME__',
+            '__ADDON_SLUG__',
+            '__ADDON_DESCRIPTION__',
+            '__ADDON_VERSION__',
+            '__ADDON_CATEGORY__',
+            '__ADDON_ROUTE__',
+            '__ADDON_DEPENDENCIES__',
+            '__ADDON_PERMISSIONS__',
+            '__ADDON_EVENTS_EMITTED__',
+            '__ADDON_EVENTS_LISTENED__',
+            '__ADDON_UI_HOOKS__',
+            '__ADDON_CONFIG_KEYS__',
+        ], [
+            $name,
+            $slug,
+            $description,
+            $version,
+            $category,
+            $routeName,
+            $dependsText,
+            $permissionsText,
+            $emittedText,
+            $listenedText,
+            $hooksText,
+            $configText,
+        ], $template);
     }
 
     protected function writeFile(string $path, string $content): void
