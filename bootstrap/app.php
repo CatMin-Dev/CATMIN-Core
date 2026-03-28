@@ -6,6 +6,7 @@ use App\Http\Middleware\EnsureCatminExternalApiKey;
 use App\Http\Middleware\EnsureCatminFrontendAvailable;
 use App\Http\Middleware\EnsureCatminPermission;
 use App\Http\Middleware\LogCatminExternalApi;
+use App\Http\Middleware\LogRequestPerformance;
 use App\Services\Api\V2Response;
 use App\Services\AddonLoader;
 use App\Services\CatminHookLoader;
@@ -63,6 +64,8 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->append(LogRequestPerformance::class);
+
         $middleware->alias([
             'catmin.admin' => EnsureCatminAdminAuthenticated::class,
             'catmin.permission' => EnsureCatminPermission::class,

@@ -107,6 +107,25 @@ class SystemLogService
     }
 
     /**
+     * @param array<string, mixed> $context
+     */
+    public function logPerformance(string $event, string $message, array $context = [], string $level = 'info'): void
+    {
+        if (!$this->canWrite()) {
+            return;
+        }
+
+        $this->write([
+            'channel' => 'performance',
+            'level' => $level,
+            'event' => $event,
+            'message' => $message,
+            'context' => $this->sanitizeContext($context),
+            'admin_username' => (string) (session('catmin_admin_username', '') ?: 'system'),
+        ]);
+    }
+
+    /**
      * @param array<string, mixed> $payload
      */
     private function write(array $payload): void

@@ -146,6 +146,11 @@ return [
         'failed_jobs_threshold' => (int) env('CATMIN_HEALTH_FAILED_JOBS_THRESHOLD', 50),
     ],
 
+    'performance' => [
+        'slow_request_ms' => (int) env('CATMIN_SLOW_REQUEST_MS', 800),
+        'slow_query_ms' => (int) env('CATMIN_SLOW_QUERY_MS', 250),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Two-Factor Authentication (212)
