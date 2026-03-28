@@ -30,7 +30,6 @@
         <div class="col-12 col-sm-6 col-xxl-3"><div class="card h-100"><div class="card-body"><p class="text-muted mb-1">Utilisateurs</p><p class="display-6 mb-0">{{ $stats['users'] }}</p></div></div></div>
         <div class="col-12 col-sm-6 col-xxl-3"><div class="card h-100"><div class="card-body"><p class="text-muted mb-1">Roles</p><p class="display-6 mb-0">{{ $stats['roles'] }}</p></div></div></div>
         <div class="col-12 col-sm-6 col-xxl-3"><div class="card h-100"><div class="card-body"><p class="text-muted mb-1">Parametres</p><p class="display-6 mb-0">{{ $stats['settings'] }}</p></div></div></div>
-        <div class="col-12 col-sm-6 col-xxl-3"><div class="card h-100"><div class="card-body"><p class="text-muted mb-1">Modules actifs</p><p class="display-6 mb-0">{{ $stats['modules_enabled'] }}/{{ $stats['modules_total'] }}</p></div></div></div>
     </div>
 
     <div class="row g-3 mb-4">
@@ -111,16 +110,6 @@
     <div class="row g-4">
         <div class="col-12 col-xl-8">
             <div class="card mb-4">
-                <div class="card-header bg-white"><h2 class="h6 mb-0">Acces rapides</h2></div>
-                <div class="card-body d-flex flex-wrap gap-2">
-                    <a class="btn btn-primary" href="{{ admin_route('users.index') }}">Utilisateurs</a>
-                    <a class="btn btn-outline-primary" href="{{ admin_route('roles.index') }}">Roles</a>
-                    <a class="btn btn-outline-primary" href="{{ admin_route('settings.index') }}">Parametres</a>
-                    <a class="btn btn-outline-primary" href="{{ admin_route('modules.index') }}">Modules</a>
-                </div>
-            </div>
-
-            <div class="card mb-4">
                 <div class="card-header bg-white"><h2 class="h6 mb-0">Informations systeme</h2></div>
                 <div class="card-body">
                     <div class="row g-3">
@@ -192,77 +181,6 @@
                 </div>
             </div>
 
-            <!-- Modules V2-DEV Status -->
-            <div class="card mt-4">
-                <div class="card-header bg-white"><h2 class="h6 mb-0"><i class="fas fa-code-branch me-2"></i>Modules en V2-DEV</h2></div>
-                <div class="card-body">
-                    @php
-                        $v2Modules = collect($versionMatrix['modules'] ?? [])
-                            ->filter(fn($v) => str_contains($v, '-dev'))
-                            ->map(fn($v, $k) => ['name' => ucfirst($k), 'version' => $v])
-                            ->values();
-                    @endphp
-                    @if($v2Modules->isNotEmpty())
-                        <div class="row g-3">
-                            @foreach($v2Modules as $module)
-                                <div class="col-12 col-sm-6">
-                                    <div class="border rounded p-3 h-100 bg-light">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <span class="fw-semibold">{{ $module['name'] }}</span>
-                                            <span class="badge rounded-pill catmin-version-pill">{{ $module['version'] }}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endforeach
-                        </div>
-                    @else
-                        <div class="alert alert-secondary mb-0">Aucun module en phase V2-DEV.</div>
-                    @endif
-                </div>
-            </div>
-
-            <!-- RBAC Status -->
-            @if(!empty($rbacData))
-                <div class="card mt-4">
-                    <div class="card-header bg-white"><h2 class="h6 mb-0"><i class="fas fa-shield-alt me-2"></i>Couverture Protection (RBAC)</h2></div>
-                    <div class="card-body">
-                        @php
-                            $coverage = $rbacData['summary']['coverage_percentage'] ?? 0;
-                            $coverageClass = match(true) {
-                                $coverage >= 90 => 'bg-success',
-                                $coverage >= 75 => 'bg-warning',
-                                default => 'bg-danger'
-                            };
-                        @endphp
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>Routes protegees par permissions</span>
-                                <strong>{{ $coverage }}%</strong>
-                            </div>
-                            <div class="progress" style="height: 25px;">
-                                <div class="progress-bar {{ $coverageClass }}" role="progressbar" style="width: {{ $coverage }}%" aria-valuenow="{{ $coverage }}" aria-valuemin="0" aria-valuemax="100">
-                                    {{ $coverage }}%
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row g-3 mt-3">
-                            <div class="col-12 col-sm-6">
-                                <div class="border rounded p-3 h-100">
-                                    <p class="text-muted mb-2 small">Total des routes admin</p>
-                                    <p class="h5 mb-0">{{ $rbacData['summary']['total_routes'] ?? 0 }}</p>
-                                </div>
-                            </div>
-                            <div class="col-12 col-sm-6">
-                                <div class="border rounded p-3 h-100">
-                                    <p class="text-muted mb-2 small">Non protegees</p>
-                                    <p class="h5 mb-0 text-danger">{{ $rbacData['summary']['without_permission'] ?? 0 }}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            @endif
-
             <div class="card mt-4">
                 <div class="card-header bg-white"><h2 class="h6 mb-0">Etat du contenu</h2></div>
                 <div class="card-body">
@@ -294,23 +212,6 @@
         </div>
 
         <div class="col-12 col-xl-4">
-            <div class="card mb-4">
-                <div class="card-header bg-white"><h2 class="h6 mb-0">Modules actifs</h2></div>
-                <div class="list-group list-group-flush">
-                    @forelse($enabledModules as $module)
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                            <div>
-                                <p class="mb-0 fw-semibold">{{ $module->name }}</p>
-                                <p class="small text-muted mb-0">{{ $module->slug }}</p>
-                            </div>
-                            <span class="badge text-bg-success">{{ $module->version ?? 'n/a' }}</span>
-                        </div>
-                    @empty
-                        <div class="list-group-item text-muted">Aucun module actif.</div>
-                    @endforelse
-                </div>
-            </div>
-
             <div class="card">
                 <div class="card-header bg-white"><h2 class="h6 mb-0">Utilisateurs recents</h2></div>
                 <div class="table-responsive">
