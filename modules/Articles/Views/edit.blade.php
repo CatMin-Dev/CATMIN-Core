@@ -3,11 +3,7 @@
 @section('page_title', 'Edition article')
 
 @push('head')
-<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
-<style>
-.ql-container { font-size: 15px; min-height: 320px; }
-.ql-editor { min-height: 300px; }
-</style>
+<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-bs5.min.css" rel="stylesheet">
 @endpush
 
 @section('content')
@@ -91,9 +87,8 @@
                     </div>
                     <div class="col-12">
                         <label class="form-label fw-semibold">Contenu</label>
-                        <textarea id="content" name="content" class="d-none">{{ old('content', $item->content) }}</textarea>
-                        <div id="quill-editor" class="border rounded @error('content') border-danger @enderror"></div>
-                        @error('content')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                        <textarea id="content" name="content" class="form-control @error('content') is-invalid @enderror">{{ old('content', $article->content) }}</textarea>
+                        @error('content')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                 </div>
             </div>
@@ -174,34 +169,41 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-bs5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/lang/summernote-fr-FR.min.js"></script>
 <script>
-(function () {
-    'use strict';
-    const quill = new Quill('#quill-editor', {
-        theme: 'snow',
-        modules: {
-            toolbar: [
-                [{ header: [2, 3, 4, false] }],
-                ['bold', 'italic', 'underline', 'strike'],
-                ['blockquote', 'code-block'],
-                [{ list: 'ordered' }, { list: 'bullet' }],
-                [{ indent: '-1' }, { indent: '+1' }],
-                ['link', 'image'],
-                ['clean']
-            ]
-        }
+$(function() {
+    $('#content').summernote({
+        lang: 'fr-FR',
+        height: 300,
+        toolbar: [
+            [ 'style', [ 'style' ] ],
+            [ 'font', [ 'bold', 'italic', 'underline', 'strikethrough', 'superscript', 'subscript', 'clear' ] ],
+            [ 'fontsize', [ 'fontsize' ] ],
+            [ 'color', [ 'color' ] ],
+            [ 'para', [ 'ul', 'ol', 'paragraph' ] ],
+            [ 'height', [ 'height' ] ],
+            [ 'table', [ 'table' ] ],
+            [ 'insert', [ 'link', 'picture', 'video' ] ],
+            [ 'view', [ 'fullscreen', 'codeview', 'help' ] ]
+        ]
     });
 
-    const contentTA = document.getElementById('content');
-    if (contentTA.value.trim() !== '') {
-        quill.clipboard.dangerouslyPasteHTML(contentTA.value);
-    }
-
-    document.getElementById('article-form').addEventListener('submit', function () {
-        contentTA.value = quill.root.innerHTML === '<p><br></p>' ? '' : quill.root.innerHTML;
+    // Auto-slug from title
+    const titleInput = document.getElementById('title');
+    const slugInput = document.getElementById('slug');
+    titleInput.addEventListener('input', function() {
+        if (slugInput.dataset.manual) return;
+        slugInput.value = titleInput.value
+            .toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '');
     });
+    slugInput.addEventListener('input', function() { slugInput.dataset.manual = '1'; });
 
+    // Restore active tab if there are errors
     @if ($errors->any())
     const tabFields = {
         'tab-content': ['title', 'slug', 'excerpt', 'content', 'content_type'],
@@ -217,6 +219,6 @@
         }
     }
     @endif
-}());
+});
 </script>
 @endpush

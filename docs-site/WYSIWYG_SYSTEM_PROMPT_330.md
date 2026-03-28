@@ -1,19 +1,21 @@
 # WYSIWYG CMS — Prompt 330
 
-## Éditeur retenu : Quill.js 1.3.7
+## Éditeur retenu : Summernote 0.8.20
 
-### Pourquoi Quill
-- Aucune dépendance jQuery (contrairement à Summernote)
-- Compatible Bootstrap 5 visuellement
-- Chargé via CDN uniquement sur les pages concernées (create/edit Pages et Articles)
-- API simple : `new Quill(container, options)` + `quill.root.innerHTML`
-- Thème `snow` : barre d'outils claire et professionnelle
-- ~250 KB min, pas de build Vite nécessaire
+### Pourquoi Summernote (correction d'audit)
+- **Spécification audit** : Summernote était explicitement mandaté dans 000-V2-COMPLETE-AUDIT.md (ligne 61-66)
+- **Bootstrap 5 native** : support complet Bootstrap 5.3.8 via `summernote-bs5`
+- **jQuery-based** : nécessite jQuery (déjà chargé dans l'admin)
+- **Toolbar classique** : interface intuitive "mode classique" pour éditeurs non-techniques
+- **CDN CDN optimisé** : chargement via CDN uniquement sur create/edit Pages et Articles
+- **API simple** : `$('#editor').summernote({ ... })` + synchronisation automatique textarea
 
 ### CDN utilisé
 ```
-https://cdn.quilljs.com/1.3.7/quill.snow.css  (via @push('head'))
-https://cdn.quilljs.com/1.3.7/quill.min.js    (via @push('scripts'))
+https://code.jquery.com/jquery-3.6.0.min.js                                    (jQuery)
+https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-bs5.min.css     (CSS)
+https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-bs5.min.js      (JS)
+https://cdn.jsdelivr.net/npm/summernote@0.8.20/lang/summernote-fr-FR.min.js    (i18n français)
 ```
 
 ---
@@ -21,15 +23,27 @@ https://cdn.quilljs.com/1.3.7/quill.min.js    (via @push('scripts'))
 ## Architecture de l'intégration
 
 ### Pattern utilisé dans les vues
-1. `<textarea id="content" name="content" class="d-none">{{ old('content', $page->content) }}</textarea>` — champ caché portant la valeur HTML
-2. `<div id="quill-editor">` — conteneur visible de l'éditeur
-3. Sur `submit` : `contentTA.value = quill.root.innerHTML` — synchronisation
+1. `<textarea id="content" name="content" class="form-control">{{ old('content', $page->content) }}</textarea>` — textarea standard
+2. Summernote l'initialise **directement** : `$('#content').summernote({ ... })`
+3. Synchronisation **automatique** : Summernote met à jour le textarea HTML avant submit
 
-### Initialisation du contenu existant
+### Initialisation & configuration
 ```js
-if (contentTA.value.trim() !== '') {
-    quill.clipboard.dangerouslyPasteHTML(contentTA.value);
-}
+$('#content').summernote({
+    lang: 'fr-FR',
+    height: 300,
+    toolbar: [
+        [ 'style', [ 'style' ] ],
+        [ 'font', [ 'bold', 'italic', 'underline', 'strikethrough', 'superscript', 'subscript', 'clear' ] ],
+        [ 'fontsize', [ 'fontsize' ] ],
+        [ 'color', [ 'color' ] ],
+        [ 'para', [ 'ul', 'ol', 'paragraph' ] ],
+        [ 'height', [ 'height' ] ],
+        [ 'table', [ 'table' ] ],
+        [ 'insert', [ 'link', 'picture', 'video' ] ],
+        [ 'view', [ 'fullscreen', 'codeview', 'help' ] ]
+    ]
+});
 ```
 
 ### Restauration automatique de l'onglet actif après erreur
