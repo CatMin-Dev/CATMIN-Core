@@ -21,7 +21,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Blade::directive('catminHook', function (string $expression): string {
-            return "<?php echo \\App\\Services\\CatminHookRegistry::render{$expression}; ?>";
+            return "<?php echo \\App\\Services\\CatminHookRegistry::render({$expression}); ?>";
         });
     }
 }
