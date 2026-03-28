@@ -107,7 +107,7 @@
                     </td>
                     <td>{{ $log->event }}</td>
                     <td>{{ \Illuminate\Support\Str::limit($log->message, 120) }}</td>
-                    <td>{{ $log->admin_username ?: 'n/a' }}</td>
+                    <td>{{ $log->admin_username ?: ($log->channel === 'application' ? 'system' : 'n/a') }}</td>
                     <td>
                         @if($log->method)
                             <span class="badge text-bg-secondary">{{ $log->method }}</span>

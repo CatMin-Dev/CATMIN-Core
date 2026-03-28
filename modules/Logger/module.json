@@ -2,7 +2,7 @@
   "name": "Logger",
   "slug": "logger",
   "enabled": true,
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Journalisation interne des actions admin et des erreurs applicatives.",
   "category": "system",
   "provides": ["admin-audit-log", "error-log"],
