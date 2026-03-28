@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Services\AdminAuthService;
+use App\Services\AdminSessionService;
 use App\Services\CatminEventBus;
 use App\Services\RbacPermissionService;
 use Illuminate\Http\RedirectResponse;
@@ -89,29 +90,23 @@ final class AuthController extends Controller
 
         $request->session()->regenerate();
 
-        // 212 — Si 2FA activée, on ne marque pas encore l'auth comme complète
-        $twoFactorEnabled = (bool) config('catmin.two_factor.enabled', false);
-        $twoFactorSecret  = (string) config('catmin.two_factor.secret', '');
-
-        if ($twoFactorEnabled && $twoFactorSecret !== '') {
+        // 327 — 2FA est per-account, plus global .env
+        $user = $result['user'];
+        if ((bool) ($user->two_factor_enabled ?? false) && (string) ($user->two_factor_secret ?? '') !== '') {
             $request->session()->put('catmin_2fa_pending', true);
-            $request->session()->put('catmin_2fa_pending_user_id', $result['user']->id);
-
-            // Pré-charger le contexte RBAC en session pour l'avoir après 2FA
-            $rbacContext = RbacPermissionService::resolveContextForUsername((string) $data['username']);
-            $request->session()->put('catmin_rbac_roles', $rbacContext['roles']);
-            $request->session()->put('catmin_rbac_permissions', $rbacContext['permissions']);
-            $request->session()->put('catmin_rbac_source', $rbacContext['source']);
+            $request->session()->put('catmin_2fa_pending_user_id', (int) $user->id);
+            $request->session()->put('catmin_2fa_pending_username', (string) $user->username);
 
             try {
-                app(\Modules\Logger\Services\SystemLogService::class)->logAudit(
+                app(SystemLogService::class)->logAudit(
                     'auth.2fa.challenge',
-                    '2FA challenge envoyé',
+                    '2FA challenge envoye',
                     ['ip' => $request->ip()],
                     'info',
-                    (string) $data['username']
+                    (string) $user->username
                 );
-            } catch (\Throwable) {}
+            } catch (\Throwable) {
+            }
 
             return redirect()->route('admin.2fa.verify');
         }
@@ -121,6 +116,7 @@ final class AuthController extends Controller
         $request->session()->put('catmin_admin_username', $result['user']->username);
         // Record absolute session start time for timeout enforcement (213)
         $request->session()->put('catmin_admin_login_at', now()->timestamp);
+        $request->session()->put('catmin_admin_last_activity_at', now()->timestamp);
 
         $rbacContext = RbacPermissionService::resolveContextForUsername($result['user']->username);
         $request->session()->put('catmin_rbac_roles', $rbacContext['roles']);
@@ -156,6 +152,8 @@ final class AuthController extends Controller
             'roles' => (array) ($rbacContext['roles'] ?? []),
         ]);
 
+        app(AdminSessionService::class)->registerSession($request, (int) $result['user']->id);
+
         return redirect()->route('admin.index');
     }
 
@@ -177,14 +175,22 @@ final class AuthController extends Controller
             'ip' => $request->ip(),
         ]);
 
+        app(AdminSessionService::class)->revokeCurrent($request);
+
         $request->session()->forget([
             'catmin_admin_authenticated',
             'catmin_admin_username',
             'catmin_admin_login_at',
+            'catmin_admin_last_activity_at',
             'catmin_rbac_roles',
             'catmin_rbac_permissions',
             'catmin_rbac_source',
             'catmin_2fa_verified',
+            'catmin_2fa_pending',
+            'catmin_2fa_pending_user_id',
+            'catmin_2fa_pending_username',
+            'catmin_2fa_setup_secret',
+            'catmin_2fa_new_recovery_codes',
         ]);
         $request->session()->invalidate();
         $request->session()->regenerateToken();

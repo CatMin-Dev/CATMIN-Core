@@ -34,6 +34,9 @@ class AdminUser extends Model
         'last_name',
         'is_active',
         'is_super_admin',
+        'two_factor_enabled',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
         'metadata',
     ];
 
@@ -43,6 +46,8 @@ class AdminUser extends Model
         'metadata' => 'array',
         'is_active' => 'boolean',
         'is_super_admin' => 'boolean',
+        'two_factor_enabled' => 'boolean',
+        'two_factor_recovery_codes' => 'array',
         'last_login_at' => 'datetime',
         'locked_until' => 'datetime',
     ];

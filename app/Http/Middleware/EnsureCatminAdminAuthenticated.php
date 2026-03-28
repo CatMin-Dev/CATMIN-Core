@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
+use App\Services\AdminSessionService;
 use Closure;
 use Illuminate\Http\Request;
 use Modules\Logger\Services\SystemLogService;
@@ -34,6 +35,34 @@ final class EnsureCatminAdminAuthenticated
             return redirect()->route('admin.login')
                 ->withErrors(['username' => 'Session expiree. Reconnecte-toi.']);
         }
+
+        $sessionService = app(AdminSessionService::class);
+
+        $sessionId = $request->session()->getId();
+        if ($sessionService->isRevoked($sessionId)) {
+            $request->session()->flush();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('admin.login')
+                ->withErrors(['username' => 'Session revoquee. Reconnecte-toi.']);
+        }
+
+        $idleTimeoutMinutes = (int) config('catmin.admin.session_idle_timeout_minutes', 0);
+        if ($idleTimeoutMinutes > 0) {
+            $lastActivityAt = (int) $request->session()->get('catmin_admin_last_activity_at', 0);
+            if ($lastActivityAt > 0 && (now()->timestamp - $lastActivityAt) > ($idleTimeoutMinutes * 60)) {
+                $sessionService->revokeCurrent($request);
+                $request->session()->flush();
+                $request->session()->regenerateToken();
+
+                return redirect()->route('admin.login')
+                    ->withErrors(['username' => 'Session inactive expiree. Reconnecte-toi.']);
+            }
+
+            $request->session()->put('catmin_admin_last_activity_at', now()->timestamp);
+        }
+
+        $sessionService->touch($request);
 
         $response = $next($request);
 

@@ -10,7 +10,7 @@
                 <div class="card-body p-4 p-lg-5">
                     <div class="text-center mb-4">
                         <h1 class="h4 mb-1">Verification en deux etapes</h1>
-                        <p class="text-muted mb-0">Entre le code de ton application d'authentification.</p>
+                        <p class="text-muted mb-0">Entre un code OTP (6 chiffres) ou un code de recuperation.</p>
                     </div>
 
                     @if($errors->any())
@@ -20,15 +20,13 @@
                     <form action="{{ route('admin.2fa.verify.submit') }}" method="POST" class="vstack gap-3">
                         @csrf
                         <div>
-                            <label for="otp" class="form-label">Code 2FA (6 chiffres)</label>
+                            <label for="otp" class="form-label">Code OTP ou code de recuperation</label>
                             <input
                                 type="text"
                                 class="form-control form-control-lg text-center @error('otp') is-invalid @enderror"
                                 id="otp"
                                 name="otp"
-                                inputmode="numeric"
-                                pattern="[0-9]{6}"
-                                maxlength="6"
+                                maxlength="64"
                                 autocomplete="one-time-code"
                                 autofocus
                                 required

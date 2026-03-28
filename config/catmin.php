@@ -42,6 +42,7 @@ return [
         */
         'session_key' => 'catmin_admin_authenticated',
         'session_lifetime' => 120, // minutes
+        'session_idle_timeout_minutes' => (int) env('CATMIN_ADMIN_SESSION_IDLE_TIMEOUT', 120),
 
         /*
         | Entry Points (for future)
@@ -238,6 +239,20 @@ return [
                         'route' => 'modules.index',
                         'active_when' => ['modules.*'],
                         'permission' => 'module.core.config',
+                    ],
+                    [
+                        'label' => '2FA',
+                        'icon' => 'bi bi-shield-lock',
+                        'route' => '2fa.setup',
+                        'active_when' => ['2fa.*'],
+                        'permission' => 'module.core.list',
+                    ],
+                    [
+                        'label' => 'Sessions',
+                        'icon' => 'bi bi-phone',
+                        'route' => 'sessions.index',
+                        'active_when' => ['sessions.*'],
+                        'permission' => 'module.core.list',
                     ],
                     [
                         'label' => 'Logs',

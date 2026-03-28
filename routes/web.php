@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\AddonMarketplaceController;
 use App\Http\Controllers\Admin\AdminPasswordResetController;
+use App\Http\Controllers\Admin\AdminSessionsController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\TwoFactorController;
 use App\Http\Controllers\Frontend\HomeController;
@@ -68,6 +69,23 @@ Route::prefix($adminPath)->middleware('web')->name('admin.')->group(function () 
     Route::middleware($adminMiddleware)->group(function () {
         Route::get('/2fa/setup', [TwoFactorController::class, 'showSetup'])
             ->name('2fa.setup');
+        Route::post('/2fa/enable', [TwoFactorController::class, 'enable'])
+            ->name('2fa.enable');
+        Route::post('/2fa/disable', [TwoFactorController::class, 'disable'])
+            ->name('2fa.disable');
+        Route::post('/2fa/recovery-codes/regenerate', [TwoFactorController::class, 'regenerateRecoveryCodes'])
+            ->name('2fa.recovery.regenerate');
+
+        Route::get('/sessions', [AdminSessionsController::class, 'index'])
+            ->middleware('catmin.permission:module.core.list')
+            ->name('sessions.index');
+        Route::post('/sessions/revoke', [AdminSessionsController::class, 'revoke'])
+            ->middleware('catmin.permission:module.core.config')
+            ->name('sessions.revoke');
+        Route::post('/sessions/revoke-others', [AdminSessionsController::class, 'revokeOthers'])
+            ->middleware('catmin.permission:module.core.config')
+            ->name('sessions.revoke-others');
+
         Route::get('/', [DashboardController::class, 'index'])
             ->name('index');
 

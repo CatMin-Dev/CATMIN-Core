@@ -285,6 +285,11 @@ class RbacAuditService
             'admin.shop.invoices.settings' => 'module.shop.config',
             'admin.shop.invoices.settings.update' => 'module.shop.config',
             'admin.mailer.config.update' => 'module.mailer.config',
+
+            // Session management is owned by core permissions.
+            'admin.sessions.index' => 'module.core.list',
+            'admin.sessions.revoke' => 'module.core.config',
+            'admin.sessions.revoke-others' => 'module.core.config',
         ];
 
         if (isset($compatibilityOverrides[$name])) {
