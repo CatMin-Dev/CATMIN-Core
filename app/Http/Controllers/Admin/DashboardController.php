@@ -10,6 +10,7 @@ use App\Services\ModuleLoader;
 use App\Services\ModuleManager;
 use App\Services\ModuleMigrationRunner;
 use App\Services\SettingService;
+use App\Services\ModuleVersionManager;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -52,12 +53,16 @@ class DashboardController extends Controller
                 'php_version' => PHP_VERSION,
                 'environment' => app()->environment(),
                 'admin_path' => (string) config('catmin.admin.path', 'admin'),
+                'dashboard_version' => config('app.dashboard_version', '2.0.0-dev'),
+                'development_phase' => config('app.development_phase', 'v2-dev'),
             ],
             'enabledModules' => $enabledModules->take(8)->values(),
             'recentUsers' => User::with('roles')->latest()->limit(5)->get(),
             'activity' => $activity,
             'health' => $health,
             'contentStatus' => $contentStatus,
+            'versionMatrix' => ModuleVersionManager::generateMatrix(),
+            'rbacData' => $this->loadRbacMatrix(),
             'contentModules' => collect(['pages', 'articles', 'media', 'menus', 'blocks'])
                 ->map(fn (string $slug) => ModuleManager::find($slug))
                 ->filter()
@@ -448,5 +453,14 @@ class DashboardController extends Controller
         }
 
         return (int) $query->count();
+    }
+
+    private function loadRbacMatrix(): array
+    {
+        $path = storage_path('logs/rbac-matrix.json');
+        if (!file_exists($path)) {
+            return [];
+        }
+        return json_decode(file_get_contents($path), true) ?? [];
     }
 }

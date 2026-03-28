@@ -148,6 +148,22 @@
                                 <p class="h5 mb-0">/{{ $systemInfo['admin_path'] }}</p>
                             </div>
                         </div>
+                        <div class="col-12 col-md-6">
+                            <div class="border rounded p-3 h-100 bg-light">
+                                <p class="text-muted mb-1">Panel Admin</p>
+                                <p class="h5 mb-0">
+                                    <span class="badge badge-info">{{ $systemInfo['dashboard_version'] }}</span>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <div class="border rounded p-3 h-100 bg-light">
+                                <p class="text-muted mb-1">Phase de developpement</p>
+                                <p class="h5 mb-0">
+                                    <span class="badge badge-warning">{{ $systemInfo['development_phase'] }}</span>
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -175,6 +191,77 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Modules V2-DEV Status -->
+            <div class="card mt-4">
+                <div class="card-header bg-white"><h2 class="h6 mb-0"><i class="fas fa-code-branch me-2"></i>Modules en V2-DEV</h2></div>
+                <div class="card-body">
+                    @php
+                        $v2Modules = collect($versionMatrix['modules'] ?? [])
+                            ->filter(fn($v) => str_contains($v, '-dev'))
+                            ->map(fn($v, $k) => ['name' => ucfirst($k), 'version' => $v])
+                            ->values();
+                    @endphp
+                    @if($v2Modules->isNotEmpty())
+                        <div class="row g-3">
+                            @foreach($v2Modules as $module)
+                                <div class="col-12 col-sm-6">
+                                    <div class="border rounded p-3 h-100 bg-light">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="fw-semibold">{{ $module['name'] }}</span>
+                                            <span class="badge badge-info">{{ $module['version'] }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="alert alert-secondary mb-0">Aucun module en phase V2-DEV.</div>
+                    @endif
+                </div>
+            </div>
+
+            <!-- RBAC Status -->
+            @if(!empty($rbacData))
+                <div class="card mt-4">
+                    <div class="card-header bg-white"><h2 class="h6 mb-0"><i class="fas fa-shield-alt me-2"></i>Couverture Protection (RBAC)</h2></div>
+                    <div class="card-body">
+                        @php
+                            $coverage = $rbacData['summary']['coverage_percentage'] ?? 0;
+                            $coverageClass = match(true) {
+                                $coverage >= 90 => 'bg-success',
+                                $coverage >= 75 => 'bg-warning',
+                                default => 'bg-danger'
+                            };
+                        @endphp
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Routes protegees par permissions</span>
+                                <strong>{{ $coverage }}%</strong>
+                            </div>
+                            <div class="progress" style="height: 25px;">
+                                <div class="progress-bar {{ $coverageClass }}" role="progressbar" style="width: {{ $coverage }}%" aria-valuenow="{{ $coverage }}" aria-valuemin="0" aria-valuemax="100">
+                                    {{ $coverage }}%
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row g-3 mt-3">
+                            <div class="col-12 col-sm-6">
+                                <div class="border rounded p-3 h-100">
+                                    <p class="text-muted mb-2 small">Total des routes admin</p>
+                                    <p class="h5 mb-0">{{ $rbacData['summary']['total_routes'] ?? 0 }}</p>
+                                </div>
+                            </div>
+                            <div class="col-12 col-sm-6">
+                                <div class="border rounded p-3 h-100">
+                                    <p class="text-muted mb-2 small">Non protegees</p>
+                                    <p class="h5 mb-0 text-danger">{{ $rbacData['summary']['without_permission'] ?? 0 }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
 
             <div class="card mt-4">
                 <div class="card-header bg-white"><h2 class="h6 mb-0">Etat du contenu</h2></div>
