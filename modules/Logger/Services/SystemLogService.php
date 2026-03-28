@@ -37,16 +37,26 @@ class SystemLogService
             return;
         }
 
+        $fingerprintSource = implode('|', [
+            get_class($throwable),
+            basename($throwable->getFile()),
+            (string) $throwable->getLine(),
+            preg_replace('/\s+/', ' ', trim((string) $throwable->getMessage())),
+        ]);
+        $fingerprint = substr(hash('sha256', $fingerprintSource), 0, 16);
+
         $this->write([
             'channel' => 'application',
             'level' => 'error',
             'event' => 'exception.reported',
-            'message' => $throwable->getMessage(),
+            'message' => $throwable->getMessage() !== '' ? $throwable->getMessage() : get_class($throwable),
             'context' => array_merge($context, [
                 'exception' => get_class($throwable),
                 'file' => $throwable->getFile(),
                 'line' => $throwable->getLine(),
                 'code' => $throwable->getCode(),
+                'fingerprint' => $fingerprint,
+                'occurred_at' => now()->toIso8601String(),
             ]),
             'status_code' => 500,
         ]);
