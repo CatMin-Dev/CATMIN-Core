@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Modules\Webhooks\Models\Webhook;
 use Modules\Webhooks\Services\WebhookAdminService;
+use Modules\Webhooks\Services\WebhookSecurityService;
 
 class WebhookController extends Controller
 {
@@ -92,5 +93,38 @@ class WebhookController extends Controller
 
         return redirect()->route('admin.webhooks.index')
             ->with('success', 'Webhook supprimé.');
+    }
+
+    public function rotateSecret(int $webhook, WebhookSecurityService $securityService): RedirectResponse
+    {
+        $model = WebhookAdminService::find($webhook);
+
+        if (!$model) {
+            abort(404);
+        }
+
+        $securityService->initiateSecretRotation($model);
+
+        return redirect()->route('admin.webhooks.edit', $webhook)
+            ->with('success', 'Rotation du secret initiée. Le nouveau secret est en attente de validation pendant 24h. Copiez-le maintenant dans l\'encart ci-dessous avant validation.');
+    }
+
+    public function completeRotation(int $webhook, WebhookSecurityService $securityService): RedirectResponse
+    {
+        $model = WebhookAdminService::find($webhook);
+
+        if (!$model) {
+            abort(404);
+        }
+
+        if ($model->rotation_status !== 'pending') {
+            return redirect()->route('admin.webhooks.edit', $webhook)
+                ->with('error', 'Aucune rotation en attente pour ce webhook.');
+        }
+
+        $securityService->completeSecretRotation($model);
+
+        return redirect()->route('admin.webhooks.edit', $webhook)
+            ->with('success', 'Rotation du secret complétée. Le nouveau secret est maintenant actif.');
     }
 }

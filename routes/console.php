@@ -18,6 +18,9 @@ Artisan::command('inspire', function () {
 use Illuminate\Support\Facades\Schedule;
 use Modules\Cron\Services\CronService;
 use Modules\Logger\Services\LogMaintenanceService;
+use Modules\Webhooks\Services\WebhookDispatcher;
+use Modules\Webhooks\Services\WebhookSecurityService;
+use Modules\Webhooks\Models\WebhookDelivery;
 
 Schedule::call(function (): void {
     CronService::runTask('cache.clear');
@@ -34,6 +37,12 @@ Schedule::call(function (): void {
     app(LogMaintenanceService::class)->rotateDaily($retentionDays, $archiveRetentionDays);
 })->dailyAt('02:30')->name('logger.rotate-daily')->withoutOverlapping();
 
+// Clean up expired webhook nonces daily
+Schedule::call(function (): void {
+    app(WebhookSecurityService::class)->cleanupExpiredNonces();
+    app(WebhookSecurityService::class)->cleanupOldEvents(30);
+})->dailyAt('03:00')->name('webhooks.cleanup')->withoutOverlapping();
+
 Artisan::command('catmin:logs:rotate', function () {
     $retentionDays = (int) config('catmin.logs.retention_days', 14);
     $archiveRetentionDays = (int) config('catmin.logs.archive_retention_days', 90);
@@ -44,3 +53,57 @@ Artisan::command('catmin:logs:rotate', function () {
     $this->line('Archivé: ' . (int) ($result['archived'] ?? 0));
     $this->line('Purgé (archive): ' . (int) ($result['purged_archive'] ?? 0));
 })->purpose('Rotate and archive system logs according to CATMIN retention policies');
+
+// ─── Webhook retry loop ─────────────────────────────────────────────────────
+Schedule::call(function (): void {
+    $retrying = WebhookDelivery::query()
+        ->where('status', 'retrying')
+        ->where('next_retry_at', '<=', now())
+        ->with('webhook')
+        ->limit(50)
+        ->get();
+
+    foreach ($retrying as $delivery) {
+        if (!$delivery->webhook || $delivery->webhook->status !== 'active') {
+            $delivery->update(['status' => 'failed']);
+            continue;
+        }
+
+        WebhookDispatcher::send($delivery->webhook, $delivery->event_type, $delivery->payload ?? []);
+    }
+})->everyFiveMinutes()->name('webhooks.process-retries')->withoutOverlapping();
+
+Artisan::command('catmin:webhooks:retry', function () {
+    $retrying = WebhookDelivery::query()
+        ->where('status', 'retrying')
+        ->where('next_retry_at', '<=', now())
+        ->with('webhook')
+        ->get();
+
+    if ($retrying->isEmpty()) {
+        $this->info('Aucune livraison en attente de retry.');
+        return;
+    }
+
+    $this->info('Livraisons en attente: ' . $retrying->count());
+
+    foreach ($retrying as $delivery) {
+        if (!$delivery->webhook || $delivery->webhook->status !== 'active') {
+            $delivery->update(['status' => 'failed']);
+            $this->warn('Webhook inactif ou supprimé pour delivery #' . $delivery->id . ' — marqué failed.');
+            continue;
+        }
+
+        WebhookDispatcher::send($delivery->webhook, $delivery->event_type, $delivery->payload ?? []);
+        $this->line('Retry déclenché pour delivery #' . $delivery->id . ' → ' . $delivery->webhook->url);
+    }
+
+    $this->info('Retry terminé.');
+})->purpose('Process retryable failed webhook deliveries');
+
+Artisan::command('catmin:webhooks:cleanup', function () {
+    $nonces = app(WebhookSecurityService::class)->cleanupExpiredNonces();
+    $events = app(WebhookSecurityService::class)->cleanupOldEvents(30);
+    $this->info("Nonces expirés supprimés: $nonces");
+    $this->info("Événements anciens supprimés: $events");
+})->purpose('Clean up expired webhook nonces and old event records');

@@ -83,5 +83,46 @@
             </form>
         </div>
     </div>
+
+    {{-- Secret rotation panel --}}
+    @php($canEdit = catmin_can('module.webhooks.edit'))
+    <div class="card border-warning mt-4">
+        <div class="card-header bg-warning-subtle">
+            <h2 class="h6 mb-0"><i class="bi bi-key me-1"></i>Rotation du secret HMAC</h2>
+        </div>
+        <div class="card-body">
+            @if($webhook->rotation_status === 'pending')
+                <div class="alert alert-warning mb-3">
+                    <strong>Rotation en cours</strong> — Un nouveau secret est en attente depuis
+                    {{ optional($webhook->pending_rotation_at)->diffForHumans() ?? 'bientôt' }}.
+                    Les deux secrets sont actuellement acceptés.
+                </div>
+                <p class="text-muted small mb-3">
+                    Configurez le nouveau secret chez votre partenaire, puis cliquez sur <em>Valider</em> pour désactiver l'ancien.
+                </p>
+                <form method="POST" action="{{ route('admin.webhooks.complete-rotation', $webhook->id) }}" class="d-inline">
+                    @csrf
+                    <button class="btn btn-success btn-sm" type="submit" @disabled(!$canEdit)>
+                        <i class="bi bi-check-circle me-1"></i>Valider & activer le nouveau secret
+                    </button>
+                </form>
+            @else
+                <p class="text-muted small mb-3">
+                    Initier une rotation génère un nouveau secret aléatoire.
+                    L'ancien et le nouveau sont tous les deux acceptés pendant 24h pour permettre la mise à jour côté partenaire.
+                </p>
+                <form method="POST" action="{{ route('admin.webhooks.rotate-secret', $webhook->id) }}" class="d-inline"
+                      onsubmit="return confirm('Initier la rotation du secret ?')">
+                    @csrf
+                    <button class="btn btn-warning btn-sm" type="submit" @disabled(!$canEdit || empty($webhook->secret))>
+                        <i class="bi bi-arrow-repeat me-1"></i>Initier la rotation du secret
+                    </button>
+                    @if(empty($webhook->secret))
+                        <span class="text-muted ms-2 small">Définissez d'abord un secret pour activer la rotation.</span>
+                    @endif
+                </form>
+            @endif
+        </div>
+    </div>
 </div>
 @endsection

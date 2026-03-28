@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Http;
 use Modules\Logger\Models\SystemAlert;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use App\Services\SettingService;
 
 class AlertingService
 {
@@ -59,7 +60,8 @@ class AlertingService
     {
         $channels = [];
 
-        $emailTo = (string) config('catmin.alerting.email_to', '');
+        // SettingService is the primary source; config() is the fallback for env-only installs
+        $emailTo = (string) (SettingService::get('ops.alert_email') ?: config('catmin.alerting.email_to', ''));
         if ($emailTo !== '' && in_array($alert->severity, ['critical', 'warning'], true)) {
             try {
                 Mail::raw(
@@ -78,7 +80,7 @@ class AlertingService
             }
         }
 
-        $webhookUrl = (string) config('catmin.alerting.webhook_url', '');
+        $webhookUrl = (string) (SettingService::get('ops.alert_webhook_url') ?: config('catmin.alerting.webhook_url', ''));
         if ($webhookUrl !== '' && in_array($alert->severity, ['critical', 'warning'], true)) {
             try {
                 Http::timeout(5)->post($webhookUrl, [

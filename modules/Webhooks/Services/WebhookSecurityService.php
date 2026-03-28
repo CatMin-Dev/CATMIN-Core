@@ -3,6 +3,7 @@
 namespace Modules\Webhooks\Services;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
 use Modules\Webhooks\Models\Webhook;
 use Modules\Webhooks\Models\WebhookNonce;
 use Modules\Webhooks\Models\WebhookEvent;
@@ -208,8 +209,9 @@ class WebhookSecurityService
         if ($webhook->rotation_status === 'pending' && !empty($webhook->pending_secret)) {
             // Accept both current and pending during rotation
             $expectedCurrent = 'sha256=' . hash_hmac('sha256', $payload, $webhook->secret);
-            $expectedPending = 'sha256=' . hash_hmac('sha256', $payload, $webhook->pending_secret);
-            
+            $pendingPlain = $this->decryptSecret($webhook->pending_secret);
+            $expectedPending = 'sha256=' . hash_hmac('sha256', $payload, $pendingPlain);
+
             if (hash_equals($signature, $expectedCurrent) || hash_equals($signature, $expectedPending)) {
                 return ['valid' => true, 'signed' => true];
             }
@@ -236,7 +238,7 @@ class WebhookSecurityService
 
         $webhook->update([
             'rotation_status' => 'pending',
-            'pending_secret' => $newSecret,
+            'pending_secret' => Crypt::encrypt($newSecret),
             'pending_rotation_at' => now()->addHours(24),
         ]);
 
@@ -256,7 +258,7 @@ class WebhookSecurityService
         }
 
         $webhook->update([
-            'secret' => $webhook->pending_secret,
+            'secret' => $this->decryptSecret($webhook->pending_secret),
             'rotation_status' => 'current',
             'pending_secret' => null,
             'pending_rotation_at' => null,
@@ -265,6 +267,24 @@ class WebhookSecurityService
         Log::info('Webhook secret rotation completed', [
             'webhook_id' => $webhook->id,
         ]);
+    }
+
+    /**
+     * Decrypt an encrypted secret, returning the input as-is if decryption fails
+     * (backward compat for secrets stored before encryption was added).
+     */
+    private function decryptSecret(?string $encrypted): string
+    {
+        if ($encrypted === null || $encrypted === '') {
+            return '';
+        }
+
+        try {
+            return (string) Crypt::decrypt($encrypted);
+        } catch (\Throwable) {
+            // Legacy plain-text secret — return as-is
+            return $encrypted;
+        }
     }
 
     /**

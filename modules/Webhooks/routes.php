@@ -4,8 +4,8 @@ use Illuminate\Support\Facades\Route;
 use Modules\Webhooks\Controllers\Admin\WebhookController;
 use Modules\Webhooks\Controllers\WebhookIncomingController;
 
-// Public incoming endpoint — no admin middleware
-Route::middleware(['web'])
+// Public incoming endpoint — no admin middleware, rate-limited to 60/min per IP
+Route::middleware(['web', 'throttle:60,1'])
     ->post('/webhooks/incoming/{token}', [WebhookIncomingController::class, 'receive'])
     ->name('webhooks.incoming');
 
@@ -32,4 +32,12 @@ Route::middleware(['web', 'catmin.admin'])
         Route::delete('/webhooks/{webhook}', [WebhookController::class, 'destroy'])
             ->middleware('catmin.permission:module.webhooks.delete')
             ->name('webhooks.destroy');
+
+        Route::post('/webhooks/{webhook}/rotate-secret', [WebhookController::class, 'rotateSecret'])
+            ->middleware('catmin.permission:module.webhooks.edit')
+            ->name('webhooks.rotate-secret');
+
+        Route::post('/webhooks/{webhook}/complete-rotation', [WebhookController::class, 'completeRotation'])
+            ->middleware('catmin.permission:module.webhooks.edit')
+            ->name('webhooks.complete-rotation');
     });
