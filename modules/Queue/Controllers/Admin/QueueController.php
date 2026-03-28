@@ -18,7 +18,7 @@ class QueueController extends Controller
 
         $failedJobs = $this->safeFailedJobs();
 
-        return view()->file(base_path('modules/Queue/Views/index.blade.php'), [
+        return view('module_queue::index', [
             'currentPage' => 'queue',
             'pending' => $pending,
             'failed' => $failed,

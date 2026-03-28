@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Services\ModuleViewLoader;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 
@@ -23,5 +24,7 @@ class AppServiceProvider extends ServiceProvider
         Blade::directive('catminHook', function (string $expression): string {
             return "<?php echo \\App\\Services\\CatminHookRegistry::render({$expression}); ?>";
         });
+
+        ModuleViewLoader::registerNamespaces();
     }
 }
