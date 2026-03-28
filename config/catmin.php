@@ -290,6 +290,13 @@ return [
                         'module' => 'webhooks',
                         'permission' => 'module.webhooks.menu',
                     ],
+                    [
+                        'label' => 'Marketplace Addons',
+                        'icon' => 'bi bi-bag',
+                        'route' => 'addons.marketplace.index',
+                        'active_when' => ['addons.marketplace.*'],
+                        'permission' => 'module.core.config',
+                    ],
                 ],
             ],
             [

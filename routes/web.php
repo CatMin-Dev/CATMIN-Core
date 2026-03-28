@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AuthController;
+use App\Http\Controllers\Admin\AddonMarketplaceController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\TwoFactorController;
 use App\Http\Controllers\Frontend\HomeController;
@@ -76,6 +77,14 @@ Route::prefix($adminPath)->middleware('web')->name('admin.')->group(function () 
 
         Route::get('/modules', [DashboardController::class, 'modules'])
             ->name('modules.index');
+
+        Route::get('/addons/marketplace', [AddonMarketplaceController::class, 'index'])
+            ->middleware('catmin.permission:module.core.config')
+            ->name('addons.marketplace.index');
+
+        Route::post('/addons/marketplace/rebuild', [AddonMarketplaceController::class, 'rebuild'])
+            ->middleware('catmin.permission:module.core.config')
+            ->name('addons.marketplace.rebuild');
 
         Route::get('/modules/{slug}/config', [DashboardController::class, 'moduleConfig'])
             ->name('modules.config');
