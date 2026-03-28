@@ -76,11 +76,11 @@
                                   placeholder="Court résumé affiché dans les listings (500 car. max)">{{ old('excerpt') }}</textarea>
                         @error('excerpt')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
-                    <div class="col-12">
-                        <label class="form-label fw-semibold">Contenu</label>
-                        <textarea id="content" name="content" class="form-control @error('content') is-invalid @enderror">{{ old('content') }}</textarea>
-                        @error('content')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
+                    @include('admin.components.content-editor-mode', [
+                        'contentValue' => old('content'),
+                        'defaultMode' => old('editor_mode', 'summernote'),
+                        'builderPayload' => old('builder_payload', ''),
+                    ])
                 </div>
             </div>
 
@@ -148,51 +148,32 @@
 <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-bs5.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/lang/summernote-fr-FR.min.js"></script>
 <script>
-$(function() {
-    $('#content').summernote({
-        lang: 'fr-FR',
-        height: 300,
-        toolbar: [
-            [ 'style', [ 'style' ] ],
-            [ 'font', [ 'bold', 'italic', 'underline', 'strikethrough', 'superscript', 'subscript', 'clear' ] ],
-            [ 'fontsize', [ 'fontsize' ] ],
-            [ 'color', [ 'color' ] ],
-            [ 'para', [ 'ul', 'ol', 'paragraph' ] ],
-            [ 'height', [ 'height' ] ],
-            [ 'table', [ 'table' ] ],
-            [ 'insert', [ 'link', 'picture', 'video' ] ],
-            [ 'view', [ 'fullscreen', 'codeview', 'help' ] ]
-        ]
-    });
-
-    // Auto-slug from title
+(function () {
     const titleInput = document.getElementById('title');
     const slugInput = document.getElementById('slug');
-    titleInput.addEventListener('input', function() {
-        if (slugInput.dataset.manual) return;
-        slugInput.value = titleInput.value
-            .toLowerCase()
-            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-            .replace(/[^a-z0-9]+/g, '-')
-            .replace(/^-+|-+$/g, '');
-    });
-    slugInput.addEventListener('input', function() { slugInput.dataset.manual = '1'; });
 
-    // Restore active tab if there are errors
-    @if ($errors->any())
-    const tabFields = {
-        'tab-content': ['title', 'slug', 'excerpt', 'content'],
-        'tab-publish': ['status', 'published_at'],
-        'tab-seo':     ['meta_title', 'meta_description'],
-    };
-    const errorKeys = @json(array_keys($errors->messages()));
-    for (const [tabId, fields] of Object.entries(tabFields)) {
-        if (fields.some(f => errorKeys.includes(f))) {
-            bootstrap.Tab.getOrCreateInstance(document.querySelector('[data-bs-target="#' + tabId + '"]')).show();
-            break;
-        }
+    if (titleInput && slugInput) {
+        titleInput.addEventListener('input', function () {
+            if (slugInput.dataset.manual) return;
+            slugInput.value = titleInput.value
+                .toLowerCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-+|-+$/g, '');
+        });
+
+        slugInput.addEventListener('input', function () {
+            slugInput.dataset.manual = '1';
+        });
     }
-    @endif
-});
+}());
 </script>
+@include('admin.components.content-editor-mode-script', [
+    'formId' => 'page-form',
+    'tabFields' => [
+        'tab-content' => ['title', 'slug', 'excerpt', 'content', 'editor_mode', 'builder_payload'],
+        'tab-publish' => ['status', 'published_at'],
+        'tab-seo' => ['meta_title', 'meta_description'],
+    ],
+])
 @endpush
