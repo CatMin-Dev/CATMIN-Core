@@ -39,7 +39,11 @@ class SettingService
         string $type = 'string',
         ?string $group = null,
         ?string $description = null,
-        bool $isPublic = false
+        bool $isPublic = false,
+        ?string $label = null,
+        bool $isEditable = true,
+        ?array $options = null,
+        ?string $validationRules = null
     ): Setting {
         $setting = Setting::updateOrCreate(
             ['key' => $key],
@@ -49,6 +53,10 @@ class SettingService
                 'group' => $group,
                 'description' => $description,
                 'is_public' => $isPublic,
+                'label' => $label,
+                'is_editable' => $isEditable,
+                'options' => $options !== null ? json_encode($options) : null,
+                'validation_rules' => $validationRules,
             ]
         );
 

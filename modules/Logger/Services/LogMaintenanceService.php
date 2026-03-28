@@ -2,11 +2,34 @@
 
 namespace Modules\Logger\Services;
 
+use App\Services\SettingService;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 
 class LogMaintenanceService
 {
+    /**
+     * Resolve retention days from SettingService (ops.log_retention_days),
+     * falling back to config() then the supplied default.
+     */
+    public function resolvedRetentionDays(int $default = 14): int
+    {
+        $fromSettings = SettingService::get('ops.log_retention_days');
+        if ($fromSettings !== null && $fromSettings !== '') {
+            return max(1, (int) $fromSettings);
+        }
+        return max(1, (int) config('catmin.logs.retention_days', $default));
+    }
+
+    public function resolvedArchiveRetentionDays(int $default = 90): int
+    {
+        $fromSettings = SettingService::get('ops.log_archive_retention_days');
+        if ($fromSettings !== null && $fromSettings !== '') {
+            return max(7, (int) $fromSettings);
+        }
+        return max(7, (int) config('catmin.logs.archive_retention_days', $default));
+    }
+
     /**
      * @param array{level?:string,channel?:string,from?:string,to?:string} $filters
      */

@@ -31,10 +31,8 @@ Schedule::call(function (): void {
 })->weekly()->name('cron.queue-prune')->withoutOverlapping();
 
 Schedule::call(function (): void {
-    $retentionDays = (int) config('catmin.logs.retention_days', 14);
-    $archiveRetentionDays = (int) config('catmin.logs.archive_retention_days', 90);
-
-    app(LogMaintenanceService::class)->rotateDaily($retentionDays, $archiveRetentionDays);
+    $svc = app(LogMaintenanceService::class);
+    $svc->rotateDaily($svc->resolvedRetentionDays(), $svc->resolvedArchiveRetentionDays());
 })->dailyAt('02:30')->name('logger.rotate-daily')->withoutOverlapping();
 
 // Clean up expired webhook nonces daily
@@ -44,10 +42,8 @@ Schedule::call(function (): void {
 })->dailyAt('03:00')->name('webhooks.cleanup')->withoutOverlapping();
 
 Artisan::command('catmin:logs:rotate', function () {
-    $retentionDays = (int) config('catmin.logs.retention_days', 14);
-    $archiveRetentionDays = (int) config('catmin.logs.archive_retention_days', 90);
-
-    $result = app(LogMaintenanceService::class)->rotateDaily($retentionDays, $archiveRetentionDays);
+    $svc = app(LogMaintenanceService::class);
+    $result = $svc->rotateDaily($svc->resolvedRetentionDays(), $svc->resolvedArchiveRetentionDays());
 
     $this->info('Rotation logs terminée.');
     $this->line('Archivé: ' . (int) ($result['archived'] ?? 0));

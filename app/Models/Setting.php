@@ -9,15 +9,20 @@ class Setting extends Model
 {
     protected $fillable = [
         'key',
+        'label',
         'value',
         'type',
         'group',
         'description',
         'is_public',
+        'is_editable',
+        'options',
+        'validation_rules',
     ];
 
     protected $casts = [
         'is_public' => 'boolean',
+        'is_editable' => 'boolean',
     ];
 
     protected static function booted(): void
