@@ -2,33 +2,221 @@
 
 @section('page_title', 'Edition article')
 
+@push('head')
+<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+<style>
+.ql-container { font-size: 15px; min-height: 320px; }
+.ql-editor { min-height: 300px; }
+</style>
+@endpush
+
 @section('content')
 <x-admin.crud.page-header
     title="Modifier un article"
-    subtitle="Fusion Blog/News dans un seul module."
+    subtitle="Article #{{ $item->id }} — {{ $item->title }}"
 >
-    <a class="btn btn-outline-secondary" href="{{ admin_route('articles.manage') }}">Retour liste</a>
+    <a class="btn btn-outline-secondary" href="{{ admin_route('articles.manage') }}">
+        <i class="bi bi-arrow-left me-1"></i>Retour liste
+    </a>
 </x-admin.crud.page-header>
 
 <div class="catmin-page-body">
-    <div class="card">
-        <div class="card-header bg-white"><h2 class="h6 mb-0">Article #{{ $item->id }}</h2></div>
-        <div class="card-body">
-            <form method="post" action="{{ admin_route('articles.update', ['article' => $item->id]) }}" class="row g-3">
-                @csrf
-                @method('PUT')
-                <div class="col-12 col-lg-6"><label class="form-label" for="title">Titre</label><input id="title" name="title" type="text" class="form-control @error('title') is-invalid @enderror" value="{{ old('title', $item->title) }}" required>@error('title')<div class="invalid-feedback">{{ $message }}</div>@enderror</div>
-                <div class="col-12 col-lg-3"><label class="form-label" for="content_type">Type</label><select id="content_type" name="content_type" class="form-select @error('content_type') is-invalid @enderror"><option value="article" @selected(old('content_type', $item->content_type) === 'article')>Article</option><option value="news" @selected(old('content_type', $item->content_type) === 'news')>News</option></select>@error('content_type')<div class="invalid-feedback">{{ $message }}</div>@enderror</div>
-                <div class="col-12 col-lg-3"><label class="form-label" for="slug">Slug</label><input id="slug" name="slug" type="text" class="form-control @error('slug') is-invalid @enderror" value="{{ old('slug', $item->slug) }}">@error('slug')<div class="invalid-feedback">{{ $message }}</div>@enderror</div>
-                <div class="col-12"><label class="form-label" for="excerpt">Extrait</label><textarea id="excerpt" name="excerpt" rows="3" class="form-control @error('excerpt') is-invalid @enderror">{{ old('excerpt', $item->excerpt) }}</textarea>@error('excerpt')<div class="invalid-feedback">{{ $message }}</div>@enderror</div>
-                <div class="col-12"><label class="form-label" for="content">Contenu</label><textarea id="content" name="content" rows="10" class="form-control @error('content') is-invalid @enderror">{{ old('content', $item->content) }}</textarea>@error('content')<div class="invalid-feedback">{{ $message }}</div>@enderror</div>
-                <div class="col-12 col-lg-3"><label class="form-label" for="status">Statut</label><select id="status" name="status" class="form-select @error('status') is-invalid @enderror"><option value="draft" @selected(old('status', $item->status) === 'draft')>Brouillon</option><option value="published" @selected(old('status', $item->status) === 'published')>Publie</option></select>@error('status')<div class="invalid-feedback">{{ $message }}</div>@enderror</div>
-                <div class="col-12 col-lg-3"><label class="form-label" for="published_at">Publication</label><input id="published_at" name="published_at" type="datetime-local" class="form-control @error('published_at') is-invalid @enderror" value="{{ old('published_at', optional($item->published_at)->format('Y-m-d\\TH:i')) }}">@error('published_at')<div class="invalid-feedback">{{ $message }}</div>@enderror</div>
-                <div class="col-12 col-lg-3"><label class="form-label" for="media_asset_id">Media ID</label><input id="media_asset_id" name="media_asset_id" type="number" class="form-control @error('media_asset_id') is-invalid @enderror" value="{{ old('media_asset_id', $item->media_asset_id) }}">@error('media_asset_id')<div class="invalid-feedback">{{ $message }}</div>@enderror</div>
-                <div class="col-12 col-lg-3"><label class="form-label" for="seo_meta_id">SEO ID</label><input id="seo_meta_id" name="seo_meta_id" type="number" class="form-control @error('seo_meta_id') is-invalid @enderror" value="{{ old('seo_meta_id', $item->seo_meta_id) }}">@error('seo_meta_id')<div class="invalid-feedback">{{ $message }}</div>@enderror</div>
-                <div class="col-12 d-flex gap-2"><button class="btn btn-primary" type="submit">Enregistrer</button><a class="btn btn-outline-secondary" href="{{ admin_route('articles.manage') }}">Annuler</a></div>
-            </form>
-        </div>
+    @if ($errors->any())
+    <div class="alert alert-danger mb-3">
+        <ul class="mb-0 ps-3">
+            @foreach ($errors->all() as $e)<li>{{ $e }}</li>@endforeach
+        </ul>
     </div>
+    @endif
+
+    <form method="post" action="{{ admin_route('articles.update', ['article' => $item->id]) }}" id="article-form">
+        @csrf
+        @method('PUT')
+
+        <ul class="nav nav-tabs mb-0" id="articleTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-content" type="button" role="tab">
+                    <i class="bi bi-pencil me-1"></i>Contenu
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-publish" type="button" role="tab">
+                    <i class="bi bi-calendar-check me-1"></i>Publication
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-seo" type="button" role="tab">
+                    <i class="bi bi-search me-1"></i>SEO
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-media" type="button" role="tab">
+                    <i class="bi bi-image me-1"></i>Médias
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content border border-top-0 rounded-bottom p-4 bg-white mb-4">
+
+            <div class="tab-pane fade show active" id="tab-content" role="tabpanel">
+                <div class="row g-3">
+                    <div class="col-12 col-lg-6">
+                        <label class="form-label fw-semibold" for="title">Titre <span class="text-danger">*</span></label>
+                        <input id="title" name="title" type="text"
+                               class="form-control @error('title') is-invalid @enderror"
+                               value="{{ old('title', $item->title) }}" required autofocus>
+                        @error('title')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-12 col-lg-3">
+                        <label class="form-label fw-semibold" for="content_type">Type</label>
+                        <select id="content_type" name="content_type" class="form-select @error('content_type') is-invalid @enderror">
+                            <option value="article" @selected(old('content_type', $item->content_type) === 'article')>Article</option>
+                            <option value="news"    @selected(old('content_type', $item->content_type) === 'news')>News</option>
+                        </select>
+                        @error('content_type')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-12 col-lg-3">
+                        <label class="form-label fw-semibold" for="slug">Slug</label>
+                        <input id="slug" name="slug" type="text"
+                               class="form-control @error('slug') is-invalid @enderror"
+                               value="{{ old('slug', $item->slug) }}">
+                        @error('slug')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold" for="excerpt">Extrait</label>
+                        <textarea id="excerpt" name="excerpt" rows="2"
+                                  class="form-control @error('excerpt') is-invalid @enderror"
+                                  placeholder="Court résumé affiché dans les listings">{{ old('excerpt', $item->excerpt) }}</textarea>
+                        @error('excerpt')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Contenu</label>
+                        <textarea id="content" name="content" class="d-none">{{ old('content', $item->content) }}</textarea>
+                        <div id="quill-editor" class="border rounded @error('content') border-danger @enderror"></div>
+                        @error('content')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="tab-publish" role="tabpanel">
+                <div class="row g-3">
+                    <div class="col-12 col-lg-4">
+                        <label class="form-label fw-semibold" for="status">Statut</label>
+                        <select id="status" name="status" class="form-select @error('status') is-invalid @enderror">
+                            <option value="draft"     @selected(old('status', $item->status) === 'draft')>Brouillon</option>
+                            <option value="published" @selected(old('status', $item->status) === 'published')>Publié</option>
+                        </select>
+                        @error('status')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-12 col-lg-4">
+                        <label class="form-label fw-semibold" for="published_at">Date de publication</label>
+                        <input id="published_at" name="published_at" type="datetime-local"
+                               class="form-control @error('published_at') is-invalid @enderror"
+                               value="{{ old('published_at', optional($item->published_at)->format('Y-m-d\\TH:i')) }}">
+                        @error('published_at')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="tab-seo" role="tabpanel">
+                <div class="row g-3">
+                    <div class="col-12 col-lg-8">
+                        <label class="form-label fw-semibold" for="meta_title">Meta titre</label>
+                        <input id="meta_title" name="meta_title" type="text"
+                               class="form-control @error('meta_title') is-invalid @enderror"
+                               value="{{ old('meta_title', $item->meta_title) }}" maxlength="255"
+                               placeholder="Titre SEO (défaut : titre de l'article)">
+                        @error('meta_title')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        <div class="form-text">Recommandé : 50–60 caractères.</div>
+                    </div>
+                    <div class="col-12 col-lg-8">
+                        <label class="form-label fw-semibold" for="meta_description">Meta description</label>
+                        <textarea id="meta_description" name="meta_description" rows="3"
+                                  class="form-control @error('meta_description') is-invalid @enderror"
+                                  maxlength="320"
+                                  placeholder="Description affichée dans les résultats de recherche">{{ old('meta_description', $item->meta_description) }}</textarea>
+                        @error('meta_description')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        <div class="form-text">Recommandé : 150–160 caractères.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="tab-media" role="tabpanel">
+                <div class="row g-3">
+                    <div class="col-12 col-lg-4">
+                        <label class="form-label fw-semibold" for="media_asset_id">Image de couverture</label>
+                        @if ($item->media_asset_id)
+                        <div class="mb-2 text-muted small">Asset actuel : <strong>#{{ $item->media_asset_id }}</strong></div>
+                        @endif
+                        <input id="media_asset_id" name="media_asset_id" type="number" min="1"
+                               class="form-control @error('media_asset_id') is-invalid @enderror"
+                               value="{{ old('media_asset_id', $item->media_asset_id) }}"
+                               placeholder="ID de l'asset média">
+                        @error('media_asset_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        <div class="form-text text-muted">
+                            Saisissez l'ID d'un asset existant dans la médiathèque.
+                            Un picker visuel sera disponible dans une prochaine version.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="d-flex gap-2">
+            <button class="btn btn-primary" type="submit">
+                <i class="bi bi-save me-1"></i>Enregistrer
+            </button>
+            <a class="btn btn-outline-secondary" href="{{ admin_route('articles.manage') }}">Annuler</a>
+        </div>
+    </form>
 </div>
 @endsection
+
+@push('scripts')
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+<script>
+(function () {
+    'use strict';
+    const quill = new Quill('#quill-editor', {
+        theme: 'snow',
+        modules: {
+            toolbar: [
+                [{ header: [2, 3, 4, false] }],
+                ['bold', 'italic', 'underline', 'strike'],
+                ['blockquote', 'code-block'],
+                [{ list: 'ordered' }, { list: 'bullet' }],
+                [{ indent: '-1' }, { indent: '+1' }],
+                ['link', 'image'],
+                ['clean']
+            ]
+        }
+    });
+
+    const contentTA = document.getElementById('content');
+    if (contentTA.value.trim() !== '') {
+        quill.clipboard.dangerouslyPasteHTML(contentTA.value);
+    }
+
+    document.getElementById('article-form').addEventListener('submit', function () {
+        contentTA.value = quill.root.innerHTML === '<p><br></p>' ? '' : quill.root.innerHTML;
+    });
+
+    @if ($errors->any())
+    const tabFields = {
+        'tab-content': ['title', 'slug', 'excerpt', 'content', 'content_type'],
+        'tab-publish': ['status', 'published_at'],
+        'tab-seo':     ['meta_title', 'meta_description'],
+        'tab-media':   ['media_asset_id'],
+    };
+    const errorKeys = @json(array_keys($errors->messages()));
+    for (const [tabId, fields] of Object.entries(tabFields)) {
+        if (fields.some(f => errorKeys.includes(f))) {
+            bootstrap.Tab.getOrCreateInstance(document.querySelector('[data-bs-target="#' + tabId + '"]')).show();
+            break;
+        }
+    }
+    @endif
+}());
+</script>
+@endpush

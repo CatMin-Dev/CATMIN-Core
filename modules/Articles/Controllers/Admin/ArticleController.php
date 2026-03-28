@@ -34,15 +34,16 @@ class ArticleController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'slug' => ['nullable', 'string', 'max:255'],
-            'excerpt' => ['nullable', 'string', 'max:1000'],
-            'content' => ['nullable', 'string'],
-            'content_type' => ['required', Rule::in(['article', 'news'])],
-            'status' => ['required', Rule::in(['draft', 'published'])],
-            'published_at' => ['nullable', 'date'],
-            'media_asset_id' => ['nullable', 'integer', 'min:1'],
-            'seo_meta_id' => ['nullable', 'integer', 'min:1'],
+            'title'            => ['required', 'string', 'max:255'],
+            'slug'             => ['nullable', 'string', 'max:255'],
+            'excerpt'          => ['nullable', 'string', 'max:1000'],
+            'content'          => ['nullable', 'string'],
+            'content_type'     => ['required', Rule::in(['article', 'news'])],
+            'status'           => ['required', Rule::in(['draft', 'published'])],
+            'published_at'     => ['nullable', 'date'],
+            'media_asset_id'   => ['nullable', 'integer', 'min:1'],
+            'meta_title'       => ['nullable', 'string', 'max:255'],
+            'meta_description' => ['nullable', 'string', 'max:320'],
         ]);
 
         $this->articleAdminService->create($validated);
@@ -62,15 +63,16 @@ class ArticleController extends Controller
     public function update(Request $request, Article $article): RedirectResponse
     {
         $validated = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'slug' => ['nullable', 'string', 'max:255'],
-            'excerpt' => ['nullable', 'string', 'max:1000'],
-            'content' => ['nullable', 'string'],
-            'content_type' => ['required', Rule::in(['article', 'news'])],
-            'status' => ['required', Rule::in(['draft', 'published'])],
-            'published_at' => ['nullable', 'date'],
-            'media_asset_id' => ['nullable', 'integer', 'min:1'],
-            'seo_meta_id' => ['nullable', 'integer', 'min:1'],
+            'title'            => ['required', 'string', 'max:255'],
+            'slug'             => ['nullable', 'string', 'max:255'],
+            'excerpt'          => ['nullable', 'string', 'max:1000'],
+            'content'          => ['nullable', 'string'],
+            'content_type'     => ['required', Rule::in(['article', 'news'])],
+            'status'           => ['required', Rule::in(['draft', 'published'])],
+            'published_at'     => ['nullable', 'date'],
+            'media_asset_id'   => ['nullable', 'integer', 'min:1'],
+            'meta_title'       => ['nullable', 'string', 'max:255'],
+            'meta_description' => ['nullable', 'string', 'max:320'],
         ]);
 
         $this->articleAdminService->update($article, $validated);

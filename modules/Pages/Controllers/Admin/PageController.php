@@ -34,11 +34,14 @@ class PageController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'slug' => ['nullable', 'string', 'max:255'],
-            'content' => ['nullable', 'string'],
-            'status' => ['required', Rule::in(['draft', 'published'])],
-            'published_at' => ['nullable', 'date'],
+            'title'            => ['required', 'string', 'max:255'],
+            'slug'             => ['nullable', 'string', 'max:255'],
+            'excerpt'          => ['nullable', 'string', 'max:500'],
+            'content'          => ['nullable', 'string'],
+            'status'           => ['required', Rule::in(['draft', 'published'])],
+            'published_at'     => ['nullable', 'date'],
+            'meta_title'       => ['nullable', 'string', 'max:255'],
+            'meta_description' => ['nullable', 'string', 'max:320'],
         ]);
 
         $this->pagesAdminService->create($validated);
@@ -58,11 +61,14 @@ class PageController extends Controller
     public function update(Request $request, Page $page): RedirectResponse
     {
         $validated = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'slug' => ['nullable', 'string', 'max:255'],
-            'content' => ['nullable', 'string'],
-            'status' => ['required', Rule::in(['draft', 'published'])],
-            'published_at' => ['nullable', 'date'],
+            'title'            => ['required', 'string', 'max:255'],
+            'slug'             => ['nullable', 'string', 'max:255'],
+            'excerpt'          => ['nullable', 'string', 'max:500'],
+            'content'          => ['nullable', 'string'],
+            'status'           => ['required', Rule::in(['draft', 'published'])],
+            'published_at'     => ['nullable', 'date'],
+            'meta_title'       => ['nullable', 'string', 'max:255'],
+            'meta_description' => ['nullable', 'string', 'max:320'],
         ]);
 
         $this->pagesAdminService->update($page, $validated);

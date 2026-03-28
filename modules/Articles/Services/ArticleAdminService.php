@@ -3,12 +3,17 @@
 namespace Modules\Articles\Services;
 
 use App\Services\CatminEventBus;
+use App\Services\ContentSanitizerService;
 use Illuminate\Support\Str;
 use Modules\Logger\Services\SystemLogService;
 use Modules\Articles\Models\Article;
 
 class ArticleAdminService
 {
+    public function __construct(private readonly ContentSanitizerService $sanitizer)
+    {
+    }
+
     /**
      * @return \Illuminate\Database\Eloquent\Collection<int, Article>
      */
@@ -29,16 +34,18 @@ class ArticleAdminService
 
         /** @var Article $item */
         $item = Article::query()->create([
-            'title' => (string) $payload['title'],
-            'slug' => $slug,
-            'excerpt' => (string) ($payload['excerpt'] ?? ''),
-            'content' => (string) ($payload['content'] ?? ''),
-            'content_type' => (string) ($payload['content_type'] ?? 'article'),
-            'status' => (string) ($payload['status'] ?? 'draft'),
-            'published_at' => $payload['published_at'] ?: null,
-            'media_asset_id' => $payload['media_asset_id'] ?: null,
-            'seo_meta_id' => $payload['seo_meta_id'] ?: null,
-            'taxonomy_snapshot' => ['category' => null, 'tags' => []],
+            'title'            => (string) $payload['title'],
+            'slug'             => $slug,
+            'excerpt'          => (string) ($payload['excerpt'] ?? ''),
+            'content'          => $this->sanitizer->sanitize((string) ($payload['content'] ?? '')),
+            'content_type'     => (string) ($payload['content_type'] ?? 'article'),
+            'status'           => (string) ($payload['status'] ?? 'draft'),
+            'published_at'     => $payload['published_at'] ?: null,
+            'media_asset_id'   => $payload['media_asset_id'] ?: null,
+            'seo_meta_id'      => $payload['seo_meta_id'] ?: null,
+            'meta_title'       => (string) ($payload['meta_title'] ?? ''),
+            'meta_description' => (string) ($payload['meta_description'] ?? ''),
+            'taxonomy_snapshot'=> ['category' => null, 'tags' => []],
         ]);
 
         CatminEventBus::dispatch(CatminEventBus::CONTENT_CREATED, [
@@ -81,16 +88,18 @@ class ArticleAdminService
         $taxonomySnapshot = is_array($item->taxonomy_snapshot) ? $item->taxonomy_snapshot : ['category' => null, 'tags' => []];
 
         $item->fill([
-            'title' => (string) $payload['title'],
-            'slug' => $slug,
-            'excerpt' => (string) ($payload['excerpt'] ?? ''),
-            'content' => (string) ($payload['content'] ?? ''),
-            'content_type' => (string) ($payload['content_type'] ?? $item->content_type),
-            'status' => (string) ($payload['status'] ?? 'draft'),
-            'published_at' => $payload['published_at'] ?: null,
-            'media_asset_id' => $payload['media_asset_id'] ?: null,
-            'seo_meta_id' => $payload['seo_meta_id'] ?: null,
-            'taxonomy_snapshot' => $taxonomySnapshot,
+            'title'            => (string) $payload['title'],
+            'slug'             => $slug,
+            'excerpt'          => (string) ($payload['excerpt'] ?? ''),
+            'content'          => $this->sanitizer->sanitize((string) ($payload['content'] ?? '')),
+            'content_type'     => (string) ($payload['content_type'] ?? $item->content_type),
+            'status'           => (string) ($payload['status'] ?? 'draft'),
+            'published_at'     => $payload['published_at'] ?: null,
+            'media_asset_id'   => $payload['media_asset_id'] ?: null,
+            'seo_meta_id'      => $payload['seo_meta_id'] ?: null,
+            'meta_title'       => (string) ($payload['meta_title'] ?? ''),
+            'meta_description' => (string) ($payload['meta_description'] ?? ''),
+            'taxonomy_snapshot'=> $taxonomySnapshot,
         ]);
 
         $item->save();

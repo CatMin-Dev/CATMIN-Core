@@ -3,12 +3,17 @@
 namespace Modules\Pages\Services;
 
 use App\Services\CatminEventBus;
+use App\Services\ContentSanitizerService;
 use Illuminate\Support\Str;
 use Modules\Logger\Services\SystemLogService;
 use Modules\Pages\Models\Page;
 
 class PagesAdminService
 {
+    public function __construct(private readonly ContentSanitizerService $sanitizer)
+    {
+    }
+
     /**
      * @return \Illuminate\Database\Eloquent\Collection<int, Page>
      */
@@ -29,11 +34,14 @@ class PagesAdminService
 
         /** @var Page $page */
         $page = Page::query()->create([
-            'title' => (string) $payload['title'],
-            'slug' => $slug,
-            'content' => (string) ($payload['content'] ?? ''),
-            'status' => (string) ($payload['status'] ?? 'draft'),
-            'published_at' => $this->normalizePublishedAt($payload),
+            'title'            => (string) $payload['title'],
+            'slug'             => $slug,
+            'excerpt'          => (string) ($payload['excerpt'] ?? ''),
+            'content'          => $this->sanitizer->sanitize((string) ($payload['content'] ?? '')),
+            'status'           => (string) ($payload['status'] ?? 'draft'),
+            'published_at'     => $this->normalizePublishedAt($payload),
+            'meta_title'       => (string) ($payload['meta_title'] ?? ''),
+            'meta_description' => (string) ($payload['meta_description'] ?? ''),
         ]);
 
         CatminEventBus::dispatch(CatminEventBus::CONTENT_CREATED, [
@@ -73,11 +81,14 @@ class PagesAdminService
         $slug = $this->uniqueSlug((string) $payload['title'], (string) ($payload['slug'] ?? ''), $page->id);
 
         $page->fill([
-            'title' => (string) $payload['title'],
-            'slug' => $slug,
-            'content' => (string) ($payload['content'] ?? ''),
-            'status' => (string) ($payload['status'] ?? 'draft'),
-            'published_at' => $this->normalizePublishedAt($payload),
+            'title'            => (string) $payload['title'],
+            'slug'             => $slug,
+            'excerpt'          => (string) ($payload['excerpt'] ?? ''),
+            'content'          => $this->sanitizer->sanitize((string) ($payload['content'] ?? '')),
+            'status'           => (string) ($payload['status'] ?? 'draft'),
+            'published_at'     => $this->normalizePublishedAt($payload),
+            'meta_title'       => (string) ($payload['meta_title'] ?? ''),
+            'meta_description' => (string) ($payload['meta_description'] ?? ''),
         ]);
 
         $page->save();

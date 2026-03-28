@@ -11,9 +11,12 @@ class Page extends Model
     protected $fillable = [
         'title',
         'slug',
+        'excerpt',
         'content',
         'status',
         'published_at',
+        'meta_title',
+        'meta_description',
     ];
 
     protected $casts = [

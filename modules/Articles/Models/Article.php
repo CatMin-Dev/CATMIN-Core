@@ -18,6 +18,8 @@ class Article extends Model
         'published_at',
         'media_asset_id',
         'seo_meta_id',
+        'meta_title',
+        'meta_description',
         'taxonomy_snapshot',
     ];
 
