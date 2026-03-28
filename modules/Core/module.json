@@ -2,7 +2,7 @@
   "name": "Core",
   "slug": "core",
   "enabled": true,
-  "version": "1.0.15",
+  "version": "1.0.16",
   "description": "Noyau minimal CATMIN: services transversaux, acces settings, etat modules et contexte admin.",
   "category": "system",
   "provides": [
