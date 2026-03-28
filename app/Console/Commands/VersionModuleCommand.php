@@ -8,7 +8,7 @@ use App\Services\ModuleVersionManager;
 class VersionModuleCommand extends Command
 {
     protected $signature = 'module:version 
-                            {action : increment|set|show|matrix}
+                            {action : increment|set|show|matrix|dashboard}
                             {module? : Module slug (e.g., shop)}
                             {--type=minor : Increment type by convention (minor|beta|stable)}
                             {--to= : Target module version A.B.C (e.g., 1.1.0)}';
@@ -25,6 +25,7 @@ class VersionModuleCommand extends Command
             'set' => $this->handleSet($module),
             'show' => $this->handleShow($module),
             'matrix' => $this->handleMatrix(),
+            'dashboard' => $this->handleDashboard(),
             default => $this->error("Unknown action: {$action}") || 1,
         };
     }
@@ -121,6 +122,7 @@ class VersionModuleCommand extends Command
     private function handleMatrix(): int
     {
         $matrix = ModuleVersionManager::generateMatrix();
+        $matrixPath = ModuleVersionManager::exportMatrix();
 
         $this->line('<fg=blue>═══════════════════════════════════</>');
         $this->line('<fg=blue>Version Matrix Report</>');
@@ -139,7 +141,30 @@ class VersionModuleCommand extends Command
 
         $this->line('');
         $this->line(sprintf('<fg=magenta>Total: %d modules</>', $matrix['total_modules']));
+        $this->line(sprintf('<fg=cyan>Matrix file: %s</>', $matrixPath));
         $this->line('<fg=blue>═══════════════════════════════════</>');
+
+        return 0;
+    }
+
+    private function handleDashboard(): int
+    {
+        $version = (string) ($this->option('to') ?? '');
+
+        if ($version !== '') {
+            ModuleVersionManager::setDashboardVersion($version);
+
+            if (ModuleVersionManager::getDashboardVersion() !== $version) {
+                $this->error('✗ Failed to set dashboard version. Format attendu: V2-dev ou V2.5-dev');
+                return 1;
+            }
+
+            $this->info("✓ Dashboard version set to: {$version}");
+
+            return 0;
+        }
+
+        $this->info('Dashboard: ' . ModuleVersionManager::getDashboardVersion());
 
         return 0;
     }

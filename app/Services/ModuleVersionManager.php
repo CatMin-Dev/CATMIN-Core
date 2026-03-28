@@ -275,4 +275,12 @@ class ModuleVersionManager
             'total_modules' => count(self::getAllVersions()),
         ];
     }
+
+    public static function exportMatrix(?string $path = null): string
+    {
+        $target = $path ?: base_path('VERSION_MATRIX.json');
+        File::put($target, json_encode(self::generateMatrix(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+
+        return $target;
+    }
 }
