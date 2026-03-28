@@ -1,9 +1,11 @@
 <?php
 
-namespace Module\Logger\Services;
+namespace Modules\Logger\Services;
 
-use Module\Logger\Models\SystemAlert;
+use Illuminate\Support\Facades\Http;
+use Modules\Logger\Models\SystemAlert;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class AlertingService
 {
@@ -48,7 +50,57 @@ class AlertingService
             'severity' => $severity,
         ]);
 
+        $this->notifyAlert($alert);
+
         return $alert;
+    }
+
+    private function notifyAlert(SystemAlert $alert): void
+    {
+        $channels = [];
+
+        $emailTo = (string) config('catmin.alerting.email_to', '');
+        if ($emailTo !== '' && in_array($alert->severity, ['critical', 'warning'], true)) {
+            try {
+                Mail::raw(
+                    "[{$alert->severity}] {$alert->title}\n\n{$alert->message}",
+                    static function ($message) use ($emailTo, $alert): void {
+                        $message->to($emailTo)
+                            ->subject('[CATMIN ALERT] ' . $alert->title);
+                    }
+                );
+                $channels[] = 'email';
+            } catch (\Throwable $e) {
+                Log::warning('Alert email notification failed', [
+                    'alert_id' => $alert->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        $webhookUrl = (string) config('catmin.alerting.webhook_url', '');
+        if ($webhookUrl !== '' && in_array($alert->severity, ['critical', 'warning'], true)) {
+            try {
+                Http::timeout(5)->post($webhookUrl, [
+                    'alert_id' => $alert->id,
+                    'type' => $alert->alert_type,
+                    'severity' => $alert->severity,
+                    'title' => $alert->title,
+                    'message' => $alert->message,
+                    'created_at' => optional($alert->created_at)->toIso8601String(),
+                ]);
+                $channels[] = 'webhook';
+            } catch (\Throwable $e) {
+                Log::warning('Alert webhook notification failed', [
+                    'alert_id' => $alert->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        if ($channels !== []) {
+            $alert->markNotified($channels);
+        }
     }
 
     /**

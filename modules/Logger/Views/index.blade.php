@@ -9,6 +9,16 @@
 />
 
 <div class="catmin-page-body">
+    @if(($alertSummary['unacknowledged'] ?? 0) > 0)
+        <div class="alert {{ ($alertSummary['critical'] ?? 0) > 0 ? 'alert-danger' : 'alert-warning' }} d-flex justify-content-between align-items-center" role="alert">
+            <div>
+                <strong>Alertes opérationnelles:</strong>
+                {{ $alertSummary['unacknowledged'] ?? 0 }} non acquittée(s), dont {{ $alertSummary['critical'] ?? 0 }} critique(s).
+            </div>
+            <a class="btn btn-sm btn-outline-dark" href="{{ route('admin.logger.alerts.index') }}">Voir les alertes</a>
+        </div>
+    @endif
+
     <x-admin.crud.table-card title="Filtres" :count="$logs->count()" :empty-colspan="1" empty-message="Aucun log.">
         <x-slot:head>
             <tr>
@@ -73,6 +83,18 @@
                             <input id="filter-status" name="status" type="number" min="100" max="599" class="form-control" value="{{ $selectedStatus }}" placeholder="500">
                         </div>
                         <div class="col-6 col-md-3 d-flex gap-2">
+                            <div class="w-100">
+                                <label for="filter-per-page" class="form-label">Par page</label>
+                                <select id="filter-per-page" name="per_page" class="form-select">
+                                    <option value="20" @selected($selectedPerPage === '20')>20</option>
+                                    <option value="50" @selected($selectedPerPage === '50')>50</option>
+                                    <option value="100" @selected($selectedPerPage === '100')>100</option>
+                                    <option value="250" @selected($selectedPerPage === '250')>250</option>
+                                    <option value="all" @selected($selectedPerPage === 'all')>All</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-3 d-flex gap-2">
                             <button class="btn btn-primary" type="submit">Filtrer</button>
                             <a class="btn btn-outline-secondary" href="{{ route('admin.logger.index') }}">Reset</a>
                         </div>
@@ -130,5 +152,37 @@
             @endforeach
         </x-slot:rows>
     </x-admin.crud.table-card>
+
+    @if(method_exists($logs, 'links'))
+        <div class="mt-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <small class="text-muted">
+                Affichage de {{ $logs->firstItem() ?? 0 }} à {{ $logs->lastItem() ?? 0 }} sur {{ $logs->total() }} entrées
+            </small>
+            {{ $logs->links() }}
+        </div>
+    @endif
+
+    @if(($recentAlerts ?? collect())->count() > 0)
+        <div class="card mt-3">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h2 class="h6 mb-0">Incidents récents non acquittés</h2>
+                <a class="btn btn-sm btn-outline-primary" href="{{ route('admin.logger.alerts.index') }}">Gérer les alertes</a>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    @foreach($recentAlerts as $alert)
+                        <li class="list-group-item d-flex justify-content-between align-items-start">
+                            <div>
+                                <span class="badge {{ $alert->severity === 'critical' ? 'text-bg-danger' : 'text-bg-warning' }} me-2">{{ strtoupper($alert->severity) }}</span>
+                                <strong>{{ $alert->title }}</strong>
+                                <div class="small text-muted">{{ optional($alert->created_at)->format('d/m/Y H:i:s') }}</div>
+                            </div>
+                            <a class="btn btn-sm btn-outline-secondary" href="{{ route('admin.logger.alerts.index') }}">Détails</a>
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+        </div>
+    @endif
 </div>
 @endsection

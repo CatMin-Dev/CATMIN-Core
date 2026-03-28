@@ -13,6 +13,10 @@ class Webhook extends Model
         'url',
         'events',
         'secret',
+        'anti_replay_enabled',
+        'rotation_status',
+        'pending_secret',
+        'pending_rotation_at',
         'status',
         'last_triggered_at',
         'last_delivery_status',
@@ -24,6 +28,8 @@ class Webhook extends Model
     {
         return [
             'events' => 'array',
+            'anti_replay_enabled' => 'boolean',
+            'pending_rotation_at' => 'datetime',
             'last_triggered_at' => 'datetime',
             'last_delivery_at' => 'datetime',
         ];

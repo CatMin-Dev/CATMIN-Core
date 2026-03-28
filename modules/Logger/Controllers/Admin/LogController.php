@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Modules\Logger\Models\SystemLog;
+use Modules\Logger\Models\SystemAlert;
 
 class LogController extends Controller
 {
@@ -19,6 +20,15 @@ class LogController extends Controller
         $from = (string) $request->query('from', '');
         $to = (string) $request->query('to', '');
         $status = trim((string) $request->query('status', ''));
+        $perPageInput = strtolower(trim((string) $request->query('per_page', '50')));
+        $perPage = match ($perPageInput) {
+            '20' => 20,
+            '50' => 50,
+            '100' => 100,
+            '250' => 250,
+            'all' => 1000,
+            default => 50,
+        };
 
         $logs = SystemLog::query()
             ->when($level !== '', fn ($query) => $query->where('level', $level))
@@ -36,7 +46,18 @@ class LogController extends Controller
             ->when($from !== '', fn ($query) => $query->where('created_at', '>=', $from . ' 00:00:00'))
             ->when($to !== '', fn ($query) => $query->where('created_at', '<=', $to . ' 23:59:59'))
             ->orderByDesc('id')
-            ->limit(300)
+            ->paginate($perPage)
+            ->withQueryString();
+
+        $alertSummary = [
+            'unacknowledged' => SystemAlert::query()->where('acknowledged', false)->count(),
+            'critical' => SystemAlert::query()->where('acknowledged', false)->where('severity', 'critical')->count(),
+        ];
+
+        $recentAlerts = SystemAlert::query()
+            ->where('acknowledged', false)
+            ->orderByDesc('id')
+            ->limit(5)
             ->get();
 
         $levels = SystemLog::query()
@@ -92,10 +113,13 @@ class LogController extends Controller
             'selectedFrom' => $from,
             'selectedTo' => $to,
             'selectedStatus' => $status,
+            'selectedPerPage' => $perPageInput,
             'levels' => $levels,
             'channels' => $channels,
             'events' => $events,
             'admins' => $admins,
+            'alertSummary' => $alertSummary,
+            'recentAlerts' => $recentAlerts,
         ]);
     }
 }

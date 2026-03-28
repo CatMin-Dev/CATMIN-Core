@@ -1,11 +1,11 @@
 <?php
 
-namespace Module\Webhooks\Services;
+namespace Modules\Webhooks\Services;
 
 use Illuminate\Http\Request;
-use Module\Webhooks\Models\Webhook;
-use Module\Webhooks\Models\WebhookNonce;
-use Module\Webhooks\Models\WebhookEvent;
+use Modules\Webhooks\Models\Webhook;
+use Modules\Webhooks\Models\WebhookNonce;
+use Modules\Webhooks\Models\WebhookEvent;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
@@ -23,6 +23,7 @@ class WebhookSecurityService
     public function validateIncomingWebhook(Request $request, Webhook $webhook): array
     {
         $errors = [];
+        $isDuplicate = false;
 
         // 1. Verify anti-replay protection is enabled for this webhook
         if ($webhook->anti_replay_enabled) {
@@ -55,15 +56,13 @@ class WebhookSecurityService
             $eventValidation = $this->validateEventId($webhook, $eventId);
             if (!$eventValidation['valid']) {
                 $errors[] = $eventValidation['error'];
-                // Set status to indicate duplicate (not an error, but a skip)
-                if ($eventValidation['duplicate']) {
-                    $errors[] = 'Event already processed (idempotent)'; // Not really an error
-                }
+                $isDuplicate = (bool) ($eventValidation['duplicate'] ?? false);
             }
         }
 
         return [
             'valid' => count($errors) === 0,
+            'duplicate' => $isDuplicate,
             'errors' => $errors,
         ];
     }
@@ -197,9 +196,16 @@ class WebhookSecurityService
             ];
         }
 
-        // Use current secret or pending secret if rotation is in progress
-        $secretToUse = $webhook->secret;
-        if ($webhook->rotation_status === 'pending' && $webhook->pending_secret) {
+        if (empty($webhook->secret)) {
+            return [
+                'valid' => false,
+                'signed' => true,
+                'error' => 'No webhook secret configured for signature validation',
+            ];
+        }
+
+        // Use current secret or pending secret if rotation is in progress.
+        if ($webhook->rotation_status === 'pending' && !empty($webhook->pending_secret)) {
             // Accept both current and pending during rotation
             $expectedCurrent = 'sha256=' . hash_hmac('sha256', $payload, $webhook->secret);
             $expectedPending = 'sha256=' . hash_hmac('sha256', $payload, $webhook->pending_secret);
@@ -208,7 +214,7 @@ class WebhookSecurityService
                 return ['valid' => true, 'signed' => true];
             }
         } else {
-            $expected = 'sha256=' . hash_hmac('sha256', $payload, $secretToUse);
+            $expected = 'sha256=' . hash_hmac('sha256', $payload, $webhook->secret);
             if (hash_equals($signature, $expected)) {
                 return ['valid' => true, 'signed' => true];
             }
@@ -230,7 +236,7 @@ class WebhookSecurityService
 
         $webhook->update([
             'rotation_status' => 'pending',
-            'pending_secret' => encrypt($newSecret),
+            'pending_secret' => $newSecret,
             'pending_rotation_at' => now()->addHours(24),
         ]);
 
