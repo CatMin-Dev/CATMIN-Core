@@ -13,6 +13,54 @@ use Illuminate\Support\Facades\File;
 class AddonMigrationRunner
 {
     /**
+     * @return array{
+     *   name: string,
+     *   slug: string,
+     *   declared_version: string,
+     *   installed_version: string,
+     *   has_pending: bool,
+     *   has_version_upgrade: bool,
+     *   migrations_path: string,
+     *   has_migrations: bool
+     * }
+     */
+    public static function statusForAddon(string $slug): array
+    {
+        $addon = AddonManager::find($slug);
+
+        if ($addon === null) {
+            return [
+                'name' => $slug,
+                'slug' => $slug,
+                'declared_version' => '',
+                'installed_version' => '',
+                'has_pending' => false,
+                'has_version_upgrade' => false,
+                'migrations_path' => '',
+                'has_migrations' => false,
+            ];
+        }
+
+        $migrationsPath = $addon->path . '/Migrations';
+        $hasMigrations = File::exists($migrationsPath) && count(File::files($migrationsPath)) > 0;
+        $installedVersionRaw = self::getInstalledVersion($slug);
+        $installedVersion = VersioningService::isValid($installedVersionRaw)
+            ? VersioningService::normalize($installedVersionRaw)
+            : '';
+
+        return [
+            'name' => (string) ($addon->name ?? $slug),
+            'slug' => (string) $addon->slug,
+            'declared_version' => VersioningService::normalize((string) ($addon->version ?? '')),
+            'installed_version' => $installedVersion,
+            'has_pending' => $hasMigrations ? self::hasPending($slug) : false,
+            'has_version_upgrade' => self::hasVersionUpgrade($slug),
+            'migrations_path' => $migrationsPath,
+            'has_migrations' => $hasMigrations,
+        ];
+    }
+
+    /**
      * Run all pending migrations for a given addon slug.
      *
      * @return array{ran: int, output: string}
