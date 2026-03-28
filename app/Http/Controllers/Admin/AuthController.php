@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Services\AdminAuthService;
+use App\Services\CatminEventBus;
 use App\Services\RbacPermissionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -34,6 +35,14 @@ final class AuthController extends Controller
         $rateLimitKey = 'catmin-login|' . $request->ip();
         if (RateLimiter::tooManyAttempts($rateLimitKey, 10)) {
             $seconds = RateLimiter::availableIn($rateLimitKey);
+
+            CatminEventBus::dispatch(CatminEventBus::SECURITY_RATE_LIMIT_HIT, [
+                'guard' => 'admin',
+                'username' => (string) ($data['username'] ?? ''),
+                'ip' => $request->ip(),
+                'retry_after_seconds' => $seconds,
+            ]);
+
             return back()
                 ->withErrors(['username' => "Trop de tentatives. Réessayez dans {$seconds} secondes."])
                 ->withInput($request->only('username'));
@@ -49,6 +58,13 @@ final class AuthController extends Controller
         );
 
         if (!$result['success']) {
+            CatminEventBus::dispatch(CatminEventBus::AUTH_LOGIN_FAILED, [
+                'guard' => 'admin',
+                'username' => (string) ($data['username'] ?? ''),
+                'ip' => $request->ip(),
+                'reason' => (string) ($result['error'] ?? 'invalid_credentials'),
+            ]);
+
             // Log failed attempt — sans révéler lequel des deux champs est incorrect (217)
             try {
                 /** @var SystemLogService $logger */
@@ -129,6 +145,17 @@ final class AuthController extends Controller
             // Never break login flow due to audit logging failure.
         }
 
+        CatminEventBus::dispatch(CatminEventBus::AUTH_LOGIN_SUCCEEDED, [
+            'guard' => 'admin',
+            'user' => [
+                'id' => (int) $result['user']->id,
+                'username' => (string) $result['user']->username,
+            ],
+            'ip' => $request->ip(),
+            'rbac_source' => (string) ($rbacContext['source'] ?? 'direct'),
+            'roles' => (array) ($rbacContext['roles'] ?? []),
+        ]);
+
         return redirect()->route('admin.index');
     }
 
@@ -143,6 +170,12 @@ final class AuthController extends Controller
         } catch (\Throwable) {
             // Never break logout flow due to audit logging failure.
         }
+
+        CatminEventBus::dispatch(CatminEventBus::AUTH_LOGOUT, [
+            'guard' => 'admin',
+            'username' => $username,
+            'ip' => $request->ip(),
+        ]);
 
         $request->session()->forget([
             'catmin_admin_authenticated',

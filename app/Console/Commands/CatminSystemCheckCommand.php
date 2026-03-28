@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Services\AddonManager;
+use App\Services\CatminEventBus;
 use App\Services\HealthCheckService;
 use App\Services\MigrationCollisionService;
 use App\Services\ModuleManager;
@@ -25,6 +26,14 @@ class CatminSystemCheckCommand extends Command
             'module_state_issues' => ModuleManager::stateIssues(),
             'migration_collisions' => MigrationCollisionService::detectBasenameCollisions(),
         ];
+
+        CatminEventBus::dispatch(CatminEventBus::SYSTEM_HEALTH_CHECKED, [
+            'source' => 'catmin:system:check',
+            'health' => [
+                'ok' => (bool) ($health['ok'] ?? false),
+                'summary' => (array) ($health['summary'] ?? []),
+            ],
+        ]);
 
         if ((bool) $this->option('json')) {
             $this->line(json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));

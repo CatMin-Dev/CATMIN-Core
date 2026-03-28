@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Services\CatminEventBus;
 use App\Services\ValidationV2PlusService;
 use Illuminate\Console\Command;
 
@@ -20,6 +21,12 @@ class CatminValidateV2PlusCommand extends Command
         $skipTests = (bool) $this->option('skip-tests');
 
         $report = ValidationV2PlusService::run(!$skipTests, $deep);
+
+        CatminEventBus::dispatch(CatminEventBus::SYSTEM_HEALTH_CHECKED, [
+            'source' => 'catmin:validate:v2-plus',
+            'summary' => (array) ($report['summary'] ?? []),
+            'ok' => (bool) ($report['ok'] ?? false),
+        ]);
 
         if ((bool) $this->option('json')) {
             $this->line(json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));

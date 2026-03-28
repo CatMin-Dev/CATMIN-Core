@@ -40,7 +40,24 @@ class AddonLoader
         }
 
         try {
+            CatminEventBus::dispatch(CatminEventBus::ADDON_BOOTING, [
+                'addon' => [
+                    'slug' => (string) $addon->slug,
+                    'name' => (string) ($addon->name ?? $addon->slug),
+                    'version' => (string) ($addon->version ?? ''),
+                ],
+            ]);
+
             require $routesPath;
+
+            CatminEventBus::dispatch(CatminEventBus::ADDON_BOOTED, [
+                'addon' => [
+                    'slug' => (string) $addon->slug,
+                    'name' => (string) ($addon->name ?? $addon->slug),
+                    'version' => (string) ($addon->version ?? ''),
+                ],
+            ]);
+
             return true;
         } catch (\Throwable $e) {
             \Log::warning("Failed to load routes for addon {$addon->slug}: {$e->getMessage()}");

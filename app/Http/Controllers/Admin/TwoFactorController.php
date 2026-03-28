@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
+use App\Services\CatminEventBus;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -55,6 +56,12 @@ final class TwoFactorController extends Controller
         $valid = $this->google2fa->verifyKey($secret, (string) $request->input('otp'));
 
         if (!$valid) {
+            CatminEventBus::dispatch(CatminEventBus::AUTH_2FA_CHALLENGE_FAILED, [
+                'guard' => 'admin',
+                'username' => (string) session('catmin_2fa_pending_username', ''),
+                'ip' => $request->ip(),
+            ]);
+
             try {
                 app(SystemLogService::class)->logAudit(
                     'auth.2fa.failed',
@@ -77,6 +84,12 @@ final class TwoFactorController extends Controller
                 (string) session('catmin_2fa_pending_username', '')
             );
         } catch (\Throwable) {}
+
+        CatminEventBus::dispatch(CatminEventBus::AUTH_2FA_CHALLENGE_PASSED, [
+            'guard' => 'admin',
+            'username' => (string) session('catmin_2fa_pending_username', ''),
+            'ip' => $request->ip(),
+        ]);
 
         return $this->completePendingLogin($request);
     }

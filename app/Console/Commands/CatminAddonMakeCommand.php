@@ -84,7 +84,7 @@ class CatminAddonMakeCommand extends Command
         $this->writeFile($addonPath . '/Views/admin/index.blade.php', $this->buildAdminView($name, $slug, $category, $version));
         $this->writeFile($addonPath . '/Services/' . $classBase . 'Service.php', $this->buildServicePhp($classBase, $name, $slug));
         $this->writeFile($addonPath . '/config.php', $this->buildConfigPhp($slug, $category));
-        $this->writeFile($addonPath . '/hooks.php', "<?php\n\nreturn [];\n");
+        $this->writeFile($addonPath . '/hooks.php', $this->buildHooksPhp($name, $slug));
         $this->writeFile($addonPath . '/Docs/README.md', $this->buildDocsReadme($name, $slug, $description, $depends, $category, $routeName));
         $this->writeFile($addonPath . '/Assets/css/addon.css', "/* {$slug} addon styles */\n");
         $this->writeFile($addonPath . '/Assets/js/addon.js', "// {$slug} addon scripts\n");
@@ -297,6 +297,33 @@ return [
     'category' => '{$category}',
 ];
 PHP;
+    }
+
+    protected function buildHooksPhp(string $name, string $slug): string
+    {
+        $template = <<<'PHP'
+<?php
+
+use App\Services\CatminEventBus;
+
+CatminEventBus::listen(CatminEventBus::SETTING_UPDATED, function (array $payload): void {
+    \Log::info('Addon listener __ADDON_SLUG__ recu', [
+        'addon' => '__ADDON_NAME__',
+        'event' => 'setting.updated',
+        'setting_key' => (string) (
+            $payload['setting']['key']
+            ?? $payload['key']
+            ?? 'unknown'
+        ),
+    ]);
+});
+PHP;
+
+        return str_replace(
+            ['__ADDON_SLUG__', '__ADDON_NAME__'],
+            [$slug, addslashes($name)],
+            $template
+        );
     }
 
     /**

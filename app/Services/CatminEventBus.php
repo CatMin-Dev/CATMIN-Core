@@ -21,6 +21,8 @@ class CatminEventBus
     public const ADDON_ENABLED = 'catmin.addon.enabled';
     public const ADDON_DISABLED = 'catmin.addon.disabled';
     public const ADDON_UNINSTALLED = 'catmin.addon.uninstalled';
+    public const ADDON_BOOTING = 'catmin.addon.booting';
+    public const ADDON_BOOTED = 'catmin.addon.booted';
     public const MODULE_ENABLED = 'catmin.module.enabled';
     public const MODULE_DISABLED = 'catmin.module.disabled';
     public const CONTENT_CREATED = 'catmin.content.created';
@@ -33,6 +35,13 @@ class CatminEventBus
     public const ARTICLE_PUBLISHED = 'catmin.article.published';
     public const ARTICLE_UPDATED = 'catmin.article.updated';
     public const SETTING_UPDATED = 'catmin.setting.updated';
+    public const AUTH_LOGIN_SUCCEEDED = 'catmin.auth.login.succeeded';
+    public const AUTH_LOGIN_FAILED = 'catmin.auth.login.failed';
+    public const AUTH_LOGOUT = 'catmin.auth.logout';
+    public const AUTH_2FA_CHALLENGE_PASSED = 'catmin.auth.2fa.challenge.passed';
+    public const AUTH_2FA_CHALLENGE_FAILED = 'catmin.auth.2fa.challenge.failed';
+    public const SECURITY_RATE_LIMIT_HIT = 'catmin.security.rate_limit.hit';
+    public const SYSTEM_HEALTH_CHECKED = 'catmin.system.health.checked';
 
     /**
      * Register a listener for a CATMIN event name.
@@ -41,9 +50,28 @@ class CatminEventBus
     {
         self::$listenerCounts[$eventName] = (self::$listenerCounts[$eventName] ?? 0) + 1;
 
-        Event::listen($eventName, function ($payload) use ($listener): void {
-            $listener((array) $payload);
+        Event::listen($eventName, function (...$payload) use ($listener): void {
+            $listener(self::normalizePayload($payload));
         });
+    }
+
+    /**
+     * @param array<int, mixed> $payload
+     * @return array<string|int, mixed>
+     */
+    protected static function normalizePayload(array $payload): array
+    {
+        if (count($payload) === 1 && is_array($payload[0])) {
+            $first = $payload[0];
+
+            if (array_is_list($first) && isset($first[0]) && is_array($first[0])) {
+                return $first[0];
+            }
+
+            return $first;
+        }
+
+        return $payload;
     }
 
     /**
