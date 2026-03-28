@@ -122,22 +122,6 @@
                                 <p class="h5 mb-0">/{{ $systemInfo['admin_path'] }}</p>
                             </div>
                         </div>
-                        <div class="col-12 col-md-6">
-                            <div class="border rounded p-3 h-100 bg-light">
-                                <p class="text-muted mb-1">Panel Admin</p>
-                                <p class="h5 mb-0">
-                                    <span class="badge rounded-pill catmin-version-pill">{{ $systemInfo['dashboard_version'] }}</span>
-                                </p>
-                            </div>
-                        </div>
-                        <div class="col-12 col-md-6">
-                            <div class="border rounded p-3 h-100 bg-light">
-                                <p class="text-muted mb-1">Phase de developpement</p>
-                                <p class="h5 mb-0">
-                                    <span class="badge rounded-pill catmin-phase-pill">{{ $systemInfo['development_phase'] }}</span>
-                                </p>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -207,20 +191,4 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 </script>
-@endpush
-
-@push('styles')
-<style>
-.catmin-version-pill {
-    background-color: #0d6efd;
-    color: #fff;
-    font-weight: 700;
-}
-
-.catmin-phase-pill {
-    background-color: #f59e0b;
-    color: #111827;
-    font-weight: 700;
-}
-</style>
 @endpush
