@@ -49,6 +49,7 @@
                             $hasUpgrade    = (bool) ($mi['has_upgrade'] ?? false);
                             $neverMigrated = (bool) ($mi['never_migrated'] ?? false);
                             $installedVersion = (string) ($mi['installed_version'] ?? '');
+                            $hasConfig = (bool) (($configInfo ?? [])[$module->slug]['has_config'] ?? false);
                         @endphp
                         <tr>
                             <td>{{ $module->name }}</td>
@@ -97,6 +98,11 @@
                                                 <i class="bi bi-database-up"></i> {{ $hasUpgrade ? 'Upgrade DB' : 'Migrer' }}
                                             </button>
                                         </form>
+                                    @endif
+                                    @if($hasConfig)
+                                        <a href="{{ route('admin.modules.config', $module->slug) }}" class="btn btn-sm btn-outline-primary ms-1">
+                                            <i class="bi bi-sliders"></i> Config
+                                        </a>
                                     @endif
                                 @else
                                     <span class="text-muted small">—</span>

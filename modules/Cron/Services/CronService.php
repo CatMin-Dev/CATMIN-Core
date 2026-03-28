@@ -2,6 +2,7 @@
 
 namespace Modules\Cron\Services;
 
+use App\Services\ModuleConfigService;
 use Illuminate\Support\Facades\DB;
 
 class CronService
@@ -48,10 +49,12 @@ class CronService
     {
         self::log($taskKey, 'started');
         try {
+            $pruneHours = (int) ModuleConfigService::get('queue', 'prune_failed_hours', 72);
+
             match ($taskKey) {
                 'cache.clear' => \Illuminate\Support\Facades\Artisan::call('cache:clear'),
                 'views.clear' => \Illuminate\Support\Facades\Artisan::call('view:clear'),
-                'queue.prune' => \Illuminate\Support\Facades\Artisan::call('queue:prune-failed', ['--hours' => 72]),
+                'queue.prune' => \Illuminate\Support\Facades\Artisan::call('queue:prune-failed', ['--hours' => max(1, $pruneHours)]),
                 default => throw new \InvalidArgumentException("Unknown task: {$taskKey}"),
             };
             self::log($taskKey, 'done');

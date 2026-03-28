@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Role;
 use App\Models\Setting;
 use App\Models\User;
+use App\Services\ModuleConfigService;
 use App\Services\ModuleLoader;
 use App\Services\ModuleManager;
 use App\Services\ModuleMigrationRunner;
@@ -71,12 +72,16 @@ class DashboardController extends Controller
     public function modules(): View
     {
         $allModules = ModuleManager::all();
+        $configInfo = [];
 
         // Build per-module migration info based on real migration files.
         $migrationInfo = [];
         $migratableEnabledCount = 0;
         foreach ($allModules as $module) {
             $slug = (string) $module->slug;
+            $configInfo[$slug] = [
+                'has_config' => ModuleConfigService::hasConfig($slug),
+            ];
             $migrationsPath = base_path('modules/' . $module->directory . '/Migrations');
             $hasMigrationsFolder = is_dir($migrationsPath);
             $migrationFilesCount = $hasMigrationsFolder
@@ -105,8 +110,41 @@ class DashboardController extends Controller
             'stateIssues' => ModuleManager::stateIssues(),
             'routesInfo' => ModuleLoader::getRoutesInfo(),
             'migrationInfo' => $migrationInfo,
+            'configInfo' => $configInfo,
             'migratableEnabledCount' => $migratableEnabledCount,
         ]);
+    }
+
+    public function moduleConfig(string $slug): View|RedirectResponse
+    {
+        $module = ModuleManager::find($slug);
+        abort_if(!$module instanceof stdClass, 404);
+
+        if (!ModuleConfigService::hasConfig($slug)) {
+            return redirect()->route('admin.modules.index')->with('error', 'Aucune configuration declarée pour ce module.');
+        }
+
+        return view('admin.pages.modules.config', [
+            'currentPage' => 'modules',
+            'module' => $module,
+            'fields' => ModuleConfigService::fields($slug),
+            'values' => ModuleConfigService::values($slug),
+        ]);
+    }
+
+    public function updateModuleConfig(Request $request, string $slug): RedirectResponse
+    {
+        $module = ModuleManager::find($slug);
+        abort_if(!$module instanceof stdClass, 404);
+
+        if (!ModuleConfigService::hasConfig($slug)) {
+            return redirect()->route('admin.modules.index')->with('error', 'Aucune configuration declarée pour ce module.');
+        }
+
+        $validated = ModuleConfigService::validate($slug, $request->all());
+        ModuleConfigService::save($slug, $validated);
+
+        return redirect()->route('admin.modules.config', $slug)->with('success', "Configuration du module {$module->name} mise a jour.");
     }
 
     public function migrateEnabledModules(Request $request): JsonResponse|RedirectResponse

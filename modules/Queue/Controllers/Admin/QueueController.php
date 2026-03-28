@@ -3,6 +3,7 @@
 namespace Modules\Queue\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\ModuleConfigService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -100,9 +101,11 @@ class QueueController extends Controller
     private function safeFailedJobs(): \Illuminate\Support\Collection
     {
         try {
+            $limit = (int) ModuleConfigService::get('queue', 'failed_jobs_limit', 20);
+
             return DB::table('failed_jobs')
                 ->orderByDesc('failed_at')
-                ->limit(20)
+                ->limit(max(1, $limit))
                 ->get();
         } catch (\Throwable) {
             return collect();

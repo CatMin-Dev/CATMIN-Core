@@ -77,6 +77,12 @@ Route::prefix($adminPath)->middleware('web')->name('admin.')->group(function () 
         Route::get('/modules', [DashboardController::class, 'modules'])
             ->name('modules.index');
 
+        Route::get('/modules/{slug}/config', [DashboardController::class, 'moduleConfig'])
+            ->name('modules.config');
+
+        Route::post('/modules/{slug}/config', [DashboardController::class, 'updateModuleConfig'])
+            ->name('modules.config.update');
+
         Route::post('/modules/{slug}/enable', [DashboardController::class, 'enableModule'])
             ->name('modules.enable');
 
