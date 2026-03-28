@@ -7,23 +7,11 @@
     title="Articles"
     subtitle="Module unifie pour les contenus editoriaux et actualites."
 >
-    <form method="get" action="{{ admin_route('articles.manage') }}" class="d-flex align-items-center gap-2">
-        <div class="input-group input-group-sm" style="min-width: 280px;">
-            <input
-                type="search"
-                name="q"
-                class="form-control"
-                placeholder="Recherche articles..."
-                value="{{ $search ?? '' }}"
-            >
-            <button class="btn btn-outline-secondary" type="submit" aria-label="Rechercher">
-                <i class="bi bi-search"></i>
-            </button>
-        </div>
-        @if(!empty($search))
-            <a class="btn btn-sm btn-outline-light border" href="{{ admin_route('articles.manage') }}">Reset</a>
-        @endif
-    </form>
+    <x-admin.crud.search-form
+        :action-url="admin_route('articles.manage')"
+        :query="$search ?? ''"
+        placeholder="Recherche articles..."
+    />
 
     @if(catmin_can('module.articles.create'))
         <a class="btn btn-primary" href="{{ admin_route('articles.create') }}">Nouvel article</a>

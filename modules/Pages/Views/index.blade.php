@@ -7,23 +7,11 @@
     title="Pages"
     subtitle="Gestion des pages simples du frontend CATMIN."
 >
-    <form method="get" action="{{ admin_route('pages.manage') }}" class="d-flex align-items-center gap-2">
-        <div class="input-group input-group-sm" style="min-width: 280px;">
-            <input
-                type="search"
-                name="q"
-                class="form-control"
-                placeholder="Recherche pages..."
-                value="{{ $search ?? '' }}"
-            >
-            <button class="btn btn-outline-secondary" type="submit" aria-label="Rechercher">
-                <i class="bi bi-search"></i>
-            </button>
-        </div>
-        @if(!empty($search))
-            <a class="btn btn-sm btn-outline-light border" href="{{ admin_route('pages.manage') }}">Reset</a>
-        @endif
-    </form>
+    <x-admin.crud.search-form
+        :action-url="admin_route('pages.manage')"
+        :query="$search ?? ''"
+        placeholder="Recherche pages..."
+    />
 
     @if(catmin_can('module.pages.create'))
         <a class="btn btn-primary" href="{{ admin_route('pages.create') }}">
