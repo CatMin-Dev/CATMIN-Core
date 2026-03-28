@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Services\AddonManager;
 use App\Services\AddonMigrationRunner;
+use App\Services\CatminEventBus;
 use Illuminate\Console\Command;
 
 class CatminAddonInstallCommand extends Command
@@ -43,6 +44,12 @@ class CatminAddonInstallCommand extends Command
             $result = AddonMigrationRunner::runForAddon($slug);
             $this->line("Migrations executees: {$result['ran']}");
         }
+
+        CatminEventBus::dispatch(CatminEventBus::ADDON_INSTALLED, [
+            'slug' => $slug,
+            'enabled' => !(bool) $this->option('no-enable'),
+            'migrations_ran' => !(bool) $this->option('no-migrate'),
+        ]);
 
         $this->info("Addon '{$slug}' installe.");
 

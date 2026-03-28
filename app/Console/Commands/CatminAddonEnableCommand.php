@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Services\CatminEventBus;
 use App\Services\AddonManager;
 use Illuminate\Console\Command;
 
@@ -24,6 +25,11 @@ class CatminAddonEnableCommand extends Command
             $this->error("Impossible d'activer l'addon: {$slug}");
             return self::FAILURE;
         }
+
+        CatminEventBus::dispatch(CatminEventBus::ADDON_ENABLED, [
+            'slug' => $slug,
+            'enabled' => true,
+        ]);
 
         $this->info("Addon '{$slug}' active.");
 

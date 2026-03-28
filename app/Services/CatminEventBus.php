@@ -12,6 +12,10 @@ use Illuminate\Support\Facades\Event;
  */
 class CatminEventBus
 {
+    public const ADDON_INSTALLED = 'catmin.addon.installed';
+    public const ADDON_ENABLED = 'catmin.addon.enabled';
+    public const ADDON_DISABLED = 'catmin.addon.disabled';
+    public const ADDON_UNINSTALLED = 'catmin.addon.uninstalled';
     public const MODULE_ENABLED = 'catmin.module.enabled';
     public const MODULE_DISABLED = 'catmin.module.disabled';
     public const CONTENT_CREATED = 'catmin.content.created';

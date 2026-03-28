@@ -100,6 +100,43 @@ class AddonMigrationRunner
     }
 
     /**
+     * Roll back addon migrations.
+     *
+     * @return array{rolled_back: bool, output: string}
+     */
+    public static function rollbackForAddon(string $slug, int $steps = 0): array
+    {
+        $addon = AddonManager::find($slug);
+
+        if ($addon === null) {
+            return ['rolled_back' => false, 'output' => "Addon '{$slug}' not found."];
+        }
+
+        $migrationsPath = $addon->path . '/Migrations';
+
+        if (!File::exists($migrationsPath) || count(File::files($migrationsPath)) === 0) {
+            return ['rolled_back' => false, 'output' => 'No migrations folder.'];
+        }
+
+        $args = [
+            '--path' => 'addons/' . $addon->directory . '/Migrations',
+            '--force' => true,
+        ];
+
+        if ($steps > 0) {
+            $args['--step'] = $steps;
+        }
+
+        $exitCode = Artisan::call('migrate:rollback', $args);
+        $output = trim(Artisan::output());
+
+        return [
+            'rolled_back' => $exitCode === 0,
+            'output' => $output,
+        ];
+    }
+
+    /**
      * @return array{upgraded: bool, ran: int, output: string}
      */
     public static function upgradeIfNeeded(string $slug): array
