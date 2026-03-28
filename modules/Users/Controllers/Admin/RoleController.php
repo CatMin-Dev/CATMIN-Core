@@ -4,6 +4,8 @@ namespace Modules\Users\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Role;
+use App\Services\AddonManager;
+use App\Services\ModuleManager;
 use App\Services\RbacPermissionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -207,15 +209,27 @@ class RoleController extends Controller
     private function allPermissions(): array
     {
         $actions = (array) config('catmin.rbac.actions', ['menu', 'list', 'create', 'edit', 'delete', 'config']);
-        $modules = [
-            'articles', 'blocks', 'cache', 'cron',
-            'logger', 'mailer', 'media', 'menus',
-            'pages', 'queue', 'seo', 'settings',
-            'shop', 'users', 'webhooks',
-        ];
+
+        $modules = ModuleManager::all()
+            ->pluck('slug')
+            ->map(fn ($slug) => strtolower((string) $slug))
+            ->filter(fn ($slug) => $slug !== '')
+            ->values();
+
+        $addons = AddonManager::all()
+            ->pluck('slug')
+            ->map(fn ($slug) => strtolower((string) $slug))
+            ->filter(fn ($slug) => $slug !== '')
+            ->values();
+
+        $entries = $modules
+            ->merge($addons)
+            ->unique()
+            ->sort()
+            ->values();
 
         $permissions = [];
-        foreach ($modules as $module) {
+        foreach ($entries as $module) {
             $permissions[$module] = array_map(
                 fn (string $action) => RbacPermissionService::modulePermission($module, $action),
                 $actions
