@@ -11,21 +11,6 @@
 </header>
 
 <div class="catmin-page-body">
-    <div class="card mb-4">
-        <div class="card-body">
-            <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 align-items-lg-center">
-                <div>
-                    <h2 class="h5 mb-1">Bienvenue {{ $welcome['admin_user'] }}</h2>
-                    <p class="text-muted mb-0">Vous administrez <strong>{{ $welcome['site_name'] }}</strong> depuis le tableau de bord CATMIN.</p>
-                </div>
-                <div class="d-flex flex-wrap gap-2">
-                    <a class="btn btn-outline-primary btn-sm" href="{{ $welcome['site_url'] }}" target="_blank" rel="noreferrer noopener">Voir le site</a>
-                    <a class="btn btn-primary btn-sm" href="{{ admin_route('settings.index') }}">Configurer</a>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <div class="row g-3 mb-4">
         <div class="col-12 col-sm-6 col-xxl-3"><div class="card h-100"><div class="card-body"><p class="text-muted mb-1">Utilisateurs</p><p class="display-6 mb-0">{{ $stats['users'] }}</p></div></div></div>
         <div class="col-12 col-sm-6 col-xxl-3"><div class="card h-100"><div class="card-body"><p class="text-muted mb-1">Roles</p><p class="display-6 mb-0">{{ $stats['roles'] }}</p></div></div></div>
@@ -153,30 +138,6 @@
                                 </p>
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-header bg-white"><h2 class="h6 mb-0">Modules de contenu</h2></div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        @forelse($contentModules as $contentModule)
-                            <div class="col-12 col-md-6">
-                                <div class="card h-100">
-                                    <div class="card-body">
-                                        <div class="d-flex justify-content-between align-items-start mb-2">
-                                            <h3 class="h6 mb-0">{{ $contentModule->name }}</h3>
-                                            <span class="badge {{ $contentModule->enabled ? 'text-bg-success' : 'text-bg-secondary' }}">{{ $contentModule->enabled ? 'Actif' : 'Desactive' }}</span>
-                                        </div>
-                                        <p class="small text-muted mb-3">Slug: {{ $contentModule->slug }} · Version {{ $contentModule->version ?? 'n/a' }}</p>
-                                        <a class="btn btn-sm btn-outline-primary" href="{{ admin_route('content.show', ['module' => $contentModule->slug]) }}">Ouvrir</a>
-                                    </div>
-                                </div>
-                            </div>
-                        @empty
-                            <div class="col-12"><div class="alert alert-secondary mb-0" role="alert">Aucun module de contenu actif.</div></div>
-                        @endforelse
                     </div>
                 </div>
             </div>

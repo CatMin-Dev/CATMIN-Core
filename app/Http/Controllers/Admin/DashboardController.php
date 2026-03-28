@@ -27,19 +27,12 @@ class DashboardController extends Controller
     {
         $allModules = ModuleManager::all();
         $enabledModules = ModuleManager::enabled();
-        $siteName = (string) SettingService::get('site.name', 'CATMIN');
-        $siteUrl = (string) SettingService::get('site.url', config('app.url'));
         $activity = $this->buildWeeklyActivity();
         $health = $this->buildSystemHealth();
         $contentStatus = $this->buildContentStatus();
 
         return view('admin.pages.dashboard', [
             'currentPage' => 'dashboard',
-            'welcome' => [
-                'site_name' => $siteName,
-                'site_url' => $siteUrl,
-                'admin_user' => (string) session('catmin_admin_username', config('catmin.admin.username')),
-            ],
             'stats' => [
                 'users' => User::count(),
                 'roles' => Role::count(),
@@ -63,10 +56,6 @@ class DashboardController extends Controller
             'contentStatus' => $contentStatus,
             'versionMatrix' => ModuleVersionManager::generateMatrix(),
             'rbacData' => $this->loadRbacMatrix(),
-            'contentModules' => collect(['pages', 'articles', 'media', 'menus', 'blocks'])
-                ->map(fn (string $slug) => ModuleManager::find($slug))
-                ->filter()
-                ->values(),
         ]);
     }
 
