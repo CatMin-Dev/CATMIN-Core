@@ -209,36 +209,11 @@
             $builderWrapper.toggleClass('d-none', !isBuilder);
         }
 
-        var customSnippetButton = function (context) {
-            var ui = $.summernote.ui;
-
-            var items = snippetTemplates.map(function (item, idx) {
-                return '<a class="dropdown-item" href="#" data-snippet-index="' + idx + '">' + item.label + '</a>';
-            }).join('');
-
-            return ui.buttonGroup([
-                ui.button({
-                    className: 'dropdown-toggle',
-                    contents: '<i class="note-icon-magic"></i> Snippets',
-                    tooltip: 'Inserer un snippet',
-                    data: {
-                        toggle: 'dropdown'
-                    }
-                }),
-                ui.dropdown({
-                    items: items,
-                    callback: function ($dropdown) {
-                        $dropdown.find('a').on('click', function (e) {
-                            e.preventDefault();
-                            var idx = Number($(this).data('snippet-index'));
-                            var snippet = snippetTemplates[idx];
-                            if (snippet) {
-                                context.invoke('editor.pasteHTML', snippet.html);
-                            }
-                        });
-                    }
-                })
-            ]).render();
+        var defaultSnippetMap = {
+            hero: snippetTemplates[0].html,
+            text: '<p>Nouveau contenu...</p>',
+            media: '<p><img src="https://via.placeholder.com/1200x500" alt=""/></p>',
+            cta: snippetTemplates[2].html
         };
 
         var initialRaw = $content.val() || '';
@@ -266,23 +241,22 @@
 
         $content.val(sanitizeContentForSummernote(initialRaw));
 
-        $content.summernote({
-            lang: 'fr-FR',
-            height: 320,
-            buttons: {
-                snippets: customSnippetButton
-            },
-            toolbar: [
-                [ 'style', [ 'style' ] ],
-                [ 'font', [ 'bold', 'italic', 'underline', 'strikethrough', 'superscript', 'subscript', 'clear' ] ],
-                [ 'fontsize', [ 'fontsize' ] ],
-                [ 'color', [ 'color' ] ],
-                [ 'para', [ 'ul', 'ol', 'paragraph' ] ],
-                [ 'table', [ 'table' ] ],
-                [ 'insert', [ 'link', 'picture', 'video', 'snippets' ] ],
-                [ 'view', [ 'fullscreen', 'codeview', 'help' ] ]
-            ]
-        });
+        if ($.fn && $.fn.summernote && $content.length > 0) {
+            $content.summernote({
+                lang: 'fr-FR',
+                height: 320,
+                toolbar: [
+                    [ 'style', [ 'style' ] ],
+                    [ 'font', [ 'bold', 'italic', 'underline', 'strikethrough', 'superscript', 'subscript', 'clear' ] ],
+                    [ 'fontsize', [ 'fontsize' ] ],
+                    [ 'color', [ 'color' ] ],
+                    [ 'para', [ 'ul', 'ol', 'paragraph' ] ],
+                    [ 'table', [ 'table' ] ],
+                    [ 'insert', [ 'link', 'picture', 'video' ] ],
+                    [ 'view', [ 'fullscreen', 'codeview', 'help' ] ]
+                ]
+            });
+        }
 
         if (state.blocks.length === 0) {
             state.blocks = [getDefaultBlock('hero')];
@@ -302,7 +276,12 @@
         });
 
         $('#builder-add').on('click', function () {
-            state.blocks.push(getDefaultBlock($builderTemplate.val()));
+            var type = $builderTemplate.val();
+            var next = getDefaultBlock(type);
+            if (defaultSnippetMap[type]) {
+                next.text = defaultSnippetMap[type].replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+            }
+            state.blocks.push(next);
             renderBlocksEditor();
         });
 
@@ -360,11 +339,22 @@
                 var merged = (encoded ? '<!--CATMIN_BUILDER:' + encoded + '-->\n' : '') + html;
 
                 $builderPayload.val(payload);
-                $content.summernote('code', merged);
+                if ($.fn && $.fn.summernote && $content.length > 0) {
+                    $content.summernote('code', merged);
+                } else {
+                    $content.val(merged);
+                }
             } else {
-                var clean = sanitizeContentForSummernote($content.summernote('code'));
+                var rawContent = ($.fn && $.fn.summernote && $content.length > 0)
+                    ? $content.summernote('code')
+                    : $content.val();
+                var clean = sanitizeContentForSummernote(rawContent);
                 $builderPayload.val('');
-                $content.summernote('code', clean);
+                if ($.fn && $.fn.summernote && $content.length > 0) {
+                    $content.summernote('code', clean);
+                } else {
+                    $content.val(clean);
+                }
             }
 
             $modeHidden.val(state.mode);
@@ -392,15 +382,15 @@
         }
     }
 
-    var configNode = document.getElementById('catmin-editor-mode-config');
-    if (!configNode) {
-        return;
-    }
+    window.CatminInitContentEditorMode = initContentEditorMode;
 
-    try {
-        var config = JSON.parse(configNode.textContent || '{}');
-        initContentEditorMode(config);
-    } catch (_e) {
-        // noop
+    var configNode = document.getElementById('catmin-editor-mode-config');
+    if (configNode) {
+        try {
+            var config = JSON.parse(configNode.textContent || '{}');
+            initContentEditorMode(config);
+        } catch (_e) {
+            // noop
+        }
     }
 }());
