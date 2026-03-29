@@ -142,6 +142,35 @@ return [
         'failed_jobs_threshold' => (int) env('CATMIN_HEALTH_FAILED_JOBS_THRESHOLD', 50),
     ],
 
+    'health_score' => [
+        'thresholds' => [
+            'excellent' => 90,
+            'stable' => 75,
+            'warning' => 55,
+        ],
+        'status_multipliers' => [
+            'ok' => 0,
+            'warning' => 0.35,
+            'degraded' => 0.7,
+            'critical' => 1,
+        ],
+        'recommendation_limit' => 4,
+        'factor_limit' => 5,
+        'domains' => [
+            'security' => ['label' => 'Securite', 'weight' => 18],
+            'database' => ['label' => 'Base de donnees', 'weight' => 16],
+            'modules' => ['label' => 'Modules critiques', 'weight' => 12],
+            'queue' => ['label' => 'Queue', 'weight' => 12],
+            'logs' => ['label' => 'Logs critiques', 'weight' => 12],
+            'performance' => ['label' => 'Performance', 'weight' => 10],
+            'webhooks' => ['label' => 'Webhooks', 'weight' => 10],
+            'storage' => ['label' => 'Storage', 'weight' => 8],
+            'mailer' => ['label' => 'Mailer', 'weight' => 8],
+            'api' => ['label' => 'API interne', 'weight' => 0],
+        ],
+        'contributors' => [],
+    ],
+
     'performance' => [
         'slow_request_ms' => (int) env('CATMIN_SLOW_REQUEST_MS', 800),
         'slow_query_ms' => (int) env('CATMIN_SLOW_QUERY_MS', 250),

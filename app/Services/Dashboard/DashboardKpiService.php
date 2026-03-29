@@ -18,6 +18,7 @@ class DashboardKpiService
     public function build(): array
     {
         $ttl = max(5, (int) config('catmin.performance.dashboard_cache_ttl_seconds', 60));
+        $healthOverview = Cache::remember('catmin.dashboard.health-overview.v1', $ttl, fn (): array => app(MonitoringService::class)->buildDashboardReport(5));
 
         $kpiIndex = Cache::remember('catmin.dashboard.kpi-index.v1', $ttl, function (): array {
             return [
@@ -41,10 +42,11 @@ class DashboardKpiService
         return [
             'kpi_index' => $kpiIndex,
             'kpis' => $this->kpiCards($kpiIndex),
-            'alerts' => $this->alertRows($kpiIndex),
+            'alerts' => $this->alertRows($kpiIndex, $healthOverview),
             'quick_actions' => $this->quickActions(),
             'module_health' => $this->moduleHealthRows(),
-            'widgets' => $this->defaultWidgets($kpiIndex),
+            'widgets' => $this->defaultWidgets($kpiIndex, $healthOverview),
+            'health_score' => (array) ($healthOverview['health_score'] ?? []),
             'generated_at' => now(),
             'cache_ttl_seconds' => $ttl,
         ];
@@ -238,9 +240,10 @@ class DashboardKpiService
      * @param array<string, int> $index
      * @return array<int, array<string, mixed>>
      */
-    private function alertRows(array $index): array
+    private function alertRows(array $index, array $healthOverview): array
     {
         $alerts = [];
+        $healthScore = (array) ($healthOverview['health_score'] ?? []);
 
         if (app()->isDownForMaintenance()) {
             $alerts[] = [
@@ -289,6 +292,20 @@ class DashboardKpiService
                 'message' => $index['low_stock_products'] . ' produit(s) sous seuil.',
                 'url' => $this->routeUrl('shop.manage'),
                 'permission' => 'module.shop.list',
+            ];
+        }
+
+        foreach (array_slice((array) ($healthScore['recommendations'] ?? []), 0, 2) as $recommendation) {
+            if (!is_array($recommendation)) {
+                continue;
+            }
+
+            $alerts[] = [
+                'severity' => (string) ($recommendation['severity'] ?? 'warning'),
+                'title' => (string) ($recommendation['title'] ?? 'Diagnostic systeme'),
+                'message' => (string) ($recommendation['message'] ?? ''),
+                'url' => (string) ($recommendation['url'] ?? ''),
+                'permission' => null,
             ];
         }
 
@@ -395,9 +412,9 @@ class DashboardKpiService
      * @param array<string, int> $index
      * @return array<int, array<string, mixed>>
      */
-    private function defaultWidgets(array $index): array
+    private function defaultWidgets(array $index, array $healthOverview): array
     {
-        $monitoringWidget = $this->monitoringWidget();
+        $monitoringWidget = $this->monitoringWidget($healthOverview);
 
         return [
             $monitoringWidget,
@@ -491,11 +508,10 @@ class DashboardKpiService
     /**
      * @return array<string, mixed>
      */
-    private function monitoringWidget(): array
+    private function monitoringWidget(array $report): array
     {
-        $ttl = max(5, (int) config('catmin.performance.monitoring_widget_cache_ttl_seconds', 30));
-        $report = Cache::remember('catmin.dashboard.monitoring-widget.v1', $ttl, fn (): array => app(MonitoringService::class)->buildDashboardReport(5));
         $global = (array) ($report['global'] ?? []);
+        $health = (array) ($report['health_score'] ?? []);
         $status = (string) ($global['status'] ?? 'ok');
 
         $tone = match ($status) {
@@ -507,9 +523,9 @@ class DashboardKpiService
 
         $items = [
             [
-                'primary' => 'Statut global: ' . strtoupper($status),
-                'secondary' => 'Score monitoring ' . (int) ($global['score'] ?? 100) . '/100',
-                'meta' => 'Observabilite transverse systeme',
+                'primary' => 'Score global: ' . (int) ($health['score'] ?? ($global['score'] ?? 100)) . '/100 - ' . (string) ($health['label'] ?? 'Stable'),
+                'secondary' => 'Statut operationnel: ' . strtoupper($status),
+                'meta' => 'Confiance ' . (int) ($health['confidence'] ?? 100) . '%',
             ],
             [
                 'primary' => 'Incidents ouverts',
@@ -518,10 +534,26 @@ class DashboardKpiService
             ],
         ];
 
+        $firstRecommendation = collect((array) ($health['recommendations'] ?? []))->first();
+        if (is_array($firstRecommendation)) {
+            $items[] = [
+                'primary' => 'Priorite: ' . (string) ($firstRecommendation['title'] ?? 'Action corrective'),
+                'secondary' => (string) ($firstRecommendation['message'] ?? ''),
+                'meta' => 'Penalite ' . (int) ($firstRecommendation['penalty'] ?? 0) . ' pts',
+            ];
+        }
+
+        $trend = (array) ($health['trend'] ?? []);
+        $items[] = [
+            'primary' => 'Tendance',
+            'secondary' => (string) ($trend['message'] ?? 'Aucune tendance exploitable.'),
+            'meta' => 'Delta ' . ((int) ($trend['delta'] ?? 0) >= 0 ? '+' : '') . (int) ($trend['delta'] ?? 0),
+        ];
+
         return [
             'id' => 'monitoring-overview',
-            'title' => 'Monitoring center',
-            'subtitle' => 'Sante globale et incidents correles',
+            'title' => 'Sante globale systeme',
+            'subtitle' => 'Score, tendance et recommandations prioritaires',
             'order' => 5,
             'tone' => $tone,
             'items' => $items,

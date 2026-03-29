@@ -94,6 +94,7 @@ Le guide QA final est disponible dans:
 - `docs-site/SECURITY_HARDENING_343.md`
 - `docs-site/MAILER_RELIABILITY_346.md`
 - `docs-site/DOC_SYSTEM_347.md`
+- `docs-site/HEALTH_SCORE_348.md`
 
 Commande de gate:
 

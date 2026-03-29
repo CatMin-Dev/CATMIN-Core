@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
@@ -20,8 +21,10 @@ class MonitoringService
     public function buildDashboardReport(int $limitIncidents = 20): array
     {
         $checks = $this->collectChecks();
-        $globalStatus = self::computeGlobalStatus($checks);
-        $score = self::computeScore($checks);
+        $history = $this->snapshotHistory();
+        $healthScore = app(SystemHealthScoreService::class)->build($checks, $history);
+        $globalStatus = (string) ($healthScore['status'] ?? self::computeGlobalStatus($checks));
+        $score = (int) ($healthScore['score'] ?? self::computeScore($checks));
 
         $incidents = MonitoringIncident::query()
             ->whereIn('status', ['warning', 'degraded', 'critical'])
@@ -34,12 +37,15 @@ class MonitoringService
             'global' => [
                 'status' => $globalStatus,
                 'score' => $score,
+                'label' => (string) ($healthScore['label'] ?? 'Stable'),
+                'confidence' => (int) ($healthScore['confidence'] ?? 100),
                 'checked_at' => now()->toIso8601String(),
             ],
+            'health_score' => $healthScore,
             'checks' => $checks,
             'incidents' => $incidents,
             'alert_clusters' => $this->alertClusters(24),
-            'history' => $this->snapshotHistory(),
+            'history' => $history,
         ];
     }
 
@@ -49,8 +55,9 @@ class MonitoringService
     public function captureSnapshot(): array
     {
         $checks = $this->collectChecks();
-        $globalStatus = self::computeGlobalStatus($checks);
-        $score = self::computeScore($checks);
+        $healthScore = app(SystemHealthScoreService::class)->build($checks, $this->snapshotHistory());
+        $globalStatus = (string) ($healthScore['status'] ?? self::computeGlobalStatus($checks));
+        $score = (int) ($healthScore['score'] ?? self::computeScore($checks));
 
         $this->syncIncidentsFromChecks($checks);
 
@@ -73,6 +80,7 @@ class MonitoringService
         return [
             'status' => $globalStatus,
             'score' => $score,
+            'health_score' => $healthScore,
             'checks' => $checks,
             'incidents_open' => $openIncidentCount,
             'incidents_critical' => $criticalIncidentCount,
@@ -286,18 +294,28 @@ class MonitoringService
      */
     private function snapshotHistory(): array
     {
-        return MonitoringSnapshot::query()
+        $rows = MonitoringSnapshot::query()
             ->orderByDesc('id')
             ->limit(24)
             ->get()
-            ->map(fn (MonitoringSnapshot $snapshot): array => [
-                'status' => (string) $snapshot->global_status,
-                'score' => (int) $snapshot->score,
-                'incidents_open' => (int) $snapshot->incidents_open,
-                'incidents_critical' => (int) $snapshot->incidents_critical,
-                'created_at' => optional($snapshot->created_at)?->toIso8601String(),
-            ])
-            ->values()
+            ->values();
+
+        return $rows
+            ->map(function (MonitoringSnapshot $snapshot, int $index) use ($rows): array {
+                $previous = $rows->get($index + 1);
+                $delta = $previous instanceof MonitoringSnapshot
+                    ? (int) $snapshot->score - (int) $previous->score
+                    : 0;
+
+                return [
+                    'status' => (string) $snapshot->global_status,
+                    'score' => (int) $snapshot->score,
+                    'incidents_open' => (int) $snapshot->incidents_open,
+                    'incidents_critical' => (int) $snapshot->incidents_critical,
+                    'delta' => $delta,
+                    'created_at' => optional($snapshot->created_at)?->toIso8601String(),
+                ];
+            })
             ->all();
     }
 

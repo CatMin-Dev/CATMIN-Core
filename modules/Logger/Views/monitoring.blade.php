@@ -20,9 +20,11 @@
     <x-admin.crud.flash-messages />
 
     @php($global = $report['global'] ?? [])
+    @php($healthScore = $report['health_score'] ?? [])
     @php($status = (string) ($global['status'] ?? 'ok'))
     @php($score = (int) ($global['score'] ?? 100))
     @php($statusBadge = $status === 'critical' ? 'text-bg-danger' : ($status === 'degraded' ? 'text-bg-warning' : ($status === 'warning' ? 'text-bg-info' : 'text-bg-success')))
+    @php($scoreBadge = 'text-bg-' . ((string) ($healthScore['badge'] ?? 'success')))
 
     <div class="row g-3 mb-4">
         <div class="col-12 col-lg-4">
@@ -31,9 +33,11 @@
                     <p class="small text-muted mb-1">Etat global</p>
                     <div class="d-flex align-items-center gap-2 mb-2">
                         <span class="badge {{ $statusBadge }}">{{ strtoupper($status) }}</span>
+                        <span class="badge {{ $scoreBadge }}">{{ $healthScore['label'] ?? 'Stable' }}</span>
                         <span class="small text-muted">Dernier check: {{ \Illuminate\Support\Carbon::parse($global['checked_at'] ?? now())->format('d/m/Y H:i:s') }}</span>
                     </div>
                     <p class="display-6 mb-0">{{ $score }}/100</p>
+                    <p class="small text-muted mb-0 mt-2">Confiance {{ $healthScore['confidence'] ?? 100 }}% · Penalites {{ $healthScore['penalties_total'] ?? 0 }} pts</p>
                 </div>
             </div>
         </div>
@@ -44,13 +48,14 @@
                     @if(!empty($report['history']))
                         <div class="table-responsive">
                             <table class="table table-sm align-middle mb-0">
-                                <thead><tr><th>Date</th><th>Status</th><th>Score</th><th>Open</th><th>Critical</th></tr></thead>
+                                <thead><tr><th>Date</th><th>Status</th><th>Score</th><th>Delta</th><th>Open</th><th>Critical</th></tr></thead>
                                 <tbody>
                                 @foreach($report['history'] as $row)
                                     <tr>
                                         <td>{{ \Illuminate\Support\Carbon::parse($row['created_at'])->format('d/m H:i') }}</td>
                                         <td>{{ strtoupper($row['status']) }}</td>
                                         <td>{{ $row['score'] }}</td>
+                                        <td>{{ (int) ($row['delta'] ?? 0) >= 0 ? '+' : '' }}{{ $row['delta'] ?? 0 }}</td>
                                         <td>{{ $row['incidents_open'] }}</td>
                                         <td>{{ $row['incidents_critical'] }}</td>
                                     </tr>
@@ -60,6 +65,62 @@
                         </div>
                     @else
                         <p class="text-muted mb-0">Aucun snapshot disponible.</p>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-xl-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-header bg-white"><h2 class="h6 mb-0">Facteurs qui tirent le score vers le bas</h2></div>
+                <div class="card-body">
+                    @if(!empty($healthScore['factors']))
+                        <div class="list-group list-group-flush">
+                            @foreach($healthScore['factors'] as $factor)
+                                <div class="list-group-item px-0 d-flex justify-content-between align-items-start gap-3">
+                                    <div>
+                                        <div class="fw-semibold">{{ $factor['label'] }} · {{ $factor['title'] }}</div>
+                                        <div class="small text-muted">{{ $factor['message'] }}</div>
+                                    </div>
+                                    <span class="badge text-bg-light border">-{{ $factor['penalty'] }} pts</span>
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <p class="text-muted mb-0">Aucun facteur penalise actuellement le score.</p>
+                    @endif
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-xl-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h2 class="h6 mb-0">Recommandations automatiques</h2>
+                    <span class="small text-muted">{{ $healthScore['trend']['message'] ?? 'Aucune tendance.' }}</span>
+                </div>
+                <div class="card-body">
+                    @if(!empty($healthScore['recommendations']))
+                        <div class="list-group list-group-flush">
+                            @foreach($healthScore['recommendations'] as $recommendation)
+                                @php($severity = (string) ($recommendation['severity'] ?? 'warning'))
+                                @php($itemClass = $severity === 'critical' ? 'border-danger-subtle bg-danger-subtle' : 'border-warning-subtle bg-warning-subtle')
+                                <div class="list-group-item rounded-3 mb-2 {{ $itemClass }}">
+                                    <div class="d-flex justify-content-between align-items-start gap-3">
+                                        <div>
+                                            <div class="fw-semibold">{{ $recommendation['title'] ?? 'Action corrective' }}</div>
+                                            <div class="small text-muted">{{ $recommendation['message'] ?? '' }}</div>
+                                        </div>
+                                        @if(!empty($recommendation['url']))
+                                            <a class="btn btn-sm btn-outline-secondary" href="{{ $recommendation['url'] }}">Ouvrir</a>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <p class="text-muted mb-0">Aucune recommandation prioritaire. Le systeme reste dans une zone stable.</p>
                     @endif
                 </div>
             </div>
