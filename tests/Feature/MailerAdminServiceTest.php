@@ -131,6 +131,42 @@ class MailerAdminServiceTest extends TestCase
         Queue::assertPushed(SendTemplatedMailJob::class, 1);
     }
 
+    public function test_dispatch_template_sandbox_redirects_recipient(): void
+    {
+        Mail::fake();
+
+        MailerConfig::query()->create([
+            'driver' => 'smtp',
+            'from_email' => 'no-reply@example.com',
+            'sandbox_mode' => true,
+            'sandbox_recipient' => 'sandbox@example.com',
+            'is_enabled' => true,
+        ]);
+
+        $template = MailerTemplate::query()->create([
+            'code' => 'sandbox_test',
+            'name' => 'Sandbox Test',
+            'subject' => 'Sandbox {{ user.name }}',
+            'body_html' => '<p>Bonjour {{ user.name }}</p>',
+            'body_text' => 'Bonjour {{ user.name }}',
+            'available_variables' => ['user.name'],
+            'sample_payload' => ['user' => ['name' => 'Sandbox']],
+            'is_enabled' => true,
+        ]);
+
+        $history = app(MailerAdminService::class)->dispatchTemplate($template, 'real@example.com', 'Real User', [
+            'user' => ['name' => 'Dev'],
+        ], [
+            'queue' => false,
+            'is_test' => false,
+            'trigger_source' => 'phpunit.sandbox',
+        ]);
+
+        $this->assertSame('sandbox@example.com', $history->fresh()->recipient);
+        $this->assertTrue((bool) ($history->fresh()->variables_json['mail']['sandbox'] ?? false));
+        Mail::assertSent(TemplatedMail::class, 1);
+    }
+
     private function createMailerTables(): void
     {
         Schema::dropAllTables();
@@ -141,6 +177,12 @@ class MailerAdminServiceTest extends TestCase
             $table->string('from_email')->nullable();
             $table->string('from_name')->nullable();
             $table->string('reply_to_email')->nullable();
+            $table->string('brand_name')->nullable();
+            $table->string('brand_logo_url')->nullable();
+            $table->string('brand_primary_color', 7)->default('#0d6efd');
+            $table->text('brand_footer_text')->nullable();
+            $table->boolean('sandbox_mode')->default(false);
+            $table->string('sandbox_recipient')->nullable();
             $table->boolean('is_enabled')->default(false);
             $table->timestamps();
         });

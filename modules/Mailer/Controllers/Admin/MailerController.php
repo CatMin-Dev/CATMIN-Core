@@ -36,9 +36,16 @@ class MailerController extends Controller
             'from_email' => ['nullable', 'email', 'max:255'],
             'from_name' => ['nullable', 'string', 'max:255'],
             'reply_to_email' => ['nullable', 'email', 'max:255'],
+            'brand_name' => ['nullable', 'string', 'max:255'],
+            'brand_logo_url' => ['nullable', 'url', 'max:500'],
+            'brand_primary_color' => ['nullable', 'regex:/^#([A-Fa-f0-9]{6})$/'],
+            'brand_footer_text' => ['nullable', 'string', 'max:1000'],
+            'sandbox_mode' => ['nullable', 'boolean'],
+            'sandbox_recipient' => ['nullable', 'email', 'max:255'],
             'is_enabled' => ['nullable', 'boolean'],
         ]);
 
+        $validated['sandbox_mode'] = $request->boolean('sandbox_mode');
         $validated['is_enabled'] = $request->boolean('is_enabled');
 
         $this->mailerAdminService->updateConfig($validated);

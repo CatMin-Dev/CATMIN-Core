@@ -16,6 +16,11 @@
         <a class="btn btn-sm btn-outline-secondary" href="{{ admin_route('shop.categories.index') }}">Catégories</a>
         <a class="btn btn-sm btn-outline-secondary" href="{{ admin_route('shop.orders.index') }}">Commandes</a>
         <a class="btn btn-sm btn-outline-secondary" href="{{ admin_route('shop.customers.index') }}">Clients</a>
+        @if($invoice)
+            <a class="btn btn-sm btn-outline-primary" href="{{ admin_route('shop.invoices.pdf', ['invoice' => $invoice->id]) }}">
+                <i class="bi bi-file-earmark-pdf me-1"></i> Télécharger PDF
+            </a>
+        @endif
         @if(catmin_can('module.shop.config'))
         <a class="btn btn-sm btn-outline-secondary ms-auto" href="{{ admin_route('shop.invoices.settings') }}">
             <i class="bi bi-sliders me-1"></i> Paramètres facture

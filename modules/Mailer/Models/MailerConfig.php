@@ -13,12 +13,19 @@ class MailerConfig extends Model
         'from_email',
         'from_name',
         'reply_to_email',
+        'brand_name',
+        'brand_logo_url',
+        'brand_primary_color',
+        'brand_footer_text',
+        'sandbox_mode',
+        'sandbox_recipient',
         'is_enabled',
     ];
 
     protected function casts(): array
     {
         return [
+            'sandbox_mode' => 'boolean',
             'is_enabled' => 'boolean',
         ];
     }

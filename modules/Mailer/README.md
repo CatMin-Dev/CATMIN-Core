@@ -5,9 +5,11 @@ Module Mailer CATMIN: couche email centralisee pour templates dynamiques, previe
 ## Portee actuelle
 
 - configuration d'envoi (driver, from, reply-to, activation)
-- templates email editables avec variables dynamiques
+- templates email editables avec variables dynamiques et rendu Blade
 - payload exemple et preview rendu dans l'admin
 - email de test manuel depuis l'admin
+- branding email (nom, logo, couleur primaire, footer)
+- sandbox mode avec redirection forcee vers une boite QA
 - journal d'envoi avec statut, driver, source, tentatives et erreurs
 - dispatch centralise sync ou queue
 - templates systeme et shop fournis par defaut

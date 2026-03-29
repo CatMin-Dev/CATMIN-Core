@@ -2,6 +2,7 @@
 
 namespace Modules\Mailer\Services;
 
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
@@ -25,6 +26,7 @@ class MailerAdminService
         /** @var MailerConfig $config */
         $config = MailerConfig::query()->firstOrCreate([], [
             'driver' => 'log',
+            'brand_primary_color' => '#0d6efd',
             'is_enabled' => false,
         ]);
 
@@ -42,6 +44,12 @@ class MailerAdminService
             'from_email' => $payload['from_email'] ?: null,
             'from_name' => $payload['from_name'] ?: null,
             'reply_to_email' => $payload['reply_to_email'] ?: null,
+            'brand_name' => $payload['brand_name'] ?: null,
+            'brand_logo_url' => $payload['brand_logo_url'] ?: null,
+            'brand_primary_color' => $payload['brand_primary_color'] ?: '#0d6efd',
+            'brand_footer_text' => $payload['brand_footer_text'] ?: null,
+            'sandbox_mode' => (bool) ($payload['sandbox_mode'] ?? false),
+            'sandbox_recipient' => $payload['sandbox_recipient'] ?: null,
             'is_enabled' => (bool) ($payload['is_enabled'] ?? false),
         ]);
         $config->save();
@@ -142,11 +150,14 @@ class MailerAdminService
         }
 
         $mergedVariables = array_replace_recursive($this->defaultPreviewVariables(), $templateModel->sample_payload ?? [], $variables);
+        $subject = trim(strip_tags($this->renderTemplateString((string) $templateModel->subject, $mergedVariables)));
+        $bodyHtml = $this->renderTemplateString((string) ($templateModel->body_html ?? ''), $mergedVariables);
+        $bodyText = trim($this->renderTemplateString((string) ($templateModel->body_text ?? ''), $mergedVariables));
 
         return [
-            'subject' => $this->renderString((string) $templateModel->subject, $mergedVariables),
-            'body_html' => $this->renderString((string) ($templateModel->body_html ?? ''), $mergedVariables),
-            'body_text' => $this->renderString((string) ($templateModel->body_text ?? ''), $mergedVariables),
+            'subject' => $subject,
+            'body_html' => $bodyHtml,
+            'body_text' => $bodyText,
             'variables' => $mergedVariables,
         ];
     }
@@ -165,11 +176,28 @@ class MailerAdminService
         $config = $this->getOrCreateConfig();
         $preview = $this->previewTemplate($templateModel, $variables);
         $queue = (bool) ($options['queue'] ?? true);
+        $recipientForDelivery = $recipient;
+        $recipientNameForDelivery = $recipientName;
+
+        if ($config->sandbox_mode && $config->sandbox_recipient) {
+            $recipientForDelivery = (string) $config->sandbox_recipient;
+            $recipientNameForDelivery = 'Sandbox';
+            $preview['variables']['mail'] = [
+                'sandbox' => true,
+                'original_recipient' => $recipient,
+                'sandbox_recipient' => $recipientForDelivery,
+            ];
+        }
+
+        $preview['body_html'] = $this->applyBrandingTemplate($preview['body_html'], $config, $preview['variables']);
+        if ($preview['body_text'] === '') {
+            $preview['body_text'] = trim(strip_tags($preview['body_html']));
+        }
 
         /** @var MailerHistory $history */
         $history = MailerHistory::query()->create([
-            'recipient' => $recipient,
-            'recipient_name' => $recipientName,
+            'recipient' => $recipientForDelivery,
+            'recipient_name' => $recipientNameForDelivery,
             'subject' => $preview['subject'],
             'template_code' => $templateModel->code,
             'driver' => (string) $config->driver,
@@ -182,6 +210,14 @@ class MailerAdminService
             'is_test' => (bool) ($options['is_test'] ?? false),
             'trigger_source' => (string) ($options['trigger_source'] ?? 'system'),
         ]);
+
+        if (($preview['variables']['mail']['sandbox'] ?? false) === true) {
+            $this->logAudit('mailer.sandbox_redirect', 'Email redirige vers sandbox', [
+                'history_id' => $history->id,
+                'original_recipient' => $recipient,
+                'sandbox_recipient' => $recipientForDelivery,
+            ]);
+        }
 
         if ($queue) {
             SendTemplatedMailJob::dispatch($history->id)->onQueue('mail');
@@ -215,7 +251,9 @@ class MailerAdminService
                 replyToEmail: $config->reply_to_email,
             );
 
-            Mail::mailer($config->driver)->to($historyModel->recipient, $historyModel->recipient_name)->send($mailable);
+            Mail::mailer($config->driver)
+                ->to($historyModel->recipient, $historyModel->recipient_name)
+                ->send($mailable);
 
             $historyModel->status = 'sent';
             $historyModel->sent_at = now();
@@ -304,20 +342,84 @@ class MailerAdminService
             ->all();
     }
 
-    private function renderString(string $content, array $variables): string
+    private function renderTemplateString(string $content, array $variables): string
     {
-        $flatVariables = Arr::dot($variables);
+        $normalized = $this->normalizeDotNotationVariables($content);
+        $renderContext = array_merge($variables, ['__catmin' => $variables]);
 
-        return (string) preg_replace_callback('/\{\{\s*([a-zA-Z0-9_\.]+)\s*\}\}/', function (array $matches) use ($flatVariables) {
+        try {
+            return (string) Blade::render($normalized, $renderContext, deleteCachedView: true);
+        } catch (\Throwable) {
+            $flatVariables = Arr::dot($variables);
+
+            return (string) preg_replace_callback('/\{\{\s*([a-zA-Z0-9_\.]+)\s*\}\}/', function (array $matches) use ($flatVariables) {
+                $key = (string) ($matches[1] ?? '');
+                $value = $flatVariables[$key] ?? null;
+
+                if (is_scalar($value) || $value === null) {
+                    return (string) ($value ?? '');
+                }
+
+                return json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '';
+            }, $content) ?? $content;
+        }
+    }
+
+    private function normalizeDotNotationVariables(string $content): string
+    {
+        return (string) preg_replace_callback('/\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z0-9_]+)+)\s*\}\}/', function (array $matches): string {
             $key = (string) ($matches[1] ?? '');
-            $value = $flatVariables[$key] ?? null;
 
-            if (is_scalar($value) || $value === null) {
-                return (string) ($value ?? '');
-            }
+            return "{{ data_get(\$__catmin, '" . addslashes($key) . "') }}";
+        }, $content);
+    }
 
-            return json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '';
-        }, $content) ?? $content;
+    private function applyBrandingTemplate(string $bodyHtml, MailerConfig $config, array $variables): string
+    {
+        $content = trim($bodyHtml) !== '' ? $bodyHtml : '<p>' . e((string) data_get($variables, 'app.name', 'CATMIN')) . '</p>';
+        $brandPrimary = (string) ($config->brand_primary_color ?: '#0d6efd');
+        $brandName = (string) ($config->brand_name ?: $config->from_name ?: config('app.name', 'CATMIN'));
+
+        $wrapper = <<<'BLADE'
+<div style="font-family: Arial, Helvetica, sans-serif; background:#f6f8fb; padding:24px; color:#1f2937;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:680px; margin:0 auto; background:#ffffff; border-radius:14px; overflow:hidden; border:1px solid #e5e7eb;">
+        <tr>
+            <td style="padding:18px 24px; border-bottom:3px solid {{ $brandPrimary }};">
+                @if($brandLogoUrl)
+                    <img src="{{ $brandLogoUrl }}" alt="{{ $brandName }}" style="max-height:42px; display:block; margin-bottom:8px;">
+                @endif
+                <p style="margin:0; font-size:18px; font-weight:700; color:#111827;">{{ $brandName }}</p>
+            </td>
+        </tr>
+        <tr>
+            <td style="padding:24px;">{!! $content !!}</td>
+        </tr>
+        @if($sandbox)
+            <tr>
+                <td style="padding:0 24px 16px;">
+                    <p style="margin:0; font-size:12px; color:#b45309;">Mode sandbox actif: destinataire original {{ $sandboxOriginal }} redirige vers {{ $sandboxRecipient }}.</p>
+                </td>
+            </tr>
+        @endif
+        <tr>
+            <td style="padding:14px 24px; background:#f9fafb; border-top:1px solid #e5e7eb; font-size:12px; color:#6b7280;">
+                {{ $brandFooterText ?: 'Email genere automatiquement par CATMIN.' }}
+            </td>
+        </tr>
+    </table>
+</div>
+BLADE;
+
+        return (string) Blade::render($wrapper, [
+            'content' => $content,
+            'brandPrimary' => $brandPrimary,
+            'brandName' => $brandName,
+            'brandLogoUrl' => $config->brand_logo_url,
+            'brandFooterText' => $config->brand_footer_text,
+            'sandbox' => (bool) data_get($variables, 'mail.sandbox', false),
+            'sandboxOriginal' => (string) data_get($variables, 'mail.original_recipient', ''),
+            'sandboxRecipient' => (string) data_get($variables, 'mail.sandbox_recipient', ''),
+        ], deleteCachedView: true);
     }
 
     private function ensureDefaultTemplates(): void

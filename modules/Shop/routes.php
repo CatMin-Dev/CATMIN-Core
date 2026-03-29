@@ -87,6 +87,10 @@ Route::middleware(['web', 'catmin.admin'])
             ->middleware('catmin.permission:module.shop.list')
             ->name('shop.invoices.show');
 
+        Route::get('/shop/invoices/{invoice}/pdf', [InvoiceController::class, 'downloadPdf'])
+            ->middleware('catmin.permission:module.shop.list')
+            ->name('shop.invoices.pdf');
+
         Route::get('/shop/invoice-settings', [InvoiceController::class, 'settingsIndex'])
             ->middleware('catmin.permission:module.shop.config')
             ->name('shop.invoices.settings');

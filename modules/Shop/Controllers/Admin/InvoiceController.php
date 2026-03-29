@@ -5,6 +5,8 @@ namespace Modules\Shop\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Modules\Shop\Models\Invoice;
 use Modules\Shop\Models\InvoiceSettings;
@@ -53,5 +55,30 @@ class InvoiceController extends Controller
 
         return redirect()->route('admin.shop.invoices.settings')
             ->with('success', 'Paramètres facture mis à jour.');
+    }
+
+    public function downloadPdf(Invoice $invoice): Response
+    {
+        $invoice->load(['order.items', 'customer']);
+
+        $html = view()->file(base_path('modules/Shop/Views/invoices/show.blade.php'), [
+            'currentPage' => 'shop',
+            'invoice' => $invoice,
+            'order' => $invoice->order,
+            'customer' => $invoice->customer,
+            'settings' => InvoiceSettings::current(),
+            'renderMode' => 'snapshot',
+        ])->render();
+
+        $pdf = app('dompdf.wrapper')->loadHTML($html)
+            ->setPaper('a4')
+            ->setWarnings(false);
+
+        $invoiceNumber = Str::slug((string) ($invoice->invoice_number ?: ('invoice-' . $invoice->id)));
+
+        return response($pdf->output(), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="' . $invoiceNumber . '.pdf"',
+        ]);
     }
 }
