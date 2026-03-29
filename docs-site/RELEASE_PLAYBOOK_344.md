@@ -78,11 +78,11 @@ php artisan test --no-coverage 2>&1 | tail -1
 - [ ] Token expire après 1h
 - [ ] Notifications email en place
 
-#### 1.2.3 API externe V2
-- [ ] Endpoints publiques documentées
-- [ ] Scopes (read/write) respectés
-- [ ] Rate limit enforced: 120/min par défaut
-- [ ] Erreurs normalisées (pas leak info interne)
+#### 1.2.3 API interne
+- [ ] Endpoints internes critiques documentés
+- [ ] Token interne configuré et rotation définie
+- [ ] Accès limité aux usages runtime/ops
+- [ ] Erreurs JSON cohérentes
 
 #### 1.2.4 Logs rotation & archivage
 - [ ] Purge automatique après 14j par défaut
@@ -270,9 +270,9 @@ curl -s https://app.com/admin/login | grep -q "Connexion admin"
 # Expected: trouvé
 
 # 3. API health
-curl -s -H "Authorization: Bearer $INTERNAL_TOKEN" \
-  https://app.com/api/internal/health | jq .status
-# Expected: "ok"
+curl -s -H "X-Catmin-Token: $INTERNAL_TOKEN" \
+    https://app.com/api/internal/system/health | jq .success
+# Expected: true
 
 # 4. Internal API
 curl -s -H "X-Catmin-Token: $INTERNAL_TOKEN" \

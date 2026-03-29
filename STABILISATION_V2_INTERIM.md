@@ -109,11 +109,11 @@ Légende: ✅ complet, ⚠️ partial, 🔴 missing
 3. Logs PII masquage
 4. Soft-delete protection (pages/articles/media)
 
-### Phase 4 — API externe (2-3 jours)
-1. `/api/v1` layer versionnée
-2. Auth API dédiée (scopes)
-3. Rate limiting/quotas
-4. Docs OpenAPI
+### Phase 4 — API interne minimale (1 jour)
+1. Conserver uniquement `/api/internal` pour runtime et supervision
+2. Token interne robuste et rotation documentée
+3. Monitoring des accès API internes
+4. Aucune surface headless/externe sans besoin produit validé
 
 ### Phase 5 — Dashboard pilotage (2 jours)
 1. KPI métier étendus (commandes, emails, erreurs)
