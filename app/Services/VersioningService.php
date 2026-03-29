@@ -6,7 +6,7 @@ namespace App\Services;
  * VersioningService
  *
  * Shared versioning rules for modules/addons (A.B.C only)
- * and dashboard global version (Vx[-.5]-dev).
+ * and dashboard global version (Vx-dev).
  */
 class VersioningService
 {
@@ -22,7 +22,7 @@ class VersioningService
     }
 
     /**
-     * Dashboard global convention examples: V2-dev, V2.5-dev, V3-dev.
+    * Dashboard global convention example: V3-dev.
      */
     public static function isDashboardVersionValid(string $version): bool
     {
