@@ -13,8 +13,8 @@ class TemplatedMail extends Mailable
 
     public function __construct(
         public readonly string $mailSubject,
-        public readonly string $html,
-        public readonly string $text = '',
+        public readonly string $htmlContent,
+        public readonly string $textContent = '',
         public readonly ?string $fromEmail = null,
         public readonly ?string $fromName = null,
         public readonly ?string $replyToEmail = null,
@@ -33,6 +33,6 @@ class TemplatedMail extends Mailable
             $message->replyTo($this->replyToEmail);
         }
 
-        return $message->html($this->html !== '' ? $this->html : nl2br(e($this->text)));
+        return $message->html($this->htmlContent !== '' ? $this->htmlContent : nl2br(e($this->textContent)));
     }
 }

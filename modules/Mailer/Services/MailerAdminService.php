@@ -244,8 +244,8 @@ class MailerAdminService
 
             $mailable = new TemplatedMail(
                 mailSubject: (string) $historyModel->subject,
-                html: (string) ($historyModel->body_html ?? ''),
-                text: (string) ($historyModel->body_text ?? ''),
+                htmlContent: (string) ($historyModel->body_html ?? ''),
+                textContent: (string) ($historyModel->body_text ?? ''),
                 fromEmail: $config->from_email ?: config('mail.from.address'),
                 fromName: $config->from_name ?: config('mail.from.name'),
                 replyToEmail: $config->reply_to_email,
