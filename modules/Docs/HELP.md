@@ -60,6 +60,18 @@ modules/MonModule/docs/
 
 Ajouter des fichiers `.md` dans `docs-site/` pour la documentation générale (architecture, guides développeur, etc.).
 
+## QA Final Gate V2
+
+Le guide QA final est disponible dans:
+
+- `docs-site/QA_FINAL_GATE_340.md`
+
+Commande de gate:
+
+```bash
+php artisan catmin:qa:final-gate --save
+```
+
 ## Syntaxe Markdown supportée
 
 Le module supporte Markdown standard (CommonMark) avec les extensions :
