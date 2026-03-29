@@ -5,190 +5,141 @@
 @section('content')
 <header class="catmin-page-header d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-3">
     <div>
-        <h1 class="h3 mb-1">Tableau de bord</h1>
-        <p class="text-muted mb-0">Vue generale de l'administration CATMIN.</p>
+        <h1 class="h3 mb-1">Pilotage CATMIN</h1>
+        <p class="text-muted mb-0">KPIs metier, incidents et actions prioritaires en un ecran.</p>
+    </div>
+    <div class="small text-muted">
+        Derniere consolidation: {{ optional($dashboard['generated_at'] ?? null)->format('d/m/Y H:i') }}
     </div>
 </header>
 
 <div class="catmin-page-body">
-    <div class="row g-3 mb-4">
-        <div class="col-12 col-sm-6 col-xxl-3"><div class="card h-100"><div class="card-body"><p class="text-muted mb-1">Utilisateurs</p><p class="display-6 mb-0">{{ $stats['users'] }}</p></div></div></div>
-        <div class="col-12 col-sm-6 col-xxl-3"><div class="card h-100"><div class="card-body"><p class="text-muted mb-1">Roles</p><p class="display-6 mb-0">{{ $stats['roles'] }}</p></div></div></div>
-        <div class="col-12 col-sm-6 col-xxl-3"><div class="card h-100"><div class="card-body"><p class="text-muted mb-1">Parametres</p><p class="display-6 mb-0">{{ $stats['settings'] }}</p></div></div></div>
-    </div>
+    @if(!empty($dashboard['alerts']))
+        <div class="catmin-dashboard-alerts mb-4">
+            @foreach($dashboard['alerts'] as $alert)
+                @php($severity = (string) ($alert['severity'] ?? 'warning'))
+                @php($class = $severity === 'critical' ? 'danger' : ($severity === 'warning' ? 'warning' : 'info'))
+                @php($canOpen = !empty($alert['url']) && (empty($alert['permission']) || catmin_can($alert['permission'])))
+                <div class="alert alert-{{ $class }} d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-2 mb-2" role="alert">
+                    <div>
+                        <strong>{{ $alert['title'] ?? 'Alerte' }}</strong>
+                        <div class="small">{{ $alert['message'] ?? '' }}</div>
+                    </div>
+                    @if($canOpen)
+                        <a class="btn btn-sm btn-outline-dark" href="{{ $alert['url'] }}">Ouvrir</a>
+                    @endif
+                </div>
+            @endforeach
+        </div>
+    @endif
 
-    <div class="row g-3 mb-4">
-        <div class="col-12 col-lg-4">
+    <section class="mb-4">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+            <h2 class="h5 mb-0">KPIs cles</h2>
+            <span class="text-muted small">Cliquez un indicateur pour agir</span>
+        </div>
+        <div class="catmin-kpi-grid">
+            @foreach(($dashboard['kpis'] ?? []) as $card)
+                @php($canOpen = !empty($card['url']) && (empty($card['permission']) || catmin_can($card['permission'])))
+                <article class="card catmin-kpi-card h-100 {{ $canOpen ? 'catmin-kpi-card--link' : '' }}">
+                    <div class="card-body d-flex flex-column gap-2">
+                        <div class="d-flex align-items-start justify-content-between gap-2">
+                            <p class="text-muted mb-0 small">{{ $card['label'] ?? 'KPI' }}</p>
+                            <span class="catmin-kpi-icon"><i class="{{ $card['icon'] ?? 'bi bi-graph-up' }}"></i></span>
+                        </div>
+                        <p class="catmin-kpi-value mb-0">{{ $card['value'] ?? 0 }}</p>
+                        <p class="small text-muted mb-0">{{ $card['description'] ?? '' }}</p>
+                        @if($canOpen)
+                            <a class="stretched-link" href="{{ $card['url'] }}" aria-label="Ouvrir {{ $card['label'] ?? 'kpi' }}"></a>
+                        @endif
+                    </div>
+                </article>
+            @endforeach
+        </div>
+    </section>
+
+    <section class="row g-3 mb-4">
+        <div class="col-12 col-xl-7">
             <div class="card h-100">
-                <div class="card-header bg-white"><h2 class="h6 mb-0">Sante plateforme</h2></div>
+                <div class="card-header bg-white">
+                    <h2 class="h6 mb-0">Actions rapides</h2>
+                </div>
                 <div class="card-body">
-                    <div class="d-flex justify-content-between py-2 border-bottom"><span>Erreurs (24h)</span><strong>{{ $health['recent_errors'] }}</strong></div>
-                    <div class="d-flex justify-content-between py-2 border-bottom"><span>Jobs en echec</span><strong>{{ $health['failed_jobs'] }}</strong></div>
-                    <div class="d-flex justify-content-between py-2 border-bottom"><span>Mails envoyes</span><strong>{{ $health['mailer_sent'] }}</strong></div>
-                    <div class="d-flex justify-content-between py-2"><span>Mails en echec</span><strong>{{ $health['mailer_failed'] }}</strong></div>
+                    <div class="catmin-quick-actions">
+                        @foreach(($dashboard['quick_actions'] ?? []) as $action)
+                            @continue(empty($action['url']))
+                            @continue(!empty($action['permission']) && !catmin_can($action['permission']))
+                            <a class="btn btn-outline-secondary" href="{{ $action['url'] }}">
+                                <i class="{{ $action['icon'] ?? 'bi bi-arrow-right-circle' }} me-1"></i>{{ $action['label'] ?? 'Action' }}
+                            </a>
+                        @endforeach
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-12 col-lg-8">
+        <div class="col-12 col-xl-5">
             <div class="card h-100">
-                <div class="card-header bg-white"><h2 class="h6 mb-0">Activite des 7 derniers jours</h2></div>
+                <div class="card-header bg-white">
+                    <h2 class="h6 mb-0">Sante modules critiques</h2>
+                </div>
                 <div class="card-body">
-                    @php
-                        $maxUsers = max(1, max($activity['users']));
-                        $maxContent = max(1, max($activity['content']));
-                        $maxErrors = max(1, max($activity['errors']));
-                    @endphp
-                    <div class="table-responsive">
-                        <table class="table table-sm align-middle mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Jour</th>
-                                    <th>Utilisateurs</th>
-                                    <th>Contenu publie</th>
-                                    <th>Erreurs</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($activity['labels'] as $i => $label)
-                                    @php
-                                        $usersWidth = (int) round(($activity['users'][$i] / $maxUsers) * 100);
-                                        $contentWidth = (int) round(($activity['content'][$i] / $maxContent) * 100);
-                                        $errorsWidth = (int) round(($activity['errors'][$i] / $maxErrors) * 100);
-                                    @endphp
-                                    <tr>
-                                        <td class="fw-semibold">{{ $label }}</td>
-                                        <td style="min-width: 180px;">
-                                            <div class="d-flex align-items-center gap-2">
-                                                <div class="progress flex-grow-1" role="progressbar" aria-valuemin="0" aria-valuemax="{{ $maxUsers }}" aria-valuenow="{{ $activity['users'][$i] }}">
-                                                    <div class="progress-bar js-progress-width" data-progress-width="{{ $usersWidth }}"></div>
-                                                </div>
-                                                <span class="small text-muted">{{ $activity['users'][$i] }}</span>
-                                            </div>
-                                        </td>
-                                        <td style="min-width: 180px;">
-                                            <div class="d-flex align-items-center gap-2">
-                                                <div class="progress flex-grow-1" role="progressbar" aria-valuemin="0" aria-valuemax="{{ $maxContent }}" aria-valuenow="{{ $activity['content'][$i] }}">
-                                                    <div class="progress-bar bg-success js-progress-width" data-progress-width="{{ $contentWidth }}"></div>
-                                                </div>
-                                                <span class="small text-muted">{{ $activity['content'][$i] }}</span>
-                                            </div>
-                                        </td>
-                                        <td style="min-width: 180px;">
-                                            <div class="d-flex align-items-center gap-2">
-                                                <div class="progress flex-grow-1" role="progressbar" aria-valuemin="0" aria-valuemax="{{ $maxErrors }}" aria-valuenow="{{ $activity['errors'][$i] }}">
-                                                    <div class="progress-bar bg-danger js-progress-width" data-progress-width="{{ $errorsWidth }}"></div>
-                                                </div>
-                                                <span class="small text-muted">{{ $activity['errors'][$i] }}</span>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
+                    @foreach(($dashboard['module_health'] ?? []) as $item)
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <span>{{ $item['label'] ?? 'Module' }}</span>
+                            <span class="badge {{ ($item['status'] ?? '') === 'active' ? 'text-bg-success' : 'text-bg-secondary' }}">
+                                {{ $item['text'] ?? '-' }}
+                            </span>
+                        </div>
+                    @endforeach
+                    <div class="small text-muted mt-3">Les modules inactifs n'injectent pas leurs widgets dashboard.</div>
                 </div>
             </div>
         </div>
-    </div>
+    </section>
 
-    <div class="row g-4">
-        <div class="col-12 col-xl-8">
-            <div class="card mb-4">
-                <div class="card-header bg-white"><h2 class="h6 mb-0">Informations systeme</h2></div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-12 col-md-6">
-                            <div class="border rounded p-3 h-100">
-                                <p class="text-muted mb-1">Version CATMIN</p>
-                                <p class="h5 mb-0">{{ $systemInfo['catmin_version'] }}</p>
-                            </div>
-                        </div>
-                        <div class="col-12 col-md-6">
-                            <div class="border rounded p-3 h-100">
-                                <p class="text-muted mb-1">Laravel / PHP</p>
-                                <p class="h5 mb-0">{{ $systemInfo['laravel_version'] }} / {{ $systemInfo['php_version'] }}</p>
-                            </div>
-                        </div>
-                        <div class="col-12 col-md-6">
-                            <div class="border rounded p-3 h-100">
-                                <p class="text-muted mb-1">Environnement</p>
-                                <p class="h5 mb-0 text-capitalize">{{ $systemInfo['environment'] }}</p>
-                            </div>
-                        </div>
-                        <div class="col-12 col-md-6">
-                            <div class="border rounded p-3 h-100">
-                                <p class="text-muted mb-1">Chemin admin</p>
-                                <p class="h5 mb-0">/{{ $systemInfo['admin_path'] }}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card mt-4">
-                <div class="card-header bg-white"><h2 class="h6 mb-0">Etat du contenu</h2></div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-12 col-md-4">
-                            <div class="border rounded p-3 h-100">
-                                <p class="text-muted mb-2">Pages</p>
-                                <div class="d-flex justify-content-between"><span>Publiees</span><strong>{{ $contentStatus['pages']['published'] }}</strong></div>
-                                <div class="d-flex justify-content-between"><span>Brouillons/autres</span><strong>{{ $contentStatus['pages']['draft'] }}</strong></div>
-                            </div>
-                        </div>
-                        <div class="col-12 col-md-4">
-                            <div class="border rounded p-3 h-100">
-                                <p class="text-muted mb-2">Articles</p>
-                                <div class="d-flex justify-content-between"><span>Publies</span><strong>{{ $contentStatus['articles']['published'] }}</strong></div>
-                                <div class="d-flex justify-content-between"><span>Brouillons/autres</span><strong>{{ $contentStatus['articles']['draft'] }}</strong></div>
-                            </div>
-                        </div>
-                        <div class="col-12 col-md-4">
-                            <div class="border rounded p-3 h-100">
-                                <p class="text-muted mb-2">Produits shop</p>
-                                <div class="d-flex justify-content-between"><span>Actifs</span><strong>{{ $contentStatus['products']['active'] }}</strong></div>
-                                <div class="d-flex justify-content-between"><span>Inactifs/autres</span><strong>{{ $contentStatus['products']['inactive'] }}</strong></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <section>
+        <div class="d-flex align-items-center justify-content-between mb-2">
+            <h2 class="h5 mb-0">Widgets operationnels</h2>
+            <span class="text-muted small">Injectables par modules via registre dashboard</span>
         </div>
 
-        <div class="col-12 col-xl-4">
-            <div class="card">
-                <div class="card-header bg-white"><h2 class="h6 mb-0">Utilisateurs recents</h2></div>
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead><tr><th>Nom</th><th>Email</th><th>Roles</th></tr></thead>
-                        <tbody>
-                            @forelse($recentUsers as $user)
-                                <tr>
-                                    <td>{{ $user->name }}</td>
-                                    <td>{{ $user->email }}</td>
-                                    <td>{{ $user->roles->pluck('display_name')->filter()->join(', ') ?: $user->roles->pluck('name')->join(', ') ?: 'Aucun role' }}</td>
-                                </tr>
-                            @empty
-                                <tr><td colspan="3" class="text-center text-muted py-4">Aucun utilisateur.</td></tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+        <div class="row g-3">
+            @foreach($dashboardWidgets as $widget)
+                <div class="col-12 col-xxl-6">
+                    <article class="card h-100 catmin-widget catmin-widget--{{ $widget['tone'] ?? 'secondary' }}">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-start gap-2">
+                            <div>
+                                <h3 class="h6 mb-1">{{ $widget['title'] ?? 'Widget' }}</h3>
+                                @if(!empty($widget['subtitle']))
+                                    <p class="small text-muted mb-0">{{ $widget['subtitle'] }}</p>
+                                @endif
+                            </div>
+                            @if(!empty($widget['action']['url']) && (empty($widget['action']['permission']) || catmin_can($widget['action']['permission'])))
+                                <a class="btn btn-sm btn-outline-secondary" href="{{ $widget['action']['url'] }}">{{ $widget['action']['label'] ?? 'Ouvrir' }}</a>
+                            @endif
+                        </div>
+                        <div class="card-body">
+                            @if(empty($widget['items']))
+                                <p class="text-muted mb-0">{{ $widget['empty'] ?? 'Aucune donnee.' }}</p>
+                            @else
+                                <ul class="list-unstyled mb-0 d-grid gap-2">
+                                    @foreach($widget['items'] as $item)
+                                        <li class="catmin-widget-item">
+                                            <p class="fw-semibold mb-0">{{ $item['primary'] ?? '-' }}</p>
+                                            <p class="small text-muted mb-0">{{ $item['secondary'] ?? '' }}</p>
+                                            @if(!empty($item['meta']))
+                                                <span class="small text-muted">{{ $item['meta'] }}</span>
+                                            @endif
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            @endif
+                        </div>
+                    </article>
                 </div>
-            </div>
+            @endforeach
         </div>
-    </div>
+    </section>
 </div>
 @endsection
-
-@push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('.js-progress-width').forEach(function (element) {
-        var value = Number(element.getAttribute('data-progress-width') || 0);
-        var clamped = Math.max(0, Math.min(100, value));
-        element.style.width = clamped + '%';
-    });
-});
-</script>
-@endpush

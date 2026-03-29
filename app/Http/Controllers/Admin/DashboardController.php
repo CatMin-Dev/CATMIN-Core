@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Role;
 use App\Models\Setting;
 use App\Models\User;
+use App\Services\Dashboard\DashboardKpiService;
+use App\Services\Dashboard\DashboardWidgetRegistry;
 use App\Services\ModuleConfigService;
 use App\Services\ModuleLoader;
 use App\Services\ModuleManager;
@@ -23,16 +25,32 @@ use stdClass;
 
 class DashboardController extends Controller
 {
+    public function __construct(private readonly DashboardKpiService $dashboardKpiService)
+    {
+    }
+
     public function index(): View
     {
         $allModules = ModuleManager::all();
         $enabledModules = ModuleManager::enabled();
-        $activity = $this->buildWeeklyActivity();
-        $health = $this->buildSystemHealth();
-        $contentStatus = $this->buildContentStatus();
+        $dashboard = $this->dashboardKpiService->build();
+        $moduleWidgets = DashboardWidgetRegistry::collect([
+            'dashboard' => $dashboard,
+            'enabled_modules' => $enabledModules->pluck('slug')->values()->all(),
+        ]);
+        $dashboardWidgets = collect($dashboard['widgets'] ?? [])
+            ->merge($moduleWidgets)
+            ->sortBy([
+                ['order', 'asc'],
+                ['title', 'asc'],
+            ])
+            ->values()
+            ->all();
 
         return view('admin.pages.dashboard', [
             'currentPage' => 'dashboard',
+            'dashboard' => $dashboard,
+            'dashboardWidgets' => $dashboardWidgets,
             'stats' => [
                 'users' => User::count(),
                 'roles' => Role::count(),
@@ -48,10 +66,6 @@ class DashboardController extends Controller
                 'admin_path' => (string) config('catmin.admin.path', 'admin'),
             ],
             'enabledModules' => $enabledModules->take(8)->values(),
-            'recentUsers' => User::with('roles')->latest()->limit(5)->get(),
-            'activity' => $activity,
-            'health' => $health,
-            'contentStatus' => $contentStatus,
         ]);
     }
 
