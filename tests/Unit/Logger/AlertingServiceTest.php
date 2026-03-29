@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Logger;
 
+use App\Services\SettingService;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Schema;
@@ -27,6 +28,7 @@ class AlertingServiceTest extends TestCase
         app('db')->reconnect('sqlite');
 
         $this->createTables();
+        SettingService::forgetCache();
     }
 
     public function test_creates_critical_webhook_failed_alert(): void
@@ -43,6 +45,21 @@ class AlertingServiceTest extends TestCase
     private function createTables(): void
     {
         Schema::dropAllTables();
+
+        Schema::create('settings', function (Blueprint $table): void {
+            $table->id();
+            $table->string('key')->unique();
+            $table->string('label')->nullable();
+            $table->text('value')->nullable();
+            $table->string('type')->default('string');
+            $table->string('group')->nullable();
+            $table->text('description')->nullable();
+            $table->boolean('is_public')->default(false);
+            $table->boolean('is_editable')->default(true);
+            $table->text('options')->nullable();
+            $table->string('validation_rules', 500)->nullable();
+            $table->timestamps();
+        });
 
         Schema::create('system_alerts', function (Blueprint $table): void {
             $table->id();

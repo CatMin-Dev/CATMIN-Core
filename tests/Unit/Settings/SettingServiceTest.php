@@ -11,13 +11,15 @@ class SettingServiceTest extends TestCase
 {
     private function createTables(): void
     {
+        \Illuminate\Support\Facades\Schema::dropAllTables();
+
         \Illuminate\Support\Facades\DB::statement('CREATE TABLE IF NOT EXISTS settings (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             key VARCHAR(191) NOT NULL UNIQUE,
             label VARCHAR(191),
             value TEXT,
             type VARCHAR(50) DEFAULT "string",
-            group_name VARCHAR(100),
+            "group" VARCHAR(100),
             description TEXT,
             is_public BOOLEAN DEFAULT 0,
             is_editable BOOLEAN DEFAULT 1,
@@ -25,6 +27,21 @@ class SettingServiceTest extends TestCase
             validation_rules VARCHAR(500),
             created_at DATETIME,
             updated_at DATETIME
+        )');
+
+        \Illuminate\Support\Facades\DB::statement('CREATE TABLE IF NOT EXISTS webhooks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name VARCHAR(191),
+            url TEXT NOT NULL,
+            secret VARCHAR(191),
+            events TEXT,
+            status VARCHAR(50) DEFAULT "active",
+            created_at DATETIME,
+            updated_at DATETIME,
+            last_triggered_at DATETIME,
+            last_delivery_at DATETIME,
+            last_delivery_status INTEGER,
+            last_delivery_error TEXT
         )');
     }
 
