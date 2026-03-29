@@ -3,34 +3,71 @@
 namespace Modules\Queue\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Services\ModuleConfigService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Modules\Queue\Services\QueueAdminService;
 
 class QueueController extends Controller
 {
-    public function index(): View
+    public function __construct(private readonly QueueAdminService $queueService)
     {
-        $pending = $this->safeDatabaseCount('jobs');
-        $failed  = $this->safeDatabaseCount('failed_jobs');
+    }
 
-        $failedJobs = $this->safeFailedJobs();
+    public function index(Request $request): View
+    {
+        $filters = [
+            'status' => (string) $request->query('status', 'all'),
+            'queue' => (string) $request->query('queue', ''),
+            'q' => (string) $request->query('q', ''),
+        ];
+
+        if (!in_array($filters['status'], ['all', 'failed', 'pending'], true)) {
+            $filters['status'] = 'all';
+        }
+
+        $perPage = $this->queueService->failedJobsLimit();
+        $counters = $this->queueService->counters();
+
+        $failedJobs = $this->queueService->failedJobs($filters, $perPage);
+        $pendingJobs = $this->queueService->pendingJobs($filters, $perPage);
 
         return view('module_queue::index', [
             'currentPage' => 'queue',
-            'pending' => $pending,
-            'failed' => $failed,
+            'pending' => $counters['pending'],
+            'failed' => $counters['failed'],
             'connection' => config('queue.default', 'sync'),
             'failedJobs' => $failedJobs,
+            'pendingJobs' => $pendingJobs,
+            'filters' => $filters,
+            'queues' => $this->queueService->availableQueues(),
+        ]);
+    }
+
+    public function showJob(string $source, int $id): View|RedirectResponse
+    {
+        $job = $source === 'failed'
+            ? $this->queueService->failedDetail($id)
+            : $this->queueService->pendingDetail($id);
+
+        if (!$job) {
+            return redirect()->route('admin.queue.index')
+                ->with('error', 'Job introuvable.');
+        }
+
+        return view('module_queue::show', [
+            'currentPage' => 'queue',
+            'job' => $job,
         ]);
     }
 
     public function deleteFailedJob(int $id): RedirectResponse
     {
         try {
-            DB::table('failed_jobs')->where('id', $id)->delete();
+            $deleted = $this->queueService->deleteFailedIds([$id]);
+            if ($deleted < 1) {
+                return redirect()->route('admin.queue.index')->with('error', 'Job introuvable ou deja supprime.');
+            }
         } catch (\Throwable) {
             return redirect()->route('admin.queue.index')->with('error', 'Suppression échouée.');
         }
@@ -42,10 +79,9 @@ class QueueController extends Controller
     public function retryFailedJob(int $id): RedirectResponse
     {
         try {
-            $exitCode = Artisan::call('queue:retry', ['id' => [$id]]);
-
-            if ($exitCode !== 0) {
-                return redirect()->route('admin.queue.index')->with('error', 'Relance échouée.');
+            $retried = $this->queueService->retryFailedIds([$id]);
+            if ($retried < 1) {
+                return redirect()->route('admin.queue.index')->with('error', 'Aucun job relance.');
             }
         } catch (\Throwable) {
             return redirect()->route('admin.queue.index')->with('error', 'Relance échouée.');
@@ -55,20 +91,33 @@ class QueueController extends Controller
             ->with('success', 'Job relancé.');
     }
 
+    public function retrySelectedFailed(Request $request): RedirectResponse
+    {
+        $ids = $this->extractIds($request);
+        if ($ids === []) {
+            return redirect()->route('admin.queue.index')->with('error', 'Selection vide: aucun job relance.');
+        }
+
+        try {
+            $retried = $this->queueService->retryFailedIds($ids);
+        } catch (\Throwable) {
+            return redirect()->route('admin.queue.index')->with('error', 'Relance selectionnee echouee.');
+        }
+
+        return redirect()->route('admin.queue.index')
+            ->with('success', $retried . ' job(s) relance(s).');
+    }
+
     public function retryAllFailed(): RedirectResponse
     {
         try {
-            $ids = DB::table('failed_jobs')->pluck('id')->map(fn ($id) => (string) $id)->all();
+            $ids = $this->queueService->allFailedIds();
 
             if ($ids === []) {
                 return redirect()->route('admin.queue.index')->with('success', 'Aucun job à relancer.');
             }
 
-            $exitCode = Artisan::call('queue:retry', ['id' => $ids]);
-
-            if ($exitCode !== 0) {
-                return redirect()->route('admin.queue.index')->with('error', 'Relance globale échouée.');
-            }
+            $this->queueService->retryFailedIds($ids);
         } catch (\Throwable) {
             return redirect()->route('admin.queue.index')->with('error', 'Relance globale échouée.');
         }
@@ -77,10 +126,27 @@ class QueueController extends Controller
             ->with('success', 'Tous les jobs en échec ont été relancés.');
     }
 
+    public function clearSelectedFailed(Request $request): RedirectResponse
+    {
+        $ids = $this->extractIds($request);
+        if ($ids === []) {
+            return redirect()->route('admin.queue.index')->with('error', 'Selection vide: aucun job supprime.');
+        }
+
+        try {
+            $deleted = $this->queueService->deleteFailedIds($ids);
+        } catch (\Throwable) {
+            return redirect()->route('admin.queue.index')->with('error', 'Suppression selectionnee echouee.');
+        }
+
+        return redirect()->route('admin.queue.index')
+            ->with('success', $deleted . ' job(s) en echec supprime(s).');
+    }
+
     public function clearFailed(): RedirectResponse
     {
         try {
-            DB::table('failed_jobs')->truncate();
+            $this->queueService->clearFailed();
         } catch (\Throwable) {
             return redirect()->route('admin.queue.index')->with('error', 'Nettoyage échoué.');
         }
@@ -89,26 +155,16 @@ class QueueController extends Controller
             ->with('success', 'Tous les jobs en échec ont été supprimés.');
     }
 
-    private function safeDatabaseCount(string $table): int
+    /**
+     * @return array<int, int>
+     */
+    private function extractIds(Request $request): array
     {
-        try {
-            return (int) DB::table($table)->count();
-        } catch (\Throwable) {
-            return 0;
-        }
-    }
-
-    private function safeFailedJobs(): \Illuminate\Support\Collection
-    {
-        try {
-            $limit = (int) ModuleConfigService::get('queue', 'failed_jobs_limit', 20);
-
-            return DB::table('failed_jobs')
-                ->orderByDesc('failed_at')
-                ->limit(max(1, $limit))
-                ->get();
-        } catch (\Throwable) {
-            return collect();
-        }
+        return collect((array) $request->input('ids', []))
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn ($id) => $id > 0)
+            ->unique()
+            ->values()
+            ->all();
     }
 }

@@ -186,7 +186,7 @@ class DashboardKpiService
                 'description' => 'Queue a relancer',
                 'icon' => 'bi bi-exclamation-triangle',
                 'permission' => 'module.queue.list',
-                'url' => $this->routeUrl('queue.index'),
+                'url' => $this->routeUrl('queue.index', ['status' => 'failed']),
             ],
             [
                 'id' => 'webhooks_failed',
@@ -260,7 +260,7 @@ class DashboardKpiService
                 'severity' => 'warning',
                 'title' => 'Queue en echec',
                 'message' => $index['failed_jobs'] . ' job(s) failed en attente.',
-                'url' => $this->routeUrl('queue.index'),
+                'url' => $this->routeUrl('queue.index', ['status' => 'failed']),
                 'permission' => 'module.queue.list',
             ];
         }
@@ -403,7 +403,7 @@ class DashboardKpiService
                 'empty' => 'Aucun job failed.',
                 'action' => [
                     'label' => 'Ouvrir queue',
-                    'url' => $this->routeUrl('queue.index'),
+                    'url' => $this->routeUrl('queue.index', ['status' => 'failed']),
                     'permission' => 'module.queue.list',
                 ],
             ],
