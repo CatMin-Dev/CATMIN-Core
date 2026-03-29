@@ -3,6 +3,7 @@
 namespace App\Services\Dashboard;
 
 use App\Services\ModuleManager;
+use App\Services\MonitoringService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
@@ -325,6 +326,12 @@ class DashboardKpiService
                 'permission' => 'module.logger.list',
             ],
             [
+                'label' => 'Monitoring center',
+                'icon' => 'bi bi-activity',
+                'url' => $this->routeUrl('monitoring.index'),
+                'permission' => 'module.logger.list',
+            ],
+            [
                 'label' => 'Voir modules',
                 'icon' => 'bi bi-puzzle',
                 'url' => $this->routeUrl('modules.index'),
@@ -378,7 +385,10 @@ class DashboardKpiService
      */
     private function defaultWidgets(array $index): array
     {
+        $monitoringWidget = $this->monitoringWidget();
+
         return [
+            $monitoringWidget,
             [
                 'id' => 'critical-incidents',
                 'title' => 'Derniers incidents critiques',
@@ -462,6 +472,51 @@ class DashboardKpiService
                     'url' => $this->routeUrl('shop.manage'),
                     'permission' => 'module.shop.list',
                 ],
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function monitoringWidget(): array
+    {
+        $report = app(MonitoringService::class)->buildDashboardReport(5);
+        $global = (array) ($report['global'] ?? []);
+        $status = (string) ($global['status'] ?? 'ok');
+
+        $tone = match ($status) {
+            'critical' => 'danger',
+            'degraded' => 'warning',
+            'warning' => 'info',
+            default => 'secondary',
+        };
+
+        $items = [
+            [
+                'primary' => 'Statut global: ' . strtoupper($status),
+                'secondary' => 'Score monitoring ' . (int) ($global['score'] ?? 100) . '/100',
+                'meta' => 'Observabilite transverse systeme',
+            ],
+            [
+                'primary' => 'Incidents ouverts',
+                'secondary' => (string) collect((array) ($report['incidents'] ?? []))->count(),
+                'meta' => 'Inclut warning/degraded/critical',
+            ],
+        ];
+
+        return [
+            'id' => 'monitoring-overview',
+            'title' => 'Monitoring center',
+            'subtitle' => 'Sante globale et incidents correles',
+            'order' => 5,
+            'tone' => $tone,
+            'items' => $items,
+            'empty' => 'Aucune donnee monitoring.',
+            'action' => [
+                'label' => 'Ouvrir monitoring',
+                'url' => $this->routeUrl('monitoring.index'),
+                'permission' => 'module.logger.list',
             ],
         ];
     }

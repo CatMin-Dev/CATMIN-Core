@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Logger\Controllers\Admin\AlertController;
 use Modules\Logger\Controllers\Admin\LogController;
+use Modules\Logger\Controllers\Admin\MonitoringController;
 
 Route::middleware(['web', 'catmin.admin'])
     ->prefix(config('catmin.admin.path', 'admin'))
@@ -23,4 +24,16 @@ Route::middleware(['web', 'catmin.admin'])
         Route::post('/logs/alerts/acknowledge', [AlertController::class, 'acknowledge'])
             ->middleware('catmin.permission:module.logger.list')
             ->name('logger.alerts.acknowledge');
+
+        Route::get('/monitoring', [MonitoringController::class, 'index'])
+            ->middleware('catmin.permission:module.logger.list')
+            ->name('monitoring.index');
+
+        Route::get('/monitoring/incidents', [MonitoringController::class, 'incidents'])
+            ->middleware('catmin.permission:module.logger.list')
+            ->name('monitoring.incidents');
+
+        Route::post('/monitoring/snapshot', [MonitoringController::class, 'snapshot'])
+            ->middleware('catmin.permission:module.logger.list')
+            ->name('monitoring.snapshot');
     });

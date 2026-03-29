@@ -65,6 +65,7 @@ Ajouter des fichiers `.md` dans `docs-site/` pour la documentation générale (a
 Le guide QA final est disponible dans:
 
 - `docs-site/QA_FINAL_GATE_340.md`
+- `docs-site/MONITORING_CENTER_341.md`
 
 Commande de gate:
 

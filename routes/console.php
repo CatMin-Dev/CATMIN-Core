@@ -16,6 +16,7 @@ Artisan::command('inspire', function () {
 */
 
 use Illuminate\Support\Facades\Schedule;
+use App\Services\MonitoringService;
 use Modules\Cron\Services\CronService;
 use Modules\Logger\Services\LogMaintenanceService;
 use Modules\Webhooks\Services\WebhookDispatcher;
@@ -34,6 +35,14 @@ Schedule::call(function (): void {
     $svc = app(LogMaintenanceService::class);
     $svc->rotateDaily($svc->resolvedRetentionDays(), $svc->resolvedArchiveRetentionDays());
 })->dailyAt('02:30')->name('logger.rotate-daily')->withoutOverlapping();
+
+Schedule::call(function (): void {
+    app(MonitoringService::class)->captureSnapshot();
+})->everyFiveMinutes()->name('monitoring.snapshot')->withoutOverlapping();
+
+Schedule::call(function (): void {
+    app(MonitoringService::class)->pruneSnapshots(30);
+})->dailyAt('03:30')->name('monitoring.prune')->withoutOverlapping();
 
 // Clean up expired webhook nonces daily
 Schedule::call(function (): void {

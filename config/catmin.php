@@ -277,6 +277,14 @@ return [
                         'permission' => 'module.logger.menu',
                     ],
                     [
+                        'label' => 'Monitoring',
+                        'icon' => 'bi bi-activity',
+                        'route' => 'monitoring.index',
+                        'active_when' => ['monitoring.*'],
+                        'module' => 'logger',
+                        'permission' => 'module.logger.list',
+                    ],
+                    [
                         'label' => 'Cache',
                         'icon' => 'bi bi-lightning-charge',
                         'route' => 'cache.index',
