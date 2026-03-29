@@ -215,13 +215,13 @@ class QaFinalGateService
             'details' => $appKey !== '' ? 'Cle presente.' : 'APP_KEY manquante.',
         ];
 
-        $apiPrefix = trim((string) config('catmin.api.external.prefix', 'api/v2'));
+        $apiPrefix = trim((string) config('catmin.api.prefix', 'api/internal'));
         $checks[] = [
             'id' => 'security_api_prefix',
-            'label' => 'API externe prefix',
+            'label' => 'API interne prefix',
             'ok' => $apiPrefix !== '',
             'severity' => 'warning',
-            'details' => $apiPrefix !== '' ? 'Prefixe configure: ' . $apiPrefix : 'Prefixe API externe vide.',
+            'details' => $apiPrefix !== '' ? 'Prefixe configure: ' . $apiPrefix : 'Prefixe API interne vide.',
         ];
 
         return $checks;

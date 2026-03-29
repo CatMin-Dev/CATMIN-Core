@@ -453,15 +453,13 @@ class MonitoringService
     private function checkApi(): array
     {
         $internalPrefix = trim((string) config('catmin.api.prefix', 'api/internal'));
-        $externalPrefix = trim((string) config('catmin.api.external.prefix', 'api/v2'));
-
-        $ok = $internalPrefix !== '' && $externalPrefix !== '';
+        $ok = $internalPrefix !== '';
         $warningCount = 0;
 
         try {
             if (DB::getSchemaBuilder()->hasTable('system_logs')) {
                 $warningCount = DB::table('system_logs')
-                    ->where('channel', 'external-api')
+                    ->where('channel', 'api')
                     ->whereIn('level', ['warning', 'error', 'critical', 'alert'])
                     ->where('created_at', '>=', now()->subHour())
                     ->count();
@@ -477,8 +475,8 @@ class MonitoringService
             status: $status,
             title: 'Etat API',
             message: $ok
-                ? sprintf('prefix internes/externe OK (%s | %s), warnings_api_1h=%d', $internalPrefix, $externalPrefix, $warningCount)
-                : 'Prefixes API incomplets.',
+                ? sprintf('prefix interne OK (%s), warnings_api_1h=%d', $internalPrefix, $warningCount)
+                : 'Prefixe API interne incomplet.',
             metric: $ok ? $warningCount : 1,
             threshold: 3,
             actions: []

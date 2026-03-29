@@ -176,7 +176,7 @@ php artisan test --no-coverage 2>&1 | tail -20
 3. Pages/Articles/Media list + search works
 4. Settings accès OK
 5. Queue/Cron/Logs visible
-6. API v2 test: `curl -H "api_key: ..." /api/v2/pages/published?page=1`
+6. API interne test: `curl -H "X-Catmin-Token: ..." /api/internal/system/version`
 
 ### 2.6 Logs/Monitoring check (10m)
 1. 0 critical incidents visible en monitoring
@@ -274,8 +274,9 @@ curl -s -H "Authorization: Bearer $INTERNAL_TOKEN" \
   https://app.com/api/internal/health | jq .status
 # Expected: "ok"
 
-# 4. External API
-curl -s "https://app.com/api/v2/pages/published?page=1" | jq .success
+# 4. Internal API
+curl -s -H "X-Catmin-Token: $INTERNAL_TOKEN" \
+    "https://app.com/api/internal/system/version" | jq .success
 # Expected: true
 
 # 5. Database connection (via command)

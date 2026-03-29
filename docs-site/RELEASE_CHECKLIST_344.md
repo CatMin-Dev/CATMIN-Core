@@ -76,7 +76,7 @@ php artisan tinker --execute "echo \Modules\Logger\Models\MonitoringIncident::wh
 4. [ ] Settings `/admin/settings` → accès + sauvegarde OK
 5. [ ] API test:
    ```bash
-   curl -s "http://localhost:8000/api/v2/pages/published?page=1" | jq .success
+   curl -s -H "X-Catmin-Token: $INTERNAL_TOKEN" "http://localhost:8000/api/internal/system/version" | jq .success
    # Résultat: true
    ```
 6. [ ] Queue listing visible

@@ -2,17 +2,10 @@
 
 use App\Http\Middleware\EnsureCatminAdminAuthenticated;
 use App\Http\Middleware\EnsureCatminApiToken;
-use App\Http\Middleware\EnsureCatminApiV1Credential;
-use App\Http\Middleware\EnsureCatminApiScope;
-use App\Http\Middleware\EnsureCatminExternalApiKey;
-use App\Http\Middleware\EnforceCatminApiRateLimit;
 use App\Http\Middleware\EnsureCatminFrontendAvailable;
 use App\Http\Middleware\EnsureCatminPermission;
 use App\Http\Middleware\ApplySecurityHeaders;
-use App\Http\Middleware\LogCatminExternalApi;
 use App\Http\Middleware\LogRequestPerformance;
-use App\Services\Api\V1Response;
-use App\Services\Api\V2Response;
 use App\Services\AddonLoader;
 use App\Services\CatminHookLoader;
 use App\Services\ModuleLoader;
@@ -49,26 +42,6 @@ return Application::configure(basePath: dirname(__DIR__))
                 return Limit::perMinute(5)->by($request->ip() . '|' . $email);
             });
 
-            RateLimiter::for('catmin-external-api', function (Request $request) {
-                $identity = 'ip:' . $request->ip();
-                $auth = (string) $request->header('Authorization', '');
-                $token = '';
-
-                if (str_starts_with($auth, 'Bearer ')) {
-                    $token = trim(substr($auth, 7));
-                } elseif ($request->header('X-Catmin-Key')) {
-                    $token = (string) $request->header('X-Catmin-Key');
-                }
-
-                if ($token !== '') {
-                    $identity = 'key:' . substr(hash('sha256', $token), 0, 16);
-                }
-
-                $max = (int) config('catmin.api.external.rate_limit_per_minute', 120);
-
-                return Limit::perMinute($max)->by($identity);
-            });
-
             ModuleLoader::registerRoutes(app('router'));
             AddonLoader::registerRoutes(app('router'));
             CatminHookLoader::load();
@@ -82,12 +55,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'catmin.admin' => EnsureCatminAdminAuthenticated::class,
             'catmin.permission' => EnsureCatminPermission::class,
             'catmin.api-token' => EnsureCatminApiToken::class,
-            'catmin.api-v1-auth' => EnsureCatminApiV1Credential::class,
-            'catmin.api-scope' => EnsureCatminApiScope::class,
-            'catmin.api-rate-limit' => EnforceCatminApiRateLimit::class,
             'catmin.frontend.available' => EnsureCatminFrontendAvailable::class,
-            'catmin.external-api-key' => EnsureCatminExternalApiKey::class,
-            'catmin.external-api-log' => LogCatminExternalApi::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
@@ -101,12 +69,6 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // 401 — Unauthenticated
         $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, Request $request) {
-            if ($request->is('api/v1/*')) {
-                return V1Response::error('unauthenticated', 'Authentication required.', 401);
-            }
-            if ($request->is('api/v2/*')) {
-                return V2Response::error('unauthenticated', 'Authentication required.', 401);
-            }
             if ($request->expectsJson()) {
                 return response()->json(['success' => false, 'message' => 'Non authentifie.'], 401);
             }
@@ -115,52 +77,36 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // 403 — Authorization
         $exceptions->render(function (\Illuminate\Auth\Access\AuthorizationException $e, Request $request) {
-            if ($request->is('api/v1/*')) {
-                return V1Response::error('forbidden', 'Access denied.', 403);
-            }
-            if ($request->is('api/v2/*')) {
-                return V2Response::error('forbidden', 'Access denied.', 403);
-            }
             if ($request->expectsJson()) {
                 return response()->json(['success' => false, 'message' => 'Acces refuse.'], 403);
             }
             return response()->view('admin.pages.errors.403', [], 403);
         });
 
-        // 422 — Validation errors for API v2
         $exceptions->render(function (\Illuminate\Validation\ValidationException $e, Request $request) {
-            if ($request->is('api/v1/*')) {
-                return V1Response::error('validation_error', 'Validation failed.', 422, [
-                    'fields' => $e->errors(),
-                ]);
-            }
-
-            if (!$request->is('api/v2/*')) {
+            if (!$request->expectsJson()) {
                 return null;
             }
 
-            return V2Response::error('validation_error', 'Validation failed.', 422, [
-                'fields' => $e->errors(),
-            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed.',
+                'errors' => $e->errors(),
+            ], 422);
         });
 
-        // Generic HTTP errors normalization for API v2
         $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $e, Request $request) {
-            if ($request->is('api/v1/*')) {
-                $status = $e->getStatusCode();
-                $message = $e->getMessage() !== '' ? $e->getMessage() : 'HTTP error';
-
-                return V1Response::error('http_error', $message, $status);
-            }
-
-            if (!$request->is('api/v2/*')) {
+            if (!$request->expectsJson()) {
                 return null;
             }
 
             $status = $e->getStatusCode();
             $message = $e->getMessage() !== '' ? $e->getMessage() : 'HTTP error';
 
-            return V2Response::error('http_error', $message, $status);
+            return response()->json([
+                'success' => false,
+                'message' => $message,
+            ], $status);
         });
 
         $exceptions->report(function (\Throwable $throwable): void {

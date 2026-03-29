@@ -216,16 +216,10 @@ class HealthCheckService
     protected static function checkApiStatus(): array
     {
         $internalPrefix = (string) config('catmin.api.prefix', 'api/internal');
-        $externalEnabled = (bool) config('catmin.api.external.enabled', true);
-        $externalPrefix = (string) config('catmin.api.external.prefix', 'api/v2');
 
         $errors = [];
         if ($internalPrefix === '') {
             $errors[] = 'prefix API interne vide';
-        }
-
-        if ($externalEnabled && $externalPrefix === '') {
-            $errors[] = 'prefix API externe vide';
         }
 
         return [
@@ -233,12 +227,10 @@ class HealthCheckService
             'label' => 'Etat des APIs',
             'ok' => $errors === [],
             'details' => $errors === []
-                ? sprintf('Interne=%s, Externe=%s (%s).', $internalPrefix, $externalEnabled ? 'on' : 'off', $externalPrefix)
+                ? sprintf('Interne=%s.', $internalPrefix)
                 : implode('; ', $errors),
             'metrics' => [
                 'internal_prefix' => $internalPrefix,
-                'external_enabled' => $externalEnabled,
-                'external_prefix' => $externalPrefix,
             ],
         ];
     }

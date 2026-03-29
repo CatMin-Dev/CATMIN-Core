@@ -92,6 +92,6 @@ final class LogRequestPerformance
             return true;
         }
 
-        return str_starts_with($path, 'api/v1/') || str_starts_with($path, 'api/v2/');
+        return str_starts_with($path, 'api/');
     }
 }

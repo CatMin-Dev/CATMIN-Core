@@ -43,7 +43,7 @@ version: V2.5
 status: current
 category: api
 tags: api,security,scopes
-summary: Gouvernance de l'API externe.
+summary: Gouvernance de l'API interne.
 ---
 ```
 
@@ -92,7 +92,6 @@ Le guide QA final est disponible dans:
 - `docs-site/MONITORING_CENTER_341.md`
 - `docs-site/PERFORMANCE_PROFILING_342.md`
 - `docs-site/SECURITY_HARDENING_343.md`
-- `docs-site/API_GOVERNANCE_345.md`
 - `docs-site/MAILER_RELIABILITY_346.md`
 - `docs-site/DOC_SYSTEM_347.md`
 

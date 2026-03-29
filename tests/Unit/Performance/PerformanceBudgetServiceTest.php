@@ -23,9 +23,9 @@ class PerformanceBudgetServiceTest extends TestCase
                 'max_slow_queries' => 0,
             ],
             [
-                'key' => 'api.v2.pages',
+                'key' => 'api.internal.pages',
                 'label' => 'API Pages',
-                'path' => 'api/v2/pages/published',
+                'path' => 'api/internal/pages/published',
                 'target_response_ms' => 250,
                 'max_response_ms' => 500,
                 'max_queries' => 6,
@@ -44,10 +44,10 @@ class PerformanceBudgetServiceTest extends TestCase
         });
 
         $dashboard = $service->budgetForRequest($request);
-        $api = $service->budgetForContext(['path' => 'api/v2/pages/published']);
+        $api = $service->budgetForContext(['path' => 'api/internal/pages/published']);
 
         $this->assertSame('admin.dashboard', $dashboard['key']);
-        $this->assertSame('api.v2.pages', $api['key']);
+        $this->assertSame('api.internal.pages', $api['key']);
     }
 
     #[Test]
