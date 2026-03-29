@@ -14,6 +14,9 @@ class ApiKey extends Model
         'expires_at',
         'last_used_at',
         'last_used_ip',
+        'usage_count',
+        'revoked_at',
+        'created_by',
         'notes',
     ];
 
@@ -24,6 +27,7 @@ class ApiKey extends Model
             'is_active' => 'boolean',
             'expires_at' => 'datetime',
             'last_used_at' => 'datetime',
+            'revoked_at' => 'datetime',
         ];
     }
 

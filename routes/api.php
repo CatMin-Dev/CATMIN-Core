@@ -27,19 +27,20 @@ Route::prefix('internal')->group(function (): void {
 });
 
 Route::prefix('v2')
-    ->middleware(['throttle:catmin-external-api', 'catmin.external-api-log'])
+    ->middleware(['catmin.external-api-log'])
     ->group(function (): void {
         // Public endpoints
-        Route::get('/health', [ExternalSystemController::class, 'health']);
-        Route::get('/version', [ExternalSystemController::class, 'version']);
-        Route::get('/settings/public', [PublicContentController::class, 'settings']);
-        Route::get('/pages/published', [PublicContentController::class, 'pages']);
-        Route::get('/articles/published', [PublicContentController::class, 'articles']);
-        Route::get('/shop/products', [PublicContentController::class, 'shopProducts']);
+        Route::get('/health', [ExternalSystemController::class, 'health'])->middleware('catmin.api-rate-limit:public-read');
+        Route::get('/version', [ExternalSystemController::class, 'version'])->middleware('catmin.api-rate-limit:public-read');
+        Route::get('/settings/public', [PublicContentController::class, 'settings'])->middleware('catmin.api-rate-limit:public-read');
+        Route::get('/pages/published', [PublicContentController::class, 'pages'])->middleware('catmin.api-rate-limit:public-read');
+        Route::get('/articles/published', [PublicContentController::class, 'articles'])->middleware('catmin.api-rate-limit:public-read');
+        Route::get('/shop/products', [PublicContentController::class, 'shopProducts'])->middleware('catmin.api-rate-limit:public-read');
 
         // Protected external endpoints
-        Route::middleware('catmin.external-api-key:external.read')->group(function (): void {
-            Route::get('/system/status', [ExternalSystemController::class, 'status']);
+        Route::middleware(['catmin.external-api-key', 'catmin.api-rate-limit:authenticated-read'])->group(function (): void {
+            Route::get('/system/status', [ExternalSystemController::class, 'status'])
+                ->middleware('catmin.api-scope:external.read');
         });
     });
 

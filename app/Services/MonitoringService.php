@@ -456,16 +456,31 @@ class MonitoringService
         $externalPrefix = trim((string) config('catmin.api.external.prefix', 'api/v2'));
 
         $ok = $internalPrefix !== '' && $externalPrefix !== '';
+        $warningCount = 0;
+
+        try {
+            if (DB::getSchemaBuilder()->hasTable('system_logs')) {
+                $warningCount = DB::table('system_logs')
+                    ->where('channel', 'external-api')
+                    ->whereIn('level', ['warning', 'error', 'critical', 'alert'])
+                    ->where('created_at', '>=', now()->subHour())
+                    ->count();
+            }
+        } catch (\Throwable) {
+            $warningCount = 0;
+        }
+
+        $status = !$ok ? 'warning' : self::classifyByThreshold($warningCount, 3, 8, 15);
 
         return $this->checkRow(
             domain: 'api',
-            status: $ok ? 'ok' : 'warning',
+            status: $status,
             title: 'Etat API',
             message: $ok
-                ? sprintf('prefix internes/externe OK (%s | %s)', $internalPrefix, $externalPrefix)
+                ? sprintf('prefix internes/externe OK (%s | %s), warnings_api_1h=%d', $internalPrefix, $externalPrefix, $warningCount)
                 : 'Prefixes API incomplets.',
-            metric: $ok ? 0 : 1,
-            threshold: 0,
+            metric: $ok ? $warningCount : 1,
+            threshold: 3,
             actions: []
         );
     }

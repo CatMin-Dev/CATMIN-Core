@@ -141,6 +141,45 @@ return [
             'prefix' => env('CATMIN_EXTERNAL_API_PREFIX', 'api/v2'),
             'rate_limit_per_minute' => (int) env('CATMIN_EXTERNAL_API_RATE_LIMIT', 120),
             'default_scope' => 'external.read',
+            'scope_profiles' => [
+                'readonly' => ['external.read', 'pages.read', 'articles.read', 'media.read', 'shop.read'],
+                'content-manager' => ['pages.*', 'articles.*', 'media.*'],
+                'shop-manager' => ['shop.*'],
+                'ops-reader' => ['ops.read', 'external.read'],
+            ],
+            'rate_limits' => [
+                'default' => [
+                    'limit' => (int) env('CATMIN_EXTERNAL_API_RATE_LIMIT', 120),
+                    'decay_seconds' => 60,
+                    'abuse_block_seconds' => 600,
+                ],
+                'public-read' => [
+                    'limit' => (int) env('CATMIN_EXTERNAL_API_PUBLIC_RATE_LIMIT', 120),
+                    'decay_seconds' => 60,
+                    'abuse_block_seconds' => 600,
+                ],
+                'authenticated-read' => [
+                    'limit' => (int) env('CATMIN_EXTERNAL_API_AUTH_RATE_LIMIT', 90),
+                    'decay_seconds' => 60,
+                    'abuse_block_seconds' => 600,
+                ],
+                'write' => [
+                    'limit' => (int) env('CATMIN_EXTERNAL_API_WRITE_RATE_LIMIT', 30),
+                    'decay_seconds' => 60,
+                    'abuse_block_seconds' => 900,
+                ],
+                'sensitive' => [
+                    'limit' => (int) env('CATMIN_EXTERNAL_API_SENSITIVE_RATE_LIMIT', 10),
+                    'decay_seconds' => 60,
+                    'abuse_block_seconds' => 1200,
+                ],
+            ],
+            'abuse' => [
+                'invalid_credentials_threshold' => (int) env('CATMIN_EXTERNAL_API_INVALID_THRESHOLD', 5),
+                'scope_denied_threshold' => (int) env('CATMIN_EXTERNAL_API_SCOPE_DENIED_THRESHOLD', 8),
+                'rate_limit_hit_threshold' => (int) env('CATMIN_EXTERNAL_API_RATE_HIT_THRESHOLD', 10),
+                'block_seconds' => (int) env('CATMIN_EXTERNAL_API_BLOCK_SECONDS', 600),
+            ],
         ],
     ],
 

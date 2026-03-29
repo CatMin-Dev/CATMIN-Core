@@ -3,7 +3,9 @@
 namespace Tests\Feature;
 
 use App\Models\ApiKey;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use Modules\Pages\Models\Page;
 use Tests\TestCase;
 
@@ -18,6 +20,19 @@ class ApiV1ExternalCrudTest extends TestCase
         }
 
         parent::setUp();
+
+        if (!Schema::hasTable('pages')) {
+            Schema::create('pages', function (Blueprint $table): void {
+                $table->id();
+                $table->string('title');
+                $table->string('slug')->unique();
+                $table->text('content')->nullable();
+                $table->text('excerpt')->nullable();
+                $table->string('status', 32)->default('draft');
+                $table->timestamp('published_at')->nullable();
+                $table->timestamps();
+            });
+        }
     }
 
     public function test_pages_index_requires_api_credential(): void

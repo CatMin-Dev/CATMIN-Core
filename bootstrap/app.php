@@ -3,7 +3,9 @@
 use App\Http\Middleware\EnsureCatminAdminAuthenticated;
 use App\Http\Middleware\EnsureCatminApiToken;
 use App\Http\Middleware\EnsureCatminApiV1Credential;
+use App\Http\Middleware\EnsureCatminApiScope;
 use App\Http\Middleware\EnsureCatminExternalApiKey;
+use App\Http\Middleware\EnforceCatminApiRateLimit;
 use App\Http\Middleware\EnsureCatminFrontendAvailable;
 use App\Http\Middleware\EnsureCatminPermission;
 use App\Http\Middleware\ApplySecurityHeaders;
@@ -81,6 +83,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'catmin.permission' => EnsureCatminPermission::class,
             'catmin.api-token' => EnsureCatminApiToken::class,
             'catmin.api-v1-auth' => EnsureCatminApiV1Credential::class,
+            'catmin.api-scope' => EnsureCatminApiScope::class,
+            'catmin.api-rate-limit' => EnforceCatminApiRateLimit::class,
             'catmin.frontend.available' => EnsureCatminFrontendAvailable::class,
             'catmin.external-api-key' => EnsureCatminExternalApiKey::class,
             'catmin.external-api-log' => LogCatminExternalApi::class,

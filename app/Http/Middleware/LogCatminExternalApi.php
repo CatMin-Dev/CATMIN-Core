@@ -34,6 +34,8 @@ final class LogCatminExternalApi
                     'api_key_id' => $request->attributes->get('catmin_api_key_id'),
                     'api_key_name' => $request->attributes->get('catmin_api_key_name'),
                     'api_scopes' => (array) $request->attributes->get('catmin_api_key_scopes', []),
+                    'api_scope' => $request->attributes->get('catmin_api_scope'),
+                    'rate_limit_profile' => $response->headers->get('X-Catmin-RateLimit-Profile'),
                 ],
                 $response->getStatusCode() >= 400 ? 'warning' : 'info',
                 'external-api'
