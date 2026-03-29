@@ -33,6 +33,10 @@ Schedule::call(function (): void {
 })->weekly()->name('cron.queue-prune')->withoutOverlapping();
 
 Schedule::call(function (): void {
+    CronService::runDueCustomTasks();
+})->everyMinute()->name('cron.custom-tasks')->withoutOverlapping();
+
+Schedule::call(function (): void {
     $svc = app(LogMaintenanceService::class);
     $svc->rotateDaily($svc->resolvedRetentionDays(), $svc->resolvedArchiveRetentionDays());
 })->dailyAt('02:30')->name('logger.rotate-daily')->withoutOverlapping();

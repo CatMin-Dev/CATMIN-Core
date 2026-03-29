@@ -195,7 +195,11 @@
 
     @if($logs->hasPages())
         <div class="mt-3">
-            <x-admin.crud.pagination :paginator="$logs" />
+            <x-admin.crud.pagination
+                :paginator="$logs"
+                route-name="admin.logger.index"
+                :query="request()->except('page')"
+            />
         </div>
     @endif
 

@@ -5,8 +5,8 @@
 @section('content')
 <header class="catmin-page-header d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-3">
     <div>
-        <h1 class="h3 mb-1">Pilotage CATMIN</h1>
-        <p class="text-muted mb-0">KPIs metier, incidents et actions prioritaires en un ecran.</p>
+        <h1 class="h3 mb-1">Dashboard principal CATMIN</h1>
+        <p class="text-muted mb-0">Vue d'ensemble des activites, incidents et priorites operationnelles.</p>
     </div>
     <div class="small text-muted">
         Derniere consolidation: {{ optional($dashboard['generated_at'] ?? null)->format('d/m/Y H:i') }}
@@ -14,28 +14,65 @@
 </header>
 
 <div class="catmin-page-body">
-    @if(!empty($dashboard['alerts']))
-        <div class="catmin-dashboard-alerts mb-4">
-            @foreach($dashboard['alerts'] as $alert)
-                @php($severity = (string) ($alert['severity'] ?? 'warning'))
-                @php($class = $severity === 'critical' ? 'danger' : ($severity === 'warning' ? 'warning' : 'info'))
-                @php($canOpen = !empty($alert['url']) && (empty($alert['permission']) || catmin_can($alert['permission'])))
-                <div class="alert alert-{{ $class }} d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-2 mb-2" role="alert">
-                    <div>
-                        <strong>{{ $alert['title'] ?? 'Alerte' }}</strong>
-                        <div class="small">{{ $alert['message'] ?? '' }}</div>
+    <section class="mb-4">
+        <div class="card">
+            <div class="card-header bg-white d-flex align-items-center justify-content-between">
+                <h2 class="h6 mb-0">Versioning dashboard</h2>
+                <span class="badge {{ !empty($systemInfo['dashboard_is_up_to_date']) ? 'text-bg-success' : 'text-bg-warning' }}">
+                    {{ !empty($systemInfo['dashboard_is_up_to_date']) ? 'Dashboard a jour' : 'Dashboard a verifier' }}
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="row g-3 small">
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <div class="text-muted">Version dashboard</div>
+                        <div class="fw-semibold">{{ $systemInfo['dashboard_version'] ?? 'n/a' }}</div>
                     </div>
-                    @if($canOpen)
-                        <a class="btn btn-sm btn-outline-dark" href="{{ $alert['url'] }}">Ouvrir</a>
-                    @endif
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <div class="text-muted">Version attendue (phase)</div>
+                        <div class="fw-semibold">{{ $systemInfo['expected_dashboard_version'] ?? 'n/a' }}</div>
+                    </div>
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <div class="text-muted">Revision git</div>
+                        <div class="fw-semibold">{{ $systemInfo['revision'] ?? 'n/a' }}</div>
+                    </div>
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <div class="text-muted">Branche</div>
+                        <div class="fw-semibold">
+                            {{ $systemInfo['branch'] ?? 'n/a' }}
+                            @if(!empty($systemInfo['is_dirty']))
+                                <span class="badge text-bg-warning ms-1">dirty</span>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <div class="text-muted">Laravel</div>
+                        <div class="fw-semibold">{{ $systemInfo['laravel_version'] ?? 'n/a' }}</div>
+                    </div>
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <div class="text-muted">PHP</div>
+                        <div class="fw-semibold">{{ $systemInfo['php_version'] ?? 'n/a' }}</div>
+                    </div>
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <div class="text-muted">Environnement</div>
+                        <div class="fw-semibold">{{ $systemInfo['environment'] ?? 'n/a' }}</div>
+                    </div>
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <div class="text-muted">Admin path</div>
+                        <div class="fw-semibold">/{{ $systemInfo['admin_path'] ?? 'admin' }}</div>
+                    </div>
                 </div>
-            @endforeach
+            </div>
         </div>
+    </section>
+
+    @if(!empty($dashboard['alerts']))
+        <x-admin.ui.notifications :items="$dashboard['alerts']" :floating="true" />
     @endif
 
     <section class="mb-4">
         <div class="d-flex align-items-center justify-content-between mb-2">
-            <h2 class="h5 mb-0">KPIs cles</h2>
+            <h2 class="h5 mb-0">Indicateurs cles</h2>
             <span class="text-muted small">Cliquez un indicateur pour agir</span>
         </div>
         <div class="catmin-kpi-grid">

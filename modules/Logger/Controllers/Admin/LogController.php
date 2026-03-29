@@ -16,7 +16,7 @@ class LogController extends Controller
     {
     }
 
-    public function index(Request $request): View
+    public function index(Request $request, ?int $page = 1): View
     {
         $level = (string) $request->query('level', '');
         $channel = (string) $request->query('channel', '');
@@ -35,25 +35,26 @@ class LogController extends Controller
             'all' => 1000,
             default => 20,
         };
+        $currentPage = max(1, (int) ($page ?? 1));
 
         $logs = SystemLog::query()
-            ->when($level !== '', fn ($query) => $query->where('level', $level))
-            ->when($channel !== '', fn ($query) => $query->where('channel', $channel))
-            ->when($event !== '', fn ($query) => $query->where('event', $event))
-            ->when($admin !== '', fn ($query) => $query->where('admin_username', $admin))
-            ->when($status !== '' && is_numeric($status), fn ($query) => $query->where('status_code', (int) $status))
+            ->when($level !== '', fn ($logQuery) => $logQuery->where('level', $level))
+            ->when($channel !== '', fn ($logQuery) => $logQuery->where('channel', $channel))
+            ->when($event !== '', fn ($logQuery) => $logQuery->where('event', $event))
+            ->when($admin !== '', fn ($logQuery) => $logQuery->where('admin_username', $admin))
+            ->when($status !== '' && is_numeric($status), fn ($logQuery) => $logQuery->where('status_code', (int) $status))
             ->when($query !== '', function ($builder) use ($query): void {
-                $builder->where(function ($q) use ($query): void {
-                    $q->where('message', 'like', '%' . $query . '%')
+                $builder->where(function ($subQuery) use ($query): void {
+                    $subQuery->where('message', 'like', '%' . $query . '%')
                         ->orWhere('event', 'like', '%' . $query . '%')
                         ->orWhere('url', 'like', '%' . $query . '%');
                 });
             })
-            ->when($from !== '', fn ($query) => $query->where('created_at', '>=', $from . ' 00:00:00'))
-            ->when($to !== '', fn ($query) => $query->where('created_at', '<=', $to . ' 23:59:59'))
+            ->when($from !== '', fn ($logQuery) => $logQuery->where('created_at', '>=', $from . ' 00:00:00'))
+            ->when($to !== '', fn ($logQuery) => $logQuery->where('created_at', '<=', $to . ' 23:59:59'))
             ->orderByDesc('id')
-            ->paginate($perPage)
-            ->withQueryString();
+            ->paginate($perPage, ['*'], 'page', $currentPage)
+            ->appends($request->except('page'));
 
         $alertSummary = [
             'unacknowledged' => SystemAlert::query()->where('acknowledged', false)->count(),

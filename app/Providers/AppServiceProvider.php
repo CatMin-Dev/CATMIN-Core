@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\AdminUser;
+use App\Services\AdminRuntimeInfoService;
 use App\Services\ModuleViewLoader;
 use App\Services\ModuleAssetLoader;
 use App\Services\Performance\JobPerformanceState;
@@ -14,6 +15,7 @@ use Illuminate\Queue\Events\JobProcessing;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Modules\Logger\Services\AlertingService;
 use Modules\Logger\Services\SystemLogService;
@@ -43,6 +45,10 @@ class AppServiceProvider extends ServiceProvider
 
         Blade::directive('catminModuleJs', function (): string {
             return "<?php echo \\App\\Services\\ModuleAssetLoader::renderJs(); ?>";
+        });
+
+        View::composer('admin.partials.footer', function ($view): void {
+            $view->with('adminRuntimeInfo', app(AdminRuntimeInfoService::class)->get());
         });
 
         ModuleViewLoader::registerNamespaces();

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Role;
 use App\Models\Setting;
 use App\Models\User;
+use App\Services\AdminRuntimeInfoService;
 use App\Services\Dashboard\DashboardKpiService;
 use App\Services\Dashboard\DashboardWidgetRegistry;
 use App\Services\ModuleConfigService;
@@ -25,7 +26,10 @@ use stdClass;
 
 class DashboardController extends Controller
 {
-    public function __construct(private readonly DashboardKpiService $dashboardKpiService)
+    public function __construct(
+        private readonly DashboardKpiService $dashboardKpiService,
+        private readonly AdminRuntimeInfoService $adminRuntimeInfoService
+    )
     {
     }
 
@@ -58,13 +62,7 @@ class DashboardController extends Controller
                 'modules_enabled' => $enabledModules->count(),
                 'modules_total' => $allModules->count(),
             ],
-            'systemInfo' => [
-                    'catmin_version' => (string) config('app.dashboard_version', 'V3-dev'),
-                'laravel_version' => app()->version(),
-                'php_version' => PHP_VERSION,
-                'environment' => app()->environment(),
-                'admin_path' => (string) config('catmin.admin.path', 'admin'),
-            ],
+            'systemInfo' => $this->adminRuntimeInfoService->get(),
             'enabledModules' => $enabledModules->take(8)->values(),
         ]);
     }
