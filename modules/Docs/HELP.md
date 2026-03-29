@@ -69,6 +69,7 @@ Le guide QA final est disponible dans:
 - `docs-site/PERFORMANCE_PROFILING_342.md`
 - `docs-site/SECURITY_HARDENING_343.md`
 - `docs-site/API_GOVERNANCE_345.md`
+- `docs-site/MAILER_RELIABILITY_346.md`
 
 Commande de gate:
 

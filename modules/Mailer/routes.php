@@ -19,6 +19,10 @@ Route::middleware(['web', 'catmin.admin'])
             ->middleware('catmin.permission:module.mailer.config')
             ->name('mailer.test');
 
+        Route::post('/mailer/history/{history}/retry', [MailerController::class, 'retryHistory'])
+            ->middleware('catmin.permission:module.mailer.config')
+            ->name('mailer.history.retry');
+
         Route::get('/mailer/templates/create', [MailerController::class, 'createTemplate'])
             ->middleware('catmin.permission:module.mailer.create')
             ->name('mailer.templates.create');

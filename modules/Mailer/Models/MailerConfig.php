@@ -19,6 +19,10 @@ class MailerConfig extends Model
         'brand_footer_text',
         'sandbox_mode',
         'sandbox_recipient',
+        'retry_max_attempts',
+        'retry_backoff_seconds',
+        'fallback_driver',
+        'failure_alert_threshold',
         'is_enabled',
     ];
 
@@ -26,6 +30,9 @@ class MailerConfig extends Model
     {
         return [
             'sandbox_mode' => 'boolean',
+            'retry_max_attempts' => 'integer',
+            'retry_backoff_seconds' => 'integer',
+            'failure_alert_threshold' => 'integer',
             'is_enabled' => 'boolean',
         ];
     }

@@ -6,8 +6,10 @@ use Illuminate\Support\Facades\Blade;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use Modules\Logger\Services\AlertingService;
 use Modules\Logger\Services\SystemLogService;
 use Modules\Mailer\Jobs\SendTemplatedMailJob;
 use Modules\Mailer\Mail\TemplatedMail;
@@ -17,7 +19,10 @@ use Modules\Mailer\Models\MailerTemplate;
 
 class MailerAdminService
 {
-    public function __construct(private readonly SystemLogService $systemLogService)
+    public function __construct(
+        private readonly SystemLogService $systemLogService,
+        private readonly AlertingService $alertingService,
+    )
     {
     }
 
@@ -27,6 +32,9 @@ class MailerAdminService
         $config = MailerConfig::query()->firstOrCreate([], [
             'driver' => 'log',
             'brand_primary_color' => '#0d6efd',
+            'retry_max_attempts' => (int) config('catmin.mailer.retry.max_attempts', 3),
+            'retry_backoff_seconds' => (int) config('catmin.mailer.retry.backoff_seconds', 60),
+            'failure_alert_threshold' => (int) config('catmin.mailer.failure_alert_threshold', 5),
             'is_enabled' => false,
         ]);
 
@@ -50,6 +58,10 @@ class MailerAdminService
             'brand_footer_text' => $payload['brand_footer_text'] ?: null,
             'sandbox_mode' => (bool) ($payload['sandbox_mode'] ?? false),
             'sandbox_recipient' => $payload['sandbox_recipient'] ?: null,
+            'retry_max_attempts' => max(1, (int) ($payload['retry_max_attempts'] ?? config('catmin.mailer.retry.max_attempts', 3))),
+            'retry_backoff_seconds' => max(5, (int) ($payload['retry_backoff_seconds'] ?? config('catmin.mailer.retry.backoff_seconds', 60))),
+            'fallback_driver' => $payload['fallback_driver'] ?: null,
+            'failure_alert_threshold' => max(1, (int) ($payload['failure_alert_threshold'] ?? config('catmin.mailer.failure_alert_threshold', 5))),
             'is_enabled' => (bool) ($payload['is_enabled'] ?? false),
         ]);
         $config->save();
@@ -124,12 +136,34 @@ class MailerAdminService
         return $template;
     }
 
-    public function historyListing(): LengthAwarePaginator
+    /**
+     * @param array<string, mixed> $filters
+     */
+    public function historyListing(array $filters = []): LengthAwarePaginator
     {
         return MailerHistory::query()
+            ->when(($filters['status'] ?? '') !== '', fn ($query) => $query->where('status', (string) $filters['status']))
+            ->when(($filters['template_code'] ?? '') !== '', fn ($query) => $query->where('template_code', (string) $filters['template_code']))
+            ->when(($filters['trigger_source'] ?? '') !== '', fn ($query) => $query->where('trigger_source', (string) $filters['trigger_source']))
+            ->when(array_key_exists('is_test', $filters) && $filters['is_test'] !== '', fn ($query) => $query->where('is_test', (bool) $filters['is_test']))
             ->orderByDesc('created_at')
             ->paginate(25)
             ->withQueryString();
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    public function historySummary(): array
+    {
+        $base = MailerHistory::query();
+
+        return [
+            'pending' => (clone $base)->whereIn('status', ['pending', 'queued', 'sending', 'retrying'])->count(),
+            'sent_24h' => (clone $base)->where('status', 'sent')->where('sent_at', '>=', now()->subDay())->count(),
+            'failed_24h' => (clone $base)->where('status', 'failed')->where('failed_at', '>=', now()->subDay())->count(),
+            'tests_24h' => (clone $base)->where('is_test', true)->where('created_at', '>=', now()->subDay())->count(),
+        ];
     }
 
     /**
@@ -178,8 +212,10 @@ class MailerAdminService
         $queue = (bool) ($options['queue'] ?? true);
         $recipientForDelivery = $recipient;
         $recipientNameForDelivery = $recipientName;
+        $originalRecipient = null;
 
         if ($config->sandbox_mode && $config->sandbox_recipient) {
+            $originalRecipient = $recipient;
             $recipientForDelivery = (string) $config->sandbox_recipient;
             $recipientNameForDelivery = 'Sandbox';
             $preview['variables']['mail'] = [
@@ -207,8 +243,10 @@ class MailerAdminService
             'body_text' => $preview['body_text'],
             'queued_at' => $queue ? now() : null,
             'attempts' => 0,
+            'next_retry_at' => null,
             'is_test' => (bool) ($options['is_test'] ?? false),
             'trigger_source' => (string) ($options['trigger_source'] ?? 'system'),
+            'original_recipient' => $originalRecipient,
         ]);
 
         if (($preview['variables']['mail']['sandbox'] ?? false) === true) {
@@ -232,14 +270,18 @@ class MailerAdminService
     {
         $historyModel = $history instanceof MailerHistory ? $history : MailerHistory::query()->findOrFail($history);
         $config = $this->getOrCreateConfig();
+        $provider = (string) ($historyModel->driver ?: $config->driver);
 
-        if (!$config->is_enabled && $config->driver !== 'log') {
+        if (!$config->is_enabled && $provider !== 'log') {
             return $this->markHistoryFailed($historyModel, 'Mailer desactive.');
         }
 
         try {
             $historyModel->attempts = (int) $historyModel->attempts + 1;
             $historyModel->status = 'sending';
+            $historyModel->driver = $provider;
+            $historyModel->next_retry_at = null;
+            $historyModel->failure_class = null;
             $historyModel->save();
 
             $mailable = new TemplatedMail(
@@ -251,13 +293,16 @@ class MailerAdminService
                 replyToEmail: $config->reply_to_email,
             );
 
-            Mail::mailer($config->driver)
+            Mail::mailer($provider)
                 ->to($historyModel->recipient, $historyModel->recipient_name)
                 ->send($mailable);
 
             $historyModel->status = 'sent';
             $historyModel->sent_at = now();
             $historyModel->error_message = null;
+            $historyModel->failed_at = null;
+            $historyModel->next_retry_at = null;
+            $historyModel->failure_class = null;
             $historyModel->save();
 
             $this->logAudit('mailer.sent', 'Email envoye', [
@@ -265,12 +310,40 @@ class MailerAdminService
                 'recipient' => $historyModel->recipient,
                 'template_code' => $historyModel->template_code,
                 'status' => $historyModel->status,
+                'driver' => $provider,
             ]);
         } catch (\Throwable $throwable) {
-            return $this->markHistoryFailed($historyModel, $throwable->getMessage());
+            return $this->handleDeliveryFailure($historyModel, $config, $throwable);
         }
 
         return $historyModel;
+    }
+
+    public function retryHistory(MailerHistory|int $history, bool $queue = true): MailerHistory
+    {
+        $historyModel = $history instanceof MailerHistory ? $history : MailerHistory::query()->findOrFail($history);
+
+        $historyModel->status = $queue ? 'queued' : 'pending';
+        $historyModel->queued_at = now();
+        $historyModel->next_retry_at = null;
+        $historyModel->failed_at = null;
+        $historyModel->error_message = null;
+        $historyModel->failure_class = null;
+        $historyModel->save();
+
+        $this->logAudit('mailer.retry.requested', 'Relance email demandee', [
+            'history_id' => $historyModel->id,
+            'recipient' => $historyModel->recipient,
+            'template_code' => $historyModel->template_code,
+        ]);
+
+        if ($queue) {
+            SendTemplatedMailJob::dispatch($historyModel->id)->onQueue('mail');
+
+            return $historyModel->fresh();
+        }
+
+        return $this->deliverHistory($historyModel);
     }
 
     /**
@@ -285,11 +358,13 @@ class MailerAdminService
         ]);
     }
 
-    private function markHistoryFailed(MailerHistory $history, string $message): MailerHistory
+    private function markHistoryFailed(MailerHistory $history, string $message, ?string $failureClass = null): MailerHistory
     {
         $history->status = 'failed';
         $history->failed_at = now();
+        $history->next_retry_at = null;
         $history->error_message = Str::limit($message, 65535, '');
+        $history->failure_class = $failureClass;
         $history->save();
 
         $this->logAudit('mailer.failed', 'Echec envoi email', [
@@ -297,9 +372,54 @@ class MailerAdminService
             'recipient' => $history->recipient,
             'template_code' => $history->template_code,
             'error' => $message,
+            'failure_class' => $failureClass,
         ], 'warning');
 
+        $this->triggerFailureAlert($history, $message, terminal: true);
+
         return $history;
+    }
+
+    private function handleDeliveryFailure(MailerHistory $history, MailerConfig $config, \Throwable $throwable): MailerHistory
+    {
+        $message = $throwable->getMessage() !== '' ? $throwable->getMessage() : get_class($throwable);
+        $failureClass = get_class($throwable);
+
+        if ($this->shouldRetry($history, $config, $message)) {
+            $delaySeconds = $this->retryDelaySeconds($history, $config);
+
+            $history->status = 'retrying';
+            $history->failed_at = now();
+            $history->next_retry_at = now()->addSeconds($delaySeconds);
+            $history->error_message = Str::limit($message, 65535, '');
+            $history->failure_class = $failureClass;
+
+            if ($config->fallback_driver && $history->driver !== $config->fallback_driver) {
+                $history->driver = $config->fallback_driver;
+            }
+
+            $history->save();
+
+            SendTemplatedMailJob::dispatch($history->id)
+                ->delay(now()->addSeconds($delaySeconds))
+                ->onQueue('mail');
+
+            $this->logAudit('mailer.retrying', 'Email programme pour retry', [
+                'history_id' => $history->id,
+                'recipient' => $history->recipient,
+                'template_code' => $history->template_code,
+                'attempts' => $history->attempts,
+                'next_retry_at' => optional($history->next_retry_at)->toIso8601String(),
+                'driver' => $history->driver,
+                'error' => $message,
+            ], 'warning');
+
+            $this->triggerFailureAlert($history, $message, terminal: false);
+
+            return $history;
+        }
+
+        return $this->markHistoryFailed($history, $message, $failureClass);
     }
 
     /**
@@ -530,5 +650,73 @@ BLADE;
         }
 
         return $code;
+    }
+
+    private function shouldRetry(MailerHistory $history, MailerConfig $config, string $message): bool
+    {
+        $maxAttempts = max(1, (int) ($config->retry_max_attempts ?? config('catmin.mailer.retry.max_attempts', 3)));
+
+        if ((int) $history->attempts >= $maxAttempts) {
+            return false;
+        }
+
+        return !$this->isTerminalFailure($message);
+    }
+
+    private function retryDelaySeconds(MailerHistory $history, MailerConfig $config): int
+    {
+        $base = max(5, (int) ($config->retry_backoff_seconds ?? config('catmin.mailer.retry.backoff_seconds', 60)));
+        $attempt = max(1, (int) $history->attempts);
+
+        return $base * (2 ** max(0, $attempt - 1));
+    }
+
+    private function isTerminalFailure(string $message): bool
+    {
+        $normalized = Str::lower($message);
+
+        foreach (['invalid address', 'invalid recipient', 'unknown user', 'recipient address rejected', '550 ', 'mailbox unavailable'] as $needle) {
+            if (str_contains($normalized, $needle)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function triggerFailureAlert(MailerHistory $history, string $message, bool $terminal): void
+    {
+        $threshold = max(1, (int) ($this->getOrCreateConfig()->failure_alert_threshold ?? config('catmin.mailer.failure_alert_threshold', 5)));
+        $failedLastHour = MailerHistory::query()
+            ->whereIn('status', ['failed', 'retrying'])
+            ->where('failed_at', '>=', now()->subHour())
+            ->count();
+
+        if ($failedLastHour < $threshold) {
+            return;
+        }
+
+        $cacheKey = 'mailer:failure-alert:' . now()->format('YmdH');
+        if (Cache::has($cacheKey)) {
+            return;
+        }
+
+        Cache::put($cacheKey, true, now()->addMinutes(15));
+
+        $severity = $terminal ? 'critical' : 'warning';
+        $this->alertingService->createAlert(
+            'mailer_failure',
+            'Mailer failures threshold reached',
+            sprintf('Mailer failures/retries reached %d in the last hour. Latest template=%s recipient=%s', $failedLastHour, (string) ($history->template_code ?: 'manual'), (string) $history->recipient),
+            [
+                'history_id' => $history->id,
+                'template_code' => $history->template_code,
+                'recipient' => $history->recipient,
+                'failed_last_hour' => $failedLastHour,
+                'error' => Str::limit($message, 500, ''),
+                'status' => $history->status,
+            ],
+            $severity
+        );
     }
 }

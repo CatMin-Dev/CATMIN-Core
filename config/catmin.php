@@ -428,6 +428,14 @@ return [
         'webhook_url' => env('CATMIN_ALERT_WEBHOOK_URL', ''),
     ],
 
+    'mailer' => [
+        'retry' => [
+            'max_attempts' => (int) env('CATMIN_MAILER_RETRY_MAX_ATTEMPTS', 3),
+            'backoff_seconds' => (int) env('CATMIN_MAILER_RETRY_BACKOFF_SECONDS', 60),
+        ],
+        'failure_alert_threshold' => (int) env('CATMIN_MAILER_FAILURE_ALERT_THRESHOLD', 5),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Uploads Security

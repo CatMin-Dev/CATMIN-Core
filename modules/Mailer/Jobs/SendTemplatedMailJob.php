@@ -16,7 +16,7 @@ class SendTemplatedMailJob implements ShouldQueue
     use Queueable;
     use SerializesModels;
 
-    public int $tries = 3;
+    public int $tries = 1;
 
     public int $timeout = 30;
 
@@ -30,5 +30,13 @@ class SendTemplatedMailJob implements ShouldQueue
     public function handle(MailerAdminService $mailerAdminService): void
     {
         $mailerAdminService->deliverHistory($this->historyId);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function tags(): array
+    {
+        return ['mailer', 'mailer-history:' . $this->historyId];
     }
 }

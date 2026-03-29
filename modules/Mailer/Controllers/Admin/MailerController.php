@@ -7,6 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Modules\Mailer\Models\MailerHistory;
 use Modules\Mailer\Models\MailerTemplate;
 use Modules\Mailer\Services\MailerAdminService;
 
@@ -16,15 +17,23 @@ class MailerController extends Controller
     {
     }
 
-    public function index(): View
+    public function index(Request $request): View
     {
         $templates = $this->mailerAdminService->templateListing();
+        $filters = [
+            'status' => (string) $request->query('status', ''),
+            'template_code' => (string) $request->query('template_code', ''),
+            'trigger_source' => (string) $request->query('trigger_source', ''),
+            'is_test' => (string) $request->query('is_test', ''),
+        ];
 
         return view()->file(base_path('modules/Mailer/Views/index.blade.php'), [
             'currentPage' => 'module-mailer',
             'config' => $this->mailerAdminService->getOrCreateConfig(),
             'templates' => $templates,
-            'history' => $this->mailerAdminService->historyListing(),
+            'history' => $this->mailerAdminService->historyListing($filters),
+            'historySummary' => $this->mailerAdminService->historySummary(),
+            'filters' => $filters,
             'defaultTemplateId' => $templates->first()?->id,
         ]);
     }
@@ -42,6 +51,10 @@ class MailerController extends Controller
             'brand_footer_text' => ['nullable', 'string', 'max:1000'],
             'sandbox_mode' => ['nullable', 'boolean'],
             'sandbox_recipient' => ['nullable', 'email', 'max:255'],
+            'retry_max_attempts' => ['required', 'integer', 'min:1', 'max:10'],
+            'retry_backoff_seconds' => ['required', 'integer', 'min:5', 'max:3600'],
+            'fallback_driver' => ['nullable', Rule::in(['smtp', 'mailgun', 'ses', 'log'])],
+            'failure_alert_threshold' => ['required', 'integer', 'min:1', 'max:500'],
             'is_enabled' => ['nullable', 'boolean'],
         ]);
 
@@ -111,6 +124,14 @@ class MailerController extends Controller
 
         return redirect()->route('admin.mailer.manage')
             ->with('status', 'Email de test lance avec statut ' . $history->status . '.');
+    }
+
+    public function retryHistory(Request $request, MailerHistory $history): RedirectResponse
+    {
+        $retry = $this->mailerAdminService->retryHistory($history, !$request->boolean('sync'));
+
+        return redirect()->route('admin.mailer.manage', $request->query())
+            ->with('status', 'Relance mail demandee avec statut ' . $retry->status . '.');
     }
 
     /**

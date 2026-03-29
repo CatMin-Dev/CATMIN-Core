@@ -21,10 +21,14 @@ class MailerHistory extends Model
         'queued_at',
         'sent_at',
         'failed_at',
+        'next_retry_at',
         'attempts',
         'is_test',
         'trigger_source',
         'error_message',
+        'provider_message_id',
+        'original_recipient',
+        'failure_class',
     ];
 
     protected function casts(): array
@@ -34,6 +38,7 @@ class MailerHistory extends Model
             'queued_at' => 'datetime',
             'sent_at' => 'datetime',
             'failed_at' => 'datetime',
+            'next_retry_at' => 'datetime',
             'is_test' => 'boolean',
         ];
     }
