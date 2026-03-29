@@ -66,6 +66,7 @@ Le guide QA final est disponible dans:
 
 - `docs-site/QA_FINAL_GATE_340.md`
 - `docs-site/MONITORING_CENTER_341.md`
+- `docs-site/PERFORMANCE_PROFILING_342.md`
 
 Commande de gate:
 

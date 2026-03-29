@@ -5,6 +5,7 @@ namespace App\Services\Dashboard;
 use App\Services\ModuleManager;
 use App\Services\MonitoringService;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
@@ -16,22 +17,26 @@ class DashboardKpiService
      */
     public function build(): array
     {
-        $kpiIndex = [
-            'active_admin_sessions' => $this->activeAdminSessions(),
-            'roles_total' => $this->countTable('roles'),
-            'admin_accounts' => $this->adminAccountsCount(),
-            'pages_published' => $this->countByStatus('pages', 'published'),
-            'pages_draft' => $this->countByNotStatus('pages', 'published'),
-            'articles_published' => $this->countByStatus('articles', 'published'),
-            'articles_draft' => $this->countByNotStatus('articles', 'published'),
-            'media_total' => $this->countTable('media_assets'),
-            'shop_orders_pending' => $this->countPendingOrders(),
-            'failed_jobs' => $this->countTable('failed_jobs'),
-            'webhooks_failed_24h' => $this->countWebhookFailedLast24h(),
-            'critical_errors_24h' => $this->countCriticalErrorsLast24h(),
-            'emails_failed_24h' => $this->countFailedEmailsLast24h(),
-            'low_stock_products' => $this->countLowStockProducts(),
-        ];
+        $ttl = max(5, (int) config('catmin.performance.dashboard_cache_ttl_seconds', 60));
+
+        $kpiIndex = Cache::remember('catmin.dashboard.kpi-index.v1', $ttl, function (): array {
+            return [
+                'active_admin_sessions' => $this->activeAdminSessions(),
+                'roles_total' => $this->countTable('roles'),
+                'admin_accounts' => $this->adminAccountsCount(),
+                'pages_published' => $this->countByStatus('pages', 'published'),
+                'pages_draft' => $this->countByNotStatus('pages', 'published'),
+                'articles_published' => $this->countByStatus('articles', 'published'),
+                'articles_draft' => $this->countByNotStatus('articles', 'published'),
+                'media_total' => $this->countTable('media_assets'),
+                'shop_orders_pending' => $this->countPendingOrders(),
+                'failed_jobs' => $this->countTable('failed_jobs'),
+                'webhooks_failed_24h' => $this->countWebhookFailedLast24h(),
+                'critical_errors_24h' => $this->countCriticalErrorsLast24h(),
+                'emails_failed_24h' => $this->countFailedEmailsLast24h(),
+                'low_stock_products' => $this->countLowStockProducts(),
+            ];
+        });
 
         return [
             'kpi_index' => $kpiIndex,
@@ -41,6 +46,7 @@ class DashboardKpiService
             'module_health' => $this->moduleHealthRows(),
             'widgets' => $this->defaultWidgets($kpiIndex),
             'generated_at' => now(),
+            'cache_ttl_seconds' => $ttl,
         ];
     }
 
@@ -332,6 +338,12 @@ class DashboardKpiService
                 'permission' => 'module.logger.list',
             ],
             [
+                'label' => 'Performance center',
+                'icon' => 'bi bi-speedometer2',
+                'url' => $this->routeUrl('performance.index'),
+                'permission' => 'module.logger.list',
+            ],
+            [
                 'label' => 'Voir modules',
                 'icon' => 'bi bi-puzzle',
                 'url' => $this->routeUrl('modules.index'),
@@ -481,7 +493,8 @@ class DashboardKpiService
      */
     private function monitoringWidget(): array
     {
-        $report = app(MonitoringService::class)->buildDashboardReport(5);
+        $ttl = max(5, (int) config('catmin.performance.monitoring_widget_cache_ttl_seconds', 30));
+        $report = Cache::remember('catmin.dashboard.monitoring-widget.v1', $ttl, fn (): array => app(MonitoringService::class)->buildDashboardReport(5));
         $global = (array) ($report['global'] ?? []);
         $status = (string) ($global['status'] ?? 'ok');
 

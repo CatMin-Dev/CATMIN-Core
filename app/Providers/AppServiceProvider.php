@@ -5,7 +5,12 @@ namespace App\Providers;
 use App\Models\AdminUser;
 use App\Services\ModuleViewLoader;
 use App\Services\ModuleAssetLoader;
+use App\Services\Performance\JobPerformanceState;
+use App\Services\Performance\PerformanceBudgetService;
+use App\Services\Performance\RequestPerformanceState;
 use App\Services\SuperAdminGuardService;
+use Illuminate\Queue\Events\JobProcessed;
+use Illuminate\Queue\Events\JobProcessing;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
@@ -109,6 +114,11 @@ class AppServiceProvider extends ServiceProvider
         DB::listen(function ($query): void {
             $threshold = (int) config('catmin.performance.slow_query_ms', 250);
             $time = (float) ($query->time ?? 0);
+            $connection = method_exists($query, 'connectionName')
+                ? (string) $query->connectionName
+                : ((string) ($query->connection?->getName() ?? 'default'));
+
+            RequestPerformanceState::recordQuery((string) $query->sql, $time, $connection, $threshold);
 
             if ($time < $threshold) {
                 return;
@@ -126,14 +136,55 @@ class AppServiceProvider extends ServiceProvider
                         'sql' => (string) $query->sql,
                         'time_ms' => $time,
                         'threshold_ms' => $threshold,
-                        'connection' => method_exists($query, 'connectionName')
-                            ? (string) $query->connectionName
-                            : ((string) ($query->connection?->getName() ?? 'default')),
+                        'connection' => $connection,
+                        'route_name' => app()->runningInConsole() ? '' : (string) optional(request()->route())->getName(),
+                        'path' => app()->runningInConsole() ? '' : (string) request()->path(),
+                        'budget' => app()->runningInConsole() ? null : app(PerformanceBudgetService::class)->budgetForRequest(request()),
                     ],
                     'warning'
                 );
             } catch (\Throwable) {
                 // Avoid breaking request flow if logging fails.
+            }
+        });
+
+        Queue::before(function (JobProcessing $event): void {
+            $key = method_exists($event->job, 'uuid') ? (string) $event->job->uuid() : spl_object_hash($event->job);
+            JobPerformanceState::start($key);
+        });
+
+        Queue::after(function (JobProcessed $event): void {
+            $key = method_exists($event->job, 'uuid') ? (string) $event->job->uuid() : spl_object_hash($event->job);
+            $durationMs = JobPerformanceState::stop($key);
+
+            if ($durationMs === null) {
+                return;
+            }
+
+            $threshold = (int) config('catmin.performance.slow_job_ms', 1500);
+            if ($durationMs < $threshold) {
+                return;
+            }
+
+            try {
+                $jobName = method_exists($event->job, 'resolveName')
+                    ? (string) $event->job->resolveName()
+                    : 'queue.job';
+
+                app(SystemLogService::class)->logPerformance(
+                    'queue.job.performance',
+                    'Long queue job detected',
+                    [
+                        'job' => $jobName,
+                        'duration_ms' => $durationMs,
+                        'threshold_ms' => $threshold,
+                        'connection' => (string) ($event->connectionName ?? ''),
+                        'queue' => method_exists($event->job, 'getQueue') ? (string) $event->job->getQueue() : '',
+                    ],
+                    'warning'
+                );
+            } catch (\Throwable) {
+                // Never break queue flow on perf logging failure.
             }
         });
 

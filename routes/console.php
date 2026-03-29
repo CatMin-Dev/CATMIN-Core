@@ -17,6 +17,7 @@ Artisan::command('inspire', function () {
 
 use Illuminate\Support\Facades\Schedule;
 use App\Services\MonitoringService;
+use App\Services\Performance\PerformanceReportService;
 use Modules\Cron\Services\CronService;
 use Modules\Logger\Services\LogMaintenanceService;
 use Modules\Webhooks\Services\WebhookDispatcher;
@@ -112,3 +113,29 @@ Artisan::command('catmin:webhooks:cleanup', function () {
     $this->info("Nonces expirés supprimés: $nonces");
     $this->info("Événements anciens supprimés: $events");
 })->purpose('Clean up expired webhook nonces and old event records');
+
+Artisan::command('catmin:performance:report {--hours=24} {--json} {--save}', function () {
+    $hours = max(1, min(168, (int) $this->option('hours')));
+    $report = app(PerformanceReportService::class)->buildReport($hours);
+
+    if ($this->option('save')) {
+        $paths = app(PerformanceReportService::class)->saveReport($report);
+        $this->info('Rapport performance sauvegarde.');
+        $this->line('JSON: ' . $paths['json']);
+        $this->line('Markdown: ' . $paths['markdown']);
+    }
+
+    if ($this->option('json')) {
+        $this->line(json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        return;
+    }
+
+    $summary = (array) ($report['summary'] ?? []);
+    $this->info('CATMIN Performance Report');
+    $this->line('Window: ' . $hours . 'h');
+    $this->line('Requests profiled: ' . (int) ($summary['requests_profiled'] ?? 0));
+    $this->line('Slow requests: ' . (int) ($summary['slow_requests'] ?? 0));
+    $this->line('Budget breaches: ' . (int) ($summary['budget_breaches'] ?? 0));
+    $this->line('Slow queries: ' . (int) ($summary['slow_queries'] ?? 0));
+    $this->line('Long jobs: ' . (int) ($summary['long_jobs'] ?? 0));
+})->purpose('Generate a CATMIN performance profiling report');

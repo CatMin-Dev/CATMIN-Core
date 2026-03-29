@@ -20,6 +20,7 @@ class ArticleAdminService
         $term = trim((string) $search);
 
         return Article::query()
+            ->select(['id', 'title', 'slug', 'excerpt', 'content_type', 'status', 'published_at', 'updated_at', 'media_asset_id'])
             ->when($term !== '', function ($query) use ($term) {
                 $query->where(function ($inner) use ($term) {
                     $inner->where('title', 'like', '%' . $term . '%')
@@ -30,7 +31,8 @@ class ArticleAdminService
             })
             ->orderByDesc('published_at')
             ->orderByDesc('updated_at')
-                ->paginate($perPage);
+            ->paginate($perPage)
+            ->withQueryString();
     }
 
     /**

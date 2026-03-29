@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Modules\Logger\Controllers\Admin\AlertController;
 use Modules\Logger\Controllers\Admin\LogController;
 use Modules\Logger\Controllers\Admin\MonitoringController;
+use Modules\Logger\Controllers\Admin\PerformanceController;
 
 Route::middleware(['web', 'catmin.admin'])
     ->prefix(config('catmin.admin.path', 'admin'))
@@ -36,4 +37,8 @@ Route::middleware(['web', 'catmin.admin'])
         Route::post('/monitoring/snapshot', [MonitoringController::class, 'snapshot'])
             ->middleware('catmin.permission:module.logger.list')
             ->name('monitoring.snapshot');
+
+        Route::get('/performance', [PerformanceController::class, 'index'])
+            ->middleware('catmin.permission:module.logger.list')
+            ->name('performance.index');
     });

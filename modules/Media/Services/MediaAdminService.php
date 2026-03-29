@@ -220,6 +220,22 @@ class MediaAdminService
         $sort = trim((string) ($filters['sort'] ?? 'newest'));
 
         $query = MediaAsset::query()
+            ->select([
+                'id',
+                'disk',
+                'path',
+                'filename',
+                'original_name',
+                'mime_type',
+                'extension',
+                'size_bytes',
+                'alt_text',
+                'caption',
+                'metadata',
+                'uploaded_by_id',
+                'created_at',
+                'updated_at',
+            ])
             ->when(
                 $folder !== '',
                 fn ($builder) => $builder->where('path', 'like', 'media/' . $folder . '/%')

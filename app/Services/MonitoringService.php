@@ -6,6 +6,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
+use App\Services\Performance\PerformanceReportService;
 use Modules\Logger\Models\MonitoringIncident;
 use Modules\Logger\Models\MonitoringSnapshot;
 use Modules\Logger\Models\SystemAlert;
@@ -96,6 +97,7 @@ class MonitoringService
         $checks[] = $this->checkQueue();
         $checks[] = $this->checkWebhooks();
         $checks[] = $this->checkLogs();
+        $checks[] = $this->checkPerformance();
         $checks[] = $this->checkApi();
         $checks[] = $this->checkMailer();
         $checks[] = $this->checkCriticalModules();
@@ -463,6 +465,29 @@ class MonitoringService
             metric: $ok ? 0 : 1,
             threshold: 0,
             actions: []
+        );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function checkPerformance(): array
+    {
+        $report = app(PerformanceReportService::class)->buildReport(24);
+        $summary = (array) ($report['summary'] ?? []);
+        $breaches = (int) ($summary['budget_breaches'] ?? 0);
+        $status = self::classifyByThreshold($breaches, 1, 4, 8);
+
+        return $this->checkRow(
+            domain: 'performance',
+            status: $breaches === 0 ? 'ok' : $status,
+            title: 'Performance budgets 24h',
+            message: sprintf('budget_breaches=%d, slow_requests=%d', $breaches, (int) ($summary['slow_requests'] ?? 0)),
+            metric: $breaches,
+            threshold: 1,
+            actions: [
+                $this->actionRow('Ouvrir Performance', 'admin.performance.index'),
+            ]
         );
     }
 
