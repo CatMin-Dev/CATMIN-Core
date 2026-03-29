@@ -30,8 +30,10 @@ final class LogCatminExternalApi
                     'status_code' => $response->getStatusCode(),
                     'duration_ms' => $durationMs,
                     'ip' => (string) $request->ip(),
+                    'auth_type' => $request->attributes->get('catmin_api_auth_type'),
                     'api_key_id' => $request->attributes->get('catmin_api_key_id'),
                     'api_key_name' => $request->attributes->get('catmin_api_key_name'),
+                    'api_scopes' => (array) $request->attributes->get('catmin_api_key_scopes', []),
                 ],
                 $response->getStatusCode() >= 400 ? 'warning' : 'info',
                 'external-api'

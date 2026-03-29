@@ -2,11 +2,13 @@
 
 use App\Http\Middleware\EnsureCatminAdminAuthenticated;
 use App\Http\Middleware\EnsureCatminApiToken;
+use App\Http\Middleware\EnsureCatminApiV1Credential;
 use App\Http\Middleware\EnsureCatminExternalApiKey;
 use App\Http\Middleware\EnsureCatminFrontendAvailable;
 use App\Http\Middleware\EnsureCatminPermission;
 use App\Http\Middleware\LogCatminExternalApi;
 use App\Http\Middleware\LogRequestPerformance;
+use App\Services\Api\V1Response;
 use App\Services\Api\V2Response;
 use App\Services\AddonLoader;
 use App\Services\CatminHookLoader;
@@ -76,6 +78,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'catmin.admin' => EnsureCatminAdminAuthenticated::class,
             'catmin.permission' => EnsureCatminPermission::class,
             'catmin.api-token' => EnsureCatminApiToken::class,
+            'catmin.api-v1-auth' => EnsureCatminApiV1Credential::class,
             'catmin.frontend.available' => EnsureCatminFrontendAvailable::class,
             'catmin.external-api-key' => EnsureCatminExternalApiKey::class,
             'catmin.external-api-log' => LogCatminExternalApi::class,
@@ -92,6 +95,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // 401 — Unauthenticated
         $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, Request $request) {
+            if ($request->is('api/v1/*')) {
+                return V1Response::error('unauthenticated', 'Authentication required.', 401);
+            }
             if ($request->is('api/v2/*')) {
                 return V2Response::error('unauthenticated', 'Authentication required.', 401);
             }
@@ -103,6 +109,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // 403 — Authorization
         $exceptions->render(function (\Illuminate\Auth\Access\AuthorizationException $e, Request $request) {
+            if ($request->is('api/v1/*')) {
+                return V1Response::error('forbidden', 'Access denied.', 403);
+            }
             if ($request->is('api/v2/*')) {
                 return V2Response::error('forbidden', 'Access denied.', 403);
             }
@@ -114,6 +123,12 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // 422 — Validation errors for API v2
         $exceptions->render(function (\Illuminate\Validation\ValidationException $e, Request $request) {
+            if ($request->is('api/v1/*')) {
+                return V1Response::error('validation_error', 'Validation failed.', 422, [
+                    'fields' => $e->errors(),
+                ]);
+            }
+
             if (!$request->is('api/v2/*')) {
                 return null;
             }
@@ -125,6 +140,13 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Generic HTTP errors normalization for API v2
         $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $e, Request $request) {
+            if ($request->is('api/v1/*')) {
+                $status = $e->getStatusCode();
+                $message = $e->getMessage() !== '' ? $e->getMessage() : 'HTTP error';
+
+                return V1Response::error('http_error', $message, $status);
+            }
+
             if (!$request->is('api/v2/*')) {
                 return null;
             }
