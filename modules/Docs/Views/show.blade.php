@@ -24,13 +24,39 @@
 </x-admin.crud.page-header>
 
 <div class="catmin-page-body">
+    <div class="mb-3 d-flex flex-wrap gap-2">
+        <span class="badge text-bg-light border">Version {{ $doc['version'] }}</span>
+        <span class="badge text-bg-light border">Statut {{ $doc['status'] }}</span>
+        <span class="badge text-bg-light border">Categorie {{ $doc['category'] }}</span>
+        @foreach(($doc['tags'] ?? []) as $tag)
+            <span class="badge text-bg-secondary">{{ $tag }}</span>
+        @endforeach
+    </div>
+
     <div class="card">
         <div class="card-body p-4 p-lg-5">
+            @if(!empty($doc['summary']))
+                <p class="lead text-muted">{{ $doc['summary'] }}</p>
+            @endif
             <div class="catmin-docs-body">
                 {!! $doc['html'] !!}
             </div>
         </div>
     </div>
+
+    @if(!empty($doc['related_docs']))
+        <div class="card mt-4">
+            <div class="card-header bg-white"><h2 class="h6 mb-0">Documents lies</h2></div>
+            <div class="list-group list-group-flush">
+                @foreach($doc['related_docs'] as $related)
+                    <a href="{{ admin_route('docs.show', ['slug' => $related['slug']]) }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <span>{{ $related['title'] }} <span class="badge text-bg-light border ms-2">{{ $related['version'] }}</span></span>
+                        <i class="bi bi-chevron-right text-muted small"></i>
+                    </a>
+                @endforeach
+            </div>
+        </div>
+    @endif
 </div>
 
 @push('styles')

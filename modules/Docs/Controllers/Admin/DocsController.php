@@ -16,35 +16,33 @@ class DocsController extends Controller
     public function index(Request $request): View
     {
         $query = (string) $request->query('q', '');
-        $module = (string) $request->query('module', '');
+        $filters = [
+            'module' => (string) $request->query('module', ''),
+            'version' => (string) $request->query('version', ''),
+            'status' => (string) $request->query('status', ''),
+            'category' => (string) $request->query('category', ''),
+        ];
 
         if ($query !== '') {
-            $results = $this->docs->search($query);
+            $results = $this->docs->search($query, $filters);
             $items = null;
-        } elseif ($module !== '') {
-            $results = null;
-            $items = $this->docs->forModule($module);
         } else {
             $results = null;
-            $items = $this->docs->index();
+            $items = $this->docs->filteredIndex($filters);
         }
 
-        // Collect distinct module slugs for filter UI
-        $modules = collect($this->docs->index())
-            ->pluck('module')
-            ->filter()
-            ->unique()
-            ->sort()
-            ->values()
-            ->all();
+        $options = $this->docs->filterOptions();
 
         return view()->file(base_path('modules/Docs/Views/index.blade.php'), [
             'currentPage' => 'docs',
             'items'       => $items,
             'results'     => $results,
             'query'       => $query,
-            'activeModule' => $module,
-            'modules'     => $modules,
+            'filters'     => $filters,
+            'modules'     => $options['modules'],
+            'versions'    => $options['versions'],
+            'statuses'    => $options['statuses'],
+            'categories'  => $options['categories'],
         ]);
     }
 

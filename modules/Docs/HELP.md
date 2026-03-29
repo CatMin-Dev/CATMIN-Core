@@ -23,6 +23,30 @@ La barre de recherche permet de trouver des documents par mots-clés dans le tit
 
 Utiliser le sélecteur « Filtrer par module » pour n'afficher que la documentation d'un module spécifique.
 
+## Versioning et métadonnées
+
+Le système Docs supporte désormais un front matter optionnel pour enrichir les documents avec:
+
+- `title`
+- `version`
+- `status`
+- `category`
+- `tags`
+- `summary`
+
+Exemple:
+
+```md
+---
+title: API Governance
+version: V2.5
+status: current
+category: api
+tags: api,security,scopes
+summary: Gouvernance de l'API externe.
+---
+```
+
 ## Publication Discord
 
 La fiche d'un document peut être publiée dans Discord via webhook:
@@ -70,6 +94,7 @@ Le guide QA final est disponible dans:
 - `docs-site/SECURITY_HARDENING_343.md`
 - `docs-site/API_GOVERNANCE_345.md`
 - `docs-site/MAILER_RELIABILITY_346.md`
+- `docs-site/DOC_SYSTEM_347.md`
 
 Commande de gate:
 

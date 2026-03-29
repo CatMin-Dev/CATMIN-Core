@@ -11,11 +11,10 @@
 <div class="catmin-page-body">
     <x-admin.crud.flash-messages />
 
-    {{-- Search bar --}}
     <div class="card mb-4">
         <div class="card-body">
             <form method="get" action="{{ admin_route('docs.index') }}" class="row g-2 align-items-end">
-                <div class="col-12 col-md-6">
+                <div class="col-12 col-md-4">
                     <label class="form-label" for="q">Rechercher dans la documentation</label>
                     <div class="input-group">
                         <input id="q" name="q" type="search" class="form-control"
@@ -30,12 +29,45 @@
                     </div>
                 </div>
                 @if(!empty($modules))
-                <div class="col-12 col-md-4">
+                <div class="col-12 col-md-2">
                     <label class="form-label" for="module_filter">Filtrer par module</label>
                     <select id="module_filter" name="module" class="form-select" onchange="this.form.submit()">
                         <option value="">Tous les modules</option>
                         @foreach($modules as $mod)
-                            <option value="{{ $mod }}" @selected($activeModule === $mod)>{{ ucfirst($mod) }}</option>
+                            <option value="{{ $mod }}" @selected(($filters['module'] ?? '') === $mod)>{{ ucfirst($mod) }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                @endif
+                @if(!empty($versions))
+                <div class="col-12 col-md-2">
+                    <label class="form-label" for="version_filter">Version</label>
+                    <select id="version_filter" name="version" class="form-select" onchange="this.form.submit()">
+                        <option value="">Toutes</option>
+                        @foreach($versions as $version)
+                            <option value="{{ $version }}" @selected(($filters['version'] ?? '') === $version)>{{ $version }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                @endif
+                @if(!empty($statuses))
+                <div class="col-12 col-md-2">
+                    <label class="form-label" for="status_filter">Statut</label>
+                    <select id="status_filter" name="status" class="form-select" onchange="this.form.submit()">
+                        <option value="">Tous</option>
+                        @foreach($statuses as $status)
+                            <option value="{{ $status }}" @selected(($filters['status'] ?? '') === $status)>{{ ucfirst($status) }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                @endif
+                @if(!empty($categories))
+                <div class="col-12 col-md-2">
+                    <label class="form-label" for="category_filter">Categorie</label>
+                    <select id="category_filter" name="category" class="form-select" onchange="this.form.submit()">
+                        <option value="">Toutes</option>
+                        @foreach($categories as $category)
+                            <option value="{{ $category }}" @selected(($filters['category'] ?? '') === $category)>{{ ucfirst($category) }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -67,6 +99,9 @@
                                     @if($result['module'])
                                         <span class="badge text-bg-secondary ms-2 small">{{ $result['module'] }}</span>
                                     @endif
+                                    <span class="badge text-bg-light border ms-2 small">{{ $result['version'] }}</span>
+                                    <span class="badge text-bg-light border ms-1 small">{{ $result['status'] }}</span>
+                                    <span class="badge text-bg-light border ms-1 small">{{ $result['category'] }}</span>
                                     <p class="text-muted small mb-0 mt-1">{{ $result['excerpt'] }}</p>
                                 </div>
                                 <i class="bi bi-chevron-right text-muted"></i>
@@ -104,7 +139,7 @@
                     @foreach($global as $doc)
                         <a href="{{ admin_route('docs.show', ['slug' => $doc['slug']]) }}"
                            class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                            <span><i class="bi bi-file-earmark-text me-2 text-muted"></i>{{ $doc['title'] }}</span>
+                            <span><i class="bi bi-file-earmark-text me-2 text-muted"></i>{{ $doc['title'] }} <span class="badge text-bg-light border ms-2">{{ $doc['version'] }}</span> <span class="badge text-bg-light border ms-1">{{ $doc['status'] }}</span></span>
                             <i class="bi bi-chevron-right text-muted small"></i>
                         </a>
                     @endforeach
@@ -129,7 +164,7 @@
                     @foreach($modDocs as $doc)
                         <a href="{{ admin_route('docs.show', ['slug' => $doc['slug']]) }}"
                            class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                            <span><i class="bi bi-file-earmark-text me-2 text-muted"></i>{{ $doc['title'] }}</span>
+                            <span><i class="bi bi-file-earmark-text me-2 text-muted"></i>{{ $doc['title'] }} <span class="badge text-bg-light border ms-2">{{ $doc['version'] }}</span> <span class="badge text-bg-light border ms-1">{{ $doc['category'] }}</span></span>
                             <i class="bi bi-chevron-right text-muted small"></i>
                         </a>
                     @endforeach
