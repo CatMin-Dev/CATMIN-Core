@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
 use App\Services\Performance\PerformanceReportService;
+use App\Services\SecurityHardeningService;
 use Modules\Logger\Models\MonitoringIncident;
 use Modules\Logger\Models\MonitoringSnapshot;
 use Modules\Logger\Models\SystemAlert;
@@ -101,6 +102,7 @@ class MonitoringService
         $checks[] = $this->checkApi();
         $checks[] = $this->checkMailer();
         $checks[] = $this->checkCriticalModules();
+        $checks[] = $this->checkSecurityHardening();
 
         return $checks;
     }
@@ -520,6 +522,33 @@ class MonitoringService
             threshold: 1,
             actions: [
                 $this->actionRow('Ouvrir Mailer', 'admin.mailer.manage'),
+            ]
+        );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function checkSecurityHardening(): array
+    {
+        $service = app(SecurityHardeningService::class);
+        $checks = $service->collectGuardrails();
+        $summary = $service->summarize($checks);
+
+        return $this->checkRow(
+            domain: 'security',
+            status: (string) ($summary['status'] ?? 'ok'),
+            title: 'Guardrails securite production',
+            message: sprintf(
+                'critical=%d, warning=%d sur %d check(s)',
+                (int) ($summary['critical'] ?? 0),
+                (int) ($summary['warning'] ?? 0),
+                (int) ($summary['total'] ?? 0)
+            ),
+            metric: (int) (($summary['critical'] ?? 0) + ($summary['warning'] ?? 0)),
+            threshold: 0,
+            actions: [
+                $this->actionRow('Ouvrir Parametres', 'admin.settings.manage'),
             ]
         );
     }

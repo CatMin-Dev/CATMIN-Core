@@ -17,12 +17,21 @@ class InstallCheckService
             'database' => self::checkDatabaseConnection(),
             'directories' => self::checkDirectories(),
             'environment' => self::checkEnvironmentVariables(),
+            'security_guardrails' => app(SecurityHardeningService::class)->installCheck(),
         ];
 
         $errors = [];
+        $warnings = [];
+
         foreach ($checks as $key => $result) {
             if (($result['ok'] ?? false) !== true) {
                 $errors[$key] = $result;
+                continue;
+            }
+
+            $status = (string) ($result['status'] ?? 'ok');
+            if ($status === 'warning') {
+                $warnings[$key] = $result;
             }
         }
 
@@ -30,6 +39,7 @@ class InstallCheckService
             'ok' => empty($errors),
             'checks' => $checks,
             'errors' => $errors,
+            'warnings' => $warnings,
         ];
     }
 

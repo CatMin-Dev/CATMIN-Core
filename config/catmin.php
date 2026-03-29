@@ -340,6 +340,43 @@ return [
         'incoming_webhook_id' => env('CATMIN_WEBHOOK_INCOMING_ID', null),
     ],
 
+    'security' => [
+        'headers' => [
+            'enabled' => env('CATMIN_SECURITY_HEADERS_ENABLED', true),
+            'csp' => env(
+                'CATMIN_SECURITY_CSP',
+                "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; object-src 'none'; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; font-src 'self' data: https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; connect-src 'self' https: wss: ws:"
+            ),
+            'frame_options' => env('CATMIN_SECURITY_FRAME_OPTIONS', 'DENY'),
+            'referrer_policy' => env('CATMIN_SECURITY_REFERRER_POLICY', 'strict-origin-when-cross-origin'),
+            'permissions_policy' => env('CATMIN_SECURITY_PERMISSIONS_POLICY', 'camera=(), geolocation=(), microphone=(), payment=(), usb=()'),
+            'hsts' => [
+                'enabled' => env('CATMIN_SECURITY_HSTS_ENABLED', true),
+                'max_age' => (int) env('CATMIN_SECURITY_HSTS_MAX_AGE', 31536000),
+                'include_subdomains' => env('CATMIN_SECURITY_HSTS_INCLUDE_SUBDOMAINS', true),
+                'preload' => env('CATMIN_SECURITY_HSTS_PRELOAD', false),
+            ],
+            'sensitive_paths' => [
+                env('CATMIN_ADMIN_PATH', 'admin') . '/login',
+                env('CATMIN_ADMIN_PATH', 'admin') . '/forgot-password',
+                env('CATMIN_ADMIN_PATH', 'admin') . '/reset-password',
+                env('CATMIN_ADMIN_PATH', 'admin') . '/2fa',
+            ],
+        ],
+        'guardrails' => [
+            'enabled' => env('CATMIN_SECURITY_GUARDRAILS_ENABLED', true),
+            'min_secret_length' => (int) env('CATMIN_SECURITY_MIN_SECRET_LENGTH', 20),
+            'critical_admin_passwords' => [
+                'admin',
+                'admin123',
+                'admin12345',
+                'password',
+                'password123',
+                'changeme',
+            ],
+        ],
+    ],
+
     'logs' => [
         'retention_days' => (int) env('CATMIN_LOG_RETENTION_DAYS', 14),
         'archive_retention_days' => (int) env('CATMIN_LOG_ARCHIVE_RETENTION_DAYS', 90),

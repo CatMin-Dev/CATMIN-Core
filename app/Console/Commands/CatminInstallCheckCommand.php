@@ -9,7 +9,7 @@ class CatminInstallCheckCommand extends Command
 {
     protected $signature = 'catmin:install:check {--json : sortie JSON des checks}';
 
-    protected $description = 'Verifier les prerequis d\'installation CATMIN (PHP, extensions, DB, dossiers, env)';
+    protected $description = 'Verifier les prerequis d\'installation CATMIN (PHP, extensions, DB, dossiers, env, guardrails securite)';
 
     public function handle(): int
     {
@@ -24,8 +24,14 @@ class CatminInstallCheckCommand extends Command
 
         foreach ($report['checks'] as $name => $check) {
             $status = ($check['ok'] ?? false) ? 'OK' : 'KO';
-            $label = str_pad((string) $name, 16, ' ');
-            $this->line("- {$label} [{$status}] " . ($check['message'] ?? ''));
+            $severity = strtoupper((string) ($check['status'] ?? 'ok'));
+            $label = str_pad((string) $name, 20, ' ');
+            $this->line("- {$label} [{$status}/{$severity}] " . ($check['message'] ?? ''));
+        }
+
+        $warningCount = count((array) ($report['warnings'] ?? []));
+        if ($warningCount > 0) {
+            $this->warn("{$warningCount} warning(s) detecte(s): verifier les guardrails de securite.");
         }
 
         if (($report['ok'] ?? false) === true) {

@@ -6,6 +6,7 @@ use App\Http\Middleware\EnsureCatminApiV1Credential;
 use App\Http\Middleware\EnsureCatminExternalApiKey;
 use App\Http\Middleware\EnsureCatminFrontendAvailable;
 use App\Http\Middleware\EnsureCatminPermission;
+use App\Http\Middleware\ApplySecurityHeaders;
 use App\Http\Middleware\LogCatminExternalApi;
 use App\Http\Middleware\LogRequestPerformance;
 use App\Services\Api\V1Response;
@@ -72,6 +73,7 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->append(ApplySecurityHeaders::class);
         $middleware->append(LogRequestPerformance::class);
 
         $middleware->alias([
