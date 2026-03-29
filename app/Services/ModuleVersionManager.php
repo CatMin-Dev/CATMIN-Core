@@ -169,7 +169,7 @@ class ModuleVersionManager
      */
     public static function getDashboardVersion(): string
     {
-        return config('app.dashboard_version', 'V2.5-dev');
+        return config('app.dashboard_version', 'V3-dev');
     }
 
     /**
@@ -231,7 +231,7 @@ class ModuleVersionManager
             'module' => strtolower($module),
             'from' => $from,
             'to' => $to,
-            'phase' => config('app.development_phase', 'v2-dev'),
+            'phase' => config('app.development_phase', 'v3-dev'),
         ];
 
         // Keep last 1000 entries
@@ -269,7 +269,7 @@ class ModuleVersionManager
     {
         return [
             'generated_at' => Carbon::now()->toIso8601String(),
-            'development_phase' => config('app.development_phase', 'v2-dev'),
+            'development_phase' => config('app.development_phase', 'v3-dev'),
             'dashboard_version' => self::getDashboardVersion(),
             'modules' => self::getAllVersions(),
             'total_modules' => count(self::getAllVersions()),

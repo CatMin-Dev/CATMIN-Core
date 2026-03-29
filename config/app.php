@@ -133,8 +133,8 @@ return [
     |
     */
 
-    'dashboard_version' => env('DASHBOARD_VERSION', 'V2.5-dev'),
+    'dashboard_version' => env('DASHBOARD_VERSION', 'V3-dev'),
 
-    'development_phase' => env('DEVELOPMENT_PHASE', 'v2-dev'),
+    'development_phase' => env('DEVELOPMENT_PHASE', 'v3-dev'),
 
 ];

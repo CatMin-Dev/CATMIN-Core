@@ -59,7 +59,7 @@ class DashboardController extends Controller
                 'modules_total' => $allModules->count(),
             ],
             'systemInfo' => [
-                'catmin_version' => (string) config('app.dashboard_version', '2.0.0-dev'),
+                    'catmin_version' => (string) config('app.dashboard_version', 'V3-dev'),
                 'laravel_version' => app()->version(),
                 'php_version' => PHP_VERSION,
                 'environment' => app()->environment(),

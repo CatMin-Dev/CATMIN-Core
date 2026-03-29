@@ -361,6 +361,12 @@ class DashboardKpiService
                 'permission' => 'module.logger.list',
             ],
             [
+                'label' => 'System check',
+                'icon' => 'bi bi-clipboard-check',
+                'url' => $this->routeUrl('system.check'),
+                'permission' => 'module.logger.list',
+            ],
+            [
                 'label' => 'Voir modules',
                 'icon' => 'bi bi-puzzle',
                 'url' => $this->routeUrl('modules.index'),

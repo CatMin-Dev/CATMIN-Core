@@ -5,13 +5,15 @@ use Modules\Logger\Controllers\Admin\AlertController;
 use Modules\Logger\Controllers\Admin\LogController;
 use Modules\Logger\Controllers\Admin\MonitoringController;
 use Modules\Logger\Controllers\Admin\PerformanceController;
+use Modules\Logger\Controllers\Admin\SystemCheckController;
 
 Route::middleware(['web', 'catmin.admin'])
     ->prefix(config('catmin.admin.path', 'admin'))
     ->name('admin.')
     ->group(function (): void {
-        Route::get('/logs', [LogController::class, 'index'])
+        Route::get('/logs/{page?}', [LogController::class, 'index'])
             ->middleware('catmin.permission:module.logger.list')
+            ->whereNumber('page')
             ->name('logger.index');
 
         Route::post('/logs/purge', [LogController::class, 'purge'])
@@ -37,6 +39,14 @@ Route::middleware(['web', 'catmin.admin'])
         Route::post('/monitoring/snapshot', [MonitoringController::class, 'snapshot'])
             ->middleware('catmin.permission:module.logger.list')
             ->name('monitoring.snapshot');
+
+        Route::get('/system-check', [SystemCheckController::class, 'index'])
+            ->middleware('catmin.permission:module.logger.list')
+            ->name('system.check');
+
+        Route::post('/system-check/recheck', [SystemCheckController::class, 'recheck'])
+            ->middleware('catmin.permission:module.logger.list')
+            ->name('system.check.recheck');
 
         Route::get('/performance', [PerformanceController::class, 'index'])
             ->middleware('catmin.permission:module.logger.list')

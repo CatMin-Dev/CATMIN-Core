@@ -13,6 +13,7 @@
             <i class="bi bi-arrow-repeat me-1"></i>Snapshot maintenant
         </button>
     </form>
+    <a class="btn btn-sm btn-outline-secondary" href="{{ admin_route('system.check') }}">System check</a>
     <a class="btn btn-sm btn-outline-secondary" href="{{ admin_route('monitoring.incidents') }}">Incidents detail</a>
 </x-admin.crud.page-header>
 
