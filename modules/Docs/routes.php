@@ -15,4 +15,9 @@ Route::middleware(['web', 'catmin.admin'])
             ->where('slug', '[a-zA-Z0-9\-_]+')
             ->middleware('catmin.permission:module.docs.list')
             ->name('docs.show');
+
+        Route::post('/docs/{slug}/publish-discord', [DocsController::class, 'publishDiscord'])
+            ->where('slug', '[a-zA-Z0-9\-_]+')
+            ->middleware('catmin.permission:module.docs.list')
+            ->name('docs.publish-discord');
     });

@@ -161,8 +161,11 @@ class SettingsAdminService
     public function docsPanel(): array
     {
         return [
-            'docs_enabled'      => $this->toBool(SettingService::get('docs.enabled', true)),
+            'docs_enabled' => $this->toBool(SettingService::get('docs.enabled', true)),
             'docs_local_source' => (string) SettingService::get('docs.local_source', 'docs-site'),
+            'docs_discord_publish_enabled' => $this->toBool(SettingService::get('docs.discord_publish_enabled', false)),
+            'docs_discord_webhook_url' => (string) SettingService::get('docs.discord_webhook_url', ''),
+            'docs_discord_username' => (string) SettingService::get('docs.discord_username', 'CATMIN Docs'),
         ];
     }
 
@@ -171,6 +174,9 @@ class SettingsAdminService
     {
         SettingService::put('docs.enabled', $this->toStringBool($payload['docs_enabled']), 'boolean', 'docs', 'Centre d\'aide activé', false, 'Docs activés');
         SettingService::put('docs.local_source', (string) $payload['docs_local_source'], 'string', 'docs', 'Source locale des docs', false, 'Source locale');
+        SettingService::put('docs.discord_publish_enabled', $this->toStringBool($payload['docs_discord_publish_enabled']), 'boolean', 'docs', 'Publication Discord activée', false, 'Discord activé');
+        SettingService::put('docs.discord_webhook_url', (string) $payload['docs_discord_webhook_url'], 'url', 'docs', 'Webhook Discord docs', false, 'Discord webhook URL');
+        SettingService::put('docs.discord_username', (string) $payload['docs_discord_username'], 'string', 'docs', 'Nom bot Discord docs', false, 'Discord username');
     }
 
     // ─── Legacy (backward compat) ────────────────────────────────────────────

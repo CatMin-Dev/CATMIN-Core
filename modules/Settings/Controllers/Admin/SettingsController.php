@@ -176,12 +176,18 @@ class SettingsController extends Controller
     public function updateDocs(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'docs_enabled'      => ['nullable', 'boolean'],
+            'docs_enabled' => ['nullable', 'boolean'],
             'docs_local_source' => ['nullable', 'string', 'max:191'],
+            'docs_discord_publish_enabled' => ['nullable', 'boolean'],
+            'docs_discord_webhook_url' => ['nullable', 'url', 'max:500'],
+            'docs_discord_username' => ['nullable', 'string', 'max:80'],
         ]);
 
-        $validated['docs_enabled']      = $request->boolean('docs_enabled');
+        $validated['docs_enabled'] = $request->boolean('docs_enabled');
         $validated['docs_local_source'] = $validated['docs_local_source'] ?? 'docs-site';
+        $validated['docs_discord_publish_enabled'] = $request->boolean('docs_discord_publish_enabled');
+        $validated['docs_discord_webhook_url'] = $validated['docs_discord_webhook_url'] ?? '';
+        $validated['docs_discord_username'] = $validated['docs_discord_username'] ?? 'CATMIN Docs';
 
         $this->service->updateDocsPanel($validated);
 

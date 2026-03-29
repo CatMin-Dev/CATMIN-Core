@@ -3,8 +3,10 @@
 namespace Modules\Docs\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use App\Services\SettingService;
 use Modules\Docs\Services\DocsService;
 
 class DocsController extends Controller
@@ -58,6 +60,27 @@ class DocsController extends Controller
         return view()->file(base_path('modules/Docs/Views/show.blade.php'), [
             'currentPage' => 'docs',
             'doc'         => $doc,
+            'discordPublishEnabled' => filter_var((string) SettingService::get('docs.discord_publish_enabled', '0'), FILTER_VALIDATE_BOOLEAN)
+                && trim((string) SettingService::get('docs.discord_webhook_url', '')) !== '',
         ]);
+    }
+
+    public function publishDiscord(string $slug): RedirectResponse
+    {
+        $doc = $this->docs->find($slug);
+
+        if ($doc === null) {
+            return redirect()->route('admin.docs.index')->with('error', 'Document introuvable.');
+        }
+
+        $result = $this->docs->publishToDiscord($doc);
+
+        if ($result['ok']) {
+            return redirect()->route('admin.docs.show', ['slug' => $slug])
+                ->with('status', 'Documentation publiee sur Discord.');
+        }
+
+        return redirect()->route('admin.docs.show', ['slug' => $slug])
+            ->with('error', 'Publication Discord echouee: ' . ($result['error'] ?? 'erreur inconnue'));
     }
 }

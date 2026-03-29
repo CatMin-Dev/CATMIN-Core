@@ -23,6 +23,16 @@ La barre de recherche permet de trouver des documents par mots-clés dans le tit
 
 Utiliser le sélecteur « Filtrer par module » pour n'afficher que la documentation d'un module spécifique.
 
+## Publication Discord
+
+La fiche d'un document peut être publiée dans Discord via webhook:
+
+- activer **Paramètres > Docs > Publication Discord activée**
+- renseigner le webhook Discord
+- ouvrir une documentation puis cliquer **Publier Discord**
+
+Le message publié contient le titre, le module et un extrait du document.
+
 ## Ajouter de la documentation
 
 ### Aide d'un module

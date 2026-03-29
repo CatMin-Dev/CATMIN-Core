@@ -13,6 +13,14 @@
             Docs {{ ucfirst($doc['module']) }}
         </a>
     @endif
+    @if($discordPublishEnabled)
+        <form method="POST" action="{{ admin_route('docs.publish-discord', ['slug' => $doc['slug']]) }}" class="d-inline">
+            @csrf
+            <button class="btn btn-sm btn-outline-primary" type="submit">
+                <i class="bi bi-discord me-1"></i>Publier Discord
+            </button>
+        </form>
+    @endif
 </x-admin.crud.page-header>
 
 <div class="catmin-page-body">

@@ -2,6 +2,9 @@
 
 namespace Modules\Docs\Services;
 
+use App\Services\SettingService;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 use League\CommonMark\CommonMarkConverter;
 use League\CommonMark\Extension\GithubFlavoredMarkdownExtension;
 use League\CommonMark\Environment\Environment;
@@ -123,7 +126,15 @@ class DocsService
         }
 
         $results = [];
-        $lowerQuery = mb_strtolower($query);
+        $terms = collect(preg_split('/\s+/', mb_strtolower(trim($query))) ?: [])
+            ->map(fn ($term) => trim((string) $term))
+            ->filter(fn ($term) => mb_strlen($term) >= 2)
+            ->values()
+            ->all();
+
+        if ($terms === []) {
+            return [];
+        }
 
         foreach ($this->index() as $doc) {
             $content = file_get_contents($doc['path']);
@@ -134,24 +145,114 @@ class DocsService
 
             $lowerContent = mb_strtolower($content);
             $lowerTitle = mb_strtolower($doc['title']);
+            $score = 0;
+            $firstTerm = null;
 
-            if (str_contains($lowerTitle, $lowerQuery) || str_contains($lowerContent, $lowerQuery)) {
-                // Find excerpt around first match
-                $pos = strpos($lowerContent, $lowerQuery);
-                $start = max(0, $pos - 80);
-                $excerpt = '...' . substr($content, $start, 200) . '...';
-                $excerpt = preg_replace('/\s+/', ' ', strip_tags($excerpt));
+            foreach ($terms as $term) {
+                $titleHits = substr_count($lowerTitle, $term);
+                $contentHits = substr_count($lowerContent, $term);
+
+                if ($titleHits > 0) {
+                    $score += $titleHits * 10;
+                }
+                if ($contentHits > 0) {
+                    $score += $contentHits;
+                }
+
+                if ($firstTerm === null && ($titleHits > 0 || $contentHits > 0)) {
+                    $firstTerm = $term;
+                }
+            }
+
+            if ($score > 0) {
+                $excerpt = $this->buildSearchExcerpt($content, $lowerContent, (string) ($firstTerm ?? $terms[0]));
 
                 $results[] = [
                     'slug'    => $doc['slug'],
                     'title'   => $doc['title'],
                     'excerpt' => trim($excerpt),
                     'module'  => $doc['module'],
+                    'score'   => $score,
                 ];
             }
         }
 
-        return $results;
+        usort($results, fn (array $a, array $b): int => (int) ($b['score'] ?? 0) <=> (int) ($a['score'] ?? 0));
+
+        return array_map(function (array $row): array {
+            unset($row['score']);
+
+            return $row;
+        }, $results);
+    }
+
+    /**
+     * @return array{ok:bool, error:string|null}
+     */
+    public function publishToDiscord(array $doc): array
+    {
+        $enabled = filter_var((string) SettingService::get('docs.discord_publish_enabled', '0'), FILTER_VALIDATE_BOOLEAN);
+        $webhookUrl = trim((string) SettingService::get('docs.discord_webhook_url', ''));
+        if (!$enabled) {
+            return ['ok' => false, 'error' => 'Publication Discord desactivee.'];
+        }
+
+        if ($webhookUrl === '') {
+            return ['ok' => false, 'error' => 'Webhook Discord non configure.'];
+        }
+
+        $username = trim((string) SettingService::get('docs.discord_username', 'CATMIN Docs'));
+        $excerpt = trim((string) preg_replace('/\s+/', ' ', strip_tags((string) ($doc['html'] ?? ''))));
+        $excerpt = Str::limit($excerpt, 350, '...');
+
+        $payload = [
+            'username' => $username !== '' ? $username : 'CATMIN Docs',
+            'content' => 'Nouvelle publication documentation: **' . (string) ($doc['title'] ?? 'Documentation') . '**',
+            'embeds' => [
+                [
+                    'title' => (string) ($doc['title'] ?? 'Documentation'),
+                    'description' => $excerpt,
+                    'color' => 3447003,
+                    'fields' => [
+                        [
+                            'name' => 'Module',
+                            'value' => (string) ($doc['module'] ? ucfirst((string) $doc['module']) : 'General'),
+                            'inline' => true,
+                        ],
+                        [
+                            'name' => 'Slug',
+                            'value' => (string) ($doc['slug'] ?? '-'),
+                            'inline' => true,
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        try {
+            $response = Http::timeout(10)->post($webhookUrl, $payload);
+            if ($response->successful()) {
+                return ['ok' => true, 'error' => null];
+            }
+
+            return ['ok' => false, 'error' => 'Discord HTTP ' . $response->status() . '.'];
+        } catch (\Throwable $throwable) {
+            return ['ok' => false, 'error' => Str::limit($throwable->getMessage(), 240, '')];
+        }
+    }
+
+    private function buildSearchExcerpt(string $content, string $lowerContent, string $term): string
+    {
+        $pos = strpos($lowerContent, $term);
+
+        if ($pos === false) {
+            return Str::limit(trim((string) preg_replace('/\s+/', ' ', strip_tags($content))), 180, '...');
+        }
+
+        $start = max(0, $pos - 80);
+        $excerpt = '...' . substr($content, $start, 220) . '...';
+
+        return (string) preg_replace('/\s+/', ' ', strip_tags($excerpt));
     }
 
     /**

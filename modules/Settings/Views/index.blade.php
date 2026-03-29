@@ -433,6 +433,31 @@
                 </div>
 
                 <div class="col-12">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="docs_discord_publish_enabled" name="docs_discord_publish_enabled" value="1"
+                            @checked(old('docs_discord_publish_enabled', $docs['docs_discord_publish_enabled'])) @disabled(!$canWrite)>
+                        <label class="form-check-label" for="docs_discord_publish_enabled">Publication Discord activée</label>
+                    </div>
+                </div>
+
+                <div class="col-12 col-lg-6">
+                    <label class="form-label" for="docs_discord_webhook_url">Webhook Discord</label>
+                    <input id="docs_discord_webhook_url" name="docs_discord_webhook_url" type="url" maxlength="500"
+                        class="form-control @error('docs_discord_webhook_url') is-invalid @enderror"
+                        value="{{ old('docs_discord_webhook_url', $docs['docs_discord_webhook_url']) }}"
+                        placeholder="https://discord.com/api/webhooks/..." @disabled(!$canWrite)>
+                    @error('docs_discord_webhook_url')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+
+                <div class="col-12 col-lg-4">
+                    <label class="form-label" for="docs_discord_username">Nom bot Discord</label>
+                    <input id="docs_discord_username" name="docs_discord_username" type="text" maxlength="80"
+                        class="form-control @error('docs_discord_username') is-invalid @enderror"
+                        value="{{ old('docs_discord_username', $docs['docs_discord_username']) }}" placeholder="CATMIN Docs" @disabled(!$canWrite)>
+                    @error('docs_discord_username')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+
+                <div class="col-12">
                     @if($canWrite)
                         <button class="btn btn-primary" type="submit"><i class="bi bi-floppy me-1"></i>Enregistrer</button>
                     @endif
@@ -500,6 +525,7 @@
         'ops_alert_email': 'tab-ops', 'ops_alert_webhook_url': 'tab-ops',
         'ops_log_retention_days': 'tab-ops',
         'docs_enabled': 'tab-docs', 'docs_local_source': 'tab-docs',
+        'docs_discord_publish_enabled': 'tab-docs', 'docs_discord_webhook_url': 'tab-docs', 'docs_discord_username': 'tab-docs',
     };
     var errorKeys = @json(array_keys($errors->toArray()));
     for (var i = 0; i < errorKeys.length; i++) {
