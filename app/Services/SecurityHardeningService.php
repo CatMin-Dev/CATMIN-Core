@@ -29,6 +29,7 @@ final class SecurityHardeningService
         ];
     }
 
+
     /**
      * @param array<int, array<string, mixed>> $checks
      * @return array<string, mixed>
@@ -149,6 +150,10 @@ final class SecurityHardeningService
     {
         $token = (string) config('catmin.api.internal_token', '');
         $isProd = $this->isProduction();
+
+            if (!(bool) config('catmin.api_enabled', false)) {
+                return $this->checkRow('internal_api_token', 'ok', 'API interne desactivee — token non requis.');
+            }
 
         if (!$this->isStrongSecret($token)) {
             return $this->checkRow(

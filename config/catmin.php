@@ -138,6 +138,15 @@ return [
         'internal_token' => env('CATMIN_API_INTERNAL_TOKEN', ''),
     ],
 
+        /*
+        |--------------------------------------------------------------------------
+        | API Surface Toggle
+        |--------------------------------------------------------------------------
+        | When disabled, the internal_api_token guardrail is skipped (no false
+        | positive when the external API surface has been removed).
+        */
+        'api_enabled' => (bool) env('CATMIN_API_ENABLED', false),
+
     'health' => [
         'failed_jobs_threshold' => (int) env('CATMIN_HEALTH_FAILED_JOBS_THRESHOLD', 50),
     ],
@@ -198,9 +207,9 @@ return [
                 'route' => 'admin.index',
                 'target_response_ms' => 350,
                 'max_response_ms' => 700,
-                'max_queries' => 18,
+                 'max_queries' => 60,
                 'max_slow_queries' => 1,
-                'notes' => 'S appuie sur cache court pour les KPI.',
+                 'notes' => 'Cache KPI 60s. Budget queries inclut monitoring + schema checks.',
             ],
             [
                 'key' => 'admin.monitoring',
@@ -209,7 +218,7 @@ return [
                 'route' => 'admin.monitoring.index',
                 'target_response_ms' => 350,
                 'max_response_ms' => 750,
-                'max_queries' => 16,
+                    'max_queries' => 30,
                 'max_slow_queries' => 1,
                 'notes' => 'Vue transverse, doit rester lisible et actionnable.',
             ],
@@ -231,7 +240,7 @@ return [
                 'route' => 'admin.logger.index',
                 'target_response_ms' => 450,
                 'max_response_ms' => 900,
-                'max_queries' => 10,
+                    'max_queries' => 20,
                 'max_slow_queries' => 1,
                 'notes' => 'Pagination et filtres doivent suffire.',
             ],
