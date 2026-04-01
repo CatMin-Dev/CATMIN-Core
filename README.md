@@ -52,6 +52,34 @@ The repository now provides a simple CI pipeline in `.github/workflows/ci.yml`:
 - Laravel test suite
 - Frontend build verification with Vite
 
+### Release packaging
+
+Prompt 351 adds a release packaging script that builds a deployable ZIP with a
+versioned naming convention.
+
+```bash
+composer release:build
+```
+
+Generated output:
+
+- archive: `runtime/releases/catmin-<version>.zip`
+- git tag: `release/<version>`
+
+Defaults:
+
+- if `--version` is omitted, version is auto-derived from `DASHBOARD_VERSION`
+	+ timestamp
+- excludes dev artifacts (`node_modules`, `tests`, `.env*`, `scripts/dev`, etc.)
+- includes production code, built assets, and `.env.example`
+
+Examples:
+
+```bash
+composer release:build -- --version v3-dev-20260401
+composer release:build -- --version v3-dev-20260401 --skip-tag
+```
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:

@@ -59,6 +59,9 @@
             "@composer lint",
             "@composer test"
         ],
+        "release:build": [
+            "bash scripts/release/build-release.sh"
+        ],
         "test": [
             "@php artisan config:clear --ansi",
             "@php artisan test"
