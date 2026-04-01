@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\AddonMarketplaceController;
 use App\Http\Controllers\Admin\AdminPasswordResetController;
 use App\Http\Controllers\Admin\AdminSessionsController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\ReleaseCheckController;
 use App\Http\Controllers\Admin\TwoFactorController;
 use App\Http\Controllers\Frontend\HomeController;
 use App\Http\Controllers\Frontend\PageController;
@@ -119,6 +120,10 @@ Route::prefix($adminPath)->middleware('web')->name('admin.')->group(function () 
         Route::post('/addons/marketplace/rebuild', [AddonMarketplaceController::class, 'rebuild'])
             ->middleware('catmin.permission:module.core.config')
             ->name('addons.marketplace.rebuild');
+
+        Route::get('/release-check', [ReleaseCheckController::class, 'index'])
+            ->middleware('catmin.permission:module.core.config')
+            ->name('release-check.index');
 
         Route::get('/modules/{slug}/config', [DashboardController::class, 'moduleConfig'])
             ->middleware('catmin.permission:module.core.config')
