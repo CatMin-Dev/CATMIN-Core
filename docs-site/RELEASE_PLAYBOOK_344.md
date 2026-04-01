@@ -465,6 +465,22 @@ Pour passage vers V2 stable:
 2. **Fermer P1** (3j): webhooks anti-replay, logs rotation, alerting
 3. **Valider avec ce playbook** (1j)
 4. **Tag + release** (jour J)
+
+---
+
+## 12) Freeze & Handover References (Prompt 360)
+
+Pour verrouiller la bascule V2 -> V3 sans contamination de scope:
+
+- `docs-site/V2_STABLE_FREEZE_360.md`
+- `docs-site/V2_BASELINE_REFERENCE_360.md`
+- `docs-site/V3_HANDOVER_PACKAGE_360.md`
+
+Commande de readiness freeze:
+
+```bash
+php artisan catmin:freeze:v2 --json
+```
 5. **Monitoring 48h** puis déclarer stable
 
 **ETA prédite:** 5-7 jours ouvrés à partir de maintenant.
