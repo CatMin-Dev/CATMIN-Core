@@ -37,6 +37,7 @@ Prefixe unique: `catmin:`
 - `catmin:migrate:safe`
 - `catmin:update:plan`
 - `catmin:update:apply`
+- `catmin:recovery:run`
 - `catmin:rbac:sync`
 - `catmin:settings:export`
 - `catmin:settings:import`

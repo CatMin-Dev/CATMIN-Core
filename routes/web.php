@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\AddonMarketplaceController;
 use App\Http\Controllers\Admin\AdminPasswordResetController;
 use App\Http\Controllers\Admin\AdminSessionsController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\RecoveryController;
 use App\Http\Controllers\Admin\ReleaseCheckController;
 use App\Http\Controllers\Admin\TwoFactorController;
 use App\Http\Controllers\Admin\UpdateController;
@@ -152,6 +153,13 @@ Route::prefix($adminPath)->middleware('web')->name('admin.')->group(function () 
         Route::post('/system-update/rollback', [UpdateController::class, 'rollback'])
             ->middleware('catmin.permission:module.core.config')
             ->name('system-update.rollback');
+
+        Route::get('/recovery', [RecoveryController::class, 'index'])
+            ->middleware('catmin.permission:module.core.config')
+            ->name('recovery.index');
+        Route::post('/recovery/run', [RecoveryController::class, 'run'])
+            ->middleware('catmin.permission:module.core.config')
+            ->name('recovery.run');
 
         Route::get('/modules/{slug}/config', [DashboardController::class, 'moduleConfig'])
             ->middleware('catmin.permission:module.core.config')
