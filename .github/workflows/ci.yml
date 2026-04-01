@@ -47,6 +47,18 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
 
+      - name: Setup Node.js for test assets
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install Node dependencies for test assets
+        run: npm ci
+
+      - name: Build frontend assets for PHP tests
+        run: npm run build
+
       - name: Prepare application env
         run: |
           cp .env.example .env
