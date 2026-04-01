@@ -48,9 +48,16 @@
             "npm install",
             "npm run build"
         ],
+        "lint": [
+            "find app bootstrap config database modules routes tests -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null"
+        ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
             "npx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74\" \"php artisan serve\" \"php artisan queue:listen --tries=1 --timeout=0\" \"php artisan pail --timeout=0\" \"npm run dev\" --names=server,queue,logs,vite --kill-others"
+        ],
+        "ci": [
+            "@composer lint",
+            "@composer test"
         ],
         "test": [
             "@php artisan config:clear --ansi",

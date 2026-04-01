@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\AdminUser;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -54,7 +55,8 @@ class AdminPasswordResetService
         }
 
         $expiresIn = (int) config('catmin.admin.password_reset_expire_minutes', 60);
-        if (now()->diffInMinutes($row->created_at) > $expiresIn) {
+        $createdAt = $row->created_at !== null ? Carbon::parse((string) $row->created_at) : null;
+        if (!$createdAt || now()->diffInMinutes($createdAt) > $expiresIn) {
             return false;
         }
 

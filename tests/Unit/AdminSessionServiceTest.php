@@ -4,11 +4,9 @@ namespace Tests\Unit;
 
 use App\Services\AdminSessionService;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Http\Request;
-use Illuminate\Session\Store;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
 use Tests\TestCase;
 
 class AdminSessionServiceTest extends TestCase
@@ -34,13 +32,29 @@ class AdminSessionServiceTest extends TestCase
     {
         $service = app(AdminSessionService::class);
 
-        $current = $this->fakeRequest('sess-current');
-        $otherA = $this->fakeRequest('sess-other-a');
-        $otherB = $this->fakeRequest('sess-other-b');
-
-        $service->registerSession($current, 7);
-        $service->registerSession($otherA, 7);
-        $service->registerSession($otherB, 7);
+        DB::table('admin_sessions')->insert([
+            [
+                'session_id' => 'sess-current',
+                'admin_user_id' => 7,
+                'last_activity_at' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'session_id' => 'sess-other-a',
+                'admin_user_id' => 7,
+                'last_activity_at' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'session_id' => 'sess-other-b',
+                'admin_user_id' => 7,
+                'last_activity_at' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        ]);
 
         $count = $service->revokeOthers(7, 'sess-current');
 
@@ -48,17 +62,6 @@ class AdminSessionServiceTest extends TestCase
         $this->assertFalse($service->isRevoked('sess-current'));
         $this->assertTrue($service->isRevoked('sess-other-a'));
         $this->assertTrue($service->isRevoked('sess-other-b'));
-    }
-
-    private function fakeRequest(string $sessionId): Request
-    {
-        $request = Request::create('/admin', 'GET');
-        $session = new Store('test', new MockArraySessionStorage());
-        $session->setId($sessionId);
-        $session->start();
-        $request->setLaravelSession($session);
-
-        return $request;
     }
 
     private function createTables(): void

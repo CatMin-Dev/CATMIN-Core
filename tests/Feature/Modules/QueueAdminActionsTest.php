@@ -5,22 +5,24 @@ namespace Tests\Feature\Modules;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Tests\TestCase;
 
+#[RunTestsInSeparateProcesses]
 class QueueAdminActionsTest extends TestCase
 {
     use RefreshDatabase;
 
     public function test_queue_index_denies_without_list_permission(): void
     {
-        $response = $this->withAdminPermissions([])->get('/admin/queue');
+        $response = $this->withAdminPermissions([])->get($this->adminPath('/queue'));
 
         $response->assertForbidden();
     }
 
     public function test_queue_index_allows_with_list_permission(): void
     {
-        $response = $this->withAdminPermissions(['module.queue.list'])->get('/admin/queue');
+        $response = $this->withAdminPermissions(['module.queue.list'])->get($this->adminPath('/queue'));
 
         $this->assertContains($response->getStatusCode(), [200, 302]);
     }
@@ -30,7 +32,7 @@ class QueueAdminActionsTest extends TestCase
         $failedId = $this->insertFailedJob();
 
         $response = $this->withAdminPermissions(['module.queue.list'])
-            ->post('/admin/queue/failed/retry-selected', ['ids' => [$failedId]]);
+            ->post($this->adminPath('/queue/failed/retry-selected'), ['ids' => [$failedId]]);
 
         $response->assertForbidden();
     }
@@ -48,9 +50,9 @@ class QueueAdminActionsTest extends TestCase
             ->andReturn(0);
 
         $response = $this->withAdminPermissions(['module.queue.config'])
-            ->post('/admin/queue/failed/retry-selected', ['ids' => [$firstId, $secondId]]);
+            ->post($this->adminPath('/queue/failed/retry-selected'), ['ids' => [$firstId, $secondId]]);
 
-        $response->assertRedirect('/admin/queue');
+        $response->assertRedirect($this->adminPath('/queue'));
         $response->assertSessionHas('success');
     }
 
@@ -60,9 +62,9 @@ class QueueAdminActionsTest extends TestCase
         $secondId = $this->insertFailedJob('App\\Jobs\\ProcessMedia');
 
         $response = $this->withAdminPermissions(['module.queue.config'])
-            ->post('/admin/queue/failed/selected', ['ids' => [$firstId]]);
+            ->post($this->adminPath('/queue/failed/selected'), ['ids' => [$firstId]]);
 
-        $response->assertRedirect('/admin/queue');
+        $response->assertRedirect($this->adminPath('/queue'));
         $this->assertDatabaseMissing('failed_jobs', ['id' => $firstId]);
         $this->assertDatabaseHas('failed_jobs', ['id' => $secondId]);
     }
@@ -71,7 +73,7 @@ class QueueAdminActionsTest extends TestCase
     {
         $failedId = $this->insertFailedJob('App\\Jobs\\ReportDailyMetrics');
 
-        $response = $this->withAdminPermissions([])->get('/admin/queue/jobs/failed/' . $failedId);
+        $response = $this->withAdminPermissions([])->get($this->adminPath('/queue/jobs/failed/' . $failedId));
 
         $response->assertForbidden();
     }
@@ -80,10 +82,10 @@ class QueueAdminActionsTest extends TestCase
     {
         $failedId = $this->insertFailedJob('App\\Jobs\\ReportDailyMetrics');
 
-        $response = $this->withAdminPermissions(['module.queue.list'])->get('/admin/queue/jobs/failed/' . $failedId);
+        $response = $this->withAdminPermissions(['module.queue.list'])->get($this->adminPath('/queue/jobs/failed/' . $failedId));
 
         $response->assertOk();
-        $response->assertSee('Detail job queue', false);
+        $response->assertSee('Détail job queue', false);
         $response->assertSee('ReportDailyMetrics', false);
     }
 
@@ -113,5 +115,10 @@ class QueueAdminActionsTest extends TestCase
             'catmin_rbac_permissions' => $permissions,
             'catmin_rbac_roles' => [],
         ]);
+    }
+
+    private function adminPath(string $path): string
+    {
+        return '/' . trim((string) config('catmin.admin.path', 'admin'), '/') . $path;
     }
 }

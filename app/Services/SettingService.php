@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Setting;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
 use Modules\Logger\Services\SystemLogService;
 
 class SettingService
@@ -20,6 +21,11 @@ class SettingService
 
         $settings = Cache::rememberForever($cacheKey, function (): array {
             $defaults = collect(config('catmin.settings.defaults', []));
+
+            if (!self::hasSettingsTable()) {
+                return $defaults->all();
+            }
+
             $databaseSettings = Setting::query()->pluck('value', 'key');
 
             return $defaults->merge($databaseSettings)->all();
@@ -107,5 +113,14 @@ class SettingService
     public static function forgetCache(): void
     {
         Cache::forget(config('catmin.settings.cache_key', 'catmin.settings'));
+    }
+
+    private static function hasSettingsTable(): bool
+    {
+        try {
+            return Schema::hasTable('settings');
+        } catch (\Throwable) {
+            return false;
+        }
     }
 }

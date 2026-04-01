@@ -4,6 +4,9 @@ namespace Tests\Feature;
 
 use App\Models\AdminUser;
 use App\Services\AdminAuthService;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class AdminAuthServiceTest extends TestCase
@@ -13,6 +16,16 @@ class AdminAuthServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        Config::set('database.default', 'sqlite');
+        Config::set('database.connections.sqlite.database', ':memory:');
+
+        app('db')->purge('sqlite');
+        app('db')->reconnect('sqlite');
+
+        $this->createTables();
+        $this->seedDefaultAdmin();
+
         $this->authService = app(AdminAuthService::class);
     }
 
@@ -70,9 +83,12 @@ class AdminAuthServiceTest extends TestCase
             'username' => 'locked_admin',
             'email' => 'locked@test.local',
             'password' => bcrypt('password123'),
+        ]);
+
+        $admin->forceFill([
             'failed_login_attempts' => 5,
             'locked_until' => now()->addHours(1),
-        ]);
+        ])->save();
 
         $result = $this->authService->attempt('locked_admin', 'password123');
 
@@ -140,5 +156,41 @@ class AdminAuthServiceTest extends TestCase
         $this->assertNotNull($admin->last_login_at);
 
         $admin->forceDelete();
+    }
+
+    private function createTables(): void
+    {
+        Schema::dropAllTables();
+
+        Schema::create('admin_users', function (Blueprint $table): void {
+            $table->id();
+            $table->string('username')->unique();
+            $table->string('email')->unique();
+            $table->string('password');
+            $table->string('first_name')->nullable();
+            $table->string('last_name')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->boolean('is_super_admin')->default(false);
+            $table->boolean('two_factor_enabled')->default(false);
+            $table->text('two_factor_secret')->nullable();
+            $table->json('two_factor_recovery_codes')->nullable();
+            $table->json('metadata')->nullable();
+            $table->timestamp('last_login_at')->nullable();
+            $table->integer('failed_login_attempts')->default(0);
+            $table->timestamp('locked_until')->nullable();
+            $table->softDeletes();
+            $table->timestamps();
+        });
+    }
+
+    private function seedDefaultAdmin(): void
+    {
+        AdminUser::query()->create([
+            'username' => 'admin',
+            'email' => 'admin@catmin.local',
+            'password' => bcrypt('admin12345'),
+            'is_active' => true,
+            'is_super_admin' => true,
+        ]);
     }
 }

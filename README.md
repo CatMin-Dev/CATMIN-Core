@@ -7,6 +7,51 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+## CATMIN Development Workflow
+
+### Branch strategy
+
+- `main`: production-ready history only.
+- `dev`: integration branch for validated work before promotion to `main`.
+- `feature/<topic>`: short-lived implementation branches.
+
+### Commit convention
+
+- Prefer explicit conventional-style commits: `feat(...)`, `fix(...)`, `refactor(...)`, `docs(...)`, `test(...)`, `chore(...)`.
+- When work is driven by a numbered prompt, mention the scope clearly in the message.
+- Keep one logical change per commit whenever practical.
+
+### Versioning
+
+- Modules/addons use semantic versioning `A.B.C`.
+- Dashboard version follows the active prompt series: `V3-dev` for the current 3xx cycle.
+- Do not reintroduce external public API scope through CI or workflow automation.
+
+### Local quality checks
+
+```bash
+composer lint
+composer test
+npm run build
+```
+
+### Optional local hook
+
+Enable the provided pre-commit hook template:
+
+```bash
+git config core.hooksPath .githooks
+chmod +x .githooks/pre-commit
+```
+
+### GitHub Actions
+
+The repository now provides a simple CI pipeline in `.github/workflows/ci.yml`:
+
+- PHP syntax lint
+- Laravel test suite
+- Frontend build verification with Vite
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:

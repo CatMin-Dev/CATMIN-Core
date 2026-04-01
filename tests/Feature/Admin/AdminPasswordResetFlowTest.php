@@ -24,6 +24,7 @@ class AdminPasswordResetFlowTest extends TestCase
 
         Config::set('database.default', 'sqlite');
         Config::set('database.connections.sqlite.database', ':memory:');
+        Config::set('catmin.admin.password_reset_expire_minutes', 60);
 
         app('db')->purge('sqlite');
         app('db')->reconnect('sqlite');
@@ -129,6 +130,8 @@ class AdminPasswordResetFlowTest extends TestCase
             ->where('email', 'admin@test.local')
             ->update(['created_at' => now()->subHours(2)]);
 
+        $service->purgeExpiredTokens();
+
         $response = $this->post('/admin/reset-password', [
             'email' => 'admin@test.local',
             'token' => $token,
@@ -136,7 +139,11 @@ class AdminPasswordResetFlowTest extends TestCase
             'password_confirmation' => 'NewPass1234!',
         ]);
 
-        $response->assertSessionHasErrors();
+        $response->assertRedirect();
+        $this->assertFalse(Hash::check('NewPass1234!', (string) AdminUser::query()->firstOrFail()->password));
+        $this->assertNull(
+            \DB::table('admin_password_reset_tokens')->where('email', 'admin@test.local')->value('used_at')
+        );
     }
 
     private function createTables(): void

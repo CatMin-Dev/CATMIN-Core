@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 class RbacPermissionService
 {
@@ -69,6 +70,14 @@ class RbacPermissionService
                 'roles' => ['super-admin'],
                 'permissions' => ['*'],
                 'source' => 'legacy-admin-config',
+            ];
+        }
+
+        if (!self::hasUsersTable()) {
+            return [
+                'roles' => [],
+                'permissions' => [],
+                'source' => 'users-table-missing',
             ];
         }
 
@@ -145,5 +154,14 @@ class RbacPermissionService
         $roles = (array) $request->session()->get('catmin_rbac_roles', []);
 
         return in_array(self::SUPER_ADMIN_ROLE, $roles, true);
+    }
+
+    private static function hasUsersTable(): bool
+    {
+        try {
+            return Schema::hasTable('users');
+        } catch (\Throwable) {
+            return false;
+        }
     }
 }
