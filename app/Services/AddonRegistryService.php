@@ -20,7 +20,7 @@ class AddonRegistryService
      */
     public function build(): array
     {
-        File::ensureDirectoryExists(dirname(self::registryPath()));
+        $this->ensureWritableDirectory(dirname(self::registryPath()));
 
         $packages = [];
         foreach (AddonMarketplaceService::listPackages() as $package) {
@@ -71,6 +71,7 @@ class AddonRegistryService
         ];
 
         File::put(self::registryPath(), json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+        $this->ensureWritableFile(self::registryPath());
 
         return $payload;
     }
@@ -87,5 +88,20 @@ class AddonRegistryService
         $decoded = json_decode((string) File::get(self::registryPath()), true);
 
         return is_array($decoded) ? $decoded : $this->build();
+    }
+
+    private function ensureWritableDirectory(string $path): void
+    {
+        File::ensureDirectoryExists($path);
+        if (File::exists($path)) {
+            @chmod($path, 02775);
+        }
+    }
+
+    private function ensureWritableFile(string $path): void
+    {
+        if (File::exists($path)) {
+            @chmod($path, 0664);
+        }
     }
 }

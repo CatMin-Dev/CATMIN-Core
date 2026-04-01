@@ -60,8 +60,9 @@ class AddonMarketplaceService
         $registry = app(AddonRegistryService::class)->build();
         $registry['packages_path'] = self::packagesPath();
 
-        File::ensureDirectoryExists(dirname(self::indexPath()));
+        self::ensureWritableDirectory(dirname(self::indexPath()));
         File::put(self::indexPath(), json_encode($registry, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+        self::ensureWritableFile(self::indexPath());
 
         return $registry;
     }
@@ -79,5 +80,20 @@ class AddonMarketplaceService
         $decoded = json_decode((string) File::get($path), true);
 
         return is_array($decoded) ? $decoded : self::buildIndex();
+    }
+
+    private static function ensureWritableDirectory(string $path): void
+    {
+        File::ensureDirectoryExists($path);
+        if (File::exists($path)) {
+            @chmod($path, 02775);
+        }
+    }
+
+    private static function ensureWritableFile(string $path): void
+    {
+        if (File::exists($path)) {
+            @chmod($path, 0664);
+        }
     }
 }
