@@ -107,8 +107,21 @@ fi
 
 (
   cd "$stage_dir"
+  build_revision="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
+  cat > update-manifest.json <<EOF
+{
+  "name": "CATMIN Update Package",
+  "version": "${version}",
+  "built_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "revision": "${build_revision}",
+  "format": "catmin.update.v1"
+}
+EOF
   zip -qr "$archive_path" .
 )
+
+checksum_path="${archive_path}.sha256"
+sha256sum "$archive_path" | awk '{print $1}' > "$checksum_path"
 
 rm -rf "$stage_dir"
 
@@ -122,6 +135,8 @@ if [[ $skip_tag -eq 0 ]]; then
 fi
 
 echo "Release archive: $archive_path"
+echo "SHA-256: $(cat "$checksum_path")"
+echo "Checksum file: $checksum_path"
 if [[ $skip_tag -eq 0 ]]; then
   echo "Git tag created: $tag_name"
 fi

@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\AdminSessionsController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ReleaseCheckController;
 use App\Http\Controllers\Admin\TwoFactorController;
+use App\Http\Controllers\Admin\UpdateController;
 use App\Http\Controllers\Frontend\HomeController;
 use App\Http\Controllers\Frontend\PageController;
 use App\Http\Controllers\InstallController;
@@ -138,6 +139,19 @@ Route::prefix($adminPath)->middleware('web')->name('admin.')->group(function () 
         Route::get('/release-check', [ReleaseCheckController::class, 'index'])
             ->middleware('catmin.permission:module.core.config')
             ->name('release-check.index');
+
+        Route::get('/system-update', [UpdateController::class, 'index'])
+            ->middleware('catmin.permission:module.core.config')
+            ->name('system-update.index');
+        Route::post('/system-update/download', [UpdateController::class, 'download'])
+            ->middleware('catmin.permission:module.core.config')
+            ->name('system-update.download');
+        Route::post('/system-update/apply', [UpdateController::class, 'apply'])
+            ->middleware('catmin.permission:module.core.config')
+            ->name('system-update.apply');
+        Route::post('/system-update/rollback', [UpdateController::class, 'rollback'])
+            ->middleware('catmin.permission:module.core.config')
+            ->name('system-update.rollback');
 
         Route::get('/modules/{slug}/config', [DashboardController::class, 'moduleConfig'])
             ->middleware('catmin.permission:module.core.config')

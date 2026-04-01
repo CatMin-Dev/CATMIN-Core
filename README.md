@@ -64,6 +64,8 @@ composer release:build
 Generated output:
 
 - archive: `runtime/releases/catmin-<version>.zip`
+- checksum: `runtime/releases/catmin-<version>.zip.sha256`
+- manifest: `update-manifest.json` embedded inside the ZIP
 - git tag: `release/<version>`
 
 Defaults:
