@@ -21,6 +21,7 @@ class ValidationV2PlusService
             self::checkHealth($health),
             self::checkModules($moduleIssues),
             self::checkAddons(),
+            self::checkExtensionContracts(),
             self::checkMigrations($migrationCollisions),
         ];
 
@@ -205,6 +206,34 @@ class ValidationV2PlusService
                 : sprintf('%d collision(s) detectee(s).', count($collisions)),
             'metrics' => [
                 'collisions' => count($collisions),
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected static function checkExtensionContracts(): array
+    {
+        $report = app(ExtensionContractValidatorService::class)->validateAll();
+        $summary = (array) ($report['summary'] ?? []);
+
+        return [
+            'key' => 'extension_contracts',
+            'label' => 'Contrats extensions (modules/addons)',
+            'ok' => (bool) ($report['ok'] ?? false),
+            'details' => sprintf(
+                '%d module(s) en echec, %d addon(s) en echec, %d warning(s).',
+                (int) ($summary['modules_failed'] ?? 0),
+                (int) ($summary['addons_failed'] ?? 0),
+                (int) ($summary['warnings'] ?? 0)
+            ),
+            'metrics' => [
+                'modules_total' => (int) ($summary['modules_total'] ?? 0),
+                'modules_failed' => (int) ($summary['modules_failed'] ?? 0),
+                'addons_total' => (int) ($summary['addons_total'] ?? 0),
+                'addons_failed' => (int) ($summary['addons_failed'] ?? 0),
+                'warnings' => (int) ($summary['warnings'] ?? 0),
             ],
         ];
     }

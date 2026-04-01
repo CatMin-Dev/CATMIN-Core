@@ -18,6 +18,10 @@ Dossiers importants:
 - `resources/views/` vues Blade (admin + frontend)
 - `docs-site/` documentation developpeur
 
+Contrat d extension (normatif):
+
+- `docs-site/EXTENSION_CONTRACTS_LOCKDOWN_359.md`
+
 ## 2. Systeme de modules
 
 Chaque module a une structure de base:

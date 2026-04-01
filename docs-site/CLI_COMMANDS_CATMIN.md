@@ -42,6 +42,8 @@ Prefixe unique: `catmin:`
 - `catmin:recovery:run`
 - `catmin:analytics:demo-seed`
 - `catmin:analytics:prune`
+- `catmin:validate-extension <slug>`
+- `catmin:validate-addon <slug>`
 - `catmin:rbac:sync`
 - `catmin:settings:export`
 - `catmin:settings:import`
