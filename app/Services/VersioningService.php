@@ -22,7 +22,7 @@ class VersioningService
     }
 
     /**
-    * Dashboard global convention example: V3-dev.
+    * Dashboard global convention example: V4-dev.
      */
     public static function isDashboardVersionValid(string $version): bool
     {

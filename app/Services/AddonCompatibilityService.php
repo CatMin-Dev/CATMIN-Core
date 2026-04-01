@@ -13,7 +13,7 @@ class AddonCompatibilityService
         $warnings = [];
         $blockers = [];
 
-        $currentCoreRaw = (string) config('app.dashboard_version', 'V3-dev');
+        $currentCoreRaw = (string) config('app.dashboard_version', 'V4-dev');
         $currentCore = AddonManifestService::normalizeCoreVersion($currentCoreRaw);
         $requiredCore = AddonManifestService::normalizeCoreVersion((string) ($manifest['required_core_version'] ?? ''));
 

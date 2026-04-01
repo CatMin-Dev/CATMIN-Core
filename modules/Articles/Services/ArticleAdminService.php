@@ -4,7 +4,7 @@ namespace Modules\Articles\Services;
 
 use App\Services\Analytics;
 use App\Services\CatminEventBus;
-use App\Services\ContentSanitizerService;
+use App\Services\Editor\WysiwygSanitizer;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Str;
 use Modules\Logger\Services\SystemLogService;
@@ -12,7 +12,7 @@ use Modules\Articles\Models\Article;
 
 class ArticleAdminService
 {
-    public function __construct(private readonly ContentSanitizerService $sanitizer)
+    public function __construct(private readonly WysiwygSanitizer $sanitizer)
     {
     }
 

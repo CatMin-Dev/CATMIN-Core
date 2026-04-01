@@ -18,8 +18,8 @@ class AdminRuntimeInfoService
             return $this->cache;
         }
 
-        $dashboardVersion = (string) config('app.dashboard_version', 'V3-dev');
-        $developmentPhase = (string) config('app.development_phase', 'v3-dev');
+        $dashboardVersion = (string) config('app.dashboard_version', 'V4-dev');
+        $developmentPhase = (string) config('app.development_phase', 'v4-dev');
         $expectedDashboardVersion = $this->expectedDashboardVersion($developmentPhase);
 
         [$revision, $branch, $isDirty] = $this->gitState();
@@ -47,7 +47,7 @@ class AdminRuntimeInfoService
             return 'V' . $matches[1] . '-dev';
         }
 
-        return (string) config('app.dashboard_version', 'V3-dev');
+        return (string) config('app.dashboard_version', 'V4-dev');
     }
 
     /**

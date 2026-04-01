@@ -155,7 +155,7 @@ class VersionModuleCommand extends Command
             ModuleVersionManager::setDashboardVersion($version);
 
             if (ModuleVersionManager::getDashboardVersion() !== $version) {
-                $this->error('✗ Failed to set dashboard version. Format attendu: V3-dev');
+                $this->error('✗ Failed to set dashboard version. Format attendu: V4-dev');
                 return 1;
             }
 

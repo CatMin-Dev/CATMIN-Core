@@ -74,11 +74,16 @@
                         @error('excerpt')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                     <div class="col-12">
-                        <label class="form-label fw-semibold" for="content">Contenu</label>
-                        <textarea id="content" name="content" rows="12"
-                                  class="form-control @error('content') is-invalid @enderror"
-                                  placeholder="Contenu HTML ou texte">{{ old('content', $page->content) }}</textarea>
-                        @error('content')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        <x-admin.editor.wysiwyg-field
+                            name="content"
+                            id="content"
+                            label="Contenu"
+                            :value="old('content', $page->content)"
+                            scope="pages.edit"
+                            field="content"
+                            placeholder="Contenu riche de la page"
+                            help-text="Editeur CATMIN maison: snippets, media, blocs et formatage riche."
+                        />
                     </div>
                 </div>
             </div>

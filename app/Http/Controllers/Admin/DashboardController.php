@@ -7,6 +7,7 @@ use App\Models\Role;
 use App\Models\Setting;
 use App\Models\User;
 use App\Services\AdminRuntimeInfoService;
+use App\Services\AddonManager;
 use App\Services\Dashboard\DashboardKpiService;
 use App\Services\Dashboard\DashboardWidgetRegistry;
 use App\Services\ModuleConfigService;
@@ -132,6 +133,7 @@ class DashboardController extends Controller
         return view('admin.pages.modules.index', [
             'currentPage' => 'modules',
             'modules' => $allModules,
+            'addons' => AddonManager::all(),
             'stateIssues' => ModuleManager::stateIssues(),
             'routesInfo' => ModuleLoader::getRoutesInfo(),
             'migrationInfo' => $migrationInfo,

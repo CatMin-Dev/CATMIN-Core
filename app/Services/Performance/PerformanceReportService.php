@@ -4,6 +4,7 @@ namespace App\Services\Performance;
 
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Schema;
 use Modules\Logger\Models\SystemLog;
 
 class PerformanceReportService
@@ -17,6 +18,27 @@ class PerformanceReportService
      */
     public function buildReport(int $hours = 24): array
     {
+        if (!Schema::hasTable('system_logs')) {
+            return [
+                'generated_at' => now()->toIso8601String(),
+                'window_hours' => max(1, $hours),
+                'summary' => [
+                    'requests_profiled' => 0,
+                    'slow_requests' => 0,
+                    'budget_breaches' => 0,
+                    'slow_queries' => 0,
+                    'long_jobs' => 0,
+                ],
+                'budgets' => [],
+                'routes' => [],
+                'slow_queries_top' => [],
+                'long_jobs_top' => [],
+                'recommendations' => [
+                    'Table system_logs absente: executer les migrations Logger.',
+                ],
+            ];
+        }
+
         $from = now()->subHours(max(1, $hours));
 
         $requestLogs = SystemLog::query()

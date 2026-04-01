@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
 
 class AdminNavigationService
@@ -13,13 +14,76 @@ class AdminNavigationService
      */
     public static function sections(?string $currentPage = null): array
     {
-        $configuredSections = config('catmin.navigation.sections', []);
+        $configuredSections = self::withAddonNavigation((array) config('catmin.navigation.sections', []));
 
         return collect($configuredSections)
             ->map(fn (array $section) => self::buildSection($section, $currentPage))
             ->filter(fn (array $section) => !empty($section['items']))
             ->values()
             ->all();
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $sections
+     * @return array<int, array<string, mixed>>
+     */
+    protected static function withAddonNavigation(array $sections): array
+    {
+        $addonItems = self::addonNavigationItems();
+        if ($addonItems === []) {
+            return $sections;
+        }
+
+        foreach ($sections as $index => $section) {
+            if ((string) ($section['title'] ?? '') !== 'Integrations') {
+                continue;
+            }
+
+            $existing = (array) ($section['items'] ?? []);
+            $section['items'] = array_values(array_merge($existing, $addonItems));
+            $sections[$index] = $section;
+
+            return $sections;
+        }
+
+        $sections[] = [
+            'title' => 'Integrations',
+            'items' => $addonItems,
+        ];
+
+        return $sections;
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    protected static function addonNavigationItems(): array
+    {
+        $items = [];
+
+        foreach (AddonManager::enabled() as $addon) {
+            $configPath = (string) ($addon->path ?? '') . '/config.php';
+            if ($configPath === '' || !File::exists($configPath)) {
+                continue;
+            }
+
+            try {
+                $config = require $configPath;
+            } catch (\Throwable) {
+                continue;
+            }
+
+            foreach ((array) ($config['navigation_items'] ?? []) as $item) {
+                if (!is_array($item)) {
+                    continue;
+                }
+
+                $item['required_addon'] = (string) ($addon->slug ?? '');
+                $items[] = $item;
+            }
+        }
+
+        return $items;
     }
 
     /**
@@ -55,6 +119,10 @@ class AdminNavigationService
         }
 
         if (!empty($item['permission']) && !RbacPermissionService::allows(request(), (string) $item['permission'])) {
+            return false;
+        }
+
+        if (!empty($item['required_addon']) && !AddonManager::enabled()->firstWhere('slug', (string) $item['required_addon'])) {
             return false;
         }
 
@@ -183,7 +251,7 @@ class AdminNavigationService
      */
     protected static function enabledModuleItems(): array
     {
-        return ModuleManager::enabled()
+        $moduleItems = ModuleManager::enabled()
             ->map(fn ($module) => [
                 'label' => $module->name ?? ucfirst($module->slug),
                 'icon' => 'bi bi-puzzle',
@@ -194,5 +262,19 @@ class AdminNavigationService
             ])
             ->values()
             ->all();
+
+        $addonItems = AddonManager::enabled()
+            ->map(fn ($addon) => [
+                'label' => ($addon->name ?? ucfirst($addon->slug)) . ' (addon)',
+                'icon' => 'bi bi-bag',
+                'url' => admin_route('addons.marketplace.index'),
+                'active' => false,
+                'target' => null,
+                'badge' => $addon->version ?? null,
+            ])
+            ->values()
+            ->all();
+
+        return array_values(array_merge($moduleItems, $addonItems));
     }
 }

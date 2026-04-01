@@ -26,7 +26,7 @@ class AutoUpdateService
         $runtime = app(AdminRuntimeInfoService::class)->get();
 
         return [
-            'current_version' => (string) config('app.dashboard_version', 'V3-dev'),
+            'current_version' => (string) config('app.dashboard_version', 'V4-dev'),
             'revision' => (string) ($runtime['revision'] ?? 'n/a'),
             'branch' => (string) ($runtime['branch'] ?? 'n/a'),
             'last_update' => $this->lastUpdateEntry(),
@@ -133,7 +133,7 @@ class AutoUpdateService
         }
 
         $previous = [
-            'dashboard_version' => (string) config('app.dashboard_version', 'V3-dev'),
+            'dashboard_version' => (string) config('app.dashboard_version', 'V4-dev'),
             'backup_dir' => (string) ($backup['backup_dir'] ?? ''),
         ];
 

@@ -1,4 +1,7 @@
-import 'bootstrap';
+import * as bootstrap from 'bootstrap';
+import { initCatminEditor } from './catmin-editor';
+
+window.bootstrap = bootstrap;
 
 function escapeHtml(value) {
 	return String(value)
@@ -169,7 +172,18 @@ function initMediaPicker() {
 
 	results.addEventListener('click', (event) => {
 		const button = event.target.closest('[data-media-pick]');
-		if (!button || !activeField) {
+		if (!button) {
+			return;
+		}
+
+		const item = JSON.parse(button.dataset.mediaPick || '{}');
+		window.dispatchEvent(new CustomEvent('catmin:media-selected', {
+			detail: item,
+		}));
+
+		if (!activeField) {
+			const modalInstance = window.bootstrap?.Modal.getOrCreateInstance(modal);
+			modalInstance?.hide();
 			return;
 		}
 
@@ -179,7 +193,6 @@ function initMediaPicker() {
 			return;
 		}
 
-		const item = JSON.parse(button.dataset.mediaPick || '{}');
 		input.value = item.id || '';
 		renderPickerPreview(previewContainer, item);
 
@@ -349,4 +362,5 @@ document.addEventListener('DOMContentLoaded', () => {
 	initMediaDropzone();
 	initMediaPicker();
 	initNotifications();
+	initCatminEditor();
 });

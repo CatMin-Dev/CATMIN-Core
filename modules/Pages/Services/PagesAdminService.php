@@ -3,7 +3,7 @@
 namespace Modules\Pages\Services;
 
 use App\Services\CatminEventBus;
-use App\Services\ContentSanitizerService;
+use App\Services\Editor\WysiwygSanitizer;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Str;
 use Modules\Logger\Services\SystemLogService;
@@ -11,7 +11,7 @@ use Modules\Pages\Models\Page;
 
 class PagesAdminService
 {
-    public function __construct(private readonly ContentSanitizerService $sanitizer)
+    public function __construct(private readonly WysiwygSanitizer $sanitizer)
     {
     }
 

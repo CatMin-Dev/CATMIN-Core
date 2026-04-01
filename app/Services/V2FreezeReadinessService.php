@@ -111,8 +111,8 @@ class V2FreezeReadinessService
         ])->values()->all();
 
         return [
-            'dashboard_version' => (string) config('app.dashboard_version', 'V3-dev'),
-            'development_phase' => (string) config('app.development_phase', 'v3-dev'),
+            'dashboard_version' => (string) config('app.dashboard_version', 'V4-dev'),
+            'development_phase' => (string) config('app.development_phase', 'v4-dev'),
             'modules_enabled' => $modules,
             'addons_enabled' => $addons,
             'support_criteria' => [

@@ -11,6 +11,7 @@
 <div class="catmin-page-body">
     @php
         $canManageModules = catmin_can('module.core.config');
+        $canManageAddons = catmin_can('addon.enable') || catmin_can('addon.disable');
     @endphp
 
     @if(!empty($stateIssues ?? []))
@@ -116,6 +117,65 @@
                     @empty
                         <tr><td colspan="8" class="text-center text-muted py-4">Aucun module.</td></tr>
                     @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card mt-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h2 class="h6 mb-0">Etat des addons</h2>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge text-bg-light">{{ collect($addons ?? [])->count() }}</span>
+                @if(catmin_can('addon.registry.view'))
+                    <a class="btn btn-sm btn-outline-primary" href="{{ route('admin.addons.marketplace.index') }}">
+                        <i class="bi bi-bag me-1"></i>Marketplace
+                    </a>
+                @endif
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle mb-0">
+                <thead><tr><th>Nom</th><th>Slug</th><th>Version</th><th>Etat</th><th>Dependances</th><th>Actions</th></tr></thead>
+                <tbody>
+                @forelse(($addons ?? []) as $addon)
+                    <tr>
+                        <td>{{ $addon->name ?? ucfirst($addon->slug) }}</td>
+                        <td>{{ $addon->slug }}</td>
+                        <td><span class="badge text-bg-light text-dark">{{ $addon->version ?? 'n/a' }}</span></td>
+                        <td>
+                            <span class="badge {{ !empty($addon->enabled) ? 'text-bg-success' : 'text-bg-secondary' }}">
+                                {{ !empty($addon->enabled) ? 'Actif' : 'Desactive' }}
+                            </span>
+                        </td>
+                        <td>{{ collect(($addon->required_modules ?? $addon->depends_modules ?? []))->join(', ') ?: 'Aucune' }}</td>
+                        <td>
+                            @if($canManageAddons)
+                                @if(!empty($addon->enabled) && catmin_can('addon.disable'))
+                                    <form method="post" action="{{ route('admin.addons.marketplace.disable') }}" class="d-inline" onsubmit="return confirm('Desactiver cet addon ?');">
+                                        @csrf
+                                        <input type="hidden" name="slug" value="{{ $addon->slug }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                            <i class="bi bi-power me-1"></i>Desactiver
+                                        </button>
+                                    </form>
+                                @elseif(empty($addon->enabled) && catmin_can('addon.enable'))
+                                    <form method="post" action="{{ route('admin.addons.marketplace.enable') }}" class="d-inline" onsubmit="return confirm('Activer cet addon ?');">
+                                        @csrf
+                                        <input type="hidden" name="slug" value="{{ $addon->slug }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-success">
+                                            <i class="bi bi-check-circle me-1"></i>Activer
+                                        </button>
+                                    </form>
+                                @endif
+                            @else
+                                <span class="text-muted small">Permission manquante</span>
+                            @endif
+                        </td>
+                    </tr>
+                @empty
+                    <tr><td colspan="6" class="text-center text-muted py-4">Aucun addon detecte.</td></tr>
+                @endforelse
                 </tbody>
             </table>
         </div>
