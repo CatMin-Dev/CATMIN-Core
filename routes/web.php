@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\AddonMarketplaceController;
+use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\AdminPasswordResetController;
 use App\Http\Controllers\Admin\AdminSessionsController;
 use App\Http\Controllers\Admin\DashboardController;
@@ -132,6 +133,13 @@ Route::prefix($adminPath)->middleware('web')->name('admin.')->group(function () 
         Route::get('/addons/marketplace', [AddonMarketplaceController::class, 'index'])
             ->middleware('catmin.permission:addon.registry.view')
             ->name('addons.marketplace.index');
+
+        Route::get('/analytics', [AnalyticsController::class, 'index'])
+            ->middleware('catmin.permission:module.logger.menu')
+            ->name('analytics.index');
+        Route::post('/analytics/settings', [AnalyticsController::class, 'updateSettings'])
+            ->middleware('catmin.permission:module.logger.config')
+            ->name('analytics.settings.update');
 
         Route::post('/addons/marketplace/rebuild', [AddonMarketplaceController::class, 'rebuild'])
             ->middleware('catmin.permission:addon.registry.view')

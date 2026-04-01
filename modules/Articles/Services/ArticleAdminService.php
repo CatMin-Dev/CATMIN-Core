@@ -2,6 +2,7 @@
 
 namespace Modules\Articles\Services;
 
+use App\Services\Analytics;
 use App\Services\CatminEventBus;
 use App\Services\ContentSanitizerService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -66,6 +67,9 @@ class ArticleAdminService
                 'slug' => $item->slug,
                 'status' => $item->status,
             ],
+        ]);
+        Analytics::track('article.created', 'content', 'create', 'success', [
+            'status' => (string) $item->status,
         ]);
 
         try {
@@ -173,6 +177,7 @@ class ArticleAdminService
                     'published_at' => optional($item->published_at)->toIso8601String(),
                 ],
             ]);
+            Analytics::track('article.published', 'content', 'publish', 'success');
         }
 
         return $item;

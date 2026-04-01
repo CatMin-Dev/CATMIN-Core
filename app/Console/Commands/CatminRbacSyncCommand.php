@@ -36,6 +36,7 @@ class CatminRbacSyncCommand extends Command
                         RbacPermissionService::modulePermission('media', 'list'),
                         RbacPermissionService::modulePermission('media', 'create'),
                         RbacPermissionService::modulePermission('media', 'edit'),
+                        RbacPermissionService::modulePermission('logger', 'list'),
                     ]
                 ),
                 'priority' => 50,

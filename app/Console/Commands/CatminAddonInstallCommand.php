@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Services\AddonDistributionService;
 use App\Services\AddonMarketplaceService;
+use App\Services\Analytics;
 use App\Services\CatminEventBus;
 use Illuminate\Console\Command;
 
@@ -61,6 +62,10 @@ class CatminAddonInstallCommand extends Command
             'slug' => $slug,
             'enabled' => $enable,
             'migrations_ran' => $migrate,
+            'from_package' => $package !== '',
+        ]);
+        Analytics::track('addon.installed', 'module', 'install', 'success', [
+            'addon_slug' => $slug,
             'from_package' => $package !== '',
         ]);
 

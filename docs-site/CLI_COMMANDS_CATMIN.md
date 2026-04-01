@@ -40,6 +40,8 @@ Prefixe unique: `catmin:`
 - `catmin:update:plan`
 - `catmin:update:apply`
 - `catmin:recovery:run`
+- `catmin:analytics:demo-seed`
+- `catmin:analytics:prune`
 - `catmin:rbac:sync`
 - `catmin:settings:export`
 - `catmin:settings:import`

@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Services\Analytics;
 use App\Services\RecoveryEngineService;
 use Illuminate\Console\Command;
 
@@ -32,6 +33,8 @@ class CatminRecoveryRunCommand extends Command
             $prefix = $ok ? '[OK]' : '[KO]';
             $this->line(sprintf('%s %s - %s', $prefix, (string) ($step['name'] ?? 'step'), (string) ($step['details'] ?? '')));
         }
+
+        Analytics::track('recovery.run', 'ops', 'recovery', (($result['ok'] ?? false) ? 'success' : 'failed'));
 
         $this->line((string) ($result['message'] ?? 'Recovery terminee.'));
 

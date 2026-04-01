@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Services\AdminAuthService;
 use App\Services\AdminSessionService;
+use App\Services\Analytics;
 use App\Services\CatminEventBus;
 use App\Services\RbacPermissionService;
 use Illuminate\Http\RedirectResponse;
@@ -63,6 +64,9 @@ final class AuthController extends Controller
                 'guard' => 'admin',
                 'username' => (string) ($data['username'] ?? ''),
                 'ip' => $request->ip(),
+                'reason' => (string) ($result['error'] ?? 'invalid_credentials'),
+            ]);
+            Analytics::track('auth.login.failed', 'admin', 'login', 'failed', [
                 'reason' => (string) ($result['error'] ?? 'invalid_credentials'),
             ]);
 
@@ -151,6 +155,7 @@ final class AuthController extends Controller
             'rbac_source' => (string) ($rbacContext['source'] ?? 'direct'),
             'roles' => (array) ($rbacContext['roles'] ?? []),
         ]);
+        Analytics::track('auth.login.succeeded', 'admin', 'login', 'success');
 
         app(AdminSessionService::class)->registerSession($request, (int) $result['user']->id);
 
@@ -174,6 +179,7 @@ final class AuthController extends Controller
             'username' => $username,
             'ip' => $request->ip(),
         ]);
+        Analytics::track('auth.logout', 'admin', 'logout', 'success');
 
         app(AdminSessionService::class)->revokeCurrent($request);
 

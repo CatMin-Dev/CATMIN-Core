@@ -6,6 +6,7 @@ use App\Http\Middleware\EnsureCatminFrontendAvailable;
 use App\Http\Middleware\EnsureCatminPermission;
 use App\Http\Middleware\ApplySecurityHeaders;
 use App\Http\Middleware\LogRequestPerformance;
+use App\Http\Middleware\TrackAdminAnalytics;
 use App\Services\AddonLoader;
 use App\Services\CatminHookLoader;
 use App\Services\ModuleLoader;
@@ -50,6 +51,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(ApplySecurityHeaders::class);
         $middleware->append(LogRequestPerformance::class);
+        $middleware->append(TrackAdminAnalytics::class);
 
         $middleware->alias([
             'catmin.admin' => EnsureCatminAdminAuthenticated::class,

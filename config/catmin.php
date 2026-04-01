@@ -421,6 +421,13 @@ return [
         'webhook_url' => env('CATMIN_ALERT_WEBHOOK_URL', ''),
     ],
 
+    'analytics' => [
+        'enabled' => (bool) env('CATMIN_ANALYTICS_ENABLED', false),
+        'retention_days' => (int) env('CATMIN_ANALYTICS_RETENTION_DAYS', 30),
+        'anonymous_mode' => (bool) env('CATMIN_ANALYTICS_ANONYMOUS_MODE', true),
+        'modules_tracked' => ['*'],
+    ],
+
     'mailer' => [
         'retry' => [
             'max_attempts' => (int) env('CATMIN_MAILER_RETRY_MAX_ATTEMPTS', 3),
@@ -521,6 +528,13 @@ return [
                         'active_when' => ['monitoring.*'],
                         'module' => 'logger',
                         'permission' => 'module.logger.list',
+                    ],
+                    [
+                        'label' => 'Analytics',
+                        'icon' => 'bi bi-bar-chart',
+                        'route' => 'analytics.index',
+                        'active_when' => ['analytics.*'],
+                        'permission' => 'module.logger.menu',
                     ],
                     [
                         'label' => 'Performance',
@@ -690,6 +704,10 @@ return [
             'admin.theme' => 'catmin-light',
             'admin.path' => env('CATMIN_ADMIN_PATH', 'admin'),
             'site.frontend_enabled' => true,
+            'analytics.enabled' => (bool) env('CATMIN_ANALYTICS_ENABLED', false),
+            'analytics.retention_days' => (int) env('CATMIN_ANALYTICS_RETENTION_DAYS', 30),
+            'analytics.anonymous_mode' => (bool) env('CATMIN_ANALYTICS_ANONYMOUS_MODE', true),
+            'analytics.modules_tracked' => ['*'],
         ],
     ],
 
