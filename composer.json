@@ -49,7 +49,7 @@
             "npm run build"
         ],
         "lint": [
-            "find app bootstrap config database modules routes tests -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null"
+            "bash scripts/dev/php-lint.sh"
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
