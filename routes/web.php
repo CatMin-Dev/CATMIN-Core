@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\ReleaseCheckController;
 use App\Http\Controllers\Admin\TwoFactorController;
 use App\Http\Controllers\Frontend\HomeController;
 use App\Http\Controllers\Frontend\PageController;
+use App\Http\Controllers\InstallController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -21,6 +22,19 @@ use Illuminate\Support\Facades\Route;
 | contains the "web" middleware group. Now create something great!
 |
 */
+
+// ========== INSTALL ROUTES ==========
+Route::prefix('install')->name('install.')->group(function (): void {
+    Route::get('/', [InstallController::class, 'index'])->name('index');
+    Route::get('/system-check', [InstallController::class, 'systemCheck'])->name('system-check');
+    Route::get('/database', [InstallController::class, 'databaseForm'])->name('database-form');
+    Route::post('/database/test', [InstallController::class, 'testDatabase'])->name('test-database');
+    Route::post('/database/configure', [InstallController::class, 'configureDatabase'])->name('configure-database');
+    Route::get('/admin', [InstallController::class, 'adminForm'])->name('admin-form');
+    Route::post('/admin/create', [InstallController::class, 'createAdmin'])->name('create-admin');
+    Route::get('/complete', [InstallController::class, 'complete'])->name('complete');
+    Route::post('/finalize', [InstallController::class, 'finalize'])->name('finalize');
+});
 
 // ========== PUBLIC ROUTES ==========
 
