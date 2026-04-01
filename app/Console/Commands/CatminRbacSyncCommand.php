@@ -58,6 +58,22 @@ class CatminRbacSyncCommand extends Command
                 'is_system' => true,
                 'is_active' => true,
             ],
+            [
+                'name' => 'addon-manager',
+                'display_name' => 'Addon Manager',
+                'description' => 'Consultation du registre addons et gestion distribution/activation',
+                'permissions' => [
+                    'addon.registry.view',
+                    'addon.install',
+                    'addon.update',
+                    'addon.enable',
+                    'addon.disable',
+                    'addon.remove',
+                ],
+                'priority' => 60,
+                'is_system' => true,
+                'is_active' => true,
+            ],
         ];
 
         $force = (bool) $this->option('force');

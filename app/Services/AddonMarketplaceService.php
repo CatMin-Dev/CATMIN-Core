@@ -57,19 +57,13 @@ class AddonMarketplaceService
      */
     public static function buildIndex(): array
     {
+        $registry = app(AddonRegistryService::class)->build();
+        $registry['packages_path'] = self::packagesPath();
+
         File::ensureDirectoryExists(dirname(self::indexPath()));
+        File::put(self::indexPath(), json_encode($registry, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
 
-        $payload = [
-            'generated_at' => now()->toIso8601String(),
-            'packages_path' => self::packagesPath(),
-            'packages_count' => count(self::listPackages()),
-            'packages' => self::listPackages(),
-            'installed_addons' => AddonManager::summary(),
-        ];
-
-        File::put(self::indexPath(), json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
-
-        return $payload;
+        return $registry;
     }
 
     /**

@@ -588,7 +588,7 @@ return [
                         'icon' => 'bi bi-bag',
                         'route' => 'addons.marketplace.index',
                         'active_when' => ['addons.marketplace.*'],
-                        'permission' => 'module.core.config',
+                        'permission' => 'addon.registry.view',
                     ],
                 ],
             ],

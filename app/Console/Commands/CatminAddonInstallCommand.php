@@ -2,62 +2,67 @@
 
 namespace App\Console\Commands;
 
-use App\Services\AddonManager;
-use App\Services\AddonMigrationRunner;
+use App\Services\AddonDistributionService;
+use App\Services\AddonMarketplaceService;
 use App\Services\CatminEventBus;
 use Illuminate\Console\Command;
 
 class CatminAddonInstallCommand extends Command
 {
     protected $signature = 'catmin:addon:install
-        {slug : Addon slug}
+        {slug? : Addon slug}
+        {--package= : Installer depuis une archive zip dans storage/app/addons/packages ou chemin absolu}
         {--no-enable : N active pas automatiquement}
         {--no-migrate : N execute pas les migrations}';
 
     protected $description = 'Installer un addon present dans addons/ (validation + activation + migrations)';
 
+    public function __construct(private readonly AddonDistributionService $addonDistributionService)
+    {
+        parent::__construct();
+    }
+
     public function handle(): int
     {
-        $slug = (string) $this->argument('slug');
+        $slug = (string) ($this->argument('slug') ?? '');
+        $package = trim((string) ($this->option('package') ?? ''));
 
-        $addon = AddonManager::find($slug);
-        if ($addon === null) {
-            $this->error("Addon introuvable: {$slug}");
+        if ($slug === '' && $package === '') {
+            $this->error('Preciser soit un slug local, soit --package=archive.zip.');
             return self::FAILURE;
         }
 
-        $missing = AddonManager::missingStructure($addon);
-        if (!empty($missing)) {
-            $this->error('Structure addon invalide, elements manquants: ' . implode(', ', $missing));
-            return self::FAILURE;
-        }
+        $enable = !(bool) $this->option('no-enable');
+        $migrate = !(bool) $this->option('no-migrate');
 
-        $validation = AddonManager::canEnable($slug);
-        if (!$validation['allowed']) {
-            $this->error($validation['message']);
-            return self::FAILURE;
-        }
+        if ($package !== '') {
+            $packagePath = str_starts_with($package, '/')
+                ? $package
+                : AddonMarketplaceService::packagesPath() . '/' . basename($package);
 
-        if (!(bool) $this->option('no-enable')) {
-            if (!AddonManager::enable($slug)) {
-                $this->error('Impossible d\'activer l\'addon.');
+            $result = $this->addonDistributionService->installPackage($packagePath, $enable, $migrate);
+            if (($result['ok'] ?? false) !== true) {
+                $this->error((string) ($result['message'] ?? 'Installation package echouee.'));
                 return self::FAILURE;
             }
-            $this->info("Addon '{$slug}' active.");
+
+            $slug = (string) ($result['slug'] ?? $slug);
+        } else {
+            $result = $this->addonDistributionService->installLocalAddon($slug, $enable, $migrate);
+            if (($result['ok'] ?? false) !== true) {
+                $this->error((string) ($result['message'] ?? 'Installation addon echouee.'));
+                return self::FAILURE;
+            }
         }
 
-        if (!(bool) $this->option('no-migrate')) {
-            $result = AddonMigrationRunner::runForAddon($slug);
-            $this->line("Migrations executees: {$result['ran']}");
-        }
+        $this->info((string) ($result['message'] ?? 'Addon installe.'));
 
         CatminEventBus::dispatch(CatminEventBus::ADDON_INSTALLED, [
             'slug' => $slug,
-            'enabled' => !(bool) $this->option('no-enable'),
-            'migrations_ran' => !(bool) $this->option('no-migrate'),
+            'enabled' => $enable,
+            'migrations_ran' => $migrate,
+            'from_package' => $package !== '',
         ]);
-
-        $this->info("Addon '{$slug}' installe.");
 
         return self::SUCCESS;
     }

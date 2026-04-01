@@ -103,7 +103,26 @@ class AddonManager
             return [];
         }
 
-        return collect((array) ($addon->depends_modules ?? []))
+        return collect((array) ($addon->required_modules ?? $addon->depends_modules ?? []))
+            ->map(fn ($dependency) => Str::lower((string) $dependency))
+            ->filter(fn ($dependency) => $dependency !== '')
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public static function addonDependenciesFor(string $slug): array
+    {
+        $addon = self::find($slug);
+
+        if ($addon === null) {
+            return [];
+        }
+
+        return collect((array) ($addon->dependencies ?? []))
             ->map(fn ($dependency) => Str::lower((string) $dependency))
             ->filter(fn ($dependency) => $dependency !== '')
             ->unique()
@@ -126,18 +145,13 @@ class AddonManager
             ];
         }
 
-        $missing = [];
-        foreach (self::dependenciesFor($slug) as $dependency) {
-            if (!ModuleManager::exists($dependency) || !ModuleManager::isDeclaredEnabled($dependency)) {
-                $missing[] = $dependency;
-            }
-        }
+        $compatibility = app(AddonCompatibilityService::class)->evaluate(AddonManifestService::normalize((array) $addon));
 
-        if ($missing !== []) {
+        if (($compatibility['compatible'] ?? false) !== true) {
             return [
                 'allowed' => false,
-                'message' => "Impossible d'activer {$addon->name}: dependances modules manquantes ou desactivees (" . implode(', ', $missing) . ').',
-                'missing' => $missing,
+                'message' => "Impossible d'activer {$addon->name}: " . implode(' ', (array) ($compatibility['blockers'] ?? ['addon incompatible.'])),
+                'missing' => (array) ($compatibility['blockers'] ?? []),
             ];
         }
 
@@ -145,6 +159,7 @@ class AddonManager
             'allowed' => true,
             'message' => "Addon {$addon->name} activable.",
             'missing' => [],
+            'warnings' => (array) ($compatibility['warnings'] ?? []),
         ];
     }
 
@@ -179,15 +194,24 @@ class AddonManager
      */
     public static function missingStructure(stdClass $addon): array
     {
-        $required = [
-            'addon.json',
-            'routes.php',
-            'Controllers',
-            'Views',
-            'Services',
-            'Migrations',
-            'Assets',
-        ];
+        $manifest = AddonManifestService::normalize((array) $addon);
+        $required = ['addon.json', 'Controllers', 'Services'];
+
+        if ((bool) ($manifest['has_routes'] ?? false)) {
+            $required[] = 'routes.php';
+        }
+
+        if ((bool) ($manifest['has_views'] ?? false)) {
+            $required[] = 'Views';
+        }
+
+        if ((bool) ($manifest['has_migrations'] ?? false)) {
+            $required[] = 'Migrations';
+        }
+
+        if ((bool) ($manifest['has_assets'] ?? false)) {
+            $required[] = 'Assets';
+        }
 
         $missing = [];
 
@@ -249,11 +273,14 @@ class AddonManager
         }
 
         try {
-            $config = json_decode(File::get($configPath), false);
+            $decoded = json_decode(File::get($configPath), true);
 
-            if (!$config instanceof stdClass) {
+            if (!is_array($decoded)) {
                 return null;
             }
+
+            $normalized = AddonManifestService::normalize($decoded);
+            $config = (object) $normalized;
 
             if (!isset($config->slug) || trim((string) $config->slug) === '') {
                 return null;
@@ -263,22 +290,9 @@ class AddonManager
             $config->directory = basename($directory);
             $config->path = $directory;
             $config->namespace = 'Addons\\' . Str::studly((string) $config->slug);
-            $config->requires_core = (bool) ($config->requires_core ?? true);
-            $declaredDependencies = collect((array) ($config->depends_modules ?? $config->depends ?? []))
-                ->map(fn ($dependency) => Str::lower((string) $dependency))
-                ->filter(fn ($dependency) => $dependency !== '');
-
-            if ($config->requires_core) {
-                $declaredDependencies->push('core');
-            }
-
-            $config->depends_modules = $declaredDependencies
-                ->unique()
-                ->values()
-                ->all();
-            $config->version_raw = (string) ($config->version ?? '');
-            $config->version = VersioningService::normalize($config->version_raw);
-            $config->version_valid = VersioningService::isValid($config->version_raw);
+            $config->requires_core = in_array('core', (array) ($config->required_modules ?? []), true);
+            $config->depends_modules = (array) ($config->required_modules ?? []);
+            $config->permissions = (array) ($config->permissions_declared ?? []);
 
             return $config;
         } catch (\Throwable) {

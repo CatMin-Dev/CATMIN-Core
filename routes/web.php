@@ -130,12 +130,24 @@ Route::prefix($adminPath)->middleware('web')->name('admin.')->group(function () 
             ->name('modules.index');
 
         Route::get('/addons/marketplace', [AddonMarketplaceController::class, 'index'])
-            ->middleware('catmin.permission:module.core.config')
+            ->middleware('catmin.permission:addon.registry.view')
             ->name('addons.marketplace.index');
 
         Route::post('/addons/marketplace/rebuild', [AddonMarketplaceController::class, 'rebuild'])
-            ->middleware('catmin.permission:module.core.config')
+            ->middleware('catmin.permission:addon.registry.view')
             ->name('addons.marketplace.rebuild');
+
+        Route::post('/addons/marketplace/install', [AddonMarketplaceController::class, 'install'])
+            ->middleware('catmin.permission:addon.install')
+            ->name('addons.marketplace.install');
+
+        Route::post('/addons/marketplace/enable', [AddonMarketplaceController::class, 'enable'])
+            ->middleware('catmin.permission:addon.enable')
+            ->name('addons.marketplace.enable');
+
+        Route::post('/addons/marketplace/disable', [AddonMarketplaceController::class, 'disable'])
+            ->middleware('catmin.permission:addon.disable')
+            ->name('addons.marketplace.disable');
 
         Route::get('/release-check', [ReleaseCheckController::class, 'index'])
             ->middleware('catmin.permission:module.core.config')

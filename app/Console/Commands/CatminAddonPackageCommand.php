@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Services\AddonManager;
+use App\Services\AddonMarketplaceService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use RecursiveDirectoryIterator;
@@ -80,10 +81,15 @@ class CatminAddonPackageCommand extends Command
 
         $zip->close();
 
+        $checksum = hash_file('sha256', $archivePath) ?: '';
+        File::put($archivePath . '.sha256', $checksum . PHP_EOL);
+        AddonMarketplaceService::buildIndex();
+
         $this->info('Archive addon generee.');
         $this->line('Addon: ' . (string) $addon->slug);
         $this->line('Version: ' . (string) ($addon->version ?? 'unknown'));
         $this->line('Fichier: ' . $archivePath);
+        $this->line('SHA-256: ' . $checksum);
 
         return self::SUCCESS;
     }

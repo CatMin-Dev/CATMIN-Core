@@ -55,6 +55,19 @@ class CatminAddonMakeCommandTest extends TestCase
         $this->assertFileExists($this->addonPath . '/Views/admin/index.blade.php');
         $this->assertFileExists($this->addonPath . '/Docs/README.md');
 
+        $manifest = json_decode((string) File::get($this->addonPath . '/addon.json'), true);
+        $this->assertIsArray($manifest);
+        $this->assertSame('3.0.0', $manifest['required_core_version'] ?? null);
+        $this->assertSame('8.2.0', $manifest['required_php_version'] ?? null);
+        $this->assertSame(['core', 'logger'], $manifest['required_modules'] ?? []);
+        $this->assertSame([], $manifest['dependencies'] ?? []);
+        $this->assertTrue((bool) ($manifest['has_routes'] ?? false));
+        $this->assertTrue((bool) ($manifest['has_migrations'] ?? false));
+        $this->assertTrue((bool) ($manifest['has_assets'] ?? false));
+        $this->assertTrue((bool) ($manifest['has_views'] ?? false));
+        $this->assertArrayHasKey('entrypoints', $manifest);
+        $this->assertArrayHasKey('permissions_declared', $manifest);
+
         AddonManager::clearCache();
         $this->assertTrue(AddonManager::exists($this->slug));
         $this->assertTrue((bool) (AddonManager::canEnable($this->slug)['allowed'] ?? false));
