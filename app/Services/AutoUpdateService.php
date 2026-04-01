@@ -14,6 +14,10 @@ class AutoUpdateService
     private const LOG_FILE = 'logs/update-history.jsonl';
     private const ACTIVE_STATE_FILE = 'app/updates/active-update.json';
 
+    public function __construct(private readonly MigrationSafetyService $migrationSafetyService)
+    {
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -303,19 +307,16 @@ class AutoUpdateService
 
     private function runMigrations(bool $withCoreMigrate): void
     {
-        if ($withCoreMigrate) {
-            Artisan::call('migrate', ['--force' => true]);
-        }
+        $result = $this->migrationSafetyService->run([
+            'dry_run' => false,
+            'skip_core_migrate' => !$withCoreMigrate,
+            'rollback_on_fail' => true,
+            'backup_name' => 'update-safe-migrate-' . now()->format('Ymd-His'),
+        ]);
 
-        $exit = Artisan::call('catmin:migrate:extensions');
-        if ($exit !== 0) {
-            throw new \RuntimeException('Migrations extensions échouées.');
+        if (($result['ok'] ?? false) !== true) {
+            throw new \RuntimeException((string) ($result['message'] ?? 'Migrations securisees echouees.'));
         }
-
-        Artisan::call('cache:clear');
-        Artisan::call('config:clear');
-        Artisan::call('view:clear');
-        Artisan::call('route:clear');
     }
 
     private function restoreFromBackup(string $backupDir): void

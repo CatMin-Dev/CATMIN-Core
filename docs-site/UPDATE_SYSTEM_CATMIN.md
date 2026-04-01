@@ -30,6 +30,8 @@
 
 ```bash
 php artisan catmin:update:plan
+php artisan catmin:migrate:safe --dry-run
+php artisan catmin:migrate:safe
 php artisan catmin:update:apply --dry-run
 php artisan catmin:update:apply
 ```
@@ -40,11 +42,15 @@ php artisan catmin:update:apply
 2. Recuperer la version cible depuis GitHub.
 3. `composer install --no-dev --optimize-autoloader`.
 4. `php artisan catmin:update:plan`.
-5. `php artisan catmin:update:apply`.
-6. Verifier admin, logs, queue workers, cron.
+5. `php artisan catmin:migrate:safe` (backup auto + rollback si echec).
+6. `php artisan catmin:update:apply` (utilise aussi la securite migrations).
+7. Verifier admin, logs, queue workers, cron.
 
 ## Securite / anti-desordre
 
 - detection des collisions de noms de migrations avant execution
 - arret en cas de collision
+- backup DB automatique avant migration
+- rollback DB automatique en cas d'echec migration (mysql)
+- logs migration dans `storage/logs/migration-safety.jsonl`
 - execution explicite et tracable (pas de magie)

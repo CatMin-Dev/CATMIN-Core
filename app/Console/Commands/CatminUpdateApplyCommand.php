@@ -3,8 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Services\MigrationCollisionService;
+use App\Services\MigrationSafetyService;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Artisan;
 
 class CatminUpdateApplyCommand extends Command
 {
@@ -13,6 +13,11 @@ class CatminUpdateApplyCommand extends Command
         {--skip-core-migrate : Ignore php artisan migrate}';
 
     protected $description = 'Applique la phase assistée de mise à jour (migrations core/modules/addons + clear caches)';
+
+    public function __construct(private readonly MigrationSafetyService $migrationSafetyService)
+    {
+        parent::__construct();
+    }
 
     public function handle(): int
     {
@@ -46,24 +51,28 @@ class CatminUpdateApplyCommand extends Command
             return self::SUCCESS;
         }
 
-        if (!$skipCoreMigrate) {
-            $this->line('> migrate --force');
-            Artisan::call('migrate', ['--force' => true]);
+        $result = $this->migrationSafetyService->run([
+            'dry_run' => false,
+            'skip_core_migrate' => $skipCoreMigrate,
+            'rollback_on_fail' => true,
+            'backup_name' => 'update-apply-' . now()->format('Ymd-His'),
+        ]);
+
+        $this->line((string) ($result['message'] ?? 'Execution terminee.'));
+
+        if (!empty($result['backup_dir'])) {
+            $this->line('Backup pre-update: ' . $result['backup_dir']);
         }
 
-        $this->line('> catmin:migrate:extensions');
-        $exit = Artisan::call('catmin:migrate:extensions');
-        if ($exit !== 0) {
-            $this->error('catmin:migrate:extensions a échoué.');
+        if (($result['ok'] ?? false) !== true) {
+            if (!empty($result['rollback']['message'])) {
+                $this->warn('Rollback: ' . (string) $result['rollback']['message']);
+            }
+
             return self::FAILURE;
         }
 
-        Artisan::call('cache:clear');
-        Artisan::call('config:clear');
-        Artisan::call('view:clear');
-        Artisan::call('route:clear');
-
-        $this->info('Mise à jour assistée terminée. Vérifiez ensuite l’admin et les logs.');
+        $this->info('Mise à jour assistée terminée. Vérifiez ensuite l\'admin et les logs.');
 
         return self::SUCCESS;
     }

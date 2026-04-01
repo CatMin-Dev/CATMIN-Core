@@ -34,6 +34,7 @@ Prefixe unique: `catmin:`
 ### Deja disponibles
 
 - `catmin:migrate:extensions`
+- `catmin:migrate:safe`
 - `catmin:update:plan`
 - `catmin:update:apply`
 - `catmin:rbac:sync`
