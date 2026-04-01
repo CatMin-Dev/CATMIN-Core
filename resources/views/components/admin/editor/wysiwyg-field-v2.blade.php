@@ -26,31 +26,31 @@
     @if ($enabled)
         <div class="catmin-editor border rounded" data-catmin-editor data-editor-input="{{ $id }}">
             <div class="catmin-editor-toolbar border-bottom p-2 d-flex flex-wrap gap-1" role="toolbar" aria-label="Toolbar editeur">
-                @if($hasTool('bold'))<button type="button" class="btn btn-sm btn-outline-secondary" data-editor-cmd="bold" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Gras"><i class="bi bi-type-bold"></i></button>@endif
-                @if($hasTool('italic'))<button type="button" class="btn btn-sm btn-outline-secondary" data-editor-cmd="italic" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Italique"><i class="bi bi-type-italic"></i></button>@endif
-                @if($hasTool('underline'))<button type="button" class="btn btn-sm btn-outline-secondary" data-editor-cmd="underline" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Souligné"><i class="bi bi-type-underline"></i></button>@endif
-                @if($hasTool('strike'))<button type="button" class="btn btn-sm btn-outline-secondary" data-editor-cmd="strikeThrough" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Barré"><i class="bi bi-type-strikethrough"></i></button>@endif
+                @if($hasTool('bold'))<button type="button" class="btn btn-sm btn-outline-secondary" data-editor-cmd="bold"><i class="bi bi-type-bold"></i></button>@endif
+                @if($hasTool('italic'))<button type="button" class="btn btn-sm btn-outline-secondary" data-editor-cmd="italic"><i class="bi bi-type-italic"></i></button>@endif
+                @if($hasTool('underline'))<button type="button" class="btn btn-sm btn-outline-secondary" data-editor-cmd="underline"><i class="bi bi-type-underline"></i></button>@endif
+                @if($hasTool('strike'))<button type="button" class="btn btn-sm btn-outline-secondary" data-editor-cmd="strikeThrough"><i class="bi bi-type-strikethrough"></i></button>@endif
 
                 @if($hasTool('align-left') || $hasTool('align-center') || $hasTool('align-right') || $hasTool('align-justify'))
                 <div class="vr mx-1"></div>
                 @endif
 
-                @if($hasTool('align-left'))<button type="button" class="btn btn-sm btn-outline-secondary" data-editor-cmd="justifyLeft" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Aligner à gauche"><i class="bi bi-text-left"></i></button>@endif
-                @if($hasTool('align-center'))<button type="button" class="btn btn-sm btn-outline-secondary" data-editor-cmd="justifyCenter" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Centrer"><i class="bi bi-text-center"></i></button>@endif
-                @if($hasTool('align-right'))<button type="button" class="btn btn-sm btn-outline-secondary" data-editor-cmd="justifyRight" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Aligner à droite"><i class="bi bi-text-right"></i></button>@endif
-                @if($hasTool('align-justify'))<button type="button" class="btn btn-sm btn-outline-secondary" data-editor-cmd="justifyFull" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Justifier"><i class="bi bi-justify"></i></button>@endif
+                @if($hasTool('align-left'))<button type="button" class="btn btn-sm btn-outline-secondary" data-editor-cmd="justifyLeft"><i class="bi bi-text-left"></i></button>@endif
+                @if($hasTool('align-center'))<button type="button" class="btn btn-sm btn-outline-secondary" data-editor-cmd="justifyCenter"><i class="bi bi-text-center"></i></button>@endif
+                @if($hasTool('align-right'))<button type="button" class="btn btn-sm btn-outline-secondary" data-editor-cmd="justifyRight"><i class="bi bi-text-right"></i></button>@endif
+                @if($hasTool('align-justify'))<button type="button" class="btn btn-sm btn-outline-secondary" data-editor-cmd="justifyFull"><i class="bi bi-justify"></i></button>@endif
 
                 @if($hasTool('ul') || $hasTool('ol') || $hasTool('blockquote') || $hasTool('code-block') || $hasTool('h1') || $hasTool('h2') || $hasTool('h3') || $hasTool('h4') || $hasTool('h5') || $hasTool('h6'))
                 <div class="vr mx-1"></div>
                 @endif
 
-                @if($hasTool('ul'))<button type="button" class="btn btn-sm btn-outline-secondary" data-editor-cmd="insertUnorderedList" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Liste à puces"><i class="bi bi-list-ul"></i></button>@endif
-                @if($hasTool('ol'))<button type="button" class="btn btn-sm btn-outline-secondary" data-editor-cmd="insertOrderedList" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Liste numérotée"><i class="bi bi-list-ol"></i></button>@endif
-                @if($hasTool('blockquote'))<button type="button" class="btn btn-sm btn-outline-secondary" data-editor-cmd="formatBlock" data-editor-value="blockquote" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Citation"><i class="bi bi-blockquote-left"></i></button>@endif
-                @if($hasTool('code-block'))<button type="button" class="btn btn-sm btn-outline-secondary" data-editor-cmd="formatBlock" data-editor-value="pre" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Code"><i class="bi bi-code-square"></i></button>@endif
+                @if($hasTool('ul'))<button type="button" class="btn btn-sm btn-outline-secondary" data-editor-cmd="insertUnorderedList"><i class="bi bi-list-ul"></i></button>@endif
+                @if($hasTool('ol'))<button type="button" class="btn btn-sm btn-outline-secondary" data-editor-cmd="insertOrderedList"><i class="bi bi-list-ol"></i></button>@endif
+                @if($hasTool('blockquote'))<button type="button" class="btn btn-sm btn-outline-secondary" data-editor-cmd="formatBlock" data-editor-value="blockquote"><i class="bi bi-blockquote-left"></i></button>@endif
+                @if($hasTool('code-block'))<button type="button" class="btn btn-sm btn-outline-secondary" data-editor-cmd="formatBlock" data-editor-value="pre"><i class="bi bi-code-square"></i></button>@endif
 
                 @if($hasTool('h1') || $hasTool('h2') || $hasTool('h3') || $hasTool('h4') || $hasTool('h5') || $hasTool('h6'))
-                <select class="form-select form-select-sm w-auto" data-editor-cmd="formatBlock" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Titre ou paragraphe">
+                <select class="form-select form-select-sm w-auto" data-editor-cmd="formatBlock">
                     <option value="p">Paragraphe</option>
                     @if($hasTool('h1'))<option value="h1">Titre H1</option>@endif
                     @if($hasTool('h2'))<option value="h2">Titre H2</option>@endif
@@ -63,20 +63,20 @@
 
                 @if($hasTool('text-color'))
                 <div class="position-relative d-inline-block">
-                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Couleur du texte" data-editor-action="color-picker" data-editor-color-cmd="foreColor"><i class="bi bi-palette"></i></button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" title="Couleur texte" data-editor-action="color-picker" data-editor-color-cmd="foreColor"><i class="bi bi-palette"></i></button>
                     <div class="catmin-editor-color-picker" data-editor-color-picker="foreColor" hidden></div>
                 </div>
                 @endif
                 @if($hasTool('bg-color'))
                 <div class="position-relative d-inline-block">
-                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Couleur de fond" data-editor-action="color-picker" data-editor-color-cmd="hiliteColor"><i class="bi bi-paint-bucket"></i></button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" title="Couleur fond" data-editor-action="color-picker" data-editor-color-cmd="hiliteColor"><i class="bi bi-paint-bucket"></i></button>
                     <div class="catmin-editor-color-picker" data-editor-color-picker="hiliteColor" hidden></div>
                 </div>
                 @endif
 
                 @if($hasTool('link'))
                 <div class="position-relative">
-                    <button type="button" class="btn btn-sm btn-outline-secondary" data-editor-action="link" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Insérer un lien"><i class="bi bi-link-45deg"></i></button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-editor-action="link" title="Insérer un lien"><i class="bi bi-link-45deg"></i></button>
                     <div class="catmin-editor-link-popup card shadow border p-2 gap-2" data-editor-link-popup hidden>
                         <div class="input-group input-group-sm">
                             <input type="url" class="form-control" placeholder="https://..." data-editor-link-input autocomplete="off">
@@ -87,16 +87,16 @@
                     </div>
                 </div>
                 @endif
-                @if($hasTool('clear'))<button type="button" class="btn btn-sm btn-outline-secondary" data-editor-cmd="removeFormat" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Effacer la mise en forme"><i class="bi bi-eraser"></i></button>@endif
-                @if($hasTool('undo'))<button type="button" class="btn btn-sm btn-outline-secondary" data-editor-cmd="undo" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Annuler"><i class="bi bi-arrow-counterclockwise"></i></button>@endif
-                @if($hasTool('redo'))<button type="button" class="btn btn-sm btn-outline-secondary" data-editor-cmd="redo" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Refaire"><i class="bi bi-arrow-clockwise"></i></button>@endif
+                @if($hasTool('clear'))<button type="button" class="btn btn-sm btn-outline-secondary" data-editor-cmd="removeFormat"><i class="bi bi-eraser"></i></button>@endif
+                @if($hasTool('undo'))<button type="button" class="btn btn-sm btn-outline-secondary" data-editor-cmd="undo"><i class="bi bi-arrow-counterclockwise"></i></button>@endif
+                @if($hasTool('redo'))<button type="button" class="btn btn-sm btn-outline-secondary" data-editor-cmd="redo"><i class="bi bi-arrow-clockwise"></i></button>@endif
 
-                <button type="button" class="btn btn-sm btn-outline-secondary" data-editor-action="media-picker" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Insérer une image"><i class="bi bi-image me-1"></i>Media</button>
-                <button type="button" class="btn btn-sm btn-outline-info" data-editor-action="toggle-preview" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Afficher l'aperçu live"><i class="bi bi-eye me-1"></i>Aperçu</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-editor-action="media-picker" title="Insérer une image"><i class="bi bi-image me-1"></i>Media</button>
+                <button type="button" class="btn btn-sm btn-outline-info" data-editor-action="toggle-preview" title="Aperçu live"><i class="bi bi-eye me-1"></i>Aperçu</button>
 
                 @if($hasTool('panel'))
                 <div class="ms-auto d-flex gap-1">
-                    <button type="button" class="btn btn-sm btn-outline-primary" data-editor-action="toggle-panel" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Afficher la bibliothèque">
+                    <button type="button" class="btn btn-sm btn-outline-primary" data-editor-action="toggle-panel">
                         <i class="bi bi-layout-sidebar"></i> Snippets / Blocs
                     </button>
                 </div>
@@ -112,8 +112,8 @@
                 </div>
 
                 <div class="catmin-editor-preview border-start flex-shrink-0" data-editor-preview-pane hidden>
-                    <div class="catmin-editor-preview-header">
-                        <small class="text-muted">📺 Aperçu live</small>
+                    <div class="p-3 border-bottom bg-light">
+                        <small class="text-muted">Aperçu live</small>
                     </div>
                     <div class="p-3 overflow-auto" data-editor-preview-canvas></div>
                 </div>
@@ -133,7 +133,7 @@
                         </div>
                     </div>
 
-                    <div class="p-3 border-bottom" data-editor-pane="snippets" style="max-height: 500px; overflow-y: auto;">
+                    <div class="p-3 border-bottom" data-editor-pane="snippets">
                         <h6 class="small text-uppercase text-muted mb-3">Snippets Bootstrap</h6>
                         <div class="d-grid gap-2">
                             @forelse ($snippetItems as $snippet)
@@ -149,7 +149,7 @@
                         </div>
                     </div>
 
-                    <div class="p-3" data-editor-pane="blocks" hidden style="max-height: 500px; overflow-y: auto;">
+                    <div class="p-3" data-editor-pane="blocks" hidden>
                         <h6 class="small text-uppercase text-muted mb-3">Blocs</h6>
                         <div class="d-grid gap-2">
                             @forelse ($blockItems as $block)
