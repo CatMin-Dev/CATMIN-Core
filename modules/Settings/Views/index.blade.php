@@ -56,6 +56,11 @@
             </button>
         </li>
     </ul>
+    <div class="d-flex justify-content-end mb-3">
+        <a class="btn btn-outline-primary btn-sm" href="{{ route('admin.templates.index') }}">
+            Templates installables
+        </a>
+    </div>
 
     <div class="tab-content border border-top-0 rounded-bottom p-4 bg-white">
 

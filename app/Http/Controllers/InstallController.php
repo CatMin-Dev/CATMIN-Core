@@ -4,16 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Services\InstallCheckService;
 use App\Services\InstallService;
+use App\Services\TemplateInstallerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class InstallController extends Controller
 {
     protected InstallService $installService;
+    protected TemplateInstallerService $templateInstallerService;
 
-    public function __construct(InstallService $installService)
+    public function __construct(InstallService $installService, TemplateInstallerService $templateInstallerService)
     {
         $this->installService = $installService;
+        $this->templateInstallerService = $templateInstallerService;
     }
 
     /**
@@ -160,6 +163,8 @@ class InstallController extends Controller
 
         return view('install.admin-create', [
             'step' => 'admin',
+            'templates' => (array) (($this->templateInstallerService->listTemplates())['templates'] ?? []),
+            'latestTemplateReport' => $this->templateInstallerService->latestReport(),
         ]);
     }
 
@@ -176,12 +181,28 @@ class InstallController extends Controller
             'name' => 'required|string|min:3|max:255',
             'email' => 'required|email|unique:admin_users,email',
             'password' => 'required|string|min:12|confirmed',
+            'template_slug' => 'nullable|string|max:120|regex:/^[a-z0-9\-]+$/',
+            'template_overwrite' => 'nullable|boolean',
         ]);
 
         $result = $this->installService->createAdminUser($validated);
 
         if (!$result['ok']) {
             return back()->withErrors(['general' => $result['message']]);
+        }
+
+        $selectedTemplate = strtolower(trim((string) ($validated['template_slug'] ?? '')));
+        if ($selectedTemplate !== '') {
+            $templateInstall = $this->templateInstallerService->installFromSlug($selectedTemplate, [
+                'overwrite' => $request->boolean('template_overwrite'),
+                'source' => 'install_wizard',
+            ]);
+
+            if (($templateInstall['ok'] ?? false) !== true) {
+                return back()->withErrors([
+                    'template_slug' => (string) ($templateInstall['message'] ?? 'Installation template echouee.'),
+                ]);
+            }
         }
 
         return redirect('/install/complete');
@@ -197,6 +218,7 @@ class InstallController extends Controller
             $this->installService->markInstallationComplete();
             return view('install.complete', [
                 'step' => 'complete',
+                'latestTemplateReport' => $this->templateInstallerService->latestReport(),
             ]);
         }
 

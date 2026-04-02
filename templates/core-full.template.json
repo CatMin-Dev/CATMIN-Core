@@ -1,0 +1,186 @@
+{
+  "name": "CATMIN Core Full",
+  "slug": "core-full",
+  "version": "1.0.0",
+  "description": "Template complet de demarrage avec pages, articles, menus, blocs, settings et placeholders media.",
+  "required_modules": [
+    "core",
+    "settings",
+    "pages",
+    "articles",
+    "menus",
+    "blocks",
+    "media"
+  ],
+  "required_addons": [],
+  "payload": {
+    "pages": [
+      {
+        "title": "Accueil",
+        "slug": "accueil",
+        "excerpt": "Bienvenue sur votre plateforme CATMIN.",
+        "content": "<h1>Accueil</h1><p>Modele complet installe.</p>",
+        "status": "published",
+        "published_at": "2026-01-02 09:00:00",
+        "meta_title": "Accueil",
+        "meta_description": "Page d accueil"
+      },
+      {
+        "title": "A propos",
+        "slug": "a-propos",
+        "excerpt": "Qui sommes nous",
+        "content": "<h1>A propos</h1><p>Parlez de votre activite.</p>",
+        "status": "published",
+        "published_at": "2026-01-02 09:10:00",
+        "meta_title": "A propos",
+        "meta_description": "Presentation"
+      },
+      {
+        "title": "Contact",
+        "slug": "contact",
+        "excerpt": "Entrons en contact",
+        "content": "<h1>Contact</h1><p>Coordonnees et formulaire.</p>",
+        "status": "published",
+        "published_at": "2026-01-02 09:20:00",
+        "meta_title": "Contact",
+        "meta_description": "Contact"
+      }
+    ],
+    "articles": [
+      {
+        "title": "Lancement CATMIN",
+        "slug": "lancement-catmin",
+        "excerpt": "Premier article de lancement",
+        "content": "<p>Bienvenue sur votre blog CATMIN.</p>",
+        "content_type": "article",
+        "status": "published",
+        "published_at": "2026-01-03 08:00:00",
+        "meta_title": "Lancement",
+        "meta_description": "Article de lancement"
+      },
+      {
+        "title": "Guide de prise en main",
+        "slug": "guide-prise-en-main",
+        "excerpt": "Guide rapide",
+        "content": "<p>Configurez votre site en quelques minutes.</p>",
+        "content_type": "article",
+        "status": "published",
+        "published_at": "2026-01-03 08:30:00",
+        "meta_title": "Guide",
+        "meta_description": "Guide prise en main"
+      }
+    ],
+    "menus": [
+      {
+        "name": "Menu principal",
+        "slug": "menu-principal",
+        "location": "primary",
+        "status": "active",
+        "items": [
+          {
+            "ref": "home",
+            "label": "Accueil",
+            "type": "page",
+            "page_slug": "accueil",
+            "sort_order": 1,
+            "status": "active"
+          },
+          {
+            "ref": "about",
+            "label": "A propos",
+            "type": "page",
+            "page_slug": "a-propos",
+            "sort_order": 2,
+            "status": "active"
+          },
+          {
+            "ref": "blog",
+            "label": "Blog",
+            "type": "url",
+            "url": "/site/blog",
+            "sort_order": 3,
+            "status": "active"
+          },
+          {
+            "ref": "contact",
+            "label": "Contact",
+            "type": "page",
+            "page_slug": "contact",
+            "sort_order": 4,
+            "status": "active"
+          }
+        ]
+      }
+    ],
+    "blocks": [
+      {
+        "name": "Hero home",
+        "slug": "hero-home",
+        "content": "<section><h2>Bienvenue</h2><p>Template core full.</p></section>",
+        "status": "active"
+      },
+      {
+        "name": "Footer links",
+        "slug": "footer-links",
+        "content": "<ul><li><a href='/site/accueil'>Accueil</a></li><li><a href='/site/contact'>Contact</a></li></ul>",
+        "status": "active"
+      }
+    ],
+    "settings": [
+      {
+        "key": "site_name",
+        "label": "Nom du site",
+        "value": "CATMIN Core Full",
+        "type": "string",
+        "group": "site",
+        "description": "Nom issu du template complet",
+        "is_public": true,
+        "is_editable": true
+      },
+      {
+        "key": "site_locale",
+        "label": "Locale",
+        "value": "fr",
+        "type": "string",
+        "group": "site",
+        "description": "Locale par defaut",
+        "is_public": false,
+        "is_editable": true
+      },
+      {
+        "key": "shop_currency",
+        "label": "Devise boutique",
+        "value": "EUR",
+        "type": "string",
+        "group": "shop",
+        "description": "Devise initiale",
+        "is_public": false,
+        "is_editable": true
+      }
+    ],
+    "media_placeholders": [
+      {
+        "disk": "public",
+        "path": "media/placeholders/hero-core-full.jpg",
+        "filename": "hero-core-full.jpg",
+        "original_name": "hero-core-full.jpg",
+        "mime_type": "image/jpeg",
+        "extension": "jpg",
+        "size_bytes": 0,
+        "alt_text": "Hero core full",
+        "caption": "Placeholder hero"
+      },
+      {
+        "disk": "public",
+        "path": "media/placeholders/blog-default.jpg",
+        "filename": "blog-default.jpg",
+        "original_name": "blog-default.jpg",
+        "mime_type": "image/jpeg",
+        "extension": "jpg",
+        "size_bytes": 0,
+        "alt_text": "Illustration blog",
+        "caption": "Placeholder blog"
+      }
+    ]
+  }
+}

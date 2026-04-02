@@ -119,7 +119,17 @@
                 <li>Migrations exécutées</li>
                 <li>Rôles et permissions initialisés</li>
                 <li>Compte administrateur créé</li>
+                @if(is_array($latestTemplateReport ?? null))
+                    <li>Template installé: {{ $latestTemplateReport['template']['slug'] ?? 'n/a' }}</li>
+                @endif
             </ul>
+
+            @if(is_array($latestTemplateReport ?? null))
+                <div style="text-align:left;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-top:12px;">
+                    <strong>Rapport template</strong>
+                    <div style="font-size:13px;color:#374151;margin-top:6px;">Pages: {{ (int) ($latestTemplateReport['summary']['pages'] ?? 0) }} | Articles: {{ (int) ($latestTemplateReport['summary']['articles'] ?? 0) }} | Menus: {{ (int) ($latestTemplateReport['summary']['menus'] ?? 0) }} | Blocs: {{ (int) ($latestTemplateReport['summary']['blocks'] ?? 0) }} | Settings: {{ (int) ($latestTemplateReport['summary']['settings'] ?? 0) }}</div>
+                </div>
+            @endif
 
             <p style="margin-top: 20px; font-weight: 600;">Vous êtes maintenant prêt à accéder à l'administration.</p>
 

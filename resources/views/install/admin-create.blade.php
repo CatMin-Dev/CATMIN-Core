@@ -135,7 +135,7 @@
 </head>
 <body>
     <div class="install-container">
-        <div class="step-badge">Étape 3 / 4 - Administrateur</div>
+        <div class="step-badge">Étape 3 / 4 - Administrateur + Template</div>
         
         <h2 style="color: var(--primary); margin-bottom: 30px;">Créer le Compte Administrateur</h2>
 
@@ -209,6 +209,37 @@
                     <div class="error-message">{{ $message }}</div>
                 @enderror
             </div>
+
+            <div class="form-group">
+                <label class="form-label">Template de demarrage (optionnel)</label>
+                <select class="form-control @error('template_slug') is-invalid @enderror" name="template_slug">
+                    <option value="">Aucun template</option>
+                    @foreach(($templates ?? []) as $template)
+                        <option value="{{ $template['slug'] ?? '' }}" @selected(old('template_slug') === ($template['slug'] ?? ''))>
+                            {{ $template['name'] ?? ($template['slug'] ?? 'template') }} ({{ $template['slug'] ?? 'n/a' }})
+                        </option>
+                    @endforeach
+                </select>
+                <div class="form-hint">Le template peut precharger pages, articles, menus, blocs, settings et medias placeholders.</div>
+                @error('template_slug')
+                    <div class="error-message">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div class="form-group">
+                <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#374151;">
+                    <input type="checkbox" name="template_overwrite" value="1" @checked(old('template_overwrite'))>
+                    Ecraser les donnees existantes si conflits
+                </label>
+            </div>
+
+            @if(is_array($latestTemplateReport ?? null))
+                <div class="password-requirements">
+                    <strong style="color: #1f2937; display: block; margin-bottom: 10px;">Dernier rapport template</strong>
+                    <div>Template: {{ $latestTemplateReport['template']['slug'] ?? 'n/a' }}</div>
+                    <div>Date: {{ $latestTemplateReport['installed_at'] ?? 'n/a' }}</div>
+                </div>
+            @endif
 
             <div style="display: flex; gap: 10px; margin-top: 30px;">
                 <a href="{{ route('install.database-form') }}" class="btn btn-secondary" style="flex: 1; text-decoration: none;">

@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\AdminSessionsController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\RecoveryController;
 use App\Http\Controllers\Admin\ReleaseCheckController;
+use App\Http\Controllers\Admin\TemplateManagerController;
 use App\Http\Controllers\Admin\TwoFactorController;
 use App\Http\Controllers\Admin\UpdateController;
 use App\Http\Controllers\Frontend\HomeController;
@@ -125,6 +126,16 @@ Route::prefix($adminPath)->middleware('web')->name('admin.')->group(function () 
         Route::get('/settings', [DashboardController::class, 'settings'])
             ->middleware('catmin.permission:module.settings.list')
             ->name('settings.index');
+
+        Route::get('/templates', [TemplateManagerController::class, 'index'])
+            ->middleware('catmin.permission:module.settings.list')
+            ->name('templates.index');
+        Route::post('/templates/install', [TemplateManagerController::class, 'install'])
+            ->middleware('catmin.permission:module.settings.config')
+            ->name('templates.install');
+        Route::post('/templates/export', [TemplateManagerController::class, 'export'])
+            ->middleware('catmin.permission:module.settings.config')
+            ->name('templates.export');
 
         Route::get('/modules', [DashboardController::class, 'modules'])
             ->middleware('catmin.permission:module.core.list')
