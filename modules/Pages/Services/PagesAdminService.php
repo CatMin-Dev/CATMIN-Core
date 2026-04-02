@@ -4,6 +4,8 @@ namespace Modules\Pages\Services;
 
 use App\Services\CatminEventBus;
 use App\Services\Editor\WysiwygSanitizer;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Str;
 use Modules\Logger\Services\SystemLogService;
@@ -15,11 +17,11 @@ class PagesAdminService
     {
     }
 
-    public function listing(?string $search = null, int $perPage = 25): LengthAwarePaginator
+    public function listing(?string $search = null, int $perPage = 25, string $scope = 'active'): LengthAwarePaginator
     {
         $term = trim((string) $search);
 
-        return Page::query()
+        $query = Page::query()
             ->select(['id', 'title', 'slug', 'excerpt', 'status', 'published_at', 'updated_at', 'media_asset_id'])
             ->when($term !== '', function ($query) use ($term) {
                 $query->where(function ($inner) use ($term) {
@@ -28,10 +30,68 @@ class PagesAdminService
                         ->orWhere('excerpt', 'like', '%' . $term . '%');
                 });
             })
+            ->orderByDesc('deleted_at')
             ->orderByDesc('published_at')
-            ->orderByDesc('updated_at')
+            ->orderByDesc('updated_at');
+
+        if ($scope === 'trash') {
+            $query->onlyTrashed();
+        } elseif ($scope === 'all') {
+            $query->withTrashed();
+        }
+
+        return $query
             ->paginate($perPage)
             ->withQueryString();
+    }
+
+    public function softDelete(Page $page): void
+    {
+        $page->delete();
+    }
+
+    public function restore(Page $page): void
+    {
+        $page->restore();
+    }
+
+    public function hardDelete(Page $page): void
+    {
+        $page->forceDelete();
+    }
+
+    public function emptyTrash(): int
+    {
+        $trashed = Page::onlyTrashed()->get();
+        $count = 0;
+
+        foreach ($trashed as $page) {
+            $page->forceDelete();
+            $count++;
+        }
+
+        return $count;
+    }
+
+    public function purgeTrashOlderThan(int $days): int
+    {
+        $safeDays = max(1, $days);
+        $threshold = now()->subDays($safeDays);
+
+        $trashed = Page::onlyTrashed()
+            ->where(function (Builder $query) use ($threshold): void {
+                $query->whereNotNull('deleted_at')
+                    ->where('deleted_at', '<=', $threshold);
+            })
+            ->get();
+
+        $count = 0;
+        foreach ($trashed as $page) {
+            $page->forceDelete();
+            $count++;
+        }
+
+        return $count;
     }
 
     /**
@@ -39,6 +99,7 @@ class PagesAdminService
      */
     public function create(array $payload): Page
     {
+        $statusAndDate = $this->resolveStatusAndPublishedAt($payload);
         $slug = $this->uniqueSlug((string) $payload['title'], (string) ($payload['slug'] ?? ''));
 
         /** @var Page $page */
@@ -47,8 +108,8 @@ class PagesAdminService
             'slug'             => $slug,
             'excerpt'          => (string) ($payload['excerpt'] ?? ''),
             'content'          => $this->sanitizer->sanitize((string) ($payload['content'] ?? '')),
-            'status'           => (string) ($payload['status'] ?? 'draft'),
-            'published_at'     => $this->normalizePublishedAt($payload),
+            'status'           => $statusAndDate['status'],
+            'published_at'     => $statusAndDate['published_at'],
             'media_asset_id'   => $payload['media_asset_id'] ?: null,
             'meta_title'       => (string) ($payload['meta_title'] ?? ''),
             'meta_description' => (string) ($payload['meta_description'] ?? ''),
@@ -88,6 +149,7 @@ class PagesAdminService
      */
     public function update(Page $page, array $payload): Page
     {
+        $statusAndDate = $this->resolveStatusAndPublishedAt($payload);
         $slug = $this->uniqueSlug((string) $payload['title'], (string) ($payload['slug'] ?? ''), $page->id);
 
         $page->fill([
@@ -95,8 +157,8 @@ class PagesAdminService
             'slug'             => $slug,
             'excerpt'          => (string) ($payload['excerpt'] ?? ''),
             'content'          => $this->sanitizer->sanitize((string) ($payload['content'] ?? '')),
-            'status'           => (string) ($payload['status'] ?? 'draft'),
-            'published_at'     => $this->normalizePublishedAt($payload),
+            'status'           => $statusAndDate['status'],
+            'published_at'     => $statusAndDate['published_at'],
             'media_asset_id'   => $payload['media_asset_id'] ?: null,
             'meta_title'       => (string) ($payload['meta_title'] ?? ''),
             'meta_description' => (string) ($payload['meta_description'] ?? ''),
@@ -144,7 +206,7 @@ class PagesAdminService
 
     public function toggleStatus(Page $page): Page
     {
-        $nextStatus = $page->status === 'published' ? 'draft' : 'published';
+        $nextStatus = in_array($page->status, ['published', 'scheduled'], true) ? 'draft' : 'published';
         $page->status = $nextStatus;
 
         if ($nextStatus === 'published' && $page->published_at === null) {
@@ -178,7 +240,7 @@ class PagesAdminService
     /**
      * @param array<string, mixed> $payload
      */
-    private function normalizePublishedAt(array $payload): ?string
+    private function normalizePublishedAt(array $payload): ?Carbon
     {
         $publishedAt = $payload['published_at'] ?? null;
 
@@ -186,7 +248,34 @@ class PagesAdminService
             return null;
         }
 
-        return (string) $publishedAt;
+        return Carbon::parse((string) $publishedAt);
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     * @return array{status:string, published_at:?Carbon}
+     */
+    private function resolveStatusAndPublishedAt(array $payload): array
+    {
+        $status = (string) ($payload['status'] ?? 'draft');
+        $publishedAt = $this->normalizePublishedAt($payload);
+
+        if ($publishedAt !== null && $publishedAt->isFuture()) {
+            $status = 'scheduled';
+        }
+
+        if ($status === 'published' && $publishedAt === null) {
+            $publishedAt = now();
+        }
+
+        if ($status === 'scheduled' && $publishedAt === null) {
+            $status = 'draft';
+        }
+
+        return [
+            'status' => $status,
+            'published_at' => $publishedAt,
+        ];
     }
 
     private function uniqueSlug(string $title, string $candidateSlug, ?int $ignoreId = null): string
@@ -211,5 +300,25 @@ class PagesAdminService
             ->where('slug', $slug)
             ->when($ignoreId !== null, fn ($query) => $query->where('id', '!=', $ignoreId))
             ->exists();
+    }
+
+    public function bulkPublish(array $ids): int
+    {
+        return Page::whereIn('id', $ids)
+            ->whereNotNull('published_at')
+            ->update(['status' => 'published']);
+    }
+
+    public function bulkUnpublish(array $ids): int
+    {
+        return Page::whereIn('id', $ids)
+            ->update(['published_at' => null, 'status' => 'draft']);
+    }
+
+    public function bulkTrash(array $ids): int
+    {
+        return Page::whereIn('id', $ids)
+            ->whereNull('deleted_at')
+            ->delete();
     }
 }

@@ -45,6 +45,11 @@
                     <i class="bi bi-image me-1"></i>Médias
                 </button>
             </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-taxonomy" type="button" role="tab">
+                    <i class="bi bi-tags me-1"></i>Taxonomie
+                </button>
+            </li>
         </ul>
 
         <div class="tab-content border border-top-0 rounded-bottom p-4 bg-white mb-4">
@@ -101,6 +106,7 @@
                         <label class="form-label fw-semibold" for="status">Statut</label>
                         <select id="status" name="status" class="form-select @error('status') is-invalid @enderror">
                             <option value="draft"     @selected(old('status', 'draft') === 'draft')>Brouillon</option>
+                            <option value="scheduled" @selected(old('status') === 'scheduled')>Programme</option>
                             <option value="published" @selected(old('status') === 'published')>Publié</option>
                         </select>
                         @error('status')<div class="invalid-feedback">{{ $message }}</div>@enderror
@@ -152,9 +158,44 @@
                 </div>
             </div>
 
+            <div class="tab-pane fade" id="tab-taxonomy" role="tabpanel">
+                <div class="row g-3">
+                    @php($selectedTagIds = collect(old('tag_ids', []))->map(fn ($id) => (int) $id)->all())
+                    <div class="col-12 col-lg-6">
+                        <label class="form-label fw-semibold" for="article_category_id">Catégorie</label>
+                        <select id="article_category_id" name="article_category_id" class="form-select @error('article_category_id') is-invalid @enderror">
+                            <option value="">Aucune</option>
+                            @foreach(($categories ?? collect()) as $category)
+                                <option value="{{ $category['id'] }}" @selected((string) old('article_category_id') === (string) $category['id'])>{{ $category['name'] }}</option>
+                            @endforeach
+                        </select>
+                        @error('article_category_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="col-12 col-lg-6">
+                        <label class="form-label fw-semibold" for="tag_ids">Tags</label>
+                        <select id="tag_ids" name="tag_ids[]" class="form-select @error('tag_ids') is-invalid @enderror" multiple size="8">
+                            @foreach(($tags ?? collect()) as $tag)
+                                <option value="{{ $tag->id }}" @selected(in_array((int) $tag->id, $selectedTagIds, true))>{{ $tag->name }}</option>
+                            @endforeach
+                        </select>
+                        @error('tag_ids')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        <div class="form-text">Maintenez Ctrl/Cmd pour sélectionner plusieurs tags. Gestion complète via les écrans Tags/Catégories.</div>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
         <div class="d-flex gap-2">
+            <button class="btn btn-outline-dark" type="submit" formaction="{{ admin_route('articles.preview') }}" formtarget="_blank">
+                <i class="bi bi-eye me-1"></i>Prévisualiser
+            </button>
+            <button class="btn btn-outline-warning" type="button" data-submit-mode="schedule">
+                <i class="bi bi-clock me-1"></i>Programmer
+            </button>
+            <button class="btn btn-outline-success" type="button" data-submit-mode="publish-now">
+                <i class="bi bi-lightning-charge me-1"></i>Publier maintenant
+            </button>
             <button class="btn btn-primary" type="submit">
                 <i class="bi bi-check2-circle me-1"></i>Créer l'article
             </button>
@@ -171,6 +212,24 @@
 (function () {
     const titleInput = document.getElementById('title');
     const slugInput = document.getElementById('slug');
+    const form = document.getElementById('article-form');
+    const statusInput = document.getElementById('status');
+    const publishedAtInput = document.getElementById('published_at');
+
+    const asLocalDateTime = function (date) {
+        const pad = function (n) { return String(n).padStart(2, '0'); };
+        return [
+            date.getFullYear(),
+            '-',
+            pad(date.getMonth() + 1),
+            '-',
+            pad(date.getDate()),
+            'T',
+            pad(date.getHours()),
+            ':',
+            pad(date.getMinutes()),
+        ].join('');
+    };
 
     if (titleInput && slugInput) {
         titleInput.addEventListener('input', function () {
@@ -184,6 +243,24 @@
 
         slugInput.addEventListener('input', function () {
             slugInput.dataset.manual = '1';
+        });
+    }
+
+    if (form && statusInput && publishedAtInput) {
+        form.querySelector('[data-submit-mode="schedule"]')?.addEventListener('click', function () {
+            statusInput.value = 'scheduled';
+            if (!publishedAtInput.value) {
+                const date = new Date();
+                date.setMinutes(date.getMinutes() + 10);
+                publishedAtInput.value = asLocalDateTime(date);
+            }
+            form.submit();
+        });
+
+        form.querySelector('[data-submit-mode="publish-now"]')?.addEventListener('click', function () {
+            statusInput.value = 'published';
+            publishedAtInput.value = asLocalDateTime(new Date());
+            form.submit();
         });
     }
 

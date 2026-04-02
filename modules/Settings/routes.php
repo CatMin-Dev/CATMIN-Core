@@ -44,5 +44,9 @@ Route::middleware(['web', 'catmin.admin'])
         Route::put('/settings/docs', [SettingsController::class, 'updateDocs'])
             ->middleware('catmin.permission:module.settings.config')
             ->name('settings.update.docs');
+
+        Route::put('/settings/seo', [SettingsController::class, 'updateSeo'])
+            ->middleware('catmin.permission:module.settings.config')
+            ->name('settings.update.seo');
     });
 

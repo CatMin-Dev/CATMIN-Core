@@ -18,4 +18,12 @@ Route::middleware(['web', 'catmin.admin'])
         Route::put('/addons/cat-wysiwyg', [\Addons\CatWysiwyg\Controllers\Admin\CatWysiwygAdminController::class, 'update'])
             ->middleware('catmin.permission:addon.cat_wysiwyg.config')
             ->name('addon.cat_wysiwyg.update');
+
+        Route::get('/addons/cat-wysiwyg/library', [\Addons\CatWysiwyg\Controllers\Admin\CatWysiwygAdminController::class, 'library'])
+            ->middleware('catmin.permission:addon.cat_wysiwyg.config')
+            ->name('addon.cat_wysiwyg.library');
+
+        Route::put('/addons/cat-wysiwyg/library', [\Addons\CatWysiwyg\Controllers\Admin\CatWysiwygAdminController::class, 'updateLibrary'])
+            ->middleware('catmin.permission:addon.cat_wysiwyg.config')
+            ->name('addon.cat_wysiwyg.library.update');
     });

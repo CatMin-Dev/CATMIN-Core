@@ -16,7 +16,7 @@ class WysiwygManager
         'ul', 'ol', 'blockquote', 'code-block',
         'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
         'text-color', 'bg-color',
-        'link', 'clear', 'undo', 'redo',
+        'link', 'modal-link', 'bookmarks', 'clear', 'undo', 'redo',
         'panel',
     ];
 
@@ -130,6 +130,8 @@ class WysiwygManager
             $dynamicItems[] = [
                 'label' => $label,
                 'html' => $html,
+                'icon' => trim((string) Arr::get($item, 'icon', '')),
+                'css' => trim((string) Arr::get($item, 'css', '')),
                 'source' => 'addon.cat-wysiwyg',
             ];
         }
@@ -156,6 +158,32 @@ class WysiwygManager
      */
     public function blockItems(array $context = []): array
     {
+        $dynamic = SettingService::get('addon.cat_wysiwyg.blocks', []);
+        $dynamicItems = [];
+        foreach ((array) $dynamic as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+
+            $label = trim((string) Arr::get($item, 'label', ''));
+            $html = (string) Arr::get($item, 'html', '');
+            if ($label === '' || trim($html) === '') {
+                continue;
+            }
+
+            $dynamicItems[] = [
+                'label' => $label,
+                'html' => $html,
+                'icon' => trim((string) Arr::get($item, 'icon', '')),
+                'css' => trim((string) Arr::get($item, 'css', '')),
+                'source' => 'addon.cat-wysiwyg',
+            ];
+        }
+
+        if ($dynamicItems !== []) {
+            return $dynamicItems;
+        }
+
         return $this->defaultSectionItems('blocks', $context);
     }
 
@@ -196,6 +224,8 @@ class WysiwygManager
             $items[] = [
                 'label' => $label,
                 'html' => $html,
+                'icon' => trim((string) Arr::get($snippet, 'icon', '')),
+                'css' => trim((string) Arr::get($snippet, 'css', '')),
                 'source' => 'core',
             ];
         }
@@ -221,6 +251,8 @@ class WysiwygManager
                 $items[] = [
                     'label' => $label,
                     'html' => $html,
+                    'icon' => trim((string) Arr::get($item, 'icon', '')),
+                    'css' => trim((string) Arr::get($item, 'css', '')),
                     'source' => (string) Arr::get($item, 'source', 'extension'),
                 ];
             }

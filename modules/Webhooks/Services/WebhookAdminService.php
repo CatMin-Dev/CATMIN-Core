@@ -64,4 +64,24 @@ class WebhookAdminService
     {
         return Webhook::find($id);
     }
+
+    public static function bulkActivate(array $ids): int
+    {
+        return Webhook::whereIn('id', $ids)->update(['status' => 'active']);
+    }
+
+    public static function bulkDeactivate(array $ids): int
+    {
+        return Webhook::whereIn('id', $ids)->update(['status' => 'inactive']);
+    }
+
+    public static function bulkDelete(array $ids): int
+    {
+        $count = 0;
+        foreach (Webhook::whereIn('id', $ids)->get() as $webhook) {
+            self::delete($webhook);
+            $count++;
+        }
+        return $count;
+    }
 }

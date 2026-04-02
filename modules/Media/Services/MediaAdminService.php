@@ -3,6 +3,7 @@
 namespace Modules\Media\Services;
 
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
@@ -15,9 +16,9 @@ class MediaAdminService
     /**
      * @param array<string, mixed> $filters
      */
-    public function listing(array $filters = [], int $perPage = 24): LengthAwarePaginator
+    public function listing(array $filters = [], int $perPage = 24, string $scope = 'active'): LengthAwarePaginator
     {
-        $query = $this->buildListingQuery($filters);
+        $query = $this->buildListingQuery($filters, $scope);
 
         return $query
             ->paginate($perPage)
@@ -29,7 +30,7 @@ class MediaAdminService
      */
     public function pickerListing(array $filters = [], int $perPage = 12): LengthAwarePaginator
     {
-        $query = $this->buildListingQuery($filters);
+        $query = $this->buildListingQuery($filters, 'active');
 
         return $query
             ->paginate($perPage)
@@ -132,11 +133,55 @@ class MediaAdminService
 
     public function destroy(MediaAsset $asset): void
     {
+        $asset->delete();
+    }
+
+    public function restore(MediaAsset $asset): void
+    {
+        $asset->restore();
+    }
+
+    public function forceDelete(MediaAsset $asset): void
+    {
         if ($asset->path !== '' && Storage::disk($asset->disk)->exists($asset->path)) {
             Storage::disk($asset->disk)->delete($asset->path);
         }
 
-        $asset->delete();
+        $asset->forceDelete();
+    }
+
+    public function emptyTrash(): int
+    {
+        $trashed = MediaAsset::onlyTrashed()->get();
+        $count = 0;
+
+        foreach ($trashed as $asset) {
+            $this->forceDelete($asset);
+            $count++;
+        }
+
+        return $count;
+    }
+
+    public function purgeTrashOlderThan(int $days): int
+    {
+        $safeDays = max(1, $days);
+        $threshold = now()->subDays($safeDays);
+
+        $trashed = MediaAsset::onlyTrashed()
+            ->where(function (Builder $query) use ($threshold): void {
+                $query->whereNotNull('deleted_at')
+                    ->where('deleted_at', '<=', $threshold);
+            })
+            ->get();
+
+        $count = 0;
+        foreach ($trashed as $asset) {
+            $this->forceDelete($asset);
+            $count++;
+        }
+
+        return $count;
     }
 
     public function previewUrl(MediaAsset $asset): ?string
@@ -210,7 +255,7 @@ class MediaAdminService
     /**
      * @param array<string, mixed> $filters
      */
-    private function buildListingQuery(array $filters)
+    private function buildListingQuery(array $filters, string $scope = 'active')
     {
         $folder = trim((string) ($filters['folder'] ?? ''));
         $search = trim((string) ($filters['q'] ?? ''));
@@ -235,6 +280,7 @@ class MediaAdminService
                 'uploaded_by_id',
                 'created_at',
                 'updated_at',
+                'deleted_at',
             ])
             ->when(
                 $folder !== '',
@@ -282,11 +328,24 @@ class MediaAdminService
             ->when($from !== '', fn ($builder) => $builder->whereDate('created_at', '>=', $from))
             ->when($to !== '', fn ($builder) => $builder->whereDate('created_at', '<=', $to));
 
+        if ($scope === 'trash') {
+            $query->onlyTrashed();
+        } elseif ($scope === 'all') {
+            $query->withTrashed();
+        }
+
         return match ($sort) {
             'oldest' => $query->orderBy('id'),
             'name' => $query->orderBy('original_name')->orderByDesc('id'),
             'type' => $query->orderBy('mime_type')->orderBy('extension')->orderByDesc('id'),
             default => $query->orderByDesc('id'),
         };
+    }
+
+    public function bulkTrash(array $ids): int
+    {
+        return MediaAsset::whereIn('id', $ids)
+            ->whereNull('deleted_at')
+            ->delete();
     }
 }

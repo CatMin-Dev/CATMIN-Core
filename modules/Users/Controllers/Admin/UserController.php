@@ -114,4 +114,57 @@ class UserController extends Controller
             ->route('admin.users.manage')
             ->with('status', 'Utilisateur "' . $name . '" supprime.');
     }
+
+    public function bulkAction(Request $request): RedirectResponse
+    {
+        $action = (string) $request->input('bulk_action', '');
+        $ids = $request->input('bulk_select', []);
+
+        if (empty($ids) || !is_array($ids)) {
+            return redirect()
+                ->back()
+                ->with('error', 'Veuillez selectionner au moins un utilisateur.');
+        }
+
+        // Sanitize and validate IDs
+        $ids = collect($ids)
+            ->filter(fn($id) => is_numeric($id))
+            ->map(fn($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        if (empty($ids)) {
+            return redirect()
+                ->back()
+                ->with('error', 'Identifiants invalides.');
+        }
+
+        // Check permission based on action
+        $permissionMap = [
+            'activate'   => 'module.users.config',
+            'deactivate' => 'module.users.config',
+        ];
+
+        $permission = $permissionMap[$action] ?? null;
+        if ($permission && !catmin_can($permission)) {
+            abort(403);
+        }
+
+        $count = 0;
+        match ($action) {
+            'activate' => $count = $this->usersAdminService->bulkActivate($ids),
+            'deactivate' => $count = $this->usersAdminService->bulkDeactivate($ids),
+            default => null,
+        };
+
+        $messages = [
+            'activate' => sprintf('Utilisateurs actives: %d', $count),
+            'deactivate' => sprintf('Utilisateurs desactives: %d', $count),
+        ];
+
+        return redirect()
+            ->back()
+            ->with('status', $messages[$action] ?? 'Action effectuee.');
+    }
 }

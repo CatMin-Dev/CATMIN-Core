@@ -15,6 +15,8 @@ class InternalPagesController extends Controller
     {
         $pages = Page::query()
             ->where('status', 'published')
+            ->whereNotNull('published_at')
+            ->where('published_at', '<=', now())
             ->orderByDesc('published_at')
             ->limit(100)
             ->get(['id', 'title', 'slug', 'content', 'published_at', 'updated_at']);

@@ -301,6 +301,29 @@ body {
     outline: none;
 }
 
+.catmin-editor-canvas:focus {
+    box-shadow: inset 0 0 0 1px rgba(13, 110, 253, 0.25);
+}
+
+.catmin-editor-canvas.drag-over {
+    background: #eef6ff;
+}
+
+.catmin-editor-context-menu {
+    min-width: 260px;
+    max-width: 320px;
+}
+
+[data-editor-html-mode] {
+    flex: 1 1 auto;
+    min-height: 22rem;
+    padding: 1rem;
+    resize: none;
+    line-height: 1.45;
+    background: #f8fafc;
+    color: #0f172a;
+}
+
 .catmin-editor-canvas:empty:before {
     content: attr(data-editor-placeholder);
     color: #98a2b3;
@@ -311,6 +334,15 @@ body {
     max-width: 100%;
     background: #fff;
     overflow-y: auto;
+}
+
+.catmin-editor-icon-btn {
+    width: 2.2rem;
+    height: 2.2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
 }
 
 .catmin-editor--panel-open .catmin-editor-canvas {

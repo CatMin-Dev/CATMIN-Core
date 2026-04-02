@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureCatminAdminAuthenticated;
+use App\Http\Middleware\ApplyAdminNoIndexHeaders;
 use App\Http\Middleware\EnsureCatminApiToken;
 use App\Http\Middleware\EnsureCatminFrontendAvailable;
 use App\Http\Middleware\EnsureCatminPermission;
@@ -50,6 +51,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(ApplySecurityHeaders::class);
+        $middleware->append(ApplyAdminNoIndexHeaders::class);
         $middleware->append(LogRequestPerformance::class);
         $middleware->append(TrackAdminAnalytics::class);
 

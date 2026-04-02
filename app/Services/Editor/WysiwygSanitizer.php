@@ -8,25 +8,29 @@ use DOMNode;
 
 class WysiwygSanitizer
 {
-    private const REMOVE_WITH_CONTENT = ['script', 'style', 'head', 'meta', 'link', 'base', 'iframe', 'object', 'embed', 'form', 'input', 'button', 'select', 'textarea', 'noscript'];
+    private const REMOVE_WITH_CONTENT = ['script', 'style', 'head', 'meta', 'link', 'base', 'iframe', 'object', 'embed', 'form', 'input', 'select', 'textarea', 'noscript'];
 
     private const ALLOWED_TAGS = [
         'p', 'br', 'hr',
         'strong', 'b', 'em', 'i', 'u', 's', 'del', 'mark', 'sub', 'sup',
-        'h1', 'h2', 'h3', 'h4',
+        'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
         'ul', 'ol', 'li',
+        'table', 'thead', 'tbody', 'tr', 'th', 'td',
+        'small', 'kbd',
         'blockquote', 'pre', 'code',
         'a', 'img',
-        'div', 'span',
+        'button', 'section', 'article', 'figure',
+        'div', 'span', 'nav',
     ];
 
     /**
      * @var array<string, string[]>
      */
     private const ALLOWED_ATTRS = [
-        '*' => ['class', 'style'],
+        '*' => ['id', 'class', 'style', 'role', 'type', 'data-bs-toggle', 'data-bs-target', 'data-bs-parent', 'aria-expanded', 'aria-controls'],
         'a' => ['href', 'title', 'target', 'rel', 'class', 'style'],
-        'img' => ['src', 'alt', 'title', 'width', 'height', 'class'],
+        'img' => ['src', 'alt', 'title', 'width', 'height', 'class', 'style'],
+        'button' => ['type', 'class', 'aria-expanded', 'aria-controls', 'data-bs-toggle', 'data-bs-target', 'data-bs-parent'],
         'ol' => ['type', 'start', 'class'],
         'li' => ['value', 'class'],
         'pre' => ['class'],
@@ -39,6 +43,38 @@ class WysiwygSanitizer
         'text-align',
         'color',
         'background-color',
+        'background',
+        'float',
+        'display',
+        'width',
+        'max-width',
+        'min-width',
+        'height',
+        'max-height',
+        'min-height',
+        'padding',
+        'padding-left',
+        'padding-right',
+        'padding-top',
+        'padding-bottom',
+        'margin',
+        'margin-left',
+        'margin-right',
+        'margin-top',
+        'margin-bottom',
+        'gap',
+        'border',
+        'border-color',
+        'border-width',
+        'box-shadow',
+        'border-radius',
+        'font-size',
+        'font-weight',
+        'line-height',
+        'letter-spacing',
+        'text-transform',
+        'opacity',
+        'vertical-align',
     ];
 
     public function sanitize(string $html): string
@@ -104,7 +140,12 @@ class WysiwygSanitizer
             foreach ($child->attributes as $attr) {
                 $name = strtolower($attr->name);
 
-                if (str_starts_with($name, 'on') || str_starts_with($name, 'data-')) {
+                if (str_starts_with($name, 'on')) {
+                    $toRemove[] = $attr->name;
+                    continue;
+                }
+
+                if (str_starts_with($name, 'data-') && !str_starts_with($name, 'data-bs-')) {
                     $toRemove[] = $attr->name;
                     continue;
                 }

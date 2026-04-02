@@ -18,7 +18,7 @@ return [
             'ul', 'ol', 'blockquote', 'code-block',
             'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
             'text-color', 'bg-color',
-            'link', 'clear', 'undo', 'redo',
+            'link', 'modal-link', 'bookmarks', 'clear', 'undo', 'redo',
             'panel',
         ],
         'enabled_fields' => [
@@ -35,6 +35,16 @@ return [
             [
                 'label' => 'Alerte Info',
                 'html' => '<div class="alert alert-info" role="alert"><strong>Info:</strong> Votre message.</div>'
+            ]
+        ],
+        'blocks' => [
+            [
+                'label' => 'Liste UL',
+                'html' => '<ul><li>Element 1</li><li>Element 2</li><li>Element 3</li></ul>'
+            ],
+            [
+                'label' => '2 colonnes',
+                'html' => '<div class="row g-3"><div class="col-md-6"><p>Colonne A</p></div><div class="col-md-6"><p>Colonne B</p></div></div>'
             ]
         ],
     ],

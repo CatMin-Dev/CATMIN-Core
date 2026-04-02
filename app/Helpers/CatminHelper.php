@@ -126,7 +126,9 @@ if (!function_exists('page_by_slug')) {
         $query = Page::query()->where('slug', $normalizedSlug);
 
         if ($onlyPublished) {
-            $query->where('status', 'published');
+            $query->where('status', 'published')
+                ->whereNotNull('published_at')
+                ->where('published_at', '<=', now());
         }
 
         return $query->first();
@@ -272,7 +274,9 @@ if (!function_exists('editorial_items')) {
         $query = Article::query()->where('content_type', $type);
 
         if ($onlyPublished) {
-            $query->where('status', 'published');
+            $query->where('status', 'published')
+                ->whereNotNull('published_at')
+                ->where('published_at', '<=', now());
         }
 
         return $query

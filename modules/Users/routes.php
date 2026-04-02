@@ -36,6 +36,10 @@ Route::middleware(['web', 'catmin.admin'])
             ->middleware('catmin.permission:module.users.delete')
             ->name('users.destroy');
 
+        Route::post('/users/bulk', [UserController::class, 'bulkAction'])
+            ->middleware('catmin.permission:module.users.list')
+            ->name('users.bulk');
+
         Route::get('/roles/manage', [RoleController::class, 'index'])
             ->middleware('catmin.permission:module.users.config')
             ->name('roles.manage');

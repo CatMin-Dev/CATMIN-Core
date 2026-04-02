@@ -165,6 +165,8 @@ class MenuAdminService
 
         return Page::query()
             ->where('status', 'published')
+            ->whereNotNull('published_at')
+            ->where('published_at', '<=', now())
             ->orderBy('title')
             ->get(['id', 'title', 'slug']);
     }

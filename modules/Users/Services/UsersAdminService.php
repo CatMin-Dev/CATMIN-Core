@@ -210,4 +210,22 @@ class UsersAdminService
             ],
         ]);
     }
+
+    public function bulkActivate(array $ids): int
+    {
+        if (!Schema::hasColumn('users', 'is_active')) {
+            return 0;
+        }
+
+        return User::whereIn('id', $ids)->update(['is_active' => true]);
+    }
+
+    public function bulkDeactivate(array $ids): int
+    {
+        if (!Schema::hasColumn('users', 'is_active')) {
+            return 0;
+        }
+
+        return User::whereIn('id', $ids)->update(['is_active' => false]);
+    }
 }

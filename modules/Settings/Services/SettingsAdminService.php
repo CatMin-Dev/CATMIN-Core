@@ -169,6 +169,24 @@ class SettingsAdminService
         ];
     }
 
+    /** @return array<string, mixed> */
+    public function seoPanel(): array
+    {
+        return [
+            'seo_sitemap_cache_minutes' => (int) SettingService::get('seo.sitemap_cache_minutes', 60),
+            'seo_sitemap_auto_refresh' => $this->toBool(SettingService::get('seo.sitemap_auto_refresh', true)),
+            'seo_robots_txt' => (string) SettingService::get('seo.robots_txt', ''),
+        ];
+    }
+
+    /** @param array<string, mixed> $payload */
+    public function updateSeoPanel(array $payload): void
+    {
+        SettingService::put('seo.sitemap_cache_minutes', (int) $payload['seo_sitemap_cache_minutes'], 'integer', 'seo', 'Duree cache sitemap (minutes)', false, 'Sitemap cache (min)');
+        SettingService::put('seo.sitemap_auto_refresh', $this->toStringBool($payload['seo_sitemap_auto_refresh']), 'boolean', 'seo', 'Refresh sitemap automatique (cron)', false, 'Sitemap auto-refresh');
+        SettingService::put('seo.robots_txt', (string) $payload['seo_robots_txt'], 'text', 'seo', 'Contenu robots.txt personnalise', false, 'robots.txt');
+    }
+
     /** @param array<string, mixed> $payload */
     public function updateDocsPanel(array $payload): void
     {

@@ -94,6 +94,7 @@
                         <label class="form-label fw-semibold" for="status">Statut</label>
                         <select id="status" name="status" class="form-select @error('status') is-invalid @enderror">
                             <option value="draft"     @selected(old('status', $page->status) === 'draft')>Brouillon</option>
+                            <option value="scheduled" @selected(old('status', $page->status) === 'scheduled')>Programme</option>
                             <option value="published" @selected(old('status', $page->status) === 'published')>Publié</option>
                         </select>
                         @error('status')<div class="invalid-feedback">{{ $message }}</div>@enderror
@@ -148,6 +149,15 @@
         </div>
 
         <div class="d-flex gap-2">
+            <button class="btn btn-outline-dark" type="submit" formaction="{{ admin_route('pages.preview') }}" formtarget="_blank">
+                <i class="bi bi-eye me-1"></i>Prévisualiser
+            </button>
+            <button class="btn btn-outline-warning" type="button" data-submit-mode="schedule">
+                <i class="bi bi-clock me-1"></i>Programmer
+            </button>
+            <button class="btn btn-outline-success" type="button" data-submit-mode="publish-now">
+                <i class="bi bi-lightning-charge me-1"></i>Publier maintenant
+            </button>
             <button class="btn btn-primary" type="submit">
                 <i class="bi bi-check2-circle me-1"></i>Enregistrer les modifications
             </button>
@@ -163,6 +173,24 @@
 (function () {
     const titleInput = document.getElementById('title');
     const slugInput = document.getElementById('slug');
+    const form = document.getElementById('page-form');
+    const statusInput = document.getElementById('status');
+    const publishedAtInput = document.getElementById('published_at');
+
+    const asLocalDateTime = function (date) {
+        const pad = function (n) { return String(n).padStart(2, '0'); };
+        return [
+            date.getFullYear(),
+            '-',
+            pad(date.getMonth() + 1),
+            '-',
+            pad(date.getDate()),
+            'T',
+            pad(date.getHours()),
+            ':',
+            pad(date.getMinutes()),
+        ].join('');
+    };
 
     if (titleInput && slugInput) {
         titleInput.addEventListener('input', function () {
@@ -176,6 +204,24 @@
 
         slugInput.addEventListener('input', function () {
             slugInput.dataset.manual = '1';
+        });
+    }
+
+    if (form && statusInput && publishedAtInput) {
+        form.querySelector('[data-submit-mode="schedule"]')?.addEventListener('click', function () {
+            statusInput.value = 'scheduled';
+            if (!publishedAtInput.value) {
+                const date = new Date();
+                date.setMinutes(date.getMinutes() + 10);
+                publishedAtInput.value = asLocalDateTime(date);
+            }
+            form.submit();
+        });
+
+        form.querySelector('[data-submit-mode="publish-now"]')?.addEventListener('click', function () {
+            statusInput.value = 'published';
+            publishedAtInput.value = asLocalDateTime(new Date());
+            form.submit();
         });
     }
 

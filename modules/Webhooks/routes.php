@@ -40,4 +40,8 @@ Route::middleware(['web', 'catmin.admin'])
         Route::post('/webhooks/{webhook}/complete-rotation', [WebhookController::class, 'completeRotation'])
             ->middleware('catmin.permission:module.webhooks.edit')
             ->name('webhooks.complete-rotation');
+
+        Route::post('/webhooks/bulk', [WebhookController::class, 'bulkAction'])
+            ->middleware('catmin.permission:module.webhooks.list')
+            ->name('webhooks.bulk');
     });

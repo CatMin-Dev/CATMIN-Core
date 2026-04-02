@@ -127,4 +127,60 @@ class WebhookController extends Controller
         return redirect()->route('admin.webhooks.edit', $webhook)
             ->with('success', 'Rotation du secret complétée. Le nouveau secret est maintenant actif.');
     }
+
+    public function bulkAction(Request $request): RedirectResponse
+    {
+        $action = (string) $request->input('bulk_action', '');
+        $ids = $request->input('bulk_select', []);
+
+        if (empty($ids) || !is_array($ids)) {
+            return redirect()
+                ->back()
+                ->with('error', 'Veuillez selectionner au moins un webhook.');
+        }
+
+        // Sanitize and validate IDs
+        $ids = collect($ids)
+            ->filter(fn($id) => is_numeric($id))
+            ->map(fn($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        if (empty($ids)) {
+            return redirect()
+                ->back()
+                ->with('error', 'Identifiants invalides.');
+        }
+
+        // Check permission based on action
+        $permissionMap = [
+            'activate'   => 'module.webhooks.edit',
+            'deactivate' => 'module.webhooks.edit',
+            'delete'     => 'module.webhooks.delete',
+        ];
+
+        $permission = $permissionMap[$action] ?? null;
+        if ($permission && !catmin_can($permission)) {
+            abort(403);
+        }
+
+        $count = 0;
+        match ($action) {
+            'activate' => $count = WebhookAdminService::bulkActivate($ids),
+            'deactivate' => $count = WebhookAdminService::bulkDeactivate($ids),
+            'delete' => $count = WebhookAdminService::bulkDelete($ids),
+            default => null,
+        };
+
+        $messages = [
+            'activate' => sprintf('Webhooks actives: %d', $count),
+            'deactivate' => sprintf('Webhooks desactives: %d', $count),
+            'delete' => sprintf('Webhooks supprimes: %d', $count),
+        ];
+
+        return redirect()
+            ->back()
+            ->with('success', $messages[$action] ?? 'Action effectuee.');
+    }
 }

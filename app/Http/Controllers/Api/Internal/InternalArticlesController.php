@@ -14,7 +14,10 @@ class InternalArticlesController extends Controller
     public function publishedArticles(): JsonResponse
     {
         $articles = Article::query()
+            ->with(['category:id,name,slug,parent_id', 'tags:id,name,slug'])
             ->where('status', 'published')
+            ->whereNotNull('published_at')
+            ->where('published_at', '<=', now())
             ->orderByDesc('published_at')
             ->limit(100)
             ->get([
@@ -23,6 +26,7 @@ class InternalArticlesController extends Controller
                 'slug',
                 'excerpt',
                 'content_type',
+                'article_category_id',
                 'published_at',
                 'updated_at',
             ]);

@@ -87,12 +87,14 @@
                     </div>
                 </div>
                 @endif
+                @if($hasTool('modal-link'))<button type="button" class="btn btn-sm btn-outline-secondary" data-editor-action="modal-link" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Lier un bouton à une modal"><i class="bi bi-window-sidebar"></i></button>@endif
+                @if($hasTool('bookmarks'))<button type="button" class="btn btn-sm btn-outline-secondary" data-editor-action="insert-bookmarks" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Insérer un bloc de signets flottants"><i class="bi bi-bookmarks"></i></button>@endif
                 @if($hasTool('clear'))<button type="button" class="btn btn-sm btn-outline-secondary" data-editor-cmd="removeFormat" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Effacer la mise en forme"><i class="bi bi-eraser"></i></button>@endif
                 @if($hasTool('undo'))<button type="button" class="btn btn-sm btn-outline-secondary" data-editor-cmd="undo" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Annuler"><i class="bi bi-arrow-counterclockwise"></i></button>@endif
                 @if($hasTool('redo'))<button type="button" class="btn btn-sm btn-outline-secondary" data-editor-cmd="redo" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Refaire"><i class="bi bi-arrow-clockwise"></i></button>@endif
 
                 <button type="button" class="btn btn-sm btn-outline-secondary" data-editor-action="media-picker" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Insérer une image"><i class="bi bi-image me-1"></i>Media</button>
-                <button type="button" class="btn btn-sm btn-outline-info" data-editor-action="toggle-preview" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Afficher l'aperçu live"><i class="bi bi-eye me-1"></i>Aperçu</button>
+                <button type="button" class="btn btn-sm btn-outline-info" data-editor-action="toggle-html" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Basculer en édition HTML"><i class="bi bi-code-slash me-1"></i><span data-editor-html-toggle-label>HTML</span></button>
 
                 @if($hasTool('panel'))
                 <div class="ms-auto d-flex gap-1">
@@ -109,13 +111,10 @@
                          contenteditable="true"
                          data-editor-canvas
                          data-editor-placeholder="{{ $placeholder }}">{!! old($name, $value) !!}</div>
-                </div>
-
-                <div class="catmin-editor-preview border-start flex-shrink-0" data-editor-preview-pane hidden>
-                    <div class="catmin-editor-preview-header">
-                        <small class="text-muted">📺 Aperçu live</small>
-                    </div>
-                    <div class="p-3 overflow-auto" data-editor-preview-canvas></div>
+                    <textarea class="form-control flex-grow-1 border-0 rounded-0 d-none"
+                              data-editor-html-mode
+                              spellcheck="false"
+                              style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace; min-height: 22rem;"></textarea>
                 </div>
 
                 <aside class="catmin-editor-panel border-start" data-editor-panel @if(!$hasTool('panel')) hidden @endif>
@@ -135,13 +134,24 @@
 
                     <div class="p-3 border-bottom" data-editor-pane="snippets" style="max-height: 500px; overflow-y: auto;">
                         <h6 class="small text-uppercase text-muted mb-3">Snippets Bootstrap</h6>
-                        <div class="d-grid gap-2">
+                        <div class="d-flex flex-wrap gap-2">
                             @forelse ($snippetItems as $snippet)
                                 <button type="button"
-                                        class="btn btn-sm btn-light text-start border"
+                                        class="btn btn-sm btn-light border catmin-editor-icon-btn"
+                                        draggable="true"
+                                        data-editor-draggable-item="1"
                                         data-editor-action="insert-html"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="top"
+                                        title="{{ (string) ($snippet['label'] ?? 'Snippet') }}"
+                                        data-editor-css="{{ e((string) ($snippet['css'] ?? '')) }}"
                                         data-editor-html="{{ e((string) ($snippet['html'] ?? '')) }}">
-                                    {{ (string) ($snippet['label'] ?? 'Snippet') }}
+                                    @php($snippetIcon = (string) ($snippet['icon'] ?? ''))
+                                    @if($snippetIcon !== '' && (str_starts_with($snippetIcon, 'http://') || str_starts_with($snippetIcon, 'https://') || str_starts_with($snippetIcon, '/')))
+                                        <img src="{{ $snippetIcon }}" alt="" style="width:1rem;height:1rem;object-fit:contain;">
+                                    @else
+                                        <i class="bi {{ $snippetIcon !== '' ? $snippetIcon : 'bi-stars' }}"></i>
+                                    @endif
                                 </button>
                             @empty
                                 <p class="small text-muted mb-0">Aucun snippet disponible.</p>
@@ -151,13 +161,24 @@
 
                     <div class="p-3" data-editor-pane="blocks" hidden style="max-height: 500px; overflow-y: auto;">
                         <h6 class="small text-uppercase text-muted mb-3">Blocs</h6>
-                        <div class="d-grid gap-2">
+                        <div class="d-flex flex-wrap gap-2">
                             @forelse ($blockItems as $block)
                                 <button type="button"
-                                        class="btn btn-sm btn-light text-start border"
+                                        class="btn btn-sm btn-light border catmin-editor-icon-btn"
+                                        draggable="true"
+                                        data-editor-draggable-item="1"
                                         data-editor-action="insert-html"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="top"
+                                        title="{{ (string) ($block['label'] ?? 'Bloc') }}"
+                                        data-editor-css="{{ e((string) ($block['css'] ?? '')) }}"
                                         data-editor-html="{{ e((string) ($block['html'] ?? '')) }}">
-                                    {{ (string) ($block['label'] ?? 'Bloc') }}
+                                    @php($blockIcon = (string) ($block['icon'] ?? ''))
+                                    @if($blockIcon !== '' && (str_starts_with($blockIcon, 'http://') || str_starts_with($blockIcon, 'https://') || str_starts_with($blockIcon, '/')))
+                                        <img src="{{ $blockIcon }}" alt="" style="width:1rem;height:1rem;object-fit:contain;">
+                                    @else
+                                        <i class="bi {{ $blockIcon !== '' ? $blockIcon : 'bi-grid-3x3-gap' }}"></i>
+                                    @endif
                                 </button>
                             @empty
                                 <p class="small text-muted mb-0">Aucun bloc disponible.</p>

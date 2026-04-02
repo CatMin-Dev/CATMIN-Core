@@ -7,6 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Modules\SEO\Models\SeoMeta;
+use Modules\SEO\Services\SitemapService;
 use Modules\SEO\Services\SeoAdminService;
 
 class SeoController extends Controller
@@ -72,5 +73,13 @@ class SeoController extends Controller
 
         return redirect()->route('admin.seo.manage')
             ->with('status', 'Entree SEO mise a jour.');
+    }
+
+    public function refreshSitemap(SitemapService $service): RedirectResponse
+    {
+        $service->refresh();
+
+        return redirect()->route('admin.seo.manage')
+            ->with('status', 'Sitemap regenere avec succes.');
     }
 }

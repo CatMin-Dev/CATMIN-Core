@@ -50,6 +50,11 @@
                 <i class="bi bi-book me-1"></i>Docs
             </button>
         </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-seo-btn" data-bs-toggle="tab" data-bs-target="#tab-seo" type="button" role="tab">
+                <i class="bi bi-search me-1"></i>SEO
+            </button>
+        </li>
     </ul>
 
     <div class="tab-content border border-top-0 rounded-bottom p-4 bg-white">
@@ -465,6 +470,51 @@
             </form>
         </div>
 
+        {{-- ══════════════════════════════════════════════════════
+             PANEL: SEO
+        ══════════════════════════════════════════════════════ --}}
+        <div class="tab-pane fade" id="tab-seo" role="tabpanel">
+            <form method="POST" action="{{ admin_route('settings.update.seo') }}" class="row g-3">
+                @csrf @method('PUT')
+
+                <div class="col-12 col-lg-4">
+                    <label class="form-label" for="seo_sitemap_cache_minutes">Cache sitemap (minutes)</label>
+                    <input id="seo_sitemap_cache_minutes" name="seo_sitemap_cache_minutes" type="number" min="5" max="1440"
+                        class="form-control @error('seo_sitemap_cache_minutes') is-invalid @enderror"
+                        value="{{ old('seo_sitemap_cache_minutes', $seo['seo_sitemap_cache_minutes']) }}" @disabled(!$canWrite)>
+                    @error('seo_sitemap_cache_minutes')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+
+                <div class="col-12 col-lg-8 d-flex align-items-end">
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="seo_sitemap_auto_refresh" name="seo_sitemap_auto_refresh" value="1"
+                            @checked(old('seo_sitemap_auto_refresh', $seo['seo_sitemap_auto_refresh'])) @disabled(!$canWrite)>
+                        <label class="form-check-label" for="seo_sitemap_auto_refresh">Rafraichissement automatique via cron</label>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label" for="seo_robots_txt">Contenu robots.txt</label>
+                    <textarea id="seo_robots_txt" name="seo_robots_txt" rows="12"
+                        class="form-control font-monospace @error('seo_robots_txt') is-invalid @enderror" @disabled(!$canWrite)>{{ old('seo_robots_txt', $seo['seo_robots_txt']) }}</textarea>
+                    <div class="form-text">Directives autorisees: User-agent, Allow, Disallow, Sitemap, Crawl-delay, Host, commentaires (#).</div>
+                    @error('seo_robots_txt')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+
+                <div class="col-12 d-flex gap-2 flex-wrap">
+                    @if($canWrite)
+                        <button class="btn btn-primary" type="submit"><i class="bi bi-floppy me-1"></i>Enregistrer</button>
+                    @endif
+
+                    @if(catmin_can('module.seo.edit'))
+                        <button class="btn btn-outline-secondary" type="submit" formaction="{{ admin_route('seo.sitemap.refresh') }}" formmethod="post">
+                            <i class="bi bi-arrow-repeat me-1"></i>Regenerer sitemap maintenant
+                        </button>
+                    @endif
+                </div>
+            </form>
+        </div>
+
     </div>
 
     {{-- All settings table --}}
@@ -526,6 +576,7 @@
         'ops_log_retention_days': 'tab-ops',
         'docs_enabled': 'tab-docs', 'docs_local_source': 'tab-docs',
         'docs_discord_publish_enabled': 'tab-docs', 'docs_discord_webhook_url': 'tab-docs', 'docs_discord_username': 'tab-docs',
+        'seo_sitemap_cache_minutes': 'tab-seo', 'seo_sitemap_auto_refresh': 'tab-seo', 'seo_robots_txt': 'tab-seo',
     };
     var errorKeys = @json(array_keys($errors->toArray()));
     for (var i = 0; i < errorKeys.length; i++) {

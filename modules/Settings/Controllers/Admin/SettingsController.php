@@ -7,6 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Modules\Settings\Services\SettingsAdminService;
+use Modules\SEO\Services\RobotsService;
 
 class SettingsController extends Controller
 {
@@ -25,6 +26,7 @@ class SettingsController extends Controller
             'shop'        => $this->service->shopPanel(),
             'ops'         => $this->service->opsPanel(),
             'docs'        => $this->service->docsPanel(),
+            'seo'         => $this->service->seoPanel(),
             'allSettings' => $this->service->recentSettings(),
             // legacy keys still expected by some other views
             'essentials'     => $this->service->essentials(),
@@ -192,5 +194,22 @@ class SettingsController extends Controller
         $this->service->updateDocsPanel($validated);
 
         return redirect()->route('admin.settings.manage', ['#tab-docs'])->with('status', 'Paramètres docs enregistrés.');
+    }
+
+    public function updateSeo(Request $request, RobotsService $robotsService): RedirectResponse
+    {
+        $validated = $request->validate([
+            'seo_sitemap_cache_minutes' => ['required', 'integer', 'min:5', 'max:1440'],
+            'seo_sitemap_auto_refresh' => ['nullable', 'boolean'],
+            'seo_robots_txt' => ['nullable', 'string'],
+        ]);
+
+        $validated['seo_sitemap_auto_refresh'] = $request->boolean('seo_sitemap_auto_refresh');
+        $validated['seo_robots_txt'] = (string) ($validated['seo_robots_txt'] ?? '');
+
+        $robotsService->validate($validated['seo_robots_txt']);
+        $this->service->updateSeoPanel($validated);
+
+        return redirect()->route('admin.settings.manage', ['#tab-seo'])->with('status', 'Paramètres SEO avancés enregistrés.');
     }
 }

@@ -19,6 +19,15 @@ class MediaController extends Controller
 
     public function index(Request $request): View
     {
+        $scope = trim((string) $request->query('scope', 'active'));
+        if (!in_array($scope, ['active', 'trash', 'all'], true)) {
+            $scope = 'active';
+        }
+
+        if (in_array($scope, ['trash', 'all'], true) && !catmin_can('module.media.trash')) {
+            abort(403);
+        }
+
         $folder = trim((string) $request->query('folder', ''));
         $kind = trim((string) $request->query('kind', ''));
         $query = trim((string) $request->query('q', ''));
@@ -37,7 +46,7 @@ class MediaController extends Controller
             'from' => $from,
             'to' => $to,
             'sort' => $sort,
-        ], $perPage);
+        ], $perPage, $scope);
 
         $folders = $this->mediaAdminService->folders();
 
@@ -53,6 +62,8 @@ class MediaController extends Controller
             'selectedTo' => $to,
             'selectedSort' => $sort,
             'selectedPerPage' => (string) $perPage,
+            'scope' => $scope,
+            'trashedCount' => MediaAsset::onlyTrashed()->count(),
         ]);
     }
 
@@ -176,6 +187,96 @@ class MediaController extends Controller
         $this->mediaAdminService->destroy($asset);
 
         return redirect()->route('admin.media.manage')
-            ->with('status', 'Fichier media supprime.');
+            ->with('status', 'Fichier media deplace dans la corbeille.');
+    }
+
+    public function restore(int $assetId): RedirectResponse
+    {
+        $asset = MediaAsset::withTrashed()->findOrFail($assetId);
+
+        if (!$asset->trashed()) {
+            return redirect()->route('admin.media.manage')
+                ->with('error', 'Ce media n\'est pas supprime.');
+        }
+
+        $this->mediaAdminService->restore($asset);
+
+        return redirect()->route('admin.media.manage', ['scope' => 'trash'])
+            ->with('status', 'Media restaure.');
+    }
+
+    public function forceDelete(int $assetId): RedirectResponse
+    {
+        $asset = MediaAsset::withTrashed()->findOrFail($assetId);
+
+        if (!$asset->trashed()) {
+            return redirect()->route('admin.media.manage')
+                ->with('error', 'Suppression definitive reservee aux medias en corbeille.');
+        }
+
+        $this->mediaAdminService->forceDelete($asset);
+
+        return redirect()->route('admin.media.manage', ['scope' => 'trash'])
+            ->with('status', 'Media supprime definitivement.');
+    }
+
+    public function emptyTrash(): RedirectResponse
+    {
+        $count = $this->mediaAdminService->emptyTrash();
+
+        return redirect()->route('admin.media.manage', ['scope' => 'trash'])
+            ->with('status', $count > 0
+                ? sprintf('Corbeille media videe: %d fichier(s) supprime(s) definitivement.', $count)
+                : 'La corbeille media est deja vide.');
+    }
+
+    public function bulkAction(Request $request): RedirectResponse
+    {
+        $action = (string) $request->input('bulk_action', '');
+        $ids = $request->input('bulk_select', []);
+
+        if (empty($ids) || !is_array($ids)) {
+            return redirect()
+                ->back()
+                ->with('error', 'Veuillez selectionner au moins un media.');
+        }
+
+        // Sanitize and validate IDs
+        $ids = collect($ids)
+            ->filter(fn($id) => is_numeric($id))
+            ->map(fn($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        if (empty($ids)) {
+            return redirect()
+                ->back()
+                ->with('error', 'Identifiants invalides.');
+        }
+
+        // Check permission based on action
+        $permissionMap = [
+            'trash' => 'module.media.trash',
+        ];
+
+        $permission = $permissionMap[$action] ?? null;
+        if ($permission && !catmin_can($permission)) {
+            abort(403);
+        }
+
+        $count = 0;
+        match ($action) {
+            'trash' => $count = $this->mediaAdminService->bulkTrash($ids),
+            default => null,
+        };
+
+        $messages = [
+            'trash' => sprintf('Medias envoyes en corbeille: %d', $count),
+        ];
+
+        return redirect()
+            ->back()
+            ->with('status', $messages[$action] ?? 'Action effectuee.');
     }
 }

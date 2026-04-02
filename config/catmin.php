@@ -128,6 +128,10 @@ return [
         'actions' => ['menu', 'list', 'create', 'edit', 'delete', 'config'],
     ],
 
+    'content' => [
+        'trash_retention_days' => (int) env('CATMIN_CONTENT_TRASH_RETENTION_DAYS', 30),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Internal REST API
@@ -298,17 +302,6 @@ return [
                 'max_queries' => 8,
                 'max_slow_queries' => 1,
                 'notes' => 'Filtrage indexable et colonnes utiles seulement.',
-            ],
-            [
-                'key' => 'admin.shop.orders',
-                'label' => 'Shop orders',
-                'category' => 'listing',
-                'route' => 'admin.shop.orders.index',
-                'target_response_ms' => 450,
-                'max_response_ms' => 900,
-                'max_queries' => 12,
-                'max_slow_queries' => 1,
-                'notes' => 'Surveiller eager loading customer/items.',
             ],
             [
                 'key' => 'api.internal.pages',
@@ -628,6 +621,20 @@ return [
                         'permission' => 'module.articles.menu',
                     ],
                     [
+                        'label' => 'Catégories articles',
+                        'icon' => 'bi bi-diagram-3',
+                        'route' => 'articles.categories.index',
+                        'active_when' => ['articles.categories.*'],
+                        'permission' => 'module.articles.config',
+                    ],
+                    [
+                        'label' => 'Tags articles',
+                        'icon' => 'bi bi-tags',
+                        'route' => 'articles.tags.index',
+                        'active_when' => ['articles.tags.*'],
+                        'permission' => 'module.articles.config',
+                    ],
+                    [
                         'label' => 'Media',
                         'icon' => 'bi bi-images',
                         'route' => 'content.show',
@@ -659,27 +666,6 @@ return [
                 ],
             ],
             [
-                'title' => 'Commerce',
-                'items' => [
-                    [
-                        'label' => 'Shop',
-                        'icon' => 'bi bi-bag',
-                        'route' => 'shop.manage',
-                        'active_when' => ['shop.*'],
-                        'module' => 'shop',
-                        'permission' => 'module.shop.menu',
-                    ],
-                        [
-                            'label' => 'Factures — Config',
-                            'icon' => 'bi bi-receipt',
-                            'route' => 'shop.invoices.settings',
-                            'active_when' => ['shop.invoices.settings*'],
-                            'module' => 'shop',
-                            'permission' => 'module.shop.config',
-                        ],
-                ],
-            ],
-            [
                 'title' => 'Modules actifs',
                 'source' => 'enabled_modules',
             ],
@@ -708,6 +694,9 @@ return [
             'analytics.retention_days' => (int) env('CATMIN_ANALYTICS_RETENTION_DAYS', 30),
             'analytics.anonymous_mode' => (bool) env('CATMIN_ANALYTICS_ANONYMOUS_MODE', true),
             'analytics.modules_tracked' => ['*'],
+            'seo.sitemap_cache_minutes' => (int) env('CATMIN_SEO_SITEMAP_CACHE_MINUTES', 60),
+            'seo.sitemap_auto_refresh' => (bool) env('CATMIN_SEO_SITEMAP_AUTO_REFRESH', true),
+            'seo.robots_txt' => "User-agent: *\nAllow: /\n\nSitemap: /sitemap.xml\n",
         ],
     ],
 

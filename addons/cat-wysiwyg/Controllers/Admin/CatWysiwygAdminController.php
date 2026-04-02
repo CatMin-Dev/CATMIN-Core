@@ -4,6 +4,7 @@ namespace Addons\CatWysiwyg\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Services\SettingService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -14,15 +15,18 @@ class CatWysiwygAdminController extends Controller
     {
         $config = require base_path('addons/cat-wysiwyg/config.php');
         $defaults = (array) ($config['defaults'] ?? []);
+        $manager = app(\App\Services\Editor\WysiwygManager::class);
 
         $toolbar = $this->decodeArraySetting('addon.cat_wysiwyg.toolbar_tools', (array) ($defaults['toolbar_tools'] ?? []));
         $fields = $this->decodeArraySetting('addon.cat_wysiwyg.enabled_fields', (array) ($defaults['enabled_fields'] ?? []));
-        $snippets = $this->decodeArraySetting('addon.cat_wysiwyg.snippets', (array) ($defaults['snippets'] ?? []));
+        $snippets = $manager->snippetItems();
+        $blocks = $manager->blockItems();
 
         return view('addon_cat_wysiwyg::admin.index', [
             'toolbarTools' => $toolbar,
             'enabledFields' => $fields,
-            'snippetsJson' => json_encode($snippets, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
+            'snippets' => $snippets,
+            'blocks' => $blocks,
             'allTools' => (array) ($defaults['toolbar_tools'] ?? []),
         ]);
     }
@@ -34,6 +38,17 @@ class CatWysiwygAdminController extends Controller
             'toolbar_tools.*' => ['string', 'max:64'],
             'enabled_fields' => ['nullable', 'string'],
             'snippets_json' => ['nullable', 'string'],
+            'blocks_json' => ['nullable', 'string'],
+            'snippets_rows' => ['nullable', 'array'],
+            'snippets_rows.*.label' => ['nullable', 'string', 'max:150'],
+            'snippets_rows.*.icon' => ['nullable', 'string', 'max:255'],
+            'snippets_rows.*.css' => ['nullable', 'string'],
+            'snippets_rows.*.html' => ['nullable', 'string'],
+            'blocks_rows' => ['nullable', 'array'],
+            'blocks_rows.*.label' => ['nullable', 'string', 'max:150'],
+            'blocks_rows.*.icon' => ['nullable', 'string', 'max:255'],
+            'blocks_rows.*.css' => ['nullable', 'string'],
+            'blocks_rows.*.html' => ['nullable', 'string'],
         ]);
 
         $toolbarTools = array_values(array_unique(array_map('strval', (array) ($validated['toolbar_tools'] ?? []))));
@@ -45,29 +60,110 @@ class CatWysiwygAdminController extends Controller
             ->values()
             ->all();
 
-        $snippetsRaw = trim((string) ($validated['snippets_json'] ?? '[]'));
-        $decoded = json_decode($snippetsRaw, true);
-        if (!is_array($decoded)) {
-            return back()->withErrors(['snippets_json' => 'JSON snippets invalide.'])->withInput();
-        }
+        $snippets = $this->normalizeLibraryItems(
+            $this->resolveLibraryInput((string) ($validated['snippets_json'] ?? ''), (array) ($validated['snippets_rows'] ?? []), 'snippets_json')
+        );
 
-        $snippets = collect($decoded)
-            ->filter(fn ($item) => is_array($item))
-            ->map(function (array $item): array {
-                return [
-                    'label' => trim((string) ($item['label'] ?? '')),
-                    'html' => (string) ($item['html'] ?? ''),
-                ];
-            })
-            ->filter(fn (array $item) => $item['label'] !== '' && trim($item['html']) !== '')
-            ->values()
-            ->all();
+        $blocks = $this->normalizeLibraryItems(
+            $this->resolveLibraryInput((string) ($validated['blocks_json'] ?? ''), (array) ($validated['blocks_rows'] ?? []), 'blocks_json')
+        );
 
         SettingService::put('addon.cat_wysiwyg.toolbar_tools', $toolbarTools, 'json', 'addons', 'Toolbar tools WYSIWYG');
         SettingService::put('addon.cat_wysiwyg.enabled_fields', $enabledFields, 'json', 'addons', 'Champs actives WYSIWYG');
         SettingService::put('addon.cat_wysiwyg.snippets', $snippets, 'json', 'addons', 'Snippets WYSIWYG');
+        SettingService::put('addon.cat_wysiwyg.blocks', $blocks, 'json', 'addons', 'Blocs WYSIWYG');
 
         return redirect()->route('admin.addon.cat_wysiwyg.index')->with('status', 'Configuration WYSIWYG mise a jour.');
+    }
+
+    public function library(): JsonResponse
+    {
+        $config = require base_path('addons/cat-wysiwyg/config.php');
+        $defaults = (array) ($config['defaults'] ?? []);
+
+        $snippets = $this->decodeArraySetting('addon.cat_wysiwyg.snippets', (array) ($defaults['snippets'] ?? []));
+        $blocks = $this->decodeArraySetting('addon.cat_wysiwyg.blocks', (array) ($defaults['blocks'] ?? []));
+
+        return response()->json([
+            'snippets' => $this->normalizeLibraryItems($snippets),
+            'blocks' => $this->normalizeLibraryItems($blocks),
+        ]);
+    }
+
+    public function updateLibrary(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'snippets' => ['nullable', 'array'],
+            'snippets.*.label' => ['nullable', 'string', 'max:150'],
+            'snippets.*.icon' => ['nullable', 'string', 'max:80'],
+            'snippets.*.css' => ['nullable', 'string'],
+            'snippets.*.html' => ['nullable', 'string'],
+            'blocks' => ['nullable', 'array'],
+            'blocks.*.label' => ['nullable', 'string', 'max:150'],
+            'blocks.*.icon' => ['nullable', 'string', 'max:80'],
+            'blocks.*.css' => ['nullable', 'string'],
+            'blocks.*.html' => ['nullable', 'string'],
+        ]);
+
+        $snippets = $this->normalizeLibraryItems((array) ($validated['snippets'] ?? []));
+        $blocks = $this->normalizeLibraryItems((array) ($validated['blocks'] ?? []));
+
+        SettingService::put('addon.cat_wysiwyg.snippets', $snippets, 'json', 'addons', 'Snippets WYSIWYG');
+        SettingService::put('addon.cat_wysiwyg.blocks', $blocks, 'json', 'addons', 'Blocs WYSIWYG');
+
+        return response()->json([
+            'ok' => true,
+            'message' => 'Bibliotheque WYSIWYG mise a jour.',
+            'snippets_count' => count($snippets),
+            'blocks_count' => count($blocks),
+        ]);
+    }
+
+    /**
+     * @param array<int, mixed> $items
+    * @return array<int, array{label:string,icon:string,css:string,html:string}>
+     */
+    private function normalizeLibraryItems(array $items): array
+    {
+        return collect($items)
+            ->filter(fn ($item) => is_array($item))
+            ->map(function (array $item): array {
+                return [
+                    'label' => trim((string) ($item['label'] ?? '')),
+                    'icon' => trim((string) ($item['icon'] ?? '')),
+                    'css' => trim((string) ($item['css'] ?? '')),
+                    'html' => trim((string) ($item['html'] ?? '')),
+                ];
+            })
+            ->filter(fn (array $item) => $item['label'] !== '' && $item['html'] !== '')
+            ->unique(fn (array $item) => mb_strtolower($item['label']) . '|' . $item['html'])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @param array<int, mixed> $rows
+     * @return array<int, mixed>
+     */
+    private function resolveLibraryInput(string $jsonPayload, array $rows, string $field): array
+    {
+        if ($rows !== []) {
+            return $rows;
+        }
+
+        $jsonPayload = trim($jsonPayload);
+        if ($jsonPayload === '') {
+            return [];
+        }
+
+        $decoded = json_decode($jsonPayload, true);
+        if (!is_array($decoded)) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                $field => sprintf('JSON %s invalide.', str_replace('_json', '', $field)),
+            ]);
+        }
+
+        return $decoded;
     }
 
     /**

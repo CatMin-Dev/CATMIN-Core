@@ -12,6 +12,22 @@
             <i class="bi bi-upload me-1"></i>Uploader
         </a>
     @endif
+
+    <div class="btn-group" role="group" aria-label="Filtre medias">
+        <a class="btn btn-outline-secondary {{ ($scope ?? 'active') === 'active' ? 'active' : '' }}" href="{{ admin_route('media.manage', ['scope' => 'active']) }}">Actifs</a>
+        <a class="btn btn-outline-secondary {{ ($scope ?? 'active') === 'all' ? 'active' : '' }}" href="{{ admin_route('media.manage', ['scope' => 'all']) }}">Tous</a>
+        <a class="btn btn-outline-secondary {{ ($scope ?? 'active') === 'trash' ? 'active' : '' }}" href="{{ admin_route('media.manage', ['scope' => 'trash']) }}">Corbeille ({{ (int) ($trashedCount ?? 0) }})</a>
+    </div>
+
+    @if(($scope ?? 'active') === 'trash' && catmin_can('module.media.trash'))
+        <form method="post" action="{{ admin_route('media.trash.empty') }}" onsubmit="return confirm('Vider toute la corbeille media ? Suppression definitive irreversible.');">
+            @csrf
+            @method('DELETE')
+            <button class="btn btn-outline-danger" type="submit">
+                <i class="bi bi-trash3 me-1"></i>Vider la corbeille
+            </button>
+        </form>
+    @endif
 </x-admin.crud.page-header>
 
 <div class="catmin-page-body">
@@ -64,6 +80,7 @@
         </div>
         <div class="card-body">
             <form method="get" action="{{ admin_route('media.manage') }}" class="row g-2 align-items-end">
+                <input type="hidden" name="scope" value="{{ $scope ?? 'active' }}">
                 <div class="col-12 col-lg-4">
                     <label class="form-label" for="filter-q">Recherche</label>
                     <input id="filter-q" name="q" type="search" class="form-control" value="{{ $search ?? '' }}" placeholder="nom, alt, legende, type...">
@@ -116,59 +133,107 @@
                 </div>
                 <div class="col-12 col-lg-4 d-flex gap-2">
                     <button class="btn btn-primary" type="submit"><i class="bi bi-funnel me-1"></i>Filtrer</button>
-                    <a class="btn btn-outline-secondary" href="{{ admin_route('media.manage') }}">Reset</a>
+                    <a class="btn btn-outline-secondary" href="{{ admin_route('media.manage', ['scope' => $scope ?? 'active']) }}">Reset</a>
                 </div>
             </form>
         </div>
     </div>
 
     @if($assets->count() > 0)
-        <div class="catmin-media-grid">
-            @foreach($assets as $asset)
-                @php
-                    $previewUrl = $mediaService->previewUrl($asset);
-                    $assetFolder = $mediaService->folderFromPath((string) $asset->path);
-                    $kind = $mediaService->assetKind($asset);
-                @endphp
-                <article class="catmin-media-card">
-                    <div class="catmin-media-card-preview">
-                        @if($previewUrl)
-                            <img src="{{ $previewUrl }}" alt="Apercu {{ $asset->original_name }}">
-                        @else
-                            <span class="badge text-bg-light">{{ strtoupper($asset->extension ?: 'file') }}</span>
+        <form id="bulk-form" method="post" action="{{ admin_route('media.bulk') }}" class="{{!catmin_can('module.media.trash') ? 'd-none' : ''}}">
+            @csrf
+
+            <div class="row mb-3">
+                <div class="col-auto">
+                    @if(catmin_can('module.media.trash'))
+                        <label class="form-check form-check-inline">
+                            <input type="checkbox" id="select-all" class="form-check-input">
+                            <span class="form-check-label">Selectionner tout</span>
+                        </label>
+                    @endif
+                </div>
+                <div class="col-auto ms-auto">
+                    <span class="selected-count" id="selected-info" style="display: none;">
+                        <span id="selected-count-value">0</span> sélectionné(s)
+                    </span>
+                </div>
+            </div>
+
+            <div class="catmin-media-grid">
+                @foreach($assets as $asset)
+                    @php
+                        $previewUrl = $mediaService->previewUrl($asset);
+                        $assetFolder = $mediaService->folderFromPath((string) $asset->path);
+                        $kind = $mediaService->assetKind($asset);
+                    @endphp
+                    <article class="catmin-media-card">
+                        @if(catmin_can('module.media.trash'))
+                            <div style="position: absolute; top: 10px; right: 10px; z-index: 10;">
+                                <input type="checkbox" name="bulk_select[]" value="{{ $asset->id }}" class="form-check-input bulk-checkbox" style="width: 20px; height: 20px;">
+                            </div>
                         @endif
-                    </div>
-                    <div class="catmin-media-card-body">
-                        <div>
-                            <p class="mb-0 fw-semibold text-truncate" title="{{ $asset->original_name }}">{{ $asset->original_name }}</p>
-                            <p class="mb-0 small text-muted">#{{ $asset->id }} · {{ $mediaService->humanSize((int) $asset->size_bytes) }}</p>
-                        </div>
-                        <div class="d-flex flex-wrap gap-1 align-items-center">
-                            <span class="badge text-bg-light">{{ $kind }}</span>
-                            @if($assetFolder !== '')
-                                <a class="badge text-bg-light text-dark text-decoration-none" href="{{ admin_route('media.manage', ['folder' => $assetFolder]) }}">
-                                    <i class="bi bi-folder me-1"></i>{{ $assetFolder }}
-                                </a>
+                        <div class="catmin-media-card-preview">
+                            @if($previewUrl)
+                                <img src="{{ $previewUrl }}" alt="Apercu {{ $asset->original_name }}">
+                            @else
+                                <span class="badge text-bg-light">{{ strtoupper($asset->extension ?: 'file') }}</span>
                             @endif
                         </div>
-                        <p class="mb-0 small text-muted text-truncate" title="{{ $asset->mime_type }}">{{ $asset->mime_type ?: 'n/a' }}</p>
-                        <p class="mb-0 small text-muted">{{ optional($asset->created_at)->format('d/m/Y H:i') ?: 'n/a' }}</p>
-                        <div class="d-flex gap-2">
-                            @if(catmin_can('module.media.edit'))
-                                <a class="btn btn-sm btn-outline-secondary" href="{{ admin_route('media.edit', ['asset' => $asset->id]) }}">Modifier</a>
-                            @endif
-                            @if(catmin_can('module.media.delete'))
-                                <form method="post" action="{{ admin_route('media.destroy', ['asset' => $asset->id]) }}" onsubmit="return confirm('Supprimer définitivement ce media ?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button class="btn btn-sm btn-outline-danger" type="submit"><i class="bi bi-trash"></i></button>
-                                </form>
-                            @endif
+                        <div class="catmin-media-card-body">
+                            <div>
+                                <p class="mb-0 fw-semibold text-truncate" title="{{ $asset->original_name }}">{{ $asset->original_name }}</p>
+                                <p class="mb-0 small text-muted">#{{ $asset->id }} · {{ $mediaService->humanSize((int) $asset->size_bytes) }}</p>
+                            </div>
+                            <div class="d-flex flex-wrap gap-1 align-items-center">
+                                <span class="badge text-bg-light">{{ $kind }}</span>
+                                @if($assetFolder !== '')
+                                    <a class="badge text-bg-light text-dark text-decoration-none" href="{{ admin_route('media.manage', ['folder' => $assetFolder]) }}">
+                                        <i class="bi bi-folder me-1"></i>{{ $assetFolder }}
+                                    </a>
+                                @endif
+                            </div>
+                            <p class="mb-0 small text-muted text-truncate" title="{{ $asset->mime_type }}">{{ $asset->mime_type ?: 'n/a' }}</p>
+                            <p class="mb-0 small text-muted">{{ optional($asset->created_at)->format('d/m/Y H:i') ?: 'n/a' }}</p>
+                            <div class="d-flex gap-2">
+                                @if(method_exists($asset, 'trashed') && $asset->trashed())
+                                    @if(catmin_can('module.media.trash'))
+                                        <form method="post" action="{{ admin_route('media.restore', ['asset' => $asset->id]) }}">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button class="btn btn-sm btn-outline-success" type="submit">Restaurer</button>
+                                        </form>
+                                        <form method="post" action="{{ admin_route('media.force_delete', ['asset' => $asset->id]) }}" onsubmit="return confirm('Supprimer définitivement ce media ? Action irreversible.');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button class="btn btn-sm btn-outline-danger" type="submit"><i class="bi bi-trash3"></i></button>
+                                        </form>
+                                    @endif
+                                @else
+                                    @if(catmin_can('module.media.edit'))
+                                        <a class="btn btn-sm btn-outline-secondary" href="{{ admin_route('media.edit', ['asset' => $asset->id]) }}">Modifier</a>
+                                    @endif
+                                    @if(catmin_can('module.media.trash'))
+                                        <form method="post" action="{{ admin_route('media.destroy', ['asset' => $asset->id]) }}" onsubmit="return confirm('Deplacer ce media dans la corbeille ?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button class="btn btn-sm btn-outline-danger" type="submit"><i class="bi bi-trash"></i></button>
+                                        </form>
+                                    @endif
+                                @endif
+                            </div>
                         </div>
-                    </div>
-                </article>
-            @endforeach
-        </div>
+                    </article>
+                @endforeach
+            </div>
+
+            @if(catmin_can('module.media.trash') && $assets->count() > 0)
+                <div class="bulk-actions-toolbar mt-3" id="bulk-toolbar" style="display: none;gap: 1rem; align-items: center;">
+                    <button type="button" class="btn btn-sm btn-outline-danger" data-bulk-action="trash" data-requires-confirmation="true" data-confirmation-message="Envoyer les medias selectionnés à la corbeille ?">
+                        <i class="bi bi-trash me-1"></i>Envoyer en corbeille
+                    </button>
+                </div>
+            @endif
+        </form>
     @else
         <div class="card border-0 bg-body-tertiary">
             <div class="card-body text-center py-5">
@@ -184,4 +249,93 @@
         </div>
     @endif
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const selectAllCheckbox = document.getElementById('select-all');
+    const toolbar = document.getElementById('bulk-toolbar');
+    const selectedInfo = document.getElementById('selected-info');
+    const countValue = document.getElementById('selected-count-value');
+    const bulkForm = document.getElementById('bulk-form');
+    
+    function updateToolbarVisibility() {
+        const checkedCount = document.querySelectorAll('input[name="bulk_select[]"]:checked').length;
+        countValue.textContent = checkedCount;
+        selectedInfo.style.display = checkedCount > 0 ? 'block' : 'none';
+        if (toolbar) {
+            toolbar.style.display = checkedCount > 0 ? 'flex' : 'none';
+        }
+    }
+    
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            const isChecked = this.checked;
+            document.querySelectorAll('input[name="bulk_select[]"]').forEach(checkbox => {
+                checkbox.checked = isChecked;
+            });
+            updateToolbarVisibility();
+        });
+    }
+    
+    document.querySelectorAll('input[name="bulk_select[]"]').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            updateToolbarVisibility();
+            if (selectAllCheckbox) {
+                const totalCount = document.querySelectorAll('input[name="bulk_select[]"]').length;
+                const checkedCount = document.querySelectorAll('input[name="bulk_select[]"]:checked').length;
+                selectAllCheckbox.checked = (checkedCount === totalCount && checkedCount > 0);
+            }
+        });
+    });
+    
+    document.querySelectorAll('[data-bulk-action]').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const action = this.dataset.bulkAction;
+            const requiresConfirmation = this.dataset.requiresConfirmation === 'true';
+            const message = this.dataset.confirmationMessage || 'Êtes-vous sûr ?';
+            
+            const selectedCount = document.querySelectorAll('input[name="bulk_select[]"]:checked').length;
+            
+            if (selectedCount === 0) {
+                alert('Veuillez sélectionner au moins un media');
+                return;
+            }
+            
+            if (requiresConfirmation && !confirm(message)) {
+                return;
+            }
+            
+            const actionInput = document.createElement('input');
+            actionInput.type = 'hidden';
+            actionInput.name = 'bulk_action';
+            actionInput.value = action;
+            bulkForm.appendChild(actionInput);
+            bulkForm.submit();
+        });
+    });
+});
+</script>
+
+<style>
+.bulk-actions-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+}
+
+.selected-count {
+    font-weight: 600;
+    color: #495057;
+}
+
+.catmin-media-card {
+    position: relative;
+}
+</style>
 @endsection

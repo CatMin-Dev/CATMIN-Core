@@ -1,0 +1,60 @@
+{
+  "name": "CATMIN Shop",
+  "slug": "catmin-shop",
+  "description": "Addon e-commerce CATMIN (produits, categories, clients, commandes, factures).",
+  "version": "1.1.0",
+  "author": "CATMIN Team",
+  "required_core_version": "4.0.0",
+  "required_php_version": "8.3.0",
+  "enabled": true,
+  "dependencies": [],
+  "required_modules": [
+    "core",
+    "users",
+    "settings",
+    "media",
+    "mailer"
+  ],
+  "depends_modules": [
+    "core",
+    "users",
+    "settings",
+    "media",
+    "mailer"
+  ],
+  "category": "commerce",
+  "has_routes": true,
+  "has_migrations": true,
+  "has_assets": false,
+  "has_views": true,
+  "has_events": true,
+  "requires_core": true,
+  "entrypoints": {
+    "admin_routes": "routes.php",
+    "docs": "Docs/README.md",
+    "permissions": "Permissions/permissions.php",
+    "events": "Events/events.php",
+    "webhooks": "Webhooks/webhooks.php"
+  },
+  "compatibility": {
+    "supports_registry": true,
+    "supports_auto_install": true
+  },
+  "permissions_declared": [
+    "module.shop.menu",
+    "module.shop.list",
+    "module.shop.create",
+    "module.shop.edit",
+    "module.shop.delete",
+    "module.shop.config"
+  ],
+  "permissions": [
+    "module.shop.menu",
+    "module.shop.list",
+    "module.shop.create",
+    "module.shop.edit",
+    "module.shop.delete",
+    "module.shop.config"
+  ],
+  "ui_hooks": []
+}
