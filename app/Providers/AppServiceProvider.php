@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\AdminUser;
+use App\Services\AddonViewLoader;
 use App\Services\AdminRuntimeInfoService;
 use App\Services\ModuleViewLoader;
 use App\Services\ModuleAssetLoader;
@@ -52,6 +53,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         ModuleViewLoader::registerNamespaces();
+        AddonViewLoader::registerNamespaces();
 
         AdminUser::updating(function (AdminUser $adminUser): void {
             /** @var SuperAdminGuardService $guard */
