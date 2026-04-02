@@ -28,6 +28,7 @@
             "Addons\\CatWysiwyg\\": "addons/cat-wysiwyg/",
             "Addons\\CatminShop\\": "addons/catmin-shop/",
             "Addons\\CatEvent\\": "addons/cat-event/",
+            "Addons\\CatminBooking\\": "addons/catmin-booking/",
             "Addons\\CatminEventShopBridge\\": "addons/catmin-event-shop-bridge/",
             "Modules\\": "modules/",
             "Database\\Factories\\": "database/factories/",
