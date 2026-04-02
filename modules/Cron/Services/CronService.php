@@ -7,6 +7,7 @@ use App\Services\SettingService;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Symfony\Component\Console\Input\InputOption;
 
 class CronService
 {
@@ -225,6 +226,7 @@ class CronService
         }
 
         [$signature, $arguments] = self::parseArtisanCommand($command);
+        $arguments = self::filterUnsupportedOptions($signature, $arguments);
         Artisan::call($signature, $arguments);
     }
 
@@ -269,6 +271,61 @@ class CronService
         }
 
         return [$signature, $arguments];
+    }
+
+    /**
+     * Drop unsupported CLI options from custom tasks to avoid hard failures
+     * when old task definitions keep stale flags (ex: --compact, --json).
+     *
+     * @param array<string|int, mixed> $arguments
+     * @return array<string|int, mixed>
+     */
+    private static function filterUnsupportedOptions(string $signature, array $arguments): array
+    {
+        try {
+            $application = Artisan::getFacadeRoot();
+            if ($application === null || !method_exists($application, 'all')) {
+                return $arguments;
+            }
+
+            $commands = $application->all();
+            if (!isset($commands[$signature])) {
+                return $arguments;
+            }
+
+            $definition = $commands[$signature]->getDefinition();
+            $allowedOptions = collect($definition->getOptions())
+                ->keys()
+                ->map(fn ($name) => '--' . $name)
+                ->all();
+
+            $filtered = [];
+            foreach ($arguments as $key => $value) {
+                if (!is_string($key) || !str_starts_with($key, '--')) {
+                    $filtered[$key] = $value;
+                    continue;
+                }
+
+                if (!in_array($key, $allowedOptions, true)) {
+                    continue;
+                }
+
+                $option = $definition->getOption(substr($key, 2));
+                if ($option->acceptValue()) {
+                    $filtered[$key] = $value;
+                    continue;
+                }
+
+                // For flags, normalize to boolean true to match Artisan expectations.
+                if ($option->getMode() === InputOption::VALUE_NONE) {
+                    $filtered[$key] = true;
+                }
+            }
+
+            return $filtered;
+        } catch (\Throwable) {
+            return $arguments;
+        }
     }
 
     private static function isDue(string $frequency, \Illuminate\Support\Carbon $now): bool

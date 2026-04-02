@@ -329,6 +329,27 @@ class AddonManager
 
         self::clearCache();
 
+        // Keep addon behavior aligned with modules: enabling must make it immediately usable.
+        if ($enabled && (bool) ($addon->has_migrations ?? false)) {
+            try {
+                $result = AddonMigrationRunner::runForAddon($slug);
+
+                if (str_contains(strtolower((string) ($result['output'] ?? '')), 'failed')) {
+                    $config['enabled'] = false;
+                    File::put($configPath, json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+                    self::clearCache();
+
+                    return false;
+                }
+            } catch (\Throwable) {
+                $config['enabled'] = false;
+                File::put($configPath, json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+                self::clearCache();
+
+                return false;
+            }
+        }
+
         return true;
     }
 }
