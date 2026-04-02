@@ -21,6 +21,7 @@ class ValidationV2PlusService
             self::checkHealth($health),
             self::checkModules($moduleIssues),
             self::checkAddons(),
+            self::checkArchitectureBalance(),
             self::checkExtensionContracts(),
             self::checkMigrations($migrationCollisions),
         ];
@@ -234,6 +235,28 @@ class ValidationV2PlusService
                 'addons_total' => (int) ($summary['addons_total'] ?? 0),
                 'addons_failed' => (int) ($summary['addons_failed'] ?? 0),
                 'warnings' => (int) ($summary['warnings'] ?? 0),
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected static function checkArchitectureBalance(): array
+    {
+        $report = app(ExtensionContractValidatorService::class)->validateArchitectureBalance();
+        $metrics = (array) ($report['metrics'] ?? []);
+
+        return [
+            'key' => 'architecture_balance',
+            'label' => 'Balance architecture CORE->MODULES->ADDONS',
+            'ok' => (bool) ($report['ok'] ?? false),
+            'details' => (string) ($report['summary'] ?? ''),
+            'metrics' => [
+                'core_to_addons_violations' => (int) ($metrics['core_to_addons_violations'] ?? 0),
+                'modules_to_addons_violations' => (int) ($metrics['modules_to_addons_violations'] ?? 0),
+                'module_manifest_violations' => (int) ($metrics['module_manifest_violations'] ?? 0),
+                'addon_manifest_violations' => (int) ($metrics['addon_manifest_violations'] ?? 0),
             ],
         ];
     }

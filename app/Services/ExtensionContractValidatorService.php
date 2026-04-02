@@ -9,6 +9,74 @@ class ExtensionContractValidatorService
     /**
      * @return array<string, mixed>
      */
+    public function validateArchitectureBalance(): array
+    {
+        $checks = [];
+
+        $checks['app_to_addons'] = $this->scanForbiddenNamespaceReferences(
+            base_path('app'),
+            '/\b(use\s+Addons\\\\|Addons\\\\[A-Za-z0-9_\\\\]+::class)/',
+            [
+                base_path('app/Console/Commands/CatminAddonMakeCommand.php'),
+                base_path('app/Services/AddonManager.php'),
+            ]
+        );
+
+        $checks['modules_to_addons'] = $this->scanForbiddenNamespaceReferences(
+            base_path('modules'),
+            '/\b(use\s+Addons\\\\|Addons\\\\[A-Za-z0-9_\\\\]+::class)/'
+        );
+
+        $checks['module_depends_on_addon'] = $this->findModuleDependenciesOnAddons();
+        $checks['addon_module_usage_declared'] = $this->findUndeclaredAddonModuleUsages();
+
+        $errors = [];
+
+        foreach ($checks['app_to_addons'] as $violation) {
+            $errors[] = sprintf('[core->addons] %s:%d %s', $violation['file'], (int) $violation['line'], $violation['message']);
+        }
+
+        foreach ($checks['modules_to_addons'] as $violation) {
+            $errors[] = sprintf('[modules->addons] %s:%d %s', $violation['file'], (int) $violation['line'], $violation['message']);
+        }
+
+        foreach ($checks['module_depends_on_addon'] as $violation) {
+            $errors[] = sprintf('[module-manifest] %s', $violation['message']);
+        }
+
+        foreach ($checks['addon_module_usage_declared'] as $violation) {
+            $errors[] = sprintf('[addon-manifest] %s:%d %s', $violation['file'], (int) $violation['line'], $violation['message']);
+        }
+
+        return [
+            'ok' => $errors === [],
+            'errors' => $errors,
+            'summary' => sprintf(
+                '%d violation(s) - core->addons=%d, modules->addons=%d, module_manifest=%d, addon_manifest=%d',
+                count($errors),
+                count($checks['app_to_addons']),
+                count($checks['modules_to_addons']),
+                count($checks['module_depends_on_addon']),
+                count($checks['addon_module_usage_declared'])
+            ),
+            'checks' => [
+                'core_to_addons' => count($checks['app_to_addons']) === 0,
+                'modules_to_addons' => count($checks['modules_to_addons']) === 0,
+                'modules_manifest_no_addon_dependencies' => count($checks['module_depends_on_addon']) === 0,
+                'addons_manifest_matches_module_usage' => count($checks['addon_module_usage_declared']) === 0,
+            ],
+            'metrics' => [
+                'core_to_addons_violations' => count($checks['app_to_addons']),
+                'modules_to_addons_violations' => count($checks['modules_to_addons']),
+                'module_manifest_violations' => count($checks['module_depends_on_addon']),
+                'addon_manifest_violations' => count($checks['addon_module_usage_declared']),
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
     public function validateModule(string $slug): array
     {
         $module = ModuleManager::find($slug);
@@ -323,5 +391,129 @@ class ExtensionContractValidatorService
         $base = rtrim(base_path(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
 
         return str_starts_with($path, $base) ? substr($path, strlen($base)) : $path;
+    }
+
+    /**
+     * @param array<int, string> $excludedPaths
+     * @return array<int, array{file: string, line: int, message: string}>
+     */
+    private function scanForbiddenNamespaceReferences(string $rootPath, string $pattern, array $excludedPaths = []): array
+    {
+        if (!File::exists($rootPath)) {
+            return [];
+        }
+
+        $violations = [];
+        $excluded = array_map(static fn (string $path): string => str_replace('\\', '/', $path), $excludedPaths);
+
+        foreach (File::allFiles($rootPath) as $file) {
+            $path = (string) $file->getPathname();
+            if (!str_ends_with($path, '.php')) {
+                continue;
+            }
+
+            $normalizedPath = str_replace('\\', '/', $path);
+            if (in_array($normalizedPath, $excluded, true)) {
+                continue;
+            }
+
+            $lines = preg_split('/\R/', (string) File::get($path)) ?: [];
+            foreach ($lines as $index => $line) {
+                if (preg_match($pattern, (string) $line) === 1) {
+                    $violations[] = [
+                        'file' => $this->relativePath($path),
+                        'line' => $index + 1,
+                        'message' => 'Reference Addons\\ detected in a forbidden layer.',
+                    ];
+                }
+            }
+        }
+
+        return $violations;
+    }
+
+    /**
+     * @return array<int, array{module: string, dependency: string, message: string}>
+     */
+    private function findModuleDependenciesOnAddons(): array
+    {
+        $violations = [];
+
+        foreach (ModuleManager::all() as $module) {
+            $slug = strtolower((string) ($module->slug ?? ''));
+            $dependencies = collect((array) ($module->depends ?? $module->dependencies ?? []))
+                ->map(fn ($dependency) => strtolower((string) $dependency))
+                ->filter(fn ($dependency) => $dependency !== '')
+                ->values()
+                ->all();
+
+            foreach ($dependencies as $dependency) {
+                if (AddonManager::exists($dependency)) {
+                    $violations[] = [
+                        'module' => $slug,
+                        'dependency' => $dependency,
+                        'message' => "Module '{$slug}' depends on addon '{$dependency}' (forbidden: modules may not depend on addons).",
+                    ];
+                }
+            }
+        }
+
+        return $violations;
+    }
+
+    /**
+     * @return array<int, array{file: string, line: int, message: string}>
+     */
+    private function findUndeclaredAddonModuleUsages(): array
+    {
+        $violations = [];
+
+        foreach (AddonManager::all() as $addon) {
+            $addonPath = (string) ($addon->path ?? '');
+            if ($addonPath === '' || !File::exists($addonPath)) {
+                continue;
+            }
+
+            $declaredModules = collect(array_merge(
+                (array) ($addon->required_modules ?? []),
+                (array) ($addon->depends_modules ?? [])
+            ))
+                ->map(fn ($row) => strtolower((string) $row))
+                ->filter(fn ($row) => $row !== '')
+                ->unique()
+                ->values()
+                ->all();
+
+            foreach (File::allFiles($addonPath) as $file) {
+                $path = (string) $file->getPathname();
+                if (!str_ends_with($path, '.php')) {
+                    continue;
+                }
+
+                $lines = preg_split('/\R/', (string) File::get($path)) ?: [];
+                foreach ($lines as $index => $line) {
+                    if (preg_match_all('/Modules\\\\([A-Za-z0-9_]+)\\\\/', (string) $line, $matches) !== 1) {
+                        continue;
+                    }
+
+                    foreach ((array) ($matches[1] ?? []) as $segment) {
+                        $candidate = strtolower((string) \Illuminate\Support\Str::kebab((string) $segment));
+                        if (!ModuleManager::exists($candidate)) {
+                            continue;
+                        }
+
+                        if (!in_array($candidate, $declaredModules, true)) {
+                            $violations[] = [
+                                'file' => $this->relativePath($path),
+                                'line' => $index + 1,
+                                'message' => "Addon uses module '{$candidate}' but it is missing from required_modules/depends_modules.",
+                            ];
+                        }
+                    }
+                }
+            }
+        }
+
+        return $violations;
     }
 }

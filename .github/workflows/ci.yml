@@ -64,6 +64,12 @@ jobs:
           cp .env.example .env
           php artisan key:generate --ansi
 
+      - name: Architecture balance gate (CORE -> MODULES -> ADDONS)
+        run: php artisan catmin:architecture:balance --json
+
+      - name: Fresh install extensions flow gate
+        run: php artisan test --filter=ArchitectureBalanceAndInstallFlowTest
+
       - name: Run Pint in test mode
         run: composer lint
 

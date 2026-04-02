@@ -12,7 +12,9 @@
     "core",
     "users",
     "settings",
-    "logger"
+    "logger",
+    "mailer",
+    "media"
   ],
   "depends_modules": [
     "core",
