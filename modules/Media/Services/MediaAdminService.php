@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use InvalidArgumentException;
 use Modules\Media\Models\MediaAsset;
+use Modules\Media\Services\UploadSecurityService;
 
 class MediaAdminService
 {
@@ -70,9 +71,19 @@ class MediaAdminService
             throw new InvalidArgumentException('Extension de fichier non autorisee.');
         }
 
+        // Real MIME inspection via finfo
+        $uploadSecurity = app(UploadSecurityService::class);
+        $inspection = $uploadSecurity->inspect($file, $extension);
+
+        if (!$inspection['valid']) {
+            throw new InvalidArgumentException($inspection['error'] ?? 'Fichier rejeté par la sécurité upload.');
+        }
+
+        $realMime = (string) $inspection['real_mime'];
+        $isQuarantine = (bool) $inspection['quarantine'];
+
         $hashedName = Str::uuid()->toString() . '.' . $extension;
         $path = $file->storeAs($directory, $hashedName, $disk);
-        $detectedMime = (string) ($file->getMimeType() ?: $file->getClientMimeType() ?: 'application/octet-stream');
 
         /** @var MediaAsset $asset */
         $asset = MediaAsset::query()->create([
@@ -80,20 +91,23 @@ class MediaAdminService
             'path' => $path,
             'filename' => $hashedName,
             'original_name' => $file->getClientOriginalName(),
-            'mime_type' => $detectedMime,
+            'mime_type' => $realMime,
+            'real_mime' => $realMime,
             'extension' => $extension,
             'size_bytes' => $file->getSize() ?: 0,
             'alt_text' => $altText,
             'caption' => $caption,
             'metadata' => [
                 'uploaded_at' => now()->toDateTimeString(),
+                'quarantined'  => $isQuarantine,
             ],
             'uploaded_by_id' => Auth::id(),
+            'quarantine_at' => $isQuarantine ? now() : null,
+            'quarantine_reason' => $isQuarantine ? ($inspection['error'] ?? null) : null,
         ]);
 
         return $asset;
     }
-
     /**
      * @return array<string, mixed>
      */

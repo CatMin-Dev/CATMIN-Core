@@ -17,18 +17,27 @@ class MediaAsset extends Model
         'filename',
         'original_name',
         'mime_type',
+        'real_mime',
         'extension',
         'size_bytes',
         'alt_text',
         'caption',
         'metadata',
         'uploaded_by_id',
+        'quarantine_at',
+        'quarantine_reason',
     ];
 
     protected $casts = [
         'metadata' => 'array',
         'deleted_at' => 'datetime',
+        'quarantine_at' => 'datetime',
         'size_bytes' => 'integer',
         'uploaded_by_id' => 'integer',
     ];
+
+    public function isQuarantined(): bool
+    {
+        return $this->quarantine_at !== null;
+    }
 }

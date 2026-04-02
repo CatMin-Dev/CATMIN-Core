@@ -442,6 +442,9 @@ return [
             'mp4', 'webm', 'mp3',
             'zip',
         ],
+        // When true, files with extension/MIME mismatch are stored but flagged in quarantine
+        // instead of being rejected outright. Review quarantined files before serving them.
+        'quarantine_enabled' => false,
     ],
 
     /*
