@@ -27,6 +27,7 @@
             "App\\": "app/",
             "Addons\\CatWysiwyg\\": "addons/cat-wysiwyg/",
             "Addons\\CatminShop\\": "addons/catmin-shop/",
+            "Addons\\CatEvent\\": "addons/cat-event/",
             "Modules\\": "modules/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
