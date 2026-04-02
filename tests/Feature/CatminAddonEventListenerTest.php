@@ -4,8 +4,11 @@ namespace Tests\Feature;
 
 use App\Services\AddonManager;
 use App\Services\CatminEventBus;
+use App\Services\CatminHookLoader;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class CatminAddonEventListenerTest extends TestCase
@@ -49,6 +52,20 @@ PHP
 
         AddonManager::clearCache();
         Cache::forget('catmin_event_listener_test_hit');
+
+        $this->artisan('migrate', ['--force' => true]);
+
+        if (!Schema::hasTable('webhooks')) {
+            Schema::create('webhooks', function (Blueprint $table): void {
+                $table->id();
+                $table->string('name');
+                $table->string('event_name');
+                $table->string('target_url');
+                $table->string('method')->default('POST');
+                $table->string('status')->default('active');
+                $table->timestamps();
+            });
+        }
     }
 
     protected function tearDown(): void
@@ -66,7 +83,7 @@ PHP
 
     public function test_enabled_addon_can_listen_to_real_event(): void
     {
-        require_once $this->addonPath . '/hooks.php';
+        CatminHookLoader::load();
 
         CatminEventBus::dispatch(CatminEventBus::SETTING_UPDATED, [
             'setting' => ['key' => 'site.name', 'value' => 'CATMIN'],

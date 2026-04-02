@@ -2,6 +2,7 @@
 
 namespace Addons\CatminShop\Services;
 
+use App\Services\CatminEventBus;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
@@ -252,6 +253,20 @@ class ShopAdminService
             'status' => $order->status,
             'grand_total' => $order->grand_total,
         ]);
+        CatminEventBus::dispatch('shop.order.created', [
+            'order_id' => $order->id,
+            'order_number' => $order->order_number,
+            'status' => $order->status,
+            'grand_total' => (float) $order->grand_total,
+        ]);
+
+        if ($order->status === 'paid') {
+            CatminEventBus::dispatch('shop.order.paid', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'status' => $order->status,
+            ]);
+        }
 
         return $order;
     }
@@ -292,6 +307,27 @@ class ShopAdminService
             'order_number' => $order->order_number,
             'status' => $targetStatus,
         ]);
+        CatminEventBus::dispatch('shop.order.status', [
+            'order_id' => $order->id,
+            'order_number' => $order->order_number,
+            'status' => $targetStatus,
+        ]);
+
+        if ($targetStatus === 'paid') {
+            CatminEventBus::dispatch('shop.order.paid', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'status' => $targetStatus,
+            ]);
+        }
+
+        if ($targetStatus === 'cancelled') {
+            CatminEventBus::dispatch('shop.order.cancelled', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'status' => $targetStatus,
+            ]);
+        }
 
         return true;
     }
@@ -323,11 +359,10 @@ class ShopAdminService
             'total' => $order->grand_total,
             'issued_on' => now()->toDateString(),
             'due_on' => now()->addDays(15)->toDateString(),
-            'html_snapshot' => view()->file(base_path('addons/catmin-shop/Views/invoices/show.blade.php'), [
+            'html_snapshot' => view()->file(base_path('addons/catmin-shop/Views/invoices/snapshot.blade.php'), [
                 'invoice' => null,
                 'order' => $order->loadMissing(['items', 'customer']),
                 'customer' => $order->customer,
-                'renderMode' => 'snapshot',
             ])->render(),
         ]);
 

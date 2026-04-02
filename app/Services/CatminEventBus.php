@@ -104,7 +104,7 @@ class CatminEventBus
      */
     public static function dispatch(string $eventName, array $payload = []): void
     {
-        Event::dispatch($eventName, $payload);
+        Event::dispatch($eventName, [$payload]);
     }
 
     /**
