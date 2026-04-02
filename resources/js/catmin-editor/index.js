@@ -981,11 +981,14 @@ function initEditorInstance(root) {
 
 		const media = event.detail || {};
 		const previewUrl = media.preview_url || '';
+		const fileUrl = media.file_url || '';
 		const fallbackLabel = media.original_name || 'media';
 
 		focusCanvas(canvas);
 		if (previewUrl) {
 			insertHtmlAtCursor(`<img src="${previewUrl}" alt="${fallbackLabel}">`);
+		} else if (fileUrl) {
+			insertHtmlAtCursor(`<a href="${fileUrl}" target="_blank" rel="noopener">${fallbackLabel}</a>`);
 		} else {
 			insertHtmlAtCursor(`<a href="#">${fallbackLabel}</a>`);
 		}

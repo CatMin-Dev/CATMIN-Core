@@ -58,6 +58,7 @@ function initMediaPicker() {
 	const itemEndpointTemplate = modal.dataset.itemEndpointTemplate;
 	const searchInput = document.getElementById('catmin-media-picker-search');
 	const kindSelect = document.getElementById('catmin-media-picker-kind');
+	const sortSelect = document.getElementById('catmin-media-picker-sort');
 	const runButton = document.getElementById('catmin-media-picker-run');
 	const prevButton = document.getElementById('catmin-media-picker-prev');
 	const nextButton = document.getElementById('catmin-media-picker-next');
@@ -65,7 +66,7 @@ function initMediaPicker() {
 	const state = document.getElementById('catmin-media-picker-state');
 	const pageState = document.getElementById('catmin-media-picker-page');
 
-	if (!endpoint || !itemEndpointTemplate || !searchInput || !kindSelect || !runButton || !prevButton || !nextButton || !results || !state || !pageState) {
+	if (!endpoint || !itemEndpointTemplate || !searchInput || !kindSelect || !sortSelect || !runButton || !prevButton || !nextButton || !results || !state || !pageState) {
 		return;
 	}
 
@@ -101,7 +102,7 @@ function initMediaPicker() {
 	};
 
 	const fetchResults = async (url = null) => {
-		const requestUrl = url || `${endpoint}?q=${encodeURIComponent(searchInput.value.trim())}&kind=${encodeURIComponent(kindSelect.value)}&page=${currentPage}`;
+		const requestUrl = url || `${endpoint}?q=${encodeURIComponent(searchInput.value.trim())}&kind=${encodeURIComponent(kindSelect.value)}&sort=${encodeURIComponent(sortSelect.value)}&page=${currentPage}`;
 
 		setBusy(true, 'Chargement...');
 		try {

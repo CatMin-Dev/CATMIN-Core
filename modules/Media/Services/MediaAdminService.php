@@ -107,6 +107,7 @@ class MediaAdminService
             'extension' => (string) ($asset->extension ?? ''),
             'size_bytes' => (int) $asset->size_bytes,
             'size_human' => $this->humanSize((int) $asset->size_bytes),
+            'file_url' => $this->fileUrl($asset),
             'folder' => $this->folderFromPath((string) $asset->path),
             'kind' => $this->assetKind($asset),
             'preview_url' => $this->previewUrl($asset),
@@ -190,6 +191,11 @@ class MediaAdminService
             return null;
         }
 
+        return $this->fileUrl($asset);
+    }
+
+    public function fileUrl(MediaAsset $asset): ?string
+    {
         if ($asset->disk !== 'public') {
             return null;
         }
@@ -250,6 +256,20 @@ class MediaAdminService
         }
 
         return 'other';
+    }
+
+    public function previewMode(MediaAsset $asset): string
+    {
+        if ($this->previewUrl($asset) !== null) {
+            return 'image';
+        }
+
+        $kind = $this->assetKind($asset);
+        if ($kind === 'document' && $this->fileUrl($asset) !== null) {
+            return 'document';
+        }
+
+        return 'none';
     }
 
     /**
@@ -338,6 +358,9 @@ class MediaAdminService
             'oldest' => $query->orderBy('id'),
             'name' => $query->orderBy('original_name')->orderByDesc('id'),
             'type' => $query->orderBy('mime_type')->orderBy('extension')->orderByDesc('id'),
+            'size_asc' => $query->orderBy('size_bytes')->orderByDesc('id'),
+            'size_desc' => $query->orderByDesc('size_bytes')->orderByDesc('id'),
+            'updated' => $query->orderByDesc('updated_at')->orderByDesc('id'),
             default => $query->orderByDesc('id'),
         };
     }

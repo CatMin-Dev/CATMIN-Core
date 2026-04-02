@@ -81,6 +81,7 @@
         <div class="card-body">
             <form method="get" action="{{ admin_route('media.manage') }}" class="row g-2 align-items-end">
                 <input type="hidden" name="scope" value="{{ $scope ?? 'active' }}">
+                <input type="hidden" name="view" id="filter-view" value="{{ $selectedView ?? 'grid' }}">
                 <div class="col-12 col-lg-4">
                     <label class="form-label" for="filter-q">Recherche</label>
                     <input id="filter-q" name="q" type="search" class="form-control" value="{{ $search ?? '' }}" placeholder="nom, alt, legende, type...">
@@ -120,6 +121,9 @@
                         <option value="oldest" @selected(($selectedSort ?? '') === 'oldest')>Plus anciens</option>
                         <option value="name" @selected(($selectedSort ?? '') === 'name')>Nom</option>
                         <option value="type" @selected(($selectedSort ?? '') === 'type')>Type</option>
+                        <option value="size_desc" @selected(($selectedSort ?? '') === 'size_desc')>Taille desc</option>
+                        <option value="size_asc" @selected(($selectedSort ?? '') === 'size_asc')>Taille asc</option>
+                        <option value="updated" @selected(($selectedSort ?? '') === 'updated')>Maj recentes</option>
                     </select>
                 </div>
                 <div class="col-6 col-lg-2">
@@ -134,6 +138,16 @@
                 <div class="col-12 col-lg-4 d-flex gap-2">
                     <button class="btn btn-primary" type="submit"><i class="bi bi-funnel me-1"></i>Filtrer</button>
                     <a class="btn btn-outline-secondary" href="{{ admin_route('media.manage', ['scope' => $scope ?? 'active']) }}">Reset</a>
+                </div>
+                <div class="col-12 col-lg-4 d-flex gap-2 justify-content-lg-end">
+                    <div class="btn-group" role="group" aria-label="Mode d'affichage">
+                        <button class="btn btn-outline-secondary {{ ($selectedView ?? 'grid') === 'grid' ? 'active' : '' }}" type="button" data-media-view="grid">
+                            <i class="bi bi-grid-3x3-gap"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary {{ ($selectedView ?? 'grid') === 'list' ? 'active' : '' }}" type="button" data-media-view="list">
+                            <i class="bi bi-list-ul"></i>
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -159,14 +173,28 @@
                 </div>
             </div>
 
-            <div class="catmin-media-grid">
+            <div class="catmin-media-grid {{ ($selectedView ?? 'grid') === 'list' ? 'catmin-media-grid-list' : '' }}" id="media-results-grid">
                 @foreach($assets as $asset)
                     @php
                         $previewUrl = $mediaService->previewUrl($asset);
+                        $fileUrl = $mediaService->fileUrl($asset);
+                        $previewMode = $mediaService->previewMode($asset);
                         $assetFolder = $mediaService->folderFromPath((string) $asset->path);
                         $kind = $mediaService->assetKind($asset);
                     @endphp
-                    <article class="catmin-media-card">
+                    <article class="catmin-media-card"
+                        data-media-item="1"
+                        data-media-id="{{ $asset->id }}"
+                        data-media-name="{{ $asset->original_name }}"
+                        data-media-kind="{{ $kind }}"
+                        data-media-mime="{{ $asset->mime_type ?: 'n/a' }}"
+                        data-media-size="{{ $mediaService->humanSize((int) $asset->size_bytes) }}"
+                        data-media-folder="{{ $assetFolder }}"
+                        data-media-created="{{ optional($asset->created_at)->format('d/m/Y H:i') ?: 'n/a' }}"
+                        data-media-preview-mode="{{ $previewMode }}"
+                        data-media-preview-url="{{ $previewUrl ?: '' }}"
+                        data-media-file-url="{{ $fileUrl ?: '' }}"
+                    >
                         @if(catmin_can('module.media.trash'))
                             <div style="position: absolute; top: 10px; right: 10px; z-index: 10;">
                                 <input type="checkbox" name="bulk_select[]" value="{{ $asset->id }}" class="form-check-input bulk-checkbox" style="width: 20px; height: 20px;">
@@ -194,6 +222,7 @@
                             </div>
                             <p class="mb-0 small text-muted text-truncate" title="{{ $asset->mime_type }}">{{ $asset->mime_type ?: 'n/a' }}</p>
                             <p class="mb-0 small text-muted">{{ optional($asset->created_at)->format('d/m/Y H:i') ?: 'n/a' }}</p>
+                            <button class="btn btn-sm btn-outline-primary" type="button" data-media-open-detail>Details</button>
                             <div class="d-flex gap-2">
                                 @if(method_exists($asset, 'trashed') && $asset->trashed())
                                     @if(catmin_can('module.media.trash'))
@@ -224,6 +253,20 @@
                         </div>
                     </article>
                 @endforeach
+            </div>
+
+            <div class="card mt-3" id="media-detail-panel">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h2 class="h6 mb-0">Panneau detail</h2>
+                    <span class="badge text-bg-light" id="media-detail-kind">-</span>
+                </div>
+                <div class="card-body">
+                    <p class="mb-1 fw-semibold" id="media-detail-name">Selectionnez un media</p>
+                    <p class="small text-muted mb-3" id="media-detail-meta">Cliquez sur Details pour afficher les informations et la preview.</p>
+                    <div id="media-detail-preview" class="border rounded p-3 bg-body-tertiary text-center small text-muted">
+                        Aucune preview active.
+                    </div>
+                </div>
             </div>
 
             @if(catmin_can('module.media.trash') && $assets->count() > 0)
@@ -257,6 +300,22 @@ document.addEventListener('DOMContentLoaded', function() {
     const selectedInfo = document.getElementById('selected-info');
     const countValue = document.getElementById('selected-count-value');
     const bulkForm = document.getElementById('bulk-form');
+    const viewInput = document.getElementById('filter-view');
+    const filterForm = viewInput ? viewInput.closest('form') : null;
+    const detailName = document.getElementById('media-detail-name');
+    const detailMeta = document.getElementById('media-detail-meta');
+    const detailKind = document.getElementById('media-detail-kind');
+    const detailPreview = document.getElementById('media-detail-preview');
+
+    document.querySelectorAll('[data-media-view]').forEach(button => {
+        button.addEventListener('click', function () {
+            if (!viewInput || !filterForm) {
+                return;
+            }
+            viewInput.value = this.dataset.mediaView || 'grid';
+            filterForm.submit();
+        });
+    });
     
     function updateToolbarVisibility() {
         const checkedCount = document.querySelectorAll('input[name="bulk_select[]"]:checked').length;
@@ -315,6 +374,47 @@ document.addEventListener('DOMContentLoaded', function() {
             bulkForm.submit();
         });
     });
+
+    document.querySelectorAll('[data-media-open-detail]').forEach(button => {
+        button.addEventListener('click', function () {
+            const card = this.closest('[data-media-item]');
+            if (!card || !detailName || !detailMeta || !detailPreview || !detailKind) {
+                return;
+            }
+
+            const name = card.dataset.mediaName || 'media';
+            const kind = card.dataset.mediaKind || '-';
+            const id = card.dataset.mediaId || '-';
+            const mime = card.dataset.mediaMime || 'n/a';
+            const size = card.dataset.mediaSize || 'n/a';
+            const folder = card.dataset.mediaFolder || '-';
+            const created = card.dataset.mediaCreated || 'n/a';
+            const previewMode = card.dataset.mediaPreviewMode || 'none';
+            const previewUrl = card.dataset.mediaPreviewUrl || '';
+            const fileUrl = card.dataset.mediaFileUrl || '';
+
+            detailName.textContent = name;
+            detailKind.textContent = kind;
+            detailMeta.textContent = '#' + id + ' · ' + mime + ' · ' + size + ' · dossier: ' + folder + ' · ' + created;
+
+            if (previewMode === 'image' && previewUrl) {
+                detailPreview.innerHTML = '<img src="' + previewUrl + '" alt="Apercu" class="img-fluid rounded" style="max-height: 320px;">';
+                return;
+            }
+
+            if (previewMode === 'document' && fileUrl) {
+                detailPreview.innerHTML = '<iframe src="' + fileUrl + '" title="Preview document" style="width:100%;height:320px;border:0;"></iframe>';
+                return;
+            }
+
+            if (fileUrl) {
+                detailPreview.innerHTML = '<a class="btn btn-outline-secondary" target="_blank" rel="noopener" href="' + fileUrl + '">Ouvrir le fichier</a>';
+                return;
+            }
+
+            detailPreview.textContent = 'Preview indisponible pour ce media.';
+        });
+    });
 });
 </script>
 
@@ -336,6 +436,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
 .catmin-media-card {
     position: relative;
+}
+
+.catmin-media-grid-list {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+}
+
+.catmin-media-grid-list .catmin-media-card {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    align-items: stretch;
+}
+
+.catmin-media-grid-list .catmin-media-card-preview {
+    min-height: 120px;
 }
 </style>
 @endsection

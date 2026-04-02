@@ -34,6 +34,10 @@ class MediaController extends Controller
         $from = trim((string) $request->query('from', ''));
         $to = trim((string) $request->query('to', ''));
         $sort = trim((string) $request->query('sort', 'newest'));
+        $view = trim((string) $request->query('view', 'grid'));
+        if (!in_array($view, ['grid', 'list'], true)) {
+            $view = 'grid';
+        }
         $perPageInput = trim((string) $request->query('per_page', '24'));
         $perPage = in_array($perPageInput, ['12', '24', '48', '96'], true)
             ? (int) $perPageInput
@@ -62,6 +66,7 @@ class MediaController extends Controller
             'selectedTo' => $to,
             'selectedSort' => $sort,
             'selectedPerPage' => (string) $perPage,
+            'selectedView' => $view,
             'scope' => $scope,
             'trashedCount' => MediaAsset::onlyTrashed()->count(),
         ]);
@@ -72,6 +77,7 @@ class MediaController extends Controller
         $folder = trim((string) $request->query('folder', ''));
         $kind = trim((string) $request->query('kind', ''));
         $query = trim((string) $request->query('q', ''));
+        $sort = trim((string) $request->query('sort', 'newest'));
         $perPageInput = trim((string) $request->query('per_page', '12'));
         $perPage = in_array($perPageInput, ['12', '24', '48'], true)
             ? (int) $perPageInput
@@ -81,7 +87,7 @@ class MediaController extends Controller
             'folder' => $folder,
             'kind' => $kind,
             'q' => $query,
-            'sort' => 'newest',
+            'sort' => $sort,
         ], $perPage);
 
         $items = array_map(

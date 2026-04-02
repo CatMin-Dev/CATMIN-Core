@@ -13,7 +13,7 @@
                         <label class="form-label" for="catmin-media-picker-search">Recherche</label>
                         <input id="catmin-media-picker-search" type="search" class="form-control" placeholder="Nom, alt, legende, type...">
                     </div>
-                    <div class="col-6 col-md-3">
+                    <div class="col-6 col-md-2">
                         <label class="form-label" for="catmin-media-picker-kind">Type</label>
                         <select id="catmin-media-picker-kind" class="form-select">
                             <option value="">Tous</option>
@@ -24,7 +24,16 @@
                             <option value="other">Autres</option>
                         </select>
                     </div>
-                    <div class="col-6 col-md-3 d-flex gap-2">
+                    <div class="col-6 col-md-2">
+                        <label class="form-label" for="catmin-media-picker-sort">Tri</label>
+                        <select id="catmin-media-picker-sort" class="form-select">
+                            <option value="newest">Recents</option>
+                            <option value="name">Nom</option>
+                            <option value="size_desc">Taille desc</option>
+                            <option value="size_asc">Taille asc</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-2 d-flex gap-2">
                         <button type="button" class="btn btn-primary w-100" id="catmin-media-picker-run">
                             <i class="bi bi-search me-1"></i>Rechercher
                         </button>
