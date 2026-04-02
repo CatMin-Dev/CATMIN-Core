@@ -2,6 +2,7 @@
 
 namespace App\Services\Dashboard;
 
+use App\Services\AddonManager;
 use App\Services\ModuleManager;
 use App\Services\MonitoringService;
 use Carbon\Carbon;
@@ -36,8 +37,14 @@ class DashboardKpiService
                 'critical_errors_24h' => $this->countCriticalErrorsLast24h(),
                 'emails_failed_24h' => $this->countFailedEmailsLast24h(),
                 'low_stock_products' => $this->countLowStockProducts(),
+                'event_upcoming' => $this->countUpcomingEvents(),
+                'event_checkins_today' => $this->countEventCheckinsToday(),
+                'incidents_open' => $this->countOpenIncidents(),
             ];
         });
+
+        $kpiIndex['content_total_published'] = (int) ($kpiIndex['pages_published'] ?? 0) + (int) ($kpiIndex['articles_published'] ?? 0);
+        $kpiIndex['perf_score'] = (int) (($healthOverview['health_score']['score'] ?? 100));
 
         return [
             'kpi_index' => $kpiIndex,
@@ -46,6 +53,7 @@ class DashboardKpiService
             'quick_actions' => $this->quickActions(),
             'module_health' => $this->moduleHealthRows(),
             'widgets' => $this->defaultWidgets($kpiIndex, $healthOverview),
+            'charts' => $this->lightweightCharts($healthOverview),
             'health_score' => (array) ($healthOverview['health_score'] ?? []),
             'generated_at' => now(),
             'cache_ttl_seconds' => $ttl,
@@ -136,13 +144,47 @@ class DashboardKpiService
             ->count();
     }
 
+    private function countUpcomingEvents(): int
+    {
+        if (!$this->hasColumns('events', ['status', 'start_at'])) {
+            return 0;
+        }
+
+        return (int) DB::table('events')
+            ->where('status', 'published')
+            ->where('start_at', '>=', now())
+            ->count();
+    }
+
+    private function countEventCheckinsToday(): int
+    {
+        if (!$this->hasColumns('event_checkins', ['checkin_at'])) {
+            return 0;
+        }
+
+        return (int) DB::table('event_checkins')
+            ->whereDate('checkin_at', now()->toDateString())
+            ->count();
+    }
+
+    private function countOpenIncidents(): int
+    {
+        if (!$this->hasColumns('monitoring_incidents', ['status'])) {
+            return 0;
+        }
+
+        return (int) DB::table('monitoring_incidents')
+            ->whereIn('status', ['warning', 'degraded', 'critical'])
+            ->count();
+    }
+
     /**
      * @param array<string, int> $index
      * @return array<int, array<string, mixed>>
      */
     private function kpiCards(array $index): array
     {
-        return [
+        $cards = [
             [
                 'id' => 'active_admin_sessions',
                 'label' => 'Admins actifs (15m)',
@@ -151,6 +193,15 @@ class DashboardKpiService
                 'icon' => 'bi bi-person-badge',
                 'permission' => 'module.core.list',
                 'url' => $this->routeUrl('sessions.index'),
+            ],
+            [
+                'id' => 'content_total',
+                'label' => 'Contenus publies',
+                'value' => $index['content_total_published'],
+                'description' => 'Pages + articles publies',
+                'icon' => 'bi bi-collection',
+                'permission' => 'module.pages.list',
+                'url' => $this->routeUrl('pages.manage'),
             ],
             [
                 'id' => 'content_pages',
@@ -180,13 +231,22 @@ class DashboardKpiService
                 'url' => $this->routeUrl('media.manage'),
             ],
             [
-                'id' => 'shop_pending',
-                'label' => 'Commandes en attente',
-                'value' => $index['shop_orders_pending'],
-                'description' => 'A traiter rapidement',
-                'icon' => 'bi bi-bag-check',
-                'permission' => 'module.shop.list',
-                'url' => $this->routeUrl('shop.orders.index'),
+                'id' => 'incidents_open',
+                'label' => 'Incidents ouverts',
+                'value' => $index['incidents_open'],
+                'description' => 'Monitoring warning/degraded/critical',
+                'icon' => 'bi bi-shield-exclamation',
+                'permission' => 'module.logger.list',
+                'url' => $this->routeUrl('monitoring.index'),
+            ],
+            [
+                'id' => 'perf_score',
+                'label' => 'Score performance',
+                'value' => $index['perf_score'] . '/100',
+                'description' => 'Score global monitoring',
+                'icon' => 'bi bi-speedometer2',
+                'permission' => 'module.logger.list',
+                'url' => $this->routeUrl('performance.index'),
             ],
             [
                 'id' => 'failed_jobs',
@@ -224,7 +284,20 @@ class DashboardKpiService
                 'permission' => 'module.mailer.list',
                 'url' => $this->routeUrl('mailer.manage'),
             ],
-            [
+        ];
+
+        if ($this->isAddonEnabled('catmin-shop')) {
+            $cards[] = [
+                'id' => 'shop_pending',
+                'label' => 'Commandes en attente',
+                'value' => $index['shop_orders_pending'],
+                'description' => 'A traiter rapidement',
+                'icon' => 'bi bi-bag-check',
+                'permission' => 'module.shop.list',
+                'url' => $this->routeUrl('shop.orders.index'),
+            ];
+
+            $cards[] = [
                 'id' => 'low_stock',
                 'label' => 'Produits stock bas',
                 'value' => $index['low_stock_products'],
@@ -232,8 +305,32 @@ class DashboardKpiService
                 'icon' => 'bi bi-box-seam',
                 'permission' => 'module.shop.list',
                 'url' => $this->routeUrl('shop.manage'),
-            ],
-        ];
+            ];
+        }
+
+        if ($this->isAddonEnabled('cat-event')) {
+            $cards[] = [
+                'id' => 'events_upcoming',
+                'label' => 'Events a venir',
+                'value' => $index['event_upcoming'],
+                'description' => 'Evenements publies non demarres',
+                'icon' => 'bi bi-calendar-event',
+                'permission' => 'module.events.list',
+                'url' => $this->routeUrl('events.index'),
+            ];
+
+            $cards[] = [
+                'id' => 'events_checkins_today',
+                'label' => 'Check-ins du jour',
+                'value' => $index['event_checkins_today'],
+                'description' => 'Flux check-in en cours',
+                'icon' => 'bi bi-qr-code-scan',
+                'permission' => 'module.events.checkin',
+                'url' => $this->routeUrl('events.index'),
+            ];
+        }
+
+        return $cards;
     }
 
     /**
@@ -422,7 +519,7 @@ class DashboardKpiService
     {
         $monitoringWidget = $this->monitoringWidget($healthOverview);
 
-        return [
+        $widgets = [
             $monitoringWidget,
             [
                 'id' => 'critical-incidents',
@@ -467,20 +564,6 @@ class DashboardKpiService
                 ],
             ],
             [
-                'id' => 'shop-orders',
-                'title' => 'Commandes recentes',
-                'subtitle' => 'Activite business immediate',
-                'order' => 40,
-                'tone' => 'info',
-                'items' => $this->recentOrders(),
-                'empty' => 'Aucune commande recente.',
-                'action' => [
-                    'label' => 'Voir commandes',
-                    'url' => $this->routeUrl('shop.orders.index'),
-                    'permission' => 'module.shop.list',
-                ],
-            ],
-            [
                 'id' => 'recent-content',
                 'title' => 'Derniers contenus modifies',
                 'subtitle' => 'Pages + Articles',
@@ -494,7 +577,25 @@ class DashboardKpiService
                     'permission' => 'module.pages.list',
                 ],
             ],
-            [
+        ];
+
+        if ($this->isAddonEnabled('catmin-shop')) {
+            $widgets[] = [
+                'id' => 'shop-orders',
+                'title' => 'Commandes recentes',
+                'subtitle' => 'Activite business immediate',
+                'order' => 40,
+                'tone' => 'info',
+                'items' => $this->recentOrders(),
+                'empty' => 'Aucune commande recente.',
+                'action' => [
+                    'label' => 'Voir commandes',
+                    'url' => $this->routeUrl('shop.orders.index'),
+                    'permission' => 'module.shop.list',
+                ],
+            ];
+
+            $widgets[] = [
                 'id' => 'low-stock',
                 'title' => 'Alertes stock bas',
                 'subtitle' => 'Produits sous seuil',
@@ -507,8 +608,192 @@ class DashboardKpiService
                     'url' => $this->routeUrl('shop.manage'),
                     'permission' => 'module.shop.list',
                 ],
-            ],
+            ];
+        }
+
+        if ($this->isAddonEnabled('cat-event')) {
+            $widgets[] = [
+                'id' => 'event-activity',
+                'title' => 'Activite events',
+                'subtitle' => 'Sessions, tickets et check-ins',
+                'order' => 45,
+                'tone' => 'info',
+                'items' => $this->recentEventActivity(),
+                'empty' => 'Aucune activite event recente.',
+                'action' => [
+                    'label' => 'Ouvrir events',
+                    'url' => $this->routeUrl('events.index'),
+                    'permission' => 'module.events.list',
+                ],
+            ];
+        }
+
+        return $widgets;
+    }
+
+    /**
+     * @param array<string, mixed> $healthOverview
+     * @return array<string, mixed>
+     */
+    private function lightweightCharts(array $healthOverview): array
+    {
+        return [
+            'content_7d' => $this->contentTimelineLastDays(7),
+            'incidents_7d' => $this->incidentTimelineLastDays(7),
+            'perf_12h' => $this->performanceTimelineLastHours(12, $healthOverview),
         ];
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function contentTimelineLastDays(int $days): array
+    {
+        $days = max(3, min(30, $days));
+        $series = [];
+
+        for ($i = $days - 1; $i >= 0; $i--) {
+            $day = now()->subDays($i)->toDateString();
+            $series[$day] = [
+                'label' => Carbon::parse($day)->format('d/m'),
+                'pages' => 0,
+                'articles' => 0,
+            ];
+        }
+
+        if ($this->hasColumns('pages', ['status', 'published_at'])) {
+            DB::table('pages')
+                ->selectRaw('DATE(published_at) as day, count(*) as total')
+                ->where('status', 'published')
+                ->where('published_at', '>=', now()->subDays($days - 1)->startOfDay())
+                ->groupBy('day')
+                ->get()
+                ->each(function ($row) use (&$series): void {
+                    $day = (string) ($row->day ?? '');
+                    if (isset($series[$day])) {
+                        $series[$day]['pages'] = (int) ($row->total ?? 0);
+                    }
+                });
+        }
+
+        if ($this->hasColumns('articles', ['status', 'published_at'])) {
+            DB::table('articles')
+                ->selectRaw('DATE(published_at) as day, count(*) as total')
+                ->where('status', 'published')
+                ->where('published_at', '>=', now()->subDays($days - 1)->startOfDay())
+                ->groupBy('day')
+                ->get()
+                ->each(function ($row) use (&$series): void {
+                    $day = (string) ($row->day ?? '');
+                    if (isset($series[$day])) {
+                        $series[$day]['articles'] = (int) ($row->total ?? 0);
+                    }
+                });
+        }
+
+        return array_values($series);
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function incidentTimelineLastDays(int $days): array
+    {
+        $days = max(3, min(30, $days));
+        $series = [];
+
+        for ($i = $days - 1; $i >= 0; $i--) {
+            $day = now()->subDays($i)->toDateString();
+            $series[$day] = [
+                'label' => Carbon::parse($day)->format('d/m'),
+                'count' => 0,
+            ];
+        }
+
+        if (!$this->hasColumns('system_alerts', ['severity', 'created_at'])) {
+            return array_values($series);
+        }
+
+        DB::table('system_alerts')
+            ->selectRaw('DATE(created_at) as day, count(*) as total')
+            ->whereIn('severity', ['warning', 'error', 'critical', 'alert', 'emergency'])
+            ->where('created_at', '>=', now()->subDays($days - 1)->startOfDay())
+            ->groupBy('day')
+            ->get()
+            ->each(function ($row) use (&$series): void {
+                $day = (string) ($row->day ?? '');
+                if (isset($series[$day])) {
+                    $series[$day]['count'] = (int) ($row->total ?? 0);
+                }
+            });
+
+        return array_values($series);
+    }
+
+    /**
+     * @param array<string, mixed> $healthOverview
+     * @return array<int, array<string, mixed>>
+     */
+    private function performanceTimelineLastHours(int $hours, array $healthOverview): array
+    {
+        $hours = max(6, min(48, $hours));
+        $series = [];
+
+        for ($i = $hours - 1; $i >= 0; $i--) {
+            $point = now()->subHours($i);
+            $key = $point->format('Y-m-d H:00:00');
+            $series[$key] = [
+                'label' => $point->format('H:i'),
+                'score' => null,
+            ];
+        }
+
+        if ($this->hasColumns('monitoring_snapshots', ['score', 'created_at'])) {
+            $bucket = [];
+
+            DB::table('monitoring_snapshots')
+                ->where('created_at', '>=', now()->subHours($hours - 1))
+                ->orderBy('created_at')
+                ->get(['score', 'created_at'])
+                ->each(function ($row) use (&$bucket): void {
+                    $rawDate = (string) ($row->created_at ?? '');
+                    if ($rawDate === '') {
+                        return;
+                    }
+
+                    try {
+                        $hourKey = Carbon::parse($rawDate)->format('Y-m-d H:00:00');
+                    } catch (\Throwable) {
+                        return;
+                    }
+
+                    if (!isset($bucket[$hourKey])) {
+                        $bucket[$hourKey] = ['sum' => 0, 'count' => 0];
+                    }
+
+                    $bucket[$hourKey]['sum'] += (int) ($row->score ?? 0);
+                    $bucket[$hourKey]['count'] += 1;
+                });
+
+            foreach ($bucket as $hourKey => $aggregate) {
+                if (!isset($series[$hourKey])) {
+                    continue;
+                }
+
+                $count = max(1, (int) ($aggregate['count'] ?? 0));
+                $sum = (int) ($aggregate['sum'] ?? 0);
+                $series[$hourKey]['score'] = (int) round($sum / $count);
+            }
+        }
+
+        $fallback = (int) (($healthOverview['health_score']['score'] ?? 100));
+        foreach ($series as $key => $row) {
+            if ($row['score'] === null) {
+                $series[$key]['score'] = $fallback;
+            }
+        }
+
+        return array_values($series);
     }
 
     /**
@@ -758,6 +1043,44 @@ class DashboardKpiService
             ->all();
     }
 
+    /**
+     * @return array<int, array<string, string>>
+     */
+    private function recentEventActivity(): array
+    {
+        $items = [];
+
+        if ($this->hasColumns('events', ['title', 'start_at', 'status'])) {
+            $events = DB::table('events')
+                ->where('start_at', '>=', now()->subDay())
+                ->orderBy('start_at')
+                ->limit(4)
+                ->get(['title', 'start_at', 'status']);
+
+            foreach ($events as $event) {
+                $items[] = [
+                    'primary' => (string) ($event->title ?? 'Event'),
+                    'secondary' => 'EVENT ' . strtoupper((string) ($event->status ?? 'draft')),
+                    'meta' => $this->formatDate((string) ($event->start_at ?? '')),
+                ];
+            }
+        }
+
+        if ($this->hasColumns('event_checkins', ['checkin_at']) && count($items) < 6) {
+            $checkins = (int) DB::table('event_checkins')
+                ->whereDate('checkin_at', now()->toDateString())
+                ->count();
+
+            $items[] = [
+                'primary' => 'Check-ins aujourd\'hui',
+                'secondary' => (string) $checkins,
+                'meta' => now()->format('d/m H:i'),
+            ];
+        }
+
+        return collect($items)->take(6)->values()->all();
+    }
+
     private function countByStatus(string $table, string $status): int
     {
         if (!$this->hasColumns($table, ['status'])) {
@@ -833,5 +1156,14 @@ class DashboardKpiService
         } catch (\Throwable) {
             return '-';
         }
+    }
+
+    protected function isAddonEnabled(string $slug): bool
+    {
+        $normalized = strtolower($slug);
+
+        return AddonManager::enabled()->contains(function ($addon) use ($normalized): bool {
+            return strtolower((string) ($addon->slug ?? '')) === $normalized;
+        });
     }
 }

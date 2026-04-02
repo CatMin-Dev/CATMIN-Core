@@ -95,6 +95,83 @@
         </div>
     </section>
 
+    <section class="mb-4">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+            <h2 class="h5 mb-0">Graphiques legers</h2>
+            <span class="text-muted small">Rendu natif sans dependance JS lourde</span>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-12 col-xxl-4">
+                <div class="card h-100">
+                    <div class="card-header bg-white">
+                        <h3 class="h6 mb-0">Contenus publies (7j)</h3>
+                    </div>
+                    <div class="card-body d-grid gap-2">
+                        @php($contentSeries = (array) ($dashboard['charts']['content_7d'] ?? []))
+                        @php($contentMax = max(1, collect($contentSeries)->map(fn ($row) => (int) (($row['pages'] ?? 0) + ($row['articles'] ?? 0)))->max() ?? 1))
+                        @foreach($contentSeries as $row)
+                            @php($pages = (int) ($row['pages'] ?? 0))
+                            @php($articles = (int) ($row['articles'] ?? 0))
+                            @php($total = $pages + $articles)
+                            <div class="catmin-lite-chart-row">
+                                <div class="catmin-lite-chart-label">{{ $row['label'] ?? '-' }}</div>
+                                <div class="catmin-lite-chart-track">
+                                    <div class="catmin-lite-chart-bar catmin-lite-chart-bar--pages" style="width: {{ round(($pages / $contentMax) * 100, 1) }}%"></div>
+                                    <div class="catmin-lite-chart-bar catmin-lite-chart-bar--articles" style="width: {{ round(($articles / $contentMax) * 100, 1) }}%"></div>
+                                </div>
+                                <div class="catmin-lite-chart-value">{{ $total }}</div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-xxl-4">
+                <div class="card h-100">
+                    <div class="card-header bg-white">
+                        <h3 class="h6 mb-0">Incidents (7j)</h3>
+                    </div>
+                    <div class="card-body d-grid gap-2">
+                        @php($incidentSeries = (array) ($dashboard['charts']['incidents_7d'] ?? []))
+                        @php($incidentMax = max(1, collect($incidentSeries)->max('count') ?? 1))
+                        @foreach($incidentSeries as $row)
+                            @php($count = (int) ($row['count'] ?? 0))
+                            <div class="catmin-lite-chart-row">
+                                <div class="catmin-lite-chart-label">{{ $row['label'] ?? '-' }}</div>
+                                <div class="catmin-lite-chart-track">
+                                    <div class="catmin-lite-chart-bar catmin-lite-chart-bar--incidents" style="width: {{ round(($count / $incidentMax) * 100, 1) }}%"></div>
+                                </div>
+                                <div class="catmin-lite-chart-value">{{ $count }}</div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-xxl-4">
+                <div class="card h-100">
+                    <div class="card-header bg-white">
+                        <h3 class="h6 mb-0">Performance (12h)</h3>
+                    </div>
+                    <div class="card-body d-grid gap-2">
+                        @php($perfSeries = (array) ($dashboard['charts']['perf_12h'] ?? []))
+                        @foreach($perfSeries as $row)
+                            @php($score = max(0, min(100, (int) ($row['score'] ?? 0))))
+                            <div class="catmin-lite-chart-row">
+                                <div class="catmin-lite-chart-label">{{ $row['label'] ?? '-' }}</div>
+                                <div class="catmin-lite-chart-track">
+                                    <div class="catmin-lite-chart-bar catmin-lite-chart-bar--perf" style="width: {{ $score }}%"></div>
+                                </div>
+                                <div class="catmin-lite-chart-value">{{ $score }}</div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <section class="row g-3 mb-4">
         <div class="col-12 col-xl-7">
             <div class="card h-100">
@@ -180,3 +257,49 @@
     </section>
 </div>
 @endsection
+
+<style>
+.catmin-lite-chart-row {
+    display: grid;
+    grid-template-columns: 52px 1fr 36px;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.catmin-lite-chart-label,
+.catmin-lite-chart-value {
+    font-size: 0.75rem;
+    color: #6c757d;
+}
+
+.catmin-lite-chart-track {
+    height: 12px;
+    border-radius: 999px;
+    background: #f1f3f5;
+    position: relative;
+    overflow: hidden;
+}
+
+.catmin-lite-chart-bar {
+    height: 100%;
+    border-radius: 999px;
+}
+
+.catmin-lite-chart-bar--pages {
+    background: #2f6fec;
+}
+
+.catmin-lite-chart-bar--articles {
+    background: #63b3ed;
+    margin-top: -12px;
+    opacity: 0.72;
+}
+
+.catmin-lite-chart-bar--incidents {
+    background: #d9534f;
+}
+
+.catmin-lite-chart-bar--perf {
+    background: #2ea66b;
+}
+</style>
