@@ -152,6 +152,29 @@ class AlertingService
     }
 
     /**
+     * Record webhook dead-letter alert (all retries exhausted)
+     */
+    public function alertWebhookDeadLetter(
+        int $webhookId,
+        string $url,
+        int $maxAttempts,
+        string $lastError
+    ): SystemAlert {
+        return $this->createAlert(
+            'webhook_dead_letter',
+            "Webhook Dead Letter: $url",
+            "Webhook delivery to $url moved to dead-letter queue after $maxAttempts attempts. Last error: $lastError",
+            [
+                'webhook_id' => $webhookId,
+                'url' => $url,
+                'max_attempts' => $maxAttempts,
+                'last_error' => $lastError,
+            ],
+            'critical'
+        );
+    }
+
+    /**
      * Record job failure alert
      */
     public function alertJobFailed(

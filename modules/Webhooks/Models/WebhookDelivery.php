@@ -20,12 +20,15 @@ class WebhookDelivery extends Model
         'response_body',
         'error_message',
         'sent_at',
+        'dead_letter_at',
+        'dlq_reason',
     ];
 
     protected $casts = [
         'payload' => 'array',
         'next_retry_at' => 'datetime',
         'sent_at' => 'datetime',
+        'dead_letter_at' => 'datetime',
     ];
 
     public function webhook(): BelongsTo
@@ -57,20 +60,48 @@ class WebhookDelivery extends Model
     }
 
     /**
-     * Mark delivery as failed with retry
+     * Mark delivery as failed with retry (exponential backoff).
+     * When retries are exhausted, moves to dead-letter queue.
      */
     public function markFailedWithRetry(string $errorMessage, ?string $responseCode = null): void
     {
         $nextAttempt = $this->attempt_number + 1;
         $retryDelay = min(pow(2, $this->attempt_number) * 60, 3600); // Exponential backoff, max 1 hour
+        $exhausted = $nextAttempt >= $this->max_attempts;
 
-        $this->update([
-            'status' => $nextAttempt >= $this->max_attempts ? 'failed' : 'retrying',
+        $updates = [
             'attempt_number' => $nextAttempt,
             'error_message' => $errorMessage,
             'response_code' => $responseCode,
-            'next_retry_at' => now()->addSeconds($retryDelay),
-        ]);
+        ];
+
+        if ($exhausted) {
+            $updates['status'] = 'dead_letter';
+            $updates['dead_letter_at'] = now();
+            $updates['dlq_reason'] = "Exhausted {$this->max_attempts} attempts. Last error: {$errorMessage}";
+        } else {
+            $updates['status'] = 'retrying';
+            $updates['next_retry_at'] = now()->addSeconds((int) $retryDelay);
+        }
+
+        $this->update($updates);
+    }
+
+    /**
+     * Compute the next backoff delay in seconds for the current attempt number.
+     * Formula: min(2^attempt * 60, 3600)
+     */
+    public static function backoffDelaySeconds(int $attemptNumber): int
+    {
+        return (int) min(pow(2, $attemptNumber) * 60, 3600);
+    }
+
+    /**
+     * Whether this delivery has been sent to the dead-letter queue.
+     */
+    public function isDeadLetter(): bool
+    {
+        return $this->status === 'dead_letter';
     }
 
     /**

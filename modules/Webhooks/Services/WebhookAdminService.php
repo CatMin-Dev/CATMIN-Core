@@ -3,7 +3,9 @@
 namespace Modules\Webhooks\Services;
 
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Modules\Webhooks\Models\Webhook;
+use Modules\Webhooks\Models\WebhookDelivery;
 
 class WebhookAdminService
 {
@@ -83,5 +85,27 @@ class WebhookAdminService
             $count++;
         }
         return $count;
+    }
+
+    /**
+     * Return dead-letter deliveries ordered by most recent first.
+     */
+    public static function listDeadLetterQueue(int $perPage = 25): LengthAwarePaginator
+    {
+        return WebhookDelivery::query()
+            ->where('status', 'dead_letter')
+            ->orderByDesc('dead_letter_at')
+            ->paginate($perPage);
+    }
+
+    /**
+     * Purge all dead-letter deliveries (older than $olderThanDays days).
+     */
+    public static function purgeDeadLetterQueue(int $olderThanDays = 30): int
+    {
+        return WebhookDelivery::query()
+            ->where('status', 'dead_letter')
+            ->where('dead_letter_at', '<=', now()->subDays($olderThanDays))
+            ->delete();
     }
 }

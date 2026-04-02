@@ -151,11 +151,11 @@ Schedule::call(function (): void {
 
     foreach ($retrying as $delivery) {
         if (!$delivery->webhook || $delivery->webhook->status !== 'active') {
-            $delivery->update(['status' => 'failed']);
+            $delivery->markFailed('Webhook not found or inactive');
             continue;
         }
 
-        WebhookDispatcher::send($delivery->webhook, $delivery->event_type, $delivery->payload ?? []);
+        WebhookDispatcher::retryDelivery($delivery);
     }
 })->everyFiveMinutes()->name('webhooks.process-retries')->withoutOverlapping();
 
@@ -175,13 +175,14 @@ Artisan::command('catmin:webhooks:retry', function () {
 
     foreach ($retrying as $delivery) {
         if (!$delivery->webhook || $delivery->webhook->status !== 'active') {
-            $delivery->update(['status' => 'failed']);
+            $delivery->markFailed('Webhook not found or inactive');
             $this->warn('Webhook inactif ou supprimé pour delivery #' . $delivery->id . ' — marqué failed.');
             continue;
         }
 
-        WebhookDispatcher::send($delivery->webhook, $delivery->event_type, $delivery->payload ?? []);
-        $this->line('Retry déclenché pour delivery #' . $delivery->id . ' → ' . $delivery->webhook->url);
+        WebhookDispatcher::retryDelivery($delivery);
+        $delivery->refresh();
+        $this->line('Retry delivery #' . $delivery->id . ' → ' . $delivery->webhook->url . ' [' . $delivery->status . ']');
     }
 
     $this->info('Retry terminé.');
