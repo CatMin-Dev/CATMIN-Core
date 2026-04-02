@@ -10,9 +10,12 @@ use Illuminate\Support\Facades\Hash;
  * @property int    $id
  * @property string $username
  * @property string $email
+ * @property string|null $contact_email
+ * @property string|null $phone
  * @property string $password
  * @property string|null $first_name
  * @property string|null $last_name
+ * @property int|null $avatar_media_asset_id
  * @property bool   $is_active
  * @property bool   $is_super_admin
  * @property \Carbon\Carbon|null $last_login_at
@@ -29,9 +32,12 @@ class AdminUser extends Model
     protected $fillable = [
         'username',
         'email',
+        'contact_email',
         'password',
         'first_name',
         'last_name',
+        'phone',
+        'avatar_media_asset_id',
         'is_active',
         'is_super_admin',
         'two_factor_enabled',
@@ -46,6 +52,7 @@ class AdminUser extends Model
         'metadata' => 'array',
         'is_active' => 'boolean',
         'is_super_admin' => 'boolean',
+        'avatar_media_asset_id' => 'integer',
         'two_factor_enabled' => 'boolean',
         'two_factor_recovery_codes' => 'array',
         'last_login_at' => 'datetime',

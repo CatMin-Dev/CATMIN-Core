@@ -465,6 +465,13 @@ return [
                         'route' => 'index',
                     ],
                     [
+                        'label' => 'Profil admin',
+                        'icon' => 'bi bi-person-circle',
+                        'route' => 'profile.show',
+                        'active_when' => ['profile.*'],
+                        'permission' => 'module.core.list',
+                    ],
+                    [
                         'label' => 'Utilisateurs',
                         'icon' => 'bi bi-people',
                         'route' => 'users.index',

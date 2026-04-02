@@ -22,8 +22,8 @@
                     {{ $adminUsername }}
                 </button>
                 <div class="dropdown-menu dropdown-menu-end shadow-sm">
-                    @if(catmin_can('module.users.list'))
-                        <a class="dropdown-item" href="{{ admin_route('users.index') }}">Profil</a>
+                    @if(catmin_can('module.core.list'))
+                        <a class="dropdown-item" href="{{ admin_route('profile.show') }}">Profil</a>
                     @endif
                     @if(catmin_can('module.settings.list'))
                         <a class="dropdown-item" href="{{ admin_route('settings.index') }}">Parametres</a>

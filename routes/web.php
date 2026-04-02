@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\AddonMarketplaceController;
 use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\AdminPasswordResetController;
+use App\Http\Controllers\Admin\AdminProfileController;
 use App\Http\Controllers\Admin\AdminSessionsController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\RecoveryController;
@@ -104,6 +105,19 @@ Route::prefix($adminPath)->middleware('web')->name('admin.')->group(function () 
         Route::post('/sessions/revoke-others', [AdminSessionsController::class, 'revokeOthers'])
             ->middleware('catmin.permission:module.core.config')
             ->name('sessions.revoke-others');
+
+        Route::get('/profile', [AdminProfileController::class, 'show'])
+            ->middleware('catmin.permission:module.core.list')
+            ->name('profile.show');
+        Route::put('/profile', [AdminProfileController::class, 'updateProfile'])
+            ->middleware('catmin.permission:module.core.list')
+            ->name('profile.update');
+        Route::put('/profile/avatar', [AdminProfileController::class, 'updateAvatar'])
+            ->middleware('catmin.permission:module.core.list')
+            ->name('profile.avatar');
+        Route::put('/profile/password', [AdminProfileController::class, 'changePassword'])
+            ->middleware('catmin.permission:module.core.list')
+            ->name('profile.password');
 
         Route::get('/', [DashboardController::class, 'index'])
             ->name('index');
