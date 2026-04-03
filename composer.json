@@ -34,6 +34,7 @@
             "Addons\\CatminBooking\\": "addons/catmin-booking/",
             "Addons\\CatminCrmLight\\": "addons/catmin-crm-light/",
             "Addons\\CatminEventShopBridge\\": "addons/catmin-event-shop-bridge/",
+            "Addons\\CatminImportExport\\": "addons/catmin-import-export/",
             "Modules\\": "modules/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/",
