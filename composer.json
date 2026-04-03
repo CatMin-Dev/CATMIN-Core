@@ -36,6 +36,7 @@
             "Addons\\CatminEventShopBridge\\": "addons/catmin-event-shop-bridge/",
             "Addons\\CatminImportExport\\": "addons/catmin-import-export/",
             "Addons\\CatminProfileExtensions\\": "addons/catmin-profile-extensions/",
+            "Addons\\CatminSlider\\": "addons/catmin-slider/",
             "Modules\\": "modules/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/",

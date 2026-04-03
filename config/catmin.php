@@ -672,6 +672,13 @@ return [
                         'permission' => 'module.menus.menu',
                     ],
                     [
+                        'label' => 'Sliders',
+                        'icon' => 'bi bi-collection-play',
+                        'route' => 'slider.index',
+                        'active_when' => ['slider.*'],
+                        'permission' => 'slider.index',
+                    ],
+                    [
                         'label' => 'Blocks',
                         'icon' => 'bi bi-grid-3x3-gap',
                         'route' => 'content.show',
