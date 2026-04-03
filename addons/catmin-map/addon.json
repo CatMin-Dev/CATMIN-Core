@@ -1,0 +1,67 @@
+{
+    "name": "CATMIN Map",
+    "slug": "catmin-map",
+    "description": "Gestion des localisations g\u00e9ographiques avec carte interactive Leaflet/OSM",
+    "version": "1.0.0",
+    "author": "CATMIN Team",
+    "required_core_version": "4.0.0",
+    "required_php_version": "8.3.0",
+    "enabled": true,
+    "dependencies": [],
+    "required_modules": [
+        "core",
+        "logger"
+    ],
+    "depends_modules": [
+        "core",
+        "logger"
+    ],
+    "category": "feature",
+    "has_routes": true,
+    "has_migrations": true,
+    "has_assets": true,
+    "has_views": true,
+    "has_events": true,
+    "requires_core": true,
+    "entrypoints": {
+        "admin_routes": "routes.php",
+        "docs": "Docs/README.md",
+        "permissions": "Permissions/permissions.php",
+        "events": "Events/events.php",
+        "webhooks": "Webhooks/webhooks.php",
+        "settings": "Settings/settings.php"
+    },
+    "homepage": "",
+    "docs_url": "",
+    "changelog": "",
+    "compatibility": {
+        "supports_registry": true,
+        "supports_auto_install": true
+    },
+    "install_notes": "Aucune d\u00e9pendance externe. Leaflet charg\u00e9 via CDN.",
+    "events_emitted": [
+        "addon.catmin_map.configured"
+    ],
+    "events_listens": [
+        "setting.updated"
+    ],
+    "ui_hooks": [
+        "after:admin.topbar"
+    ],
+    "permissions_declared": [
+        "module.map.menu",
+        "module.map.list",
+        "module.map.create",
+        "module.map.edit",
+        "module.map.delete",
+        "module.map.api"
+    ],
+    "permissions": [
+        "module.map.menu",
+        "module.map.list",
+        "module.map.create",
+        "module.map.edit",
+        "module.map.delete",
+        "module.map.api"
+    ]
+}
