@@ -93,6 +93,12 @@
                 </div>
             </div>
 
+            @if(!empty($profileExtensionEnabled) && \Illuminate\Support\Facades\Route::has('admin.profile.extensions.update'))
+                @include('addon_catmin_profile_extensions::profile-extended-card', [
+                    'profileExtension' => $profileExtension ?? [],
+                ])
+            @endif
+
             <div class="card">
                 <div class="card-header bg-white"><h2 class="h6 mb-0">Changer le mot de passe</h2></div>
                 <div class="card-body">

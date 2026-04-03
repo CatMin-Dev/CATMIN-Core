@@ -1,0 +1,33 @@
+{
+    "name": "CATMIN Profile Extensions",
+    "slug": "catmin-profile-extensions",
+    "description": "Extension profil optionnelle: telephone, adresse, identite et preferences de contact.",
+    "version": "1.0.0",
+    "author": "CATMIN Team",
+    "enabled": true,
+    "dependencies": [],
+    "required_modules": [
+        "core",
+        "users",
+        "settings"
+    ],
+    "depends_modules": [
+        "core",
+        "users",
+        "settings"
+    ],
+    "category": "profile",
+    "has_routes": true,
+    "has_migrations": true,
+    "has_assets": false,
+    "has_views": true,
+    "requires_core": true,
+    "entrypoints": {
+        "admin_routes": "routes.php",
+        "docs": "Docs/README.md"
+    },
+    "permissions_declared": [
+        "module.core.list",
+        "module.core.config"
+    ]
+}

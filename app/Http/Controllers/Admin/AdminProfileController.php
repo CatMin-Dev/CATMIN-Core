@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\AdminUser;
 use App\Services\AdminProfileService;
 use App\Services\AdminSessionService;
+use App\Services\AddonManager;
 use App\Services\LocaleService;
+use App\Services\ProfileExtensionResolverService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
@@ -18,6 +20,7 @@ class AdminProfileController extends Controller
     public function __construct(
         private readonly AdminProfileService $adminProfileService,
         private readonly AdminSessionService $adminSessionService,
+        private readonly ProfileExtensionResolverService $profileExtensionResolver,
     ) {
     }
 
@@ -34,6 +37,10 @@ class AdminProfileController extends Controller
             'sessions' => $this->adminSessionService->listActiveForAdmin((int) $adminUser->id),
             'currentSessionId' => $request->session()->getId(),
             'canUseMediaPicker' => $this->adminProfileService->mediaTableExists(),
+            'profileExtensionEnabled' => AddonManager::enabled()->contains(function ($addon): bool {
+                return (string) ($addon->slug ?? '') === 'catmin-profile-extensions';
+            }),
+            'profileExtension' => $this->profileExtensionResolver->forAdminUser((int) $adminUser->id),
         ]);
     }
 

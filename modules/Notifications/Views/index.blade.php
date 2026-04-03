@@ -108,15 +108,13 @@
         </div>
     </div>
 
-    {{-- Bulk form + listing --}}
-    <form id="bulk-form" method="POST" action="{{ admin_route('notifications.bulk') }}">
-        @csrf
-        <x-admin.crud.table-card
+    {{-- Listing --}}
+    <x-admin.crud.table-card
             title="Notifications"
             :count="$notifications->total()"
             :empty-colspan="7"
             empty-message="Aucune notification."
-        >
+    >
             <x-slot:head>
                 <tr>
                     <th style="width:28px"><input type="checkbox" class="form-check-input" id="select-all" title="Tout sélectionner"></th>
@@ -131,7 +129,7 @@
             <x-slot:rows>
                 @foreach($notifications as $notif)
                     <tr class="{{ !$notif->is_read ? 'fw-semibold' : '' }}">
-                        <td><input type="checkbox" name="ids[]" value="{{ $notif->id }}" class="form-check-input row-checkbox"></td>
+                        <td><input type="checkbox" name="ids[]" value="{{ $notif->id }}" class="form-check-input row-checkbox" form="bulk-form"></td>
                         <td>
                             @php
                                 $badge = match($notif->type) {
@@ -170,7 +168,7 @@
                                     <form method="POST" action="{{ admin_route('notifications.read', $notif) }}" class="m-0">
                                         @csrf
                                         <button type="submit" class="btn btn-xs btn-outline-primary" title="Marquer lu">
-                                            <i class="bi bi-check2"></i>
+                                            <i class="bi bi-check2 me-1"></i>Lue
                                         </button>
                                     </form>
                                 @endif
@@ -178,7 +176,7 @@
                                     <form method="POST" action="{{ admin_route('notifications.acknowledge', $notif) }}" class="m-0">
                                         @csrf
                                         <button type="submit" class="btn btn-xs btn-outline-secondary" title="Acquitter">
-                                            <i class="bi bi-check2-circle"></i>
+                                            <i class="bi bi-check2-circle me-1"></i>Acquitter
                                         </button>
                                     </form>
                                 @endif
@@ -187,19 +185,19 @@
                     </tr>
                 @endforeach
             </x-slot:rows>
-        </x-admin.crud.table-card>
+    </x-admin.crud.table-card>
 
-        {{-- Bulk actions --}}
-        @if(catmin_can('module.notifications.read'))
-            <div class="d-flex align-items-center gap-2 mt-2">
-                <select name="bulk_action" class="form-select form-select-sm w-auto">
-                    <option value="read">Marquer lu</option>
-                    <option value="acknowledge">Acquitter</option>
-                </select>
-                <button type="submit" class="btn btn-sm btn-outline-secondary">Appliquer</button>
-            </div>
-        @endif
-    </form>
+    {{-- Bulk actions --}}
+    @if(catmin_can('module.notifications.read'))
+        <form id="bulk-form" method="POST" action="{{ admin_route('notifications.bulk') }}" class="d-flex align-items-center gap-2 mt-2">
+            @csrf
+            <select name="bulk_action" class="form-select form-select-sm w-auto">
+                <option value="read">Marquer lu</option>
+                <option value="acknowledge">Acquitter</option>
+            </select>
+            <button type="submit" class="btn btn-sm btn-outline-secondary">Appliquer</button>
+        </form>
+    @endif
 
     <div class="mt-3">
         {{ $notifications->withQueryString()->links() }}
