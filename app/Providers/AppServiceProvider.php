@@ -7,6 +7,8 @@ use App\Services\AddonViewLoader;
 use App\Services\AdminRuntimeInfoService;
 use App\Services\ModuleViewLoader;
 use App\Services\ModuleAssetLoader;
+use App\Services\ModuleLangLoader;
+use App\Services\AddonLangLoader;
 use App\Services\Performance\JobPerformanceState;
 use App\Services\Performance\PerformanceBudgetService;
 use App\Services\Performance\RequestPerformanceState;
@@ -54,6 +56,8 @@ class AppServiceProvider extends ServiceProvider
 
         ModuleViewLoader::registerNamespaces();
         AddonViewLoader::registerNamespaces();
+        ModuleLangLoader::registerNamespaces();
+        AddonLangLoader::registerNamespaces();
 
         AdminUser::updating(function (AdminUser $adminUser): void {
             /** @var SuperAdminGuardService $guard */

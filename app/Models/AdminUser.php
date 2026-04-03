@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Hash;
+use App\Services\LocaleService;
 
 /**
  * @property int    $id
@@ -77,6 +78,18 @@ class AdminUser extends Model
     public function verifyPassword(string $password): bool
     {
         return Hash::check($password, $this->password);
+    }
+
+    /**
+
+    /**
+     * Get the admin user's preferred locale, falling back to app default.
+     */
+    public function getLocale(): string
+    {
+        $meta = (array) ($this->metadata ?? []);
+        $locale = (string) ($meta['locale'] ?? '');
+        return LocaleService::isSupported($locale) ? $locale : LocaleService::DEFAULT_LOCALE;
     }
 
     /**

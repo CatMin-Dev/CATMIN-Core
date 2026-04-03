@@ -145,6 +145,25 @@
                 </div>
             </div>
 
+            <div class="card mb-4">
+                <div class="card-header bg-white"><h2 class="h6 mb-0">{{ __('users.locale_label') }}</h2></div>
+                <div class="card-body">
+                    <form method="POST" action="{{ route('admin.profile.locale') }}">
+                        @csrf
+                        @method('PUT')
+                        <div class="mb-3">
+                            <label class="form-label" for="locale">{{ __('users.locale_label') }}</label>
+                            <select id="locale" name="locale" class="form-select">
+                                @foreach(\App\Services\LocaleService::localeOptions() as $code => $label)
+                                    <option value="{{ $code }}" {{ $adminUser->getLocale() === $code ? 'selected' : '' }}>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <button class="btn btn-primary btn-sm" type="submit">{{ __('core.save') }}</button>
+                    </form>
+                </div>
+            </div>
+
             <div class="card">
                 <div class="card-header bg-white"><h2 class="h6 mb-0">Infos session utiles</h2></div>
                 <div class="card-body small">

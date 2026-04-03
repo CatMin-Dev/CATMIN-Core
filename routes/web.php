@@ -118,6 +118,9 @@ Route::prefix($adminPath)->middleware('web')->name('admin.')->group(function () 
         Route::put('/profile/password', [AdminProfileController::class, 'changePassword'])
             ->middleware('catmin.permission:module.core.list')
             ->name('profile.password');
+        Route::put('/profile/locale', [AdminProfileController::class, 'updateLocale'])
+            ->middleware('catmin.permission:module.core.list')
+            ->name('profile.locale');
 
         Route::get('/', [DashboardController::class, 'index'])
             ->name('index');

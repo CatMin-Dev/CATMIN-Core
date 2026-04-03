@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AdminUser;
 use App\Services\AdminProfileService;
 use App\Services\AdminSessionService;
+use App\Services\LocaleService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
@@ -119,5 +120,22 @@ class AdminProfileController extends Controller
         $adminUserId = (int) $request->session()->get('catmin_admin_user_id', 0);
 
         return $adminUserId > 0 ? AdminUser::query()->find($adminUserId) : null;
+    }
+
+    public function updateLocale(Request $request): RedirectResponse
+    {
+        $adminUser = $this->currentAdminUser($request);
+        if ($adminUser === null) {
+            return redirect()->route('admin.login');
+        }
+
+        $validated = $request->validate([
+            'locale' => ['required', 'string', 'in:' . implode(',', LocaleService::SUPPORTED_LOCALES)],
+        ]);
+
+        LocaleService::persistForUser($adminUser, (string) $validated['locale']);
+        LocaleService::apply((string) $validated['locale']);
+
+        return redirect()->route('admin.profile.show')->with('status', __('users.locale_saved'));
     }
 }

@@ -29,7 +29,7 @@ return [
         /*
         | Middleware for Admin Routes
         */
-        'middleware' => ['web', 'catmin.admin'],
+        'middleware' => ['web', 'catmin.admin', 'catmin.locale'],
 
         /*
         | Naming Convention for Routes

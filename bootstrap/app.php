@@ -8,6 +8,7 @@ use App\Http\Middleware\EnsureCatminPermission;
 use App\Http\Middleware\ApplySecurityHeaders;
 use App\Http\Middleware\LogRequestPerformance;
 use App\Http\Middleware\TrackAdminAnalytics;
+use App\Http\Middleware\SetAdminLocale;
 use App\Services\AddonLoader;
 use App\Services\CatminHookLoader;
 use App\Services\ModuleLoader;
@@ -60,6 +61,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'catmin.permission' => EnsureCatminPermission::class,
             'catmin.api-token' => EnsureCatminApiToken::class,
             'catmin.frontend.available' => EnsureCatminFrontendAvailable::class,
+            'catmin.locale' => SetAdminLocale::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

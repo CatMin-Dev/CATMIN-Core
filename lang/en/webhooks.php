@@ -1,0 +1,40 @@
+<?php
+
+/**
+ * CATMIN — English translations — webhooks
+ */
+return [
+    'title'                 => 'Webhooks',
+    'subtitle'              => 'Configure and monitor your outgoing webhooks.',
+    'new_webhook'           => 'New webhook',
+    'edit_webhook'          => 'Edit webhook',
+    'delete_webhook'        => 'Delete webhook',
+    'endpoint_url'          => 'Endpoint URL',
+    'secret'                => 'Secret (HMAC)',
+    'events'                => 'Listened events',
+    'is_active'             => 'Active',
+    'created_at'            => 'Created at',
+    'deliveries'            => 'Deliveries',
+    'delivery_id'           => 'Delivery ID',
+    'event_type'            => 'Event type',
+    'status'                => 'Status',
+    'status_sent'           => 'Sent',
+    'status_failed'         => 'Failed',
+    'status_pending'        => 'Pending',
+    'http_status'           => 'HTTP status',
+    'response_body'         => 'Response',
+    'delivered_at'          => 'Delivered at',
+    'retry'                 => 'Retry',
+    'retry_confirm'         => 'Retry delivery?',
+    'retried'               => 'Delivery re-queued.',
+    'no_deliveries'         => 'No deliveries recorded.',
+    'created'               => 'Webhook created.',
+    'updated'               => 'Webhook updated.',
+    'deleted'               => 'Webhook deleted.',
+    'activated'             => 'Webhook activated.',
+    'deactivated'           => 'Webhook deactivated.',
+    'signature_header'      => 'Signature header',
+    'payload_format'        => 'Payload format',
+    'test'                  => 'Test',
+    'test_sent'             => 'Test event sent.',
+];
