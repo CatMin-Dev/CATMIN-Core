@@ -9,6 +9,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use Modules\Cache\Services\QueryCacheService;
 use Modules\Webhooks\Services\WebhookDispatcher;
 
 class BookingAdminService
@@ -18,11 +19,16 @@ class BookingAdminService
      */
     public function services(array $filters = []): LengthAwarePaginator
     {
-        return BookingService::query()
-            ->when(($filters['q'] ?? '') !== '', fn ($q) => $q->where('name', 'like', '%' . $filters['q'] . '%'))
-            ->orderByDesc('created_at')
-            ->paginate(25)
-            ->withQueryString();
+        $page = max(1, (int) request()->query('page', 1));
+        $key = 'services.' . md5(json_encode([$filters, $page]));
+
+        return QueryCacheService::remember('booking', $key, 90, function () use ($filters): LengthAwarePaginator {
+            return BookingService::query()
+                ->when(($filters['q'] ?? '') !== '', fn ($q) => $q->where('name', 'like', '%' . $filters['q'] . '%'))
+                ->orderByDesc('created_at')
+                ->paginate(25)
+                ->withQueryString();
+        });
     }
 
     /**
@@ -34,7 +40,7 @@ class BookingAdminService
             ? (string) $payload['slug']
             : (string) $payload['name'];
 
-        return BookingService::query()->create([
+        $created = BookingService::query()->create([
             'name' => (string) $payload['name'],
             'slug' => $this->uniqueServiceSlug($slugBase),
             'description' => $payload['description'] ?? null,
@@ -45,6 +51,10 @@ class BookingAdminService
                 'created_by' => auth()->id(),
             ],
         ]);
+
+        $this->invalidateCache();
+
+        return $created;
     }
 
     /**
@@ -65,12 +75,15 @@ class BookingAdminService
             'is_active' => (bool) ($payload['is_active'] ?? true),
         ]);
 
+        $this->invalidateCache();
+
         return $service->fresh() ?? $service;
     }
 
     public function deleteService(BookingService $service): void
     {
         $service->delete();
+        $this->invalidateCache();
     }
 
     /**
@@ -78,14 +91,19 @@ class BookingAdminService
      */
     public function slots(array $filters = []): LengthAwarePaginator
     {
-        return BookingSlot::query()
-            ->with('service:id,name,slug')
-            ->when(!empty($filters['booking_service_id']), fn ($q) => $q->where('booking_service_id', (int) $filters['booking_service_id']))
-            ->when(($filters['from'] ?? '') !== '', fn ($q) => $q->whereDate('start_at', '>=', (string) $filters['from']))
-            ->when(($filters['to'] ?? '') !== '', fn ($q) => $q->whereDate('start_at', '<=', (string) $filters['to']))
-            ->orderBy('start_at')
-            ->paginate(40)
-            ->withQueryString();
+        $page = max(1, (int) request()->query('page', 1));
+        $key = 'slots.' . md5(json_encode([$filters, $page]));
+
+        return QueryCacheService::remember('booking', $key, 90, function () use ($filters): LengthAwarePaginator {
+            return BookingSlot::query()
+                ->with('service:id,name,slug')
+                ->when(!empty($filters['booking_service_id']), fn ($q) => $q->where('booking_service_id', (int) $filters['booking_service_id']))
+                ->when(($filters['from'] ?? '') !== '', fn ($q) => $q->whereDate('start_at', '>=', (string) $filters['from']))
+                ->when(($filters['to'] ?? '') !== '', fn ($q) => $q->whereDate('start_at', '<=', (string) $filters['to']))
+                ->orderBy('start_at')
+                ->paginate(40)
+                ->withQueryString();
+        });
     }
 
     /**
@@ -98,7 +116,7 @@ class BookingAdminService
 
         $this->assertNoSlotCollision((int) $payload['booking_service_id'], $startAt, $endAt);
 
-        return BookingSlot::query()->create([
+        $created = BookingSlot::query()->create([
             'booking_service_id' => (int) $payload['booking_service_id'],
             'start_at' => $startAt,
             'end_at' => $endAt,
@@ -106,6 +124,10 @@ class BookingAdminService
             'booked_count' => 0,
             'is_active' => (bool) ($payload['is_active'] ?? true),
         ]);
+
+        $this->invalidateCache();
+
+        return $created;
     }
 
     /**
@@ -127,6 +149,8 @@ class BookingAdminService
             'is_active' => (bool) ($payload['is_active'] ?? $slot->is_active),
         ]);
 
+        $this->invalidateCache();
+
         return $slot->fresh() ?? $slot;
     }
 
@@ -137,6 +161,7 @@ class BookingAdminService
         }
 
         $slot->delete();
+        $this->invalidateCache();
     }
 
     /**
@@ -144,15 +169,20 @@ class BookingAdminService
      */
     public function bookings(array $filters = []): LengthAwarePaginator
     {
-        return Booking::query()
-            ->with(['service:id,name,slug', 'slot:id,booking_service_id,start_at,end_at'])
-            ->when(($filters['status'] ?? '') !== '', fn ($q) => $q->where('status', (string) $filters['status']))
-            ->when(!empty($filters['booking_service_id']), fn ($q) => $q->where('booking_service_id', (int) $filters['booking_service_id']))
-            ->when(($filters['from'] ?? '') !== '', fn ($q) => $q->whereDate('created_at', '>=', (string) $filters['from']))
-            ->when(($filters['to'] ?? '') !== '', fn ($q) => $q->whereDate('created_at', '<=', (string) $filters['to']))
-            ->orderByDesc('created_at')
-            ->paginate(30)
-            ->withQueryString();
+        $page = max(1, (int) request()->query('page', 1));
+        $key = 'bookings.' . md5(json_encode([$filters, $page]));
+
+        return QueryCacheService::remember('booking', $key, 90, function () use ($filters): LengthAwarePaginator {
+            return Booking::query()
+                ->with(['service:id,name,slug', 'slot:id,booking_service_id,start_at,end_at'])
+                ->when(($filters['status'] ?? '') !== '', fn ($q) => $q->where('status', (string) $filters['status']))
+                ->when(!empty($filters['booking_service_id']), fn ($q) => $q->where('booking_service_id', (int) $filters['booking_service_id']))
+                ->when(($filters['from'] ?? '') !== '', fn ($q) => $q->whereDate('created_at', '>=', (string) $filters['from']))
+                ->when(($filters['to'] ?? '') !== '', fn ($q) => $q->whereDate('created_at', '<=', (string) $filters['to']))
+                ->orderByDesc('created_at')
+                ->paginate(30)
+                ->withQueryString();
+        });
     }
 
     /**
@@ -193,6 +223,8 @@ class BookingAdminService
 
             $this->dispatchWebhook('booking.created', $booking);
             $this->sendBookingMail($booking, 'created');
+
+            $this->invalidateCache();
 
             return $booking;
         });
@@ -238,6 +270,8 @@ class BookingAdminService
             $this->sendBookingMail($booking, 'cancelled');
         }
 
+        $this->invalidateCache();
+
         return $booking;
     }
 
@@ -254,25 +288,34 @@ class BookingAdminService
      */
     public function calendarData(string $from, string $to): array
     {
-        $slots = BookingSlot::query()
-            ->with('service:id,name')
-            ->whereBetween('start_at', [$from, $to])
-            ->orderBy('start_at')
-            ->get();
+        $key = 'calendar.' . md5($from . '|' . $to);
 
-        return [
-            'slots' => $slots->map(fn (BookingSlot $slot) => [
-                'id' => (int) $slot->id,
-                'service_id' => (int) $slot->booking_service_id,
-                'service_name' => (string) ($slot->service->name ?? ''),
-                'start_at' => optional($slot->start_at)?->toIso8601String(),
-                'end_at' => optional($slot->end_at)?->toIso8601String(),
-                'capacity' => (int) $slot->capacity,
-                'booked_count' => (int) $slot->booked_count,
-                'remaining' => $slot->remainingCapacity(),
-                'is_active' => (bool) $slot->is_active,
-            ])->values()->all(),
-        ];
+        return QueryCacheService::remember('booking', $key, 60, function () use ($from, $to): array {
+            $slots = BookingSlot::query()
+                ->with('service:id,name')
+                ->whereBetween('start_at', [$from, $to])
+                ->orderBy('start_at')
+                ->get();
+
+            return [
+                'slots' => $slots->map(fn (BookingSlot $slot) => [
+                    'id' => (int) $slot->id,
+                    'service_id' => (int) $slot->booking_service_id,
+                    'service_name' => (string) ($slot->service->name ?? ''),
+                    'start_at' => optional($slot->start_at)?->toIso8601String(),
+                    'end_at' => optional($slot->end_at)?->toIso8601String(),
+                    'capacity' => (int) $slot->capacity,
+                    'booked_count' => (int) $slot->booked_count,
+                    'remaining' => $slot->remainingCapacity(),
+                    'is_active' => (bool) $slot->is_active,
+                ])->values()->all(),
+            ];
+        });
+    }
+
+    private function invalidateCache(): void
+    {
+        QueryCacheService::invalidateModules(['booking', 'dashboard', 'performance', 'crm']);
     }
 
     private function uniqueServiceSlug(string $base, ?int $excludeId = null): string

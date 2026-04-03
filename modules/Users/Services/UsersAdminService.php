@@ -9,30 +9,35 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
+use Modules\Cache\Services\QueryCacheService;
 use Modules\Logger\Services\SystemLogService;
 
 class UsersAdminService
 {
     public function usersForListing(): Collection
     {
-        $query = User::query()
-            ->with('roles')
-            ->orderBy('id');
+        return QueryCacheService::remember('users', 'listing.' . (int) $this->supportsActivation(), 90, function (): Collection {
+            $query = User::query()
+                ->with('roles')
+                ->orderBy('id');
 
-        if ($this->supportsActivation()) {
-            $query->orderByDesc('is_active');
-        }
+            if ($this->supportsActivation()) {
+                $query->orderByDesc('is_active');
+            }
 
-        return $query->get();
+            return $query->get();
+        });
     }
 
     public function rolesForAssignment(): Collection
     {
-        return Role::query()
-            ->where('is_active', true)
-            ->orderBy('priority')
-            ->orderBy('name')
-            ->get();
+        return QueryCacheService::remember('users', 'roles.assignment', 300, function (): Collection {
+            return Role::query()
+                ->where('is_active', true)
+                ->orderBy('priority')
+                ->orderBy('name')
+                ->get();
+        });
     }
 
     public function supportsActivation(): bool
@@ -86,6 +91,8 @@ class UsersAdminService
             // Keep user creation resilient if logging fails.
         }
 
+        $this->invalidateCache();
+
         return $user;
     }
 
@@ -136,6 +143,8 @@ class UsersAdminService
             ],
         ]);
 
+        $this->invalidateCache();
+
         return $updated;
     }
 
@@ -163,6 +172,8 @@ class UsersAdminService
             } catch (\Throwable) {
                 // Keep activation toggle resilient if logging fails.
             }
+
+            $this->invalidateCache();
         }
 
         return $saved;
@@ -209,6 +220,8 @@ class UsersAdminService
                 'email' => $email,
             ],
         ]);
+
+        $this->invalidateCache();
     }
 
     public function bulkActivate(array $ids): int
@@ -217,7 +230,13 @@ class UsersAdminService
             return 0;
         }
 
-        return User::whereIn('id', $ids)->update(['is_active' => true]);
+        $updated = User::whereIn('id', $ids)->update(['is_active' => true]);
+
+        if ($updated > 0) {
+            $this->invalidateCache();
+        }
+
+        return $updated;
     }
 
     public function bulkDeactivate(array $ids): int
@@ -226,6 +245,17 @@ class UsersAdminService
             return 0;
         }
 
-        return User::whereIn('id', $ids)->update(['is_active' => false]);
+        $updated = User::whereIn('id', $ids)->update(['is_active' => false]);
+
+        if ($updated > 0) {
+            $this->invalidateCache();
+        }
+
+        return $updated;
+    }
+
+    private function invalidateCache(): void
+    {
+        QueryCacheService::invalidateModules(['users', 'dashboard', 'performance']);
     }
 }

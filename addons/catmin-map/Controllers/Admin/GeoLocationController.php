@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use InvalidArgumentException;
 
 class GeoLocationController extends Controller
 {
@@ -38,14 +39,19 @@ class GeoLocationController extends Controller
     {
         $request->validate([
             'name'    => 'required|string|max:191',
-            'lat'     => 'nullable|numeric|between:-90,90',
-            'lng'     => 'nullable|numeric|between:-180,180',
+            'address' => 'required|string|max:255',
             'email'   => 'nullable|email|max:191',
             'website' => 'nullable|url|max:255',
             'status'  => 'required|in:published,draft,archived',
         ]);
 
-        $location = $this->service->createLocation($request->all());
+        try {
+            $location = $this->service->createLocation($request->all());
+        } catch (InvalidArgumentException $exception) {
+            return redirect()->back()
+                ->withErrors(['address' => $exception->getMessage()])
+                ->withInput();
+        }
 
         return redirect()->route('admin.map.locations.edit', $location)
             ->with('success', 'Lieu créé.');
@@ -65,14 +71,19 @@ class GeoLocationController extends Controller
     {
         $request->validate([
             'name'    => 'required|string|max:191',
-            'lat'     => 'nullable|numeric|between:-90,90',
-            'lng'     => 'nullable|numeric|between:-180,180',
+            'address' => 'required|string|max:255',
             'email'   => 'nullable|email|max:191',
             'website' => 'nullable|url|max:255',
             'status'  => 'required|in:published,draft,archived',
         ]);
 
-        $this->service->updateLocation($geoLocation, $request->all());
+        try {
+            $this->service->updateLocation($geoLocation, $request->all());
+        } catch (InvalidArgumentException $exception) {
+            return redirect()->back()
+                ->withErrors(['address' => $exception->getMessage()])
+                ->withInput();
+        }
 
         return redirect()->route('admin.map.locations.edit', $geoLocation)
             ->with('success', 'Lieu mis à jour.');

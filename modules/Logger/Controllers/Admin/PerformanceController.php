@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\Performance\PerformanceReportService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Modules\Cache\Services\QueryCacheService;
 
 class PerformanceController extends Controller
 {
@@ -22,6 +23,7 @@ class PerformanceController extends Controller
             'currentPage' => 'performance',
             'selectedHours' => $hours,
             'report' => $report,
+            'queryCache' => QueryCacheService::stats(),
         ]);
     }
 }

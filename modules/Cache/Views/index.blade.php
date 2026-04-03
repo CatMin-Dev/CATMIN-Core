@@ -48,6 +48,42 @@
         </div>
     </div>
 
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-md-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h2 class="h6 mb-1 text-muted">Query cache keys</h2>
+                    <p class="h4 mb-0 fw-bold">{{ number_format($queryCache['keys'] ?? 0) }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h2 class="h6 mb-1 text-muted">Hit ratio</h2>
+                    <p class="h4 mb-0 fw-bold">{{ $queryCache['hit_ratio'] ?? 0 }}%</p>
+                    <small class="text-muted">{{ $queryCache['hits'] ?? 0 }} hits / {{ $queryCache['misses'] ?? 0 }} misses</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h2 class="h6 mb-1 text-muted">Modules cachés</h2>
+                    <p class="h4 mb-0 fw-bold">{{ $queryCache['modules'] ?? 0 }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h2 class="h6 mb-1 text-muted">Invalidations auto</h2>
+                    <p class="h4 mb-0 fw-bold">{{ number_format($queryCache['invalidations'] ?? 0) }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="card">
         <div class="card-header bg-white"><h2 class="h6 mb-0">Actions</h2></div>
         <div class="card-body">
@@ -93,6 +129,21 @@
                                 @csrf
                                 <button class="btn btn-info btn-sm w-100" type="submit">
                                     <i class="bi bi-code-slash me-1"></i>Vider vues
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6 col-lg-3">
+                    <div class="card border-primary h-100">
+                        <div class="card-body text-center">
+                            <i class="bi bi-lightning-charge fs-2 text-primary mb-2"></i>
+                            <h3 class="h6">Query Cache V2</h3>
+                            <p class="small text-muted">Vider les caches de requêtes + registres modules</p>
+                            <form method="POST" action="{{ route('admin.cache.clear.query') }}">
+                                @csrf
+                                <button class="btn btn-primary btn-sm w-100" type="submit">
+                                    <i class="bi bi-arrow-repeat me-1"></i>Vider query cache
                                 </button>
                             </form>
                         </div>

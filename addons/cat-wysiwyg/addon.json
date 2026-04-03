@@ -39,7 +39,5 @@
     "addon.cat_wysiwyg.menu",
     "addon.cat_wysiwyg.config"
   ],
-  "ui_hooks": [
-    "after:admin.topbar"
-  ]
+  "ui_hooks": [],
 }

@@ -22,4 +22,8 @@ Route::middleware(['web', 'catmin.admin'])
         Route::post('/cache/clear/views', [CacheController::class, 'clearViews'])
             ->middleware('catmin.permission:module.cache.config')
             ->name('cache.clear.views');
+
+        Route::post('/cache/clear/query', [CacheController::class, 'clearQueryCache'])
+            ->middleware('catmin.permission:module.cache.config')
+            ->name('cache.clear.query');
     });

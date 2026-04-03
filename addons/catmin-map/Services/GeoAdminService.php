@@ -6,7 +6,9 @@ use Addons\CatminMap\Models\GeoCategory;
 use Addons\CatminMap\Models\GeoLocation;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 
 class GeoAdminService
 {
@@ -104,6 +106,7 @@ class GeoAdminService
     public function createLocation(array $payload): GeoLocation
     {
         $slug = $this->uniqueSlug((string) ($payload['slug'] ?? $payload['name']));
+        [$lat, $lng] = $this->resolveCoordinates($payload);
 
         return GeoLocation::query()->create([
             'geo_category_id' => $payload['geo_category_id'] ?? null,
@@ -114,8 +117,8 @@ class GeoAdminService
             'city'            => $payload['city'] ?? null,
             'country'         => $payload['country'] ?? null,
             'zip'             => $payload['zip'] ?? null,
-            'lat'             => isset($payload['lat']) && $payload['lat'] !== '' ? (float) $payload['lat'] : null,
-            'lng'             => isset($payload['lng']) && $payload['lng'] !== '' ? (float) $payload['lng'] : null,
+            'lat'             => $lat,
+            'lng'             => $lng,
             'phone'           => $payload['phone'] ?? null,
             'email'           => $payload['email'] ?? null,
             'website'         => $payload['website'] ?? null,
@@ -132,6 +135,8 @@ class GeoAdminService
     /** @param array<string,mixed> $payload */
     public function updateLocation(GeoLocation $location, array $payload): GeoLocation
     {
+        [$lat, $lng] = $this->resolveCoordinates($payload, $location);
+
         $location->update([
             'geo_category_id' => array_key_exists('geo_category_id', $payload) ? ($payload['geo_category_id'] ?: null) : $location->geo_category_id,
             'name'            => (string) ($payload['name'] ?? $location->name),
@@ -140,8 +145,8 @@ class GeoAdminService
             'city'            => $payload['city'] ?? $location->city,
             'country'         => $payload['country'] ?? $location->country,
             'zip'             => $payload['zip'] ?? $location->zip,
-            'lat'             => isset($payload['lat']) && $payload['lat'] !== '' ? (float) $payload['lat'] : $location->lat,
-            'lng'             => isset($payload['lng']) && $payload['lng'] !== '' ? (float) $payload['lng'] : $location->lng,
+            'lat'             => $lat,
+            'lng'             => $lng,
             'phone'           => $payload['phone'] ?? $location->phone,
             'email'           => $payload['email'] ?? $location->email,
             'website'         => $payload['website'] ?? $location->website,
@@ -173,5 +178,68 @@ class GeoAdminService
         }
 
         return $i === 0 ? $slug : $slug . '-' . $i;
+    }
+
+    /**
+     * @param array<string,mixed> $payload
+     * @return array{0: float|null, 1: float|null}
+     */
+    private function resolveCoordinates(array $payload, ?GeoLocation $location = null): array
+    {
+        // Backward-compat for programmatic calls/tests that still pass coordinates.
+        if (isset($payload['lat'], $payload['lng']) && $payload['lat'] !== '' && $payload['lng'] !== '') {
+            return [(float) $payload['lat'], (float) $payload['lng']];
+        }
+
+        $address = trim((string) ($payload['address'] ?? $location?->address ?? ''));
+        $city = trim((string) ($payload['city'] ?? $location?->city ?? ''));
+        $zip = trim((string) ($payload['zip'] ?? $location?->zip ?? ''));
+        $country = trim((string) ($payload['country'] ?? $location?->country ?? ''));
+
+        $query = implode(', ', array_filter([$address, $zip, $city, $country]));
+
+        if ($query === '') {
+            return [$location?->lat, $location?->lng];
+        }
+
+        $endpoint = (string) setting('map.geocoding_url', 'https://nominatim.openstreetmap.org/search');
+        $timeout = (int) setting('map.geocoding_timeout', 8);
+        $userAgent = (string) setting('map.geocoding_user_agent', 'CATMIN-Map/1.0 (+https://catmin.local)');
+
+        try {
+            $response = Http::timeout($timeout)
+                ->acceptJson()
+                ->withHeaders(['User-Agent' => $userAgent])
+                ->get($endpoint, [
+                    'q' => $query,
+                    'format' => 'jsonv2',
+                    'limit' => 1,
+                ]);
+        } catch (\Throwable) {
+            if ($location?->lat !== null && $location?->lng !== null) {
+                return [(float) $location->lat, (float) $location->lng];
+            }
+
+            throw new InvalidArgumentException('Impossible de géocoder cette adresse pour le moment. Réessayez plus tard.');
+        }
+
+        if (!$response->ok()) {
+            if ($location?->lat !== null && $location?->lng !== null) {
+                return [(float) $location->lat, (float) $location->lng];
+            }
+
+            throw new InvalidArgumentException('Échec du géocodage automatique. Vérifiez l\'adresse.');
+        }
+
+        $rows = $response->json();
+        if (is_array($rows) && isset($rows[0]['lat'], $rows[0]['lon'])) {
+            return [(float) $rows[0]['lat'], (float) $rows[0]['lon']];
+        }
+
+        if ($location?->lat !== null && $location?->lng !== null) {
+            return [(float) $location->lat, (float) $location->lng];
+        }
+
+        throw new InvalidArgumentException('Aucune coordonnée trouvée pour cette adresse.');
     }
 }

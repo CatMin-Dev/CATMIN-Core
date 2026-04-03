@@ -15,6 +15,7 @@ class CacheController extends Controller
             'currentPage' => 'cache',
             'info' => CacheAdminService::info(),
             'entryCount' => CacheAdminService::cacheEntryCount(),
+            'queryCache' => CacheAdminService::queryCacheStats(),
         ]);
     }
 
@@ -42,5 +43,13 @@ class CacheController extends Controller
 
         return redirect()->route('admin.cache.index')
             ->with('success', 'Cache des vues Blade vidé.');
+    }
+
+    public function clearQueryCache(): RedirectResponse
+    {
+        $count = CacheAdminService::clearQueryCache();
+
+        return redirect()->route('admin.cache.index')
+            ->with('success', 'Cache requêtes vidé. Clés supprimées: ' . $count . '.');
     }
 }

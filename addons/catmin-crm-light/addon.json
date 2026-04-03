@@ -51,9 +51,7 @@
     "events_listens": [
         "setting.updated"
     ],
-    "ui_hooks": [
-        "after:admin.topbar"
-    ],
+    "ui_hooks": [],
     "permissions_declared": [
         "module.crm.menu",
         "module.crm.list",

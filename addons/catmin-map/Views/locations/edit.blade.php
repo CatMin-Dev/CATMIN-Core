@@ -81,8 +81,9 @@
                     <div class="card-header bg-white"><strong>Adresse &amp; Coordonnées GPS</strong></div>
                     <div class="card-body row g-3">
                         <div class="col-12">
-                            <label class="form-label">Adresse</label>
+                            <label class="form-label">Adresse <span class="text-danger">*</span></label>
                             <input type="text" name="address" class="form-control" maxlength="255"
+                                required
                                 value="{{ old('address', $location->address ?? '') }}">
                         </div>
                         <div class="col-md-5">
@@ -101,22 +102,21 @@
                                 value="{{ old('zip', $location->zip ?? '') }}">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Latitude</label>
-                            <input type="number" name="lat" step="0.0000001" min="-90" max="90"
-                                class="form-control" id="inputLat"
-                                value="{{ old('lat', $location->lat ?? '') }}">
+                            <label class="form-label">Latitude (auto)</label>
+                            <input type="text" class="form-control" value="{{ $location?->lat ?? 'générée à l\'enregistrement' }}" readonly>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Longitude</label>
-                            <input type="number" name="lng" step="0.0000001" min="-180" max="180"
-                                class="form-control" id="inputLng"
-                                value="{{ old('lng', $location->lng ?? '') }}">
+                            <label class="form-label">Longitude (auto)</label>
+                            <input type="text" class="form-control" value="{{ $location?->lng ?? 'générée à l\'enregistrement' }}" readonly>
                         </div>
 
-                        {{-- Mini-map pour choisir les coords --}}
+                        {{-- Mini-map aperçu des coords générées --}}
                         <div class="col-12">
-                            <p class="small text-muted mb-1">Cliquez sur la carte pour définir les coordonnées :</p>
-                            <div id="pickMap" style="height:300px;border-radius:8px;"></div>
+                            <p class="small text-muted mb-1">Les coordonnées sont générées automatiquement à partir de l'adresse.</p>
+                            <div id="pickMap"
+                                 data-lat="{{ $location?->lat ?? '' }}"
+                                 data-lng="{{ $location?->lng ?? '' }}"
+                                 style="height:300px;border-radius:8px;"></div>
                         </div>
                     </div>
                 </div>
@@ -188,14 +188,20 @@
 
 @push('scripts')
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XSj/4=" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
 (function () {
-    var latInput = document.getElementById('inputLat');
-    var lngInput = document.getElementById('inputLng');
-    var initLat  = parseFloat(latInput.value) || 46.5;
-    var initLng  = parseFloat(lngInput.value) || 2.3;
-    var zoom     = (latInput.value !== '') ? 13 : 5;
+    var mapNode = document.getElementById('pickMap');
+    if (!mapNode) {
+        return;
+    }
+
+    var latValue = parseFloat(mapNode.dataset.lat || '');
+    var lngValue = parseFloat(mapNode.dataset.lng || '');
+    var hasCoords = !isNaN(latValue) && !isNaN(lngValue);
+    var initLat = hasCoords ? latValue : 46.5;
+    var initLng = hasCoords ? lngValue : 2.3;
+    var zoom = hasCoords ? 13 : 5;
 
     var map = L.map('pickMap').setView([initLat, initLng], zoom);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -203,22 +209,9 @@
         maxZoom: 19
     }).addTo(map);
 
-    var marker = null;
-    if (latInput.value !== '' && lngInput.value !== '') {
-        marker = L.marker([initLat, initLng]).addTo(map);
+    if (hasCoords) {
+        L.marker([initLat, initLng]).addTo(map);
     }
-
-    map.on('click', function (e) {
-        var lat = e.latlng.lat.toFixed(7);
-        var lng = e.latlng.lng.toFixed(7);
-        latInput.value = lat;
-        lngInput.value = lng;
-        if (marker) {
-            marker.setLatLng(e.latlng);
-        } else {
-            marker = L.marker(e.latlng).addTo(map);
-        }
-    });
 })();
 </script>
 @endpush

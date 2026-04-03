@@ -8,6 +8,7 @@ use Addons\CatminCrmLight\Models\CrmNote;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Modules\Cache\Services\QueryCacheService;
 
 class CrmAdminService
 {
@@ -15,27 +16,31 @@ class CrmAdminService
     public function contacts(array $filters = []): LengthAwarePaginator
     {
         $q = trim((string) ($filters['q'] ?? ''));
+        $page = max(1, (int) request()->query('page', 1));
+        $key = 'contacts.' . md5(json_encode([$q, $page]));
 
-        return CrmContact::query()
-            ->with('company:id,name')
-            ->when($q !== '', function ($builder) use ($q): void {
-                $builder->where(function ($sub) use ($q): void {
-                    $sub->where('first_name', 'like', '%' . $q . '%')
-                        ->orWhere('last_name', 'like', '%' . $q . '%')
-                        ->orWhere('email', 'like', '%' . $q . '%')
-                        ->orWhere('phone', 'like', '%' . $q . '%')
-                        ->orWhereHas('company', fn ($cq) => $cq->where('name', 'like', '%' . $q . '%'));
-                });
-            })
-            ->orderByDesc('created_at')
-            ->paginate(25)
-            ->withQueryString();
+        return QueryCacheService::remember('crm', $key, 90, function () use ($q): LengthAwarePaginator {
+            return CrmContact::query()
+                ->with('company:id,name')
+                ->when($q !== '', function ($builder) use ($q): void {
+                    $builder->where(function ($sub) use ($q): void {
+                        $sub->where('first_name', 'like', '%' . $q . '%')
+                            ->orWhere('last_name', 'like', '%' . $q . '%')
+                            ->orWhere('email', 'like', '%' . $q . '%')
+                            ->orWhere('phone', 'like', '%' . $q . '%')
+                            ->orWhereHas('company', fn ($cq) => $cq->where('name', 'like', '%' . $q . '%'));
+                    });
+                })
+                ->orderByDesc('created_at')
+                ->paginate(25)
+                ->withQueryString();
+        });
     }
 
     /** @param array<string,mixed> $payload */
     public function createContact(array $payload): CrmContact
     {
-        return CrmContact::query()->create([
+        $created = CrmContact::query()->create([
             'crm_company_id' => $payload['crm_company_id'] ?? null,
             'first_name' => (string) $payload['first_name'],
             'last_name' => $payload['last_name'] ?? null,
@@ -47,6 +52,10 @@ class CrmAdminService
             'notes' => $payload['notes'] ?? null,
             'metadata' => ['source' => 'admin'],
         ]);
+
+        $this->invalidateCache();
+
+        return $created;
     }
 
     /** @param array<string,mixed> $payload */
@@ -64,31 +73,38 @@ class CrmAdminService
             'notes' => $payload['notes'] ?? null,
         ]);
 
+        $this->invalidateCache();
+
         return $contact->fresh() ?? $contact;
     }
 
     public function deleteContact(CrmContact $contact): void
     {
         $contact->delete();
+        $this->invalidateCache();
     }
 
     /** @param array<string,mixed> $filters */
     public function companies(array $filters = []): LengthAwarePaginator
     {
         $q = trim((string) ($filters['q'] ?? ''));
+        $page = max(1, (int) request()->query('page', 1));
+        $key = 'companies.' . md5(json_encode([$q, $page]));
 
-        return CrmCompany::query()
-            ->withCount('contacts')
-            ->when($q !== '', fn ($builder) => $builder->where('name', 'like', '%' . $q . '%'))
-            ->orderBy('name')
-            ->paginate(25)
-            ->withQueryString();
+        return QueryCacheService::remember('crm', $key, 90, function () use ($q): LengthAwarePaginator {
+            return CrmCompany::query()
+                ->withCount('contacts')
+                ->when($q !== '', fn ($builder) => $builder->where('name', 'like', '%' . $q . '%'))
+                ->orderBy('name')
+                ->paginate(25)
+                ->withQueryString();
+        });
     }
 
     /** @param array<string,mixed> $payload */
     public function createCompany(array $payload): CrmCompany
     {
-        return CrmCompany::query()->create([
+        $created = CrmCompany::query()->create([
             'name' => (string) $payload['name'],
             'website' => $payload['website'] ?? null,
             'industry' => $payload['industry'] ?? null,
@@ -97,6 +113,10 @@ class CrmAdminService
             'address' => $payload['address'] ?? null,
             'notes' => $payload['notes'] ?? null,
         ]);
+
+        $this->invalidateCache();
+
+        return $created;
     }
 
     /** @param array<string,mixed> $payload */
@@ -112,17 +132,20 @@ class CrmAdminService
             'notes' => $payload['notes'] ?? null,
         ]);
 
+        $this->invalidateCache();
+
         return $company->fresh() ?? $company;
     }
 
     public function deleteCompany(CrmCompany $company): void
     {
         $company->delete();
+        $this->invalidateCache();
     }
 
     public function addNote(CrmContact $contact, string $content, string $type = 'note', ?string $module = null, ?string $linkedType = null, ?int $linkedId = null): CrmNote
     {
-        return CrmNote::query()->create([
+        $note = CrmNote::query()->create([
             'crm_contact_id' => (int) $contact->id,
             'type' => $type,
             'content' => $content,
@@ -131,11 +154,18 @@ class CrmAdminService
             'linked_id' => $linkedId,
             'created_by_id' => auth()->id(),
         ]);
+
+        $this->invalidateCache();
+
+        return $note;
     }
 
     /** @return array<int, array<string,mixed>> */
     public function contactTimeline(CrmContact $contact): array
     {
+        $key = 'timeline.' . (int) $contact->id . '.' . md5((string) ($contact->email ?? ''));
+
+        return QueryCacheService::remember('crm', $key, 60, function () use ($contact): array {
         $items = [];
 
         foreach ($contact->crmNotes()->get() as $note) {
@@ -186,11 +216,12 @@ class CrmAdminService
             }
         }
 
-        usort($items, static function (array $a, array $b): int {
-            return strcmp((string) ($b['date'] ?? ''), (string) ($a['date'] ?? ''));
-        });
+            usort($items, static function (array $a, array $b): int {
+                return strcmp((string) ($b['date'] ?? ''), (string) ($a['date'] ?? ''));
+            });
 
-        return $items;
+            return $items;
+        });
     }
 
     public function sendContactMail(CrmContact $contact, string $subject, string $message): bool
@@ -211,5 +242,10 @@ class CrmAdminService
             $this->addNote($contact, 'Échec envoi email: ' . $subject, 'mail_failed', 'mailer');
             return false;
         }
+    }
+
+    private function invalidateCache(): void
+    {
+        QueryCacheService::invalidateModules(['crm', 'dashboard', 'performance']);
     }
 }

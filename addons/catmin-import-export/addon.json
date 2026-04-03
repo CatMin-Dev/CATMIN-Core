@@ -54,9 +54,7 @@
     "events_listens": [
         "setting.updated"
     ],
-    "ui_hooks": [
-        "after:admin.topbar"
-    ],
+    "ui_hooks": [],
     "permissions_declared": [
         "module.import_export.menu",
         "module.import_export.use",

@@ -41,6 +41,13 @@
         <div class="col-6 col-xl-2"><div class="card h-100"><div class="card-body"><div class="small text-muted">Fenetre</div><div class="fs-4 fw-semibold">{{ $report['window_hours'] ?? 24 }}h</div></div></div></div>
     </div>
 
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-xl-3"><div class="card h-100"><div class="card-body"><div class="small text-muted">Query cache keys</div><div class="fs-4 fw-semibold">{{ $queryCache['keys'] ?? 0 }}</div></div></div></div>
+        <div class="col-6 col-xl-3"><div class="card h-100"><div class="card-body"><div class="small text-muted">Query cache hit ratio</div><div class="fs-4 fw-semibold">{{ $queryCache['hit_ratio'] ?? 0 }}%</div></div></div></div>
+        <div class="col-6 col-xl-3"><div class="card h-100"><div class="card-body"><div class="small text-muted">Query cache requests</div><div class="fs-4 fw-semibold">{{ $queryCache['requests'] ?? 0 }}</div></div></div></div>
+        <div class="col-6 col-xl-3"><div class="card h-100"><div class="card-body"><div class="small text-muted">Invalidations auto</div><div class="fs-4 fw-semibold">{{ $queryCache['invalidations'] ?? 0 }}</div></div></div></div>
+    </div>
+
     <x-admin.crud.table-card title="Budgets de performance" :count="count($report['budgets'] ?? [])" :empty-colspan="8" empty-message="Aucun budget defini.">
         <x-slot:head>
             <tr><th>Zone</th><th>Hits</th><th>Avg ms</th><th>Max ms</th><th>Avg queries</th><th>Budget ms</th><th>Budget queries</th><th>Breaches</th></tr>

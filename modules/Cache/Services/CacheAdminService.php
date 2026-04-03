@@ -70,6 +70,19 @@ class CacheAdminService
         Artisan::call('view:clear');
     }
 
+    public static function clearQueryCache(): int
+    {
+        return QueryCacheService::flushAll();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public static function queryCacheStats(): array
+    {
+        return QueryCacheService::stats();
+    }
+
     /**
      * Estimate cache entry count (database store only).
      */

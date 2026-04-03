@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Str;
+use Modules\Cache\Services\QueryCacheService;
 use Modules\Logger\Services\SystemLogService;
 use Modules\Articles\Models\Article;
 use Modules\Articles\Models\Tag;
@@ -22,48 +23,55 @@ class ArticleAdminService
     public function listing(?string $search = null, int $perPage = 25, string $scope = 'active', ?int $categoryId = null, ?int $tagId = null): LengthAwarePaginator
     {
         $term = trim((string) $search);
+        $page = max(1, (int) request()->query('page', 1));
+        $key = 'listing.' . md5(json_encode([$term, $perPage, $scope, $categoryId, $tagId, $page]));
 
-        $query = Article::query()
-            ->with(['category:id,name', 'tags:id,name'])
-            ->select(['id', 'title', 'slug', 'excerpt', 'content_type', 'article_category_id', 'status', 'published_at', 'updated_at', 'media_asset_id'])
-            ->when($term !== '', function ($query) use ($term) {
-                $query->where(function ($inner) use ($term) {
-                    $inner->where('title', 'like', '%' . $term . '%')
-                        ->orWhere('slug', 'like', '%' . $term . '%')
-                        ->orWhere('excerpt', 'like', '%' . $term . '%')
-                        ->orWhere('content_type', 'like', '%' . $term . '%');
-                });
-            })
-            ->when($categoryId !== null, fn ($query) => $query->where('article_category_id', $categoryId))
-            ->when($tagId !== null, fn ($query) => $query->whereHas('tags', fn ($inner) => $inner->where('tags.id', $tagId)))
-            ->orderByDesc('deleted_at')
-            ->orderByDesc('published_at')
-            ->orderByDesc('updated_at');
+        return QueryCacheService::remember('articles', $key, 90, function () use ($term, $perPage, $scope, $categoryId, $tagId): LengthAwarePaginator {
+            $query = Article::query()
+                ->with(['category:id,name', 'tags:id,name'])
+                ->select(['id', 'title', 'slug', 'excerpt', 'content_type', 'article_category_id', 'status', 'published_at', 'updated_at', 'media_asset_id'])
+                ->when($term !== '', function ($query) use ($term) {
+                    $query->where(function ($inner) use ($term) {
+                        $inner->where('title', 'like', '%' . $term . '%')
+                            ->orWhere('slug', 'like', '%' . $term . '%')
+                            ->orWhere('excerpt', 'like', '%' . $term . '%')
+                            ->orWhere('content_type', 'like', '%' . $term . '%');
+                    });
+                })
+                ->when($categoryId !== null, fn ($query) => $query->where('article_category_id', $categoryId))
+                ->when($tagId !== null, fn ($query) => $query->whereHas('tags', fn ($inner) => $inner->where('tags.id', $tagId)))
+                ->orderByDesc('deleted_at')
+                ->orderByDesc('published_at')
+                ->orderByDesc('updated_at');
 
-        if ($scope === 'trash') {
-            $query->onlyTrashed();
-        } elseif ($scope === 'all') {
-            $query->withTrashed();
-        }
+            if ($scope === 'trash') {
+                $query->onlyTrashed();
+            } elseif ($scope === 'all') {
+                $query->withTrashed();
+            }
 
-        return $query
-            ->paginate($perPage)
-            ->withQueryString();
+            return $query
+                ->paginate($perPage)
+                ->withQueryString();
+        });
     }
 
     public function softDelete(Article $item): void
     {
         $item->delete();
+        $this->invalidateCache();
     }
 
     public function restore(Article $item): void
     {
         $item->restore();
+        $this->invalidateCache();
     }
 
     public function hardDelete(Article $item): void
     {
         $item->forceDelete();
+        $this->invalidateCache();
     }
 
     public function emptyTrash(): int
@@ -75,6 +83,8 @@ class ArticleAdminService
             $item->forceDelete();
             $count++;
         }
+
+        $this->invalidateCache();
 
         return $count;
     }
@@ -95,6 +105,10 @@ class ArticleAdminService
         foreach ($trashed as $item) {
             $item->forceDelete();
             $count++;
+        }
+
+        if ($count > 0) {
+            $this->invalidateCache();
         }
 
         return $count;
@@ -159,6 +173,8 @@ class ArticleAdminService
         } catch (\Throwable) {
             // Keep content creation resilient if logging fails.
         }
+
+        $this->invalidateCache();
 
         return $item;
     }
@@ -231,6 +247,8 @@ class ArticleAdminService
             // Keep content update resilient if logging fails.
         }
 
+        $this->invalidateCache();
+
         return $item;
     }
 
@@ -256,6 +274,8 @@ class ArticleAdminService
             ]);
             Analytics::track('article.published', 'content', 'publish', 'success');
         }
+
+        $this->invalidateCache();
 
         return $item;
     }
@@ -319,22 +339,45 @@ class ArticleAdminService
 
     public function bulkPublish(array $ids): int
     {
-        return Article::whereIn('id', $ids)
+        $updated = Article::whereIn('id', $ids)
             ->whereNotNull('published_at')
             ->update(['status' => 'published']);
+
+        if ($updated > 0) {
+            $this->invalidateCache();
+        }
+
+        return $updated;
     }
 
     public function bulkUnpublish(array $ids): int
     {
-        return Article::whereIn('id', $ids)
+        $updated = Article::whereIn('id', $ids)
             ->update(['published_at' => null, 'status' => 'draft']);
+
+        if ($updated > 0) {
+            $this->invalidateCache();
+        }
+
+        return $updated;
     }
 
     public function bulkTrash(array $ids): int
     {
-        return Article::whereIn('id', $ids)
+        $deleted = Article::whereIn('id', $ids)
             ->whereNull('deleted_at')
             ->delete();
+
+        if ($deleted > 0) {
+            $this->invalidateCache();
+        }
+
+        return $deleted;
+    }
+
+    private function invalidateCache(): void
+    {
+        QueryCacheService::invalidateModules(['articles', 'dashboard', 'performance']);
     }
 
     /** @param array<int, mixed> $tagIds */

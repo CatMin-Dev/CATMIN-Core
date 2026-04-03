@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Str;
+use Modules\Cache\Services\QueryCacheService;
 use Modules\Logger\Services\SystemLogService;
 use Modules\Pages\Models\Page;
 
@@ -20,44 +21,51 @@ class PagesAdminService
     public function listing(?string $search = null, int $perPage = 25, string $scope = 'active'): LengthAwarePaginator
     {
         $term = trim((string) $search);
+        $page = max(1, (int) request()->query('page', 1));
+        $key = 'listing.' . md5(json_encode([$term, $perPage, $scope, $page]));
 
-        $query = Page::query()
-            ->select(['id', 'title', 'slug', 'excerpt', 'status', 'published_at', 'updated_at', 'media_asset_id'])
-            ->when($term !== '', function ($query) use ($term) {
-                $query->where(function ($inner) use ($term) {
-                    $inner->where('title', 'like', '%' . $term . '%')
-                        ->orWhere('slug', 'like', '%' . $term . '%')
-                        ->orWhere('excerpt', 'like', '%' . $term . '%');
-                });
-            })
-            ->orderByDesc('deleted_at')
-            ->orderByDesc('published_at')
-            ->orderByDesc('updated_at');
+        return QueryCacheService::remember('pages', $key, 90, function () use ($term, $scope, $perPage): LengthAwarePaginator {
+            $query = Page::query()
+                ->select(['id', 'title', 'slug', 'excerpt', 'status', 'published_at', 'updated_at', 'media_asset_id'])
+                ->when($term !== '', function ($query) use ($term) {
+                    $query->where(function ($inner) use ($term) {
+                        $inner->where('title', 'like', '%' . $term . '%')
+                            ->orWhere('slug', 'like', '%' . $term . '%')
+                            ->orWhere('excerpt', 'like', '%' . $term . '%');
+                    });
+                })
+                ->orderByDesc('deleted_at')
+                ->orderByDesc('published_at')
+                ->orderByDesc('updated_at');
 
-        if ($scope === 'trash') {
-            $query->onlyTrashed();
-        } elseif ($scope === 'all') {
-            $query->withTrashed();
-        }
+            if ($scope === 'trash') {
+                $query->onlyTrashed();
+            } elseif ($scope === 'all') {
+                $query->withTrashed();
+            }
 
-        return $query
-            ->paginate($perPage)
-            ->withQueryString();
+            return $query
+                ->paginate($perPage)
+                ->withQueryString();
+        });
     }
 
     public function softDelete(Page $page): void
     {
         $page->delete();
+        $this->invalidateCache();
     }
 
     public function restore(Page $page): void
     {
         $page->restore();
+        $this->invalidateCache();
     }
 
     public function hardDelete(Page $page): void
     {
         $page->forceDelete();
+        $this->invalidateCache();
     }
 
     public function emptyTrash(): int
@@ -69,6 +77,8 @@ class PagesAdminService
             $page->forceDelete();
             $count++;
         }
+
+        $this->invalidateCache();
 
         return $count;
     }
@@ -89,6 +99,10 @@ class PagesAdminService
         foreach ($trashed as $page) {
             $page->forceDelete();
             $count++;
+        }
+
+        if ($count > 0) {
+            $this->invalidateCache();
         }
 
         return $count;
@@ -140,6 +154,8 @@ class PagesAdminService
         } catch (\Throwable) {
             // Keep content creation resilient if logging fails.
         }
+
+        $this->invalidateCache();
 
         return $page;
     }
@@ -201,6 +217,8 @@ class PagesAdminService
             // Keep content update resilient if logging fails.
         }
 
+        $this->invalidateCache();
+
         return $page;
     }
 
@@ -225,6 +243,8 @@ class PagesAdminService
                 ],
             ]);
         }
+
+        $this->invalidateCache();
 
         return $page;
     }
@@ -304,21 +324,44 @@ class PagesAdminService
 
     public function bulkPublish(array $ids): int
     {
-        return Page::whereIn('id', $ids)
+        $updated = Page::whereIn('id', $ids)
             ->whereNotNull('published_at')
             ->update(['status' => 'published']);
+
+        if ($updated > 0) {
+            $this->invalidateCache();
+        }
+
+        return $updated;
     }
 
     public function bulkUnpublish(array $ids): int
     {
-        return Page::whereIn('id', $ids)
+        $updated = Page::whereIn('id', $ids)
             ->update(['published_at' => null, 'status' => 'draft']);
+
+        if ($updated > 0) {
+            $this->invalidateCache();
+        }
+
+        return $updated;
     }
 
     public function bulkTrash(array $ids): int
     {
-        return Page::whereIn('id', $ids)
+        $deleted = Page::whereIn('id', $ids)
             ->whereNull('deleted_at')
             ->delete();
+
+        if ($deleted > 0) {
+            $this->invalidateCache();
+        }
+
+        return $deleted;
+    }
+
+    private function invalidateCache(): void
+    {
+        QueryCacheService::invalidateModules(['pages', 'dashboard', 'performance']);
     }
 }
