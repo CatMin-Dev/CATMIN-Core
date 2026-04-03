@@ -7,6 +7,7 @@ use Modules\Logger\Models\SystemAlert;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Services\SettingService;
+use App\Services\Notifications\AdminNotificationService;
 
 class AlertingService
 {
@@ -52,8 +53,34 @@ class AlertingService
         ]);
 
         $this->notifyAlert($alert);
+        $this->pushAdminNotification($alert);
 
         return $alert;
+    }
+
+    private function pushAdminNotification(SystemAlert $alert): void
+    {
+        try {
+            $type = $alert->severity === 'critical' ? 'critical' : 'warning';
+            $source = match($alert->alert_type) {
+                'webhook_failed', 'webhook_retrying' => 'webhooks',
+                'job_failed', 'queue_stalled' => 'queue',
+                'disk_space_low', 'memory_threshold_exceeded', 'db_connection_failed' => 'monitoring',
+                default => 'system',
+            };
+            $key = 'alert.' . md5($alert->alert_type . '.' . $alert->title);
+
+            AdminNotificationService::notify(
+                title: $alert->title,
+                message: $alert->message,
+                type: $type,
+                source: $source,
+                dedupeKey: $key,
+                context: ['system_alert_id' => $alert->id, 'alert_type' => $alert->alert_type],
+            );
+        } catch (\Throwable $e) {
+            Log::warning('AlertingService: failed to push admin notification', ['error' => $e->getMessage()]);
+        }
     }
 
     private function notifyAlert(SystemAlert $alert): void

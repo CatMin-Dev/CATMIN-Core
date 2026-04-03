@@ -14,6 +14,7 @@ use App\Services\ModuleConfigService;
 use App\Services\ModuleLoader;
 use App\Services\ModuleManager;
 use App\Services\ModuleMigrationRunner;
+use App\Services\Notifications\AdminNotificationService;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -65,6 +66,9 @@ class DashboardController extends Controller
             ],
             'systemInfo' => $this->adminRuntimeInfoService->get(),
             'enabledModules' => $enabledModules->take(8)->values(),
+            'notificationStats' => ModuleManager::isEnabled('notifications')
+                ? AdminNotificationService::dashboardStats()
+                : ['unread' => 0, 'critical' => 0, 'warning' => 0, 'unacknowledged' => 0],
         ]);
     }
 

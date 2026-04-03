@@ -4,6 +4,8 @@ namespace Modules\Cron\Services;
 
 use App\Services\ModuleConfigService;
 use App\Services\SettingService;
+use App\Services\Notifications\AdminNotificationService;
+use App\Services\Notifications\NotificationAggregationService;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -44,6 +46,8 @@ class CronService
             'views.clear' => 'Vider les vues compilées (Blade)',
             'queue.prune' => 'Nettoyer les jobs en file échoués',
             'logs.archive' => 'Archiver les logs systeme',
+            'notifications.aggregate' => 'Agréger et créer les notifications admin',
+            'notifications.purge' => 'Purger les notifications expirées',
         ];
 
         foreach (self::customTasks() as $task) {
@@ -71,6 +75,8 @@ class CronService
                 'views.clear' => Artisan::call('view:clear'),
                 'queue.prune' => Artisan::call('queue:prune-failed', ['--hours' => max(1, $pruneHours)]),
                 'logs.archive' => Artisan::call('catmin:logs:rotate'),
+                'notifications.aggregate' => NotificationAggregationService::aggregate(),
+                'notifications.purge' => AdminNotificationService::purgeExpired(),
                 default => self::runCustomTaskById($taskKey),
             };
             self::log($taskKey, 'done');

@@ -517,6 +517,14 @@ return [
                         'permission' => 'module.core.list',
                     ],
                     [
+                        'label' => 'Notifications',
+                        'icon' => 'bi bi-bell',
+                        'route' => 'notifications.index',
+                        'active_when' => ['notifications.*'],
+                        'module' => 'notifications',
+                        'permission' => 'module.notifications.list',
+                    ],
+                    [
                         'label' => 'Logs',
                         'icon' => 'bi bi-journal-code',
                         'route' => 'logger.index',

@@ -7,15 +7,18 @@
                 Voir le site
             </a>
 
-            <div class="dropdown">
-                <button class="btn btn-outline-secondary btn-sm position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="bi bi-bell"></i>
-                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill text-bg-primary">0</span>
-                </button>
-                <div class="dropdown-menu dropdown-menu-end shadow-sm">
-                    <div class="dropdown-item-text text-muted small">Aucune notification.</div>
+            @if(\App\Services\ModuleManager::isEnabled('notifications'))
+                @include('module_notifications::partials.bell-dropdown')
+            @else
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary btn-sm position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-bell"></i>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end shadow-sm">
+                        <div class="dropdown-item-text text-muted small">Module notifications inactif.</div>
+                    </div>
                 </div>
-            </div>
+            @endif
 
             <div class="dropdown">
                 <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">

@@ -70,6 +70,41 @@
         <x-admin.ui.notifications :items="$dashboard['alerts']" :floating="true" />
     @endif
 
+    @if(($notificationStats['critical'] ?? 0) > 0 || ($notificationStats['unacknowledged'] ?? 0) > 0)
+        <section class="mb-4">
+            <div class="alert alert-danger d-flex align-items-center justify-content-between gap-3 mb-0">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                    <div>
+                        <strong>{{ $notificationStats['critical'] ?? 0 }} alerte(s) critique(s) non lue(s)</strong>
+                        @if(($notificationStats['unacknowledged'] ?? 0) > 0)
+                            &mdash; {{ $notificationStats['unacknowledged'] }} non acquittée(s)
+                        @endif
+                    </div>
+                </div>
+                @if(\App\Services\ModuleManager::isEnabled('notifications'))
+                    <a href="{{ admin_route('notifications.index', ['type' => 'critical', 'read' => 'unread']) }}" class="btn btn-sm btn-danger">
+                        Voir les alertes
+                    </a>
+                @endif
+            </div>
+        </section>
+    @elseif(($notificationStats['warning'] ?? 0) > 0)
+        <section class="mb-4">
+            <div class="alert alert-warning d-flex align-items-center justify-content-between gap-3 mb-0">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-exclamation-circle-fill fs-5"></i>
+                    <strong>{{ $notificationStats['warning'] ?? 0 }} avertissement(s) non lu(s)</strong>
+                </div>
+                @if(\App\Services\ModuleManager::isEnabled('notifications'))
+                    <a href="{{ admin_route('notifications.index', ['type' => 'warning', 'read' => 'unread']) }}" class="btn btn-sm btn-warning">
+                        Voir les alertes
+                    </a>
+                @endif
+            </div>
+        </section>
+    @endif
+
     <section class="mb-4">
         <div class="d-flex align-items-center justify-content-between mb-2">
             <h2 class="h5 mb-0">Indicateurs cles</h2>
