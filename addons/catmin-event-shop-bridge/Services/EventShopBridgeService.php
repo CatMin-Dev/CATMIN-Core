@@ -4,6 +4,8 @@ namespace Addons\CatminEventShopBridge\Services;
 
 use App\Services\CatminEventBus;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Addons\CatEvent\Models\Event;
@@ -31,14 +33,25 @@ class EventShopBridgeService
 
     public function ticketTypes(): LengthAwarePaginator
     {
+        if (!Schema::hasTable('event_shop_bridge_ticket_types')) {
+            return new LengthAwarePaginator([], 0, 25, 1, [
+                'path' => request()->url(),
+                'query' => request()->query(),
+            ]);
+        }
+
         return EventShopTicketType::query()
             ->with(['event', 'product'])
             ->orderByDesc('id')
             ->paginate(25);
     }
 
-    public function recentOrderLinks(): \Illuminate\Support\Collection
+    public function recentOrderLinks(): Collection
     {
+        if (!Schema::hasTable('event_shop_bridge_order_links')) {
+            return collect();
+        }
+
         return EventShopOrderLink::query()
             ->with(['ticketType', 'ticket', 'order'])
             ->orderByDesc('id')

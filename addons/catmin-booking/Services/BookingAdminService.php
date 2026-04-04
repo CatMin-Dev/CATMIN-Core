@@ -33,13 +33,17 @@ class BookingAdminService
         $page = max(1, (int) request()->query('page', 1));
         $key = 'services.' . md5(json_encode([$filters, $page]));
 
-        return QueryCacheService::remember('booking', $key, 90, function () use ($filters): LengthAwarePaginator {
-            return BookingService::query()
-                ->when(($filters['q'] ?? '') !== '', fn ($q) => $q->where('name', 'like', '%' . $filters['q'] . '%'))
-                ->orderByDesc('created_at')
-                ->paginate(25)
-                ->withQueryString();
+        $cached = QueryCacheService::remember('booking', $key, 90, function () use ($filters): LengthAwarePaginator {
+            return $this->buildServicesPaginator($filters);
         });
+
+        if ($cached instanceof LengthAwarePaginator) {
+            return $cached;
+        }
+
+        QueryCacheService::invalidateModule('booking');
+
+        return $this->buildServicesPaginator($filters);
     }
 
     /**
@@ -325,6 +329,18 @@ class BookingAdminService
     private function invalidateCache(): void
     {
         QueryCacheService::invalidateModules(['booking', 'dashboard', 'performance', 'crm']);
+    }
+
+    /**
+     * @param array<string, mixed> $filters
+     */
+    private function buildServicesPaginator(array $filters): LengthAwarePaginator
+    {
+        return BookingService::query()
+            ->when(($filters['q'] ?? '') !== '', fn ($q) => $q->where('name', 'like', '%' . $filters['q'] . '%'))
+            ->orderByDesc('created_at')
+            ->paginate(25)
+            ->withQueryString();
     }
 
     private function uniqueServiceSlug(string $base, ?int $excludeId = null): string

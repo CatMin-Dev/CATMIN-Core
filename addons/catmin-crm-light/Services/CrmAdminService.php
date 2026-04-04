@@ -12,6 +12,7 @@ use Addons\CatminCrmLight\Services\CrmWorkflowService;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use Modules\Cache\Services\QueryCacheService;
 
 class CrmAdminService
@@ -34,34 +35,24 @@ class CrmAdminService
         $page = max(1, (int) request()->query('page', 1));
         $key = 'contacts.' . md5(json_encode([$q, $pipelineStage, $source, $interactionFrom, $interactionTo, $page]));
 
-        return QueryCacheService::remember('crm', $key, 90, function () use ($q, $pipelineStage, $source, $interactionFrom, $interactionTo): LengthAwarePaginator {
-            return CrmContact::query()
-                ->with('company:id,name')
-                ->when($q !== '', function ($builder) use ($q): void {
-                    $builder->where(function ($sub) use ($q): void {
-                        $sub->where('first_name', 'like', '%' . $q . '%')
-                            ->orWhere('last_name', 'like', '%' . $q . '%')
-                            ->orWhere('email', 'like', '%' . $q . '%')
-                            ->orWhere('phone', 'like', '%' . $q . '%')
-                            ->orWhere('pipeline_stage', 'like', '%' . $q . '%')
-                            ->orWhere('source', 'like', '%' . $q . '%')
-                            ->orWhereHas('company', fn ($cq) => $cq->where('name', 'like', '%' . $q . '%'));
-                    });
-                })
-                    ->when($pipelineStage !== '', fn ($builder) => $builder->where('pipeline_stage', $pipelineStage))
-                    ->when($source !== '', fn ($builder) => $builder->where('source', $source))
-                    ->when($interactionFrom !== '', fn ($builder) => $builder->whereDate('last_interaction_at', '>=', $interactionFrom))
-                    ->when($interactionTo !== '', fn ($builder) => $builder->whereDate('last_interaction_at', '<=', $interactionTo))
-                ->orderByDesc('created_at')
-                ->paginate(25)
-                ->withQueryString();
+        $cached = QueryCacheService::remember('crm', $key, 90, function () use ($q, $pipelineStage, $source, $interactionFrom, $interactionTo): LengthAwarePaginator {
+            return $this->buildContactsPaginator($q, $pipelineStage, $source, $interactionFrom, $interactionTo);
         });
+
+        if ($cached instanceof LengthAwarePaginator) {
+            return $cached;
+        }
+
+        // Defensive fallback for stale serialized cache payloads (e.g. __PHP_Incomplete_Class).
+        QueryCacheService::invalidateModule('crm');
+
+        return $this->buildContactsPaginator($q, $pipelineStage, $source, $interactionFrom, $interactionTo);
     }
 
     /** @param array<string,mixed> $payload */
     public function createContact(array $payload): CrmContact
     {
-        $created = CrmContact::query()->create([
+        $data = [
             'crm_company_id' => $payload['crm_company_id'] ?? null,
             'first_name' => (string) $payload['first_name'],
             'last_name' => $payload['last_name'] ?? null,
@@ -69,12 +60,20 @@ class CrmAdminService
             'phone' => $payload['phone'] ?? null,
             'position' => $payload['position'] ?? null,
             'status' => (string) ($payload['status'] ?? 'lead'),
-            'pipeline_stage' => (string) ($payload['pipeline_stage'] ?? 'new'),
-            'source' => (string) ($payload['source'] ?? 'admin'),
             'tags' => $payload['tags'] ?? null,
             'notes' => $payload['notes'] ?? null,
             'metadata' => ['source' => 'admin'],
-        ]);
+        ];
+
+        if ($this->hasCrmColumn('pipeline_stage')) {
+            $data['pipeline_stage'] = (string) ($payload['pipeline_stage'] ?? 'new');
+        }
+
+        if ($this->hasCrmColumn('source')) {
+            $data['source'] = (string) ($payload['source'] ?? 'admin');
+        }
+
+        $created = CrmContact::query()->create($data);
 
         $this->invalidateCache();
 
@@ -84,18 +83,26 @@ class CrmAdminService
     /** @param array<string,mixed> $payload */
     public function updateContact(CrmContact $contact, array $payload): CrmContact
     {
-        $contact->update([
+        $updates = [
             'first_name' => (string) $payload['first_name'],
             'last_name' => $payload['last_name'] ?? null,
             'email' => $payload['email'] ?? null,
             'phone' => $payload['phone'] ?? null,
             'position' => $payload['position'] ?? null,
             'status' => (string) ($payload['status'] ?? $contact->status),
-            'pipeline_stage' => (string) ($payload['pipeline_stage'] ?? $contact->pipeline_stage ?? 'new'),
-            'source' => (string) ($payload['source'] ?? $contact->source ?? 'admin'),
             'tags' => $payload['tags'] ?? null,
             'notes' => $payload['notes'] ?? null,
-        ]);
+        ];
+
+        if ($this->hasCrmColumn('pipeline_stage')) {
+            $updates['pipeline_stage'] = (string) ($payload['pipeline_stage'] ?? $contact->pipeline_stage ?? 'new');
+        }
+
+        if ($this->hasCrmColumn('source')) {
+            $updates['source'] = (string) ($payload['source'] ?? $contact->source ?? 'admin');
+        }
+
+        $contact->update($updates);
 
         $this->relationService->attachContactToCompany($contact, isset($payload['crm_company_id']) ? (int) $payload['crm_company_id'] : null);
 
@@ -117,14 +124,17 @@ class CrmAdminService
         $page = max(1, (int) request()->query('page', 1));
         $key = 'companies.' . md5(json_encode([$q, $page]));
 
-        return QueryCacheService::remember('crm', $key, 90, function () use ($q): LengthAwarePaginator {
-            return CrmCompany::query()
-                ->withCount('contacts')
-                ->when($q !== '', fn ($builder) => $builder->where('name', 'like', '%' . $q . '%'))
-                ->orderBy('name')
-                ->paginate(25)
-                ->withQueryString();
+        $cached = QueryCacheService::remember('crm', $key, 90, function () use ($q): LengthAwarePaginator {
+            return $this->buildCompaniesPaginator($q);
         });
+
+        if ($cached instanceof LengthAwarePaginator) {
+            return $cached;
+        }
+
+        QueryCacheService::invalidateModule('crm');
+
+        return $this->buildCompaniesPaginator($q);
     }
 
     /** @param array<string,mixed> $payload */
@@ -373,4 +383,60 @@ class CrmAdminService
     {
         QueryCacheService::invalidateModules(['crm', 'dashboard', 'performance']);
     }
-}
+
+    private function buildContactsPaginator(
+        string $q,
+        string $pipelineStage,
+        string $source,
+        string $interactionFrom,
+        string $interactionTo,
+    ): LengthAwarePaginator {
+        $hasPipelineStage = $this->hasCrmColumn('pipeline_stage');
+        $hasSource = $this->hasCrmColumn('source');
+        $hasLastInteraction = $this->hasCrmColumn('last_interaction_at');
+
+        return CrmContact::query()
+            ->with('company:id,name')
+            ->when($q !== '', function ($builder) use ($q, $hasPipelineStage, $hasSource): void {
+                $builder->where(function ($sub) use ($q, $hasPipelineStage, $hasSource): void {
+                    $sub->where('first_name', 'like', '%' . $q . '%')
+                        ->orWhere('last_name', 'like', '%' . $q . '%')
+                        ->orWhere('email', 'like', '%' . $q . '%')
+                        ->orWhere('phone', 'like', '%' . $q . '%');
+
+                    if ($hasPipelineStage) {
+                        $sub->orWhere('pipeline_stage', 'like', '%' . $q . '%');
+                    }
+
+                    if ($hasSource) {
+                        $sub->orWhere('source', 'like', '%' . $q . '%');
+                    }
+
+                    $sub->orWhereHas('company', fn ($cq) => $cq->where('name', 'like', '%' . $q . '%'));
+                });
+            })
+            ->when($hasPipelineStage && $pipelineStage !== '', fn ($builder) => $builder->where('pipeline_stage', $pipelineStage))
+            ->when($hasSource && $source !== '', fn ($builder) => $builder->where('source', $source))
+            ->when($hasLastInteraction && $interactionFrom !== '', fn ($builder) => $builder->whereDate('last_interaction_at', '>=', $interactionFrom))
+            ->when($hasLastInteraction && $interactionTo !== '', fn ($builder) => $builder->whereDate('last_interaction_at', '<=', $interactionTo))
+            ->orderByDesc('created_at')
+            ->paginate(25)
+            ->withQueryString();
+    }
+
+    private function hasCrmColumn(string $column): bool
+    {
+        return Schema::hasTable('crm_contacts') && Schema::hasColumn('crm_contacts', $column);
+    }
+
+    private function buildCompaniesPaginator(string $q): LengthAwarePaginator
+    {
+        return CrmCompany::query()
+            ->withCount('contacts')
+            ->when($q !== '', fn ($builder) => $builder->where('name', 'like', '%' . $q . '%'))
+            ->orderBy('name')
+            ->paginate(25)
+            ->withQueryString();
+    }
+
+        }
