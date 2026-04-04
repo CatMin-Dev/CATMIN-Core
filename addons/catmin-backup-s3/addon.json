@@ -1,0 +1,43 @@
+{
+    "name": "CATMIN Remote Backup",
+    "slug": "catmin-backup-s3",
+    "description": "Sauvegarde distante multi-provider (S3, Google Cloud Storage, SFTP, FTP) avec retention et preparation restore.",
+    "version": "1.0.0",
+    "author": "CATMIN Team",
+    "required_core_version": "4.0.0",
+    "required_php_version": "8.3.0",
+    "enabled": true,
+    "dependencies": [],
+    "required_modules": [
+        "core",
+        "settings"
+    ],
+    "depends_modules": [
+        "core",
+        "settings"
+    ],
+    "category": "ops",
+    "has_routes": true,
+    "has_migrations": false,
+    "has_assets": false,
+    "has_views": true,
+    "has_events": false,
+    "requires_core": true,
+    "entrypoints": {
+        "admin_routes": "routes.php",
+        "docs": "Docs/README.md",
+        "permissions": "Permissions/permissions.php"
+    },
+    "permissions_declared": [
+        "backup.remote.index",
+        "backup.remote.upload",
+        "backup.remote.download",
+        "backup.remote.manage"
+    ],
+    "permissions": [
+        "backup.remote.index",
+        "backup.remote.upload",
+        "backup.remote.download",
+        "backup.remote.manage"
+    ]
+}

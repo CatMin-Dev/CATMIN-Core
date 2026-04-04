@@ -10,11 +10,17 @@
     "license": "MIT",
     "require": {
         "php": "^8.3",
+        "aws/aws-sdk-php": "^3.376",
         "bacon/bacon-qr-code": "^3.0",
         "barryvdh/laravel-dompdf": "^3.1",
+        "google/cloud-storage": "^1.50",
         "laravel/framework": "^13.0",
         "laravel/tinker": "^3.0",
         "league/commonmark": "^2.8",
+        "league/flysystem-aws-s3-v3": "^3.32",
+        "league/flysystem-ftp": "^3.31",
+        "league/flysystem-google-cloud-storage": "^3.31",
+        "league/flysystem-sftp-v3": "^3.33",
         "pragmarx/google2fa": "^9.0"
     },
     "require-dev": {
@@ -37,6 +43,7 @@
             "Addons\\CatminImportExport\\": "addons/catmin-import-export/",
             "Addons\\CatminProfileExtensions\\": "addons/catmin-profile-extensions/",
             "Addons\\CatminSlider\\": "addons/catmin-slider/",
+            "Addons\\CatminBackupS3\\": "addons/catmin-backup-s3/",
             "Modules\\": "modules/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/",
