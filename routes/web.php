@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\AdminPasswordResetController;
 use App\Http\Controllers\Admin\AdminProfileController;
 use App\Http\Controllers\Admin\AdminSessionsController;
+use App\Http\Controllers\Admin\Addons\AddonBundleController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\RecoveryController;
 use App\Http\Controllers\Admin\ReleaseCheckController;
@@ -184,6 +185,14 @@ Route::prefix($adminPath)->middleware('web')->name('admin.')->group(function () 
         Route::get('/addons/marketplace', [AddonMarketplaceController::class, 'index'])
             ->middleware('catmin.permission:addon.registry.view')
             ->name('addons.marketplace.index');
+
+        Route::get('/addons/bundles', [AddonBundleController::class, 'index'])
+            ->middleware('catmin.permission:addon.registry.view')
+            ->name('addons.bundles.index');
+
+        Route::post('/addons/bundles/install', [AddonBundleController::class, 'install'])
+            ->middleware('catmin.permission:addon.install')
+            ->name('addons.bundles.install');
 
         Route::get('/analytics', [AnalyticsController::class, 'index'])
             ->middleware('catmin.permission:module.logger.menu')

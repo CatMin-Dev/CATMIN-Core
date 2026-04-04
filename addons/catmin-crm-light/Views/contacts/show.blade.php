@@ -52,6 +52,18 @@
                             </select>
                         </div>
                         <div class="col-12">
+                            <label class="form-label">Pipeline</label>
+                            <select name="pipeline_stage" class="form-select">
+                                @foreach(['new','contacted','qualified','won','lost','archived'] as $stage)
+                                    <option value="{{ $stage }}" @selected(($contact->pipeline_stage ?? 'new') === $stage)>{{ ucfirst($stage) }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Source</label>
+                            <input type="text" name="source" class="form-control" value="{{ $contact->source }}">
+                        </div>
+                        <div class="col-12">
                             <button class="btn btn-primary">Enregistrer</button>
                         </div>
                     </form>
@@ -102,6 +114,77 @@
                             <button class="btn btn-primary">Ajouter</button>
                         </div>
                     </form>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header bg-white"><strong>Ajouter une interaction</strong></div>
+                <div class="card-body">
+                    <form method="POST" action="{{ route('admin.crm.contacts.interactions.store', $contact->id) }}" class="row g-3">
+                        @csrf
+                        <div class="col-md-3">
+                            <label class="form-label">Type</label>
+                            <select name="type" class="form-select">
+                                @foreach(['call','email','meeting','note','task','imported'] as $type)
+                                    <option value="{{ $type }}">{{ ucfirst($type) }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label">Sujet</label>
+                            <input type="text" name="subject" class="form-control">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Date interaction</label>
+                            <input type="datetime-local" name="happened_at" class="form-control">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Contenu</label>
+                            <textarea name="content" class="form-control" rows="2" required></textarea>
+                        </div>
+                        <div class="col-12">
+                            <button class="btn btn-primary">Ajouter interaction</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header bg-white"><strong>Tâches / rappels</strong></div>
+                <div class="card-body">
+                    <form method="POST" action="{{ route('admin.crm.contacts.tasks.store', $contact->id) }}" class="row g-3 mb-3">
+                        @csrf
+                        <div class="col-md-6">
+                            <label class="form-label">Titre</label>
+                            <input type="text" name="title" class="form-control" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Echéance</label>
+                            <input type="datetime-local" name="due_at" class="form-control">
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button class="btn btn-outline-primary w-100">Créer tâche</button>
+                        </div>
+                        <div class="col-12">
+                            <textarea name="details" class="form-control" rows="2" placeholder="Détails"></textarea>
+                        </div>
+                    </form>
+
+                    @foreach($contact->tasks as $task)
+                        <div class="border rounded p-2 mb-2 d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ $task->title }}</strong>
+                                <div class="small text-muted">{{ $task->status }} @if($task->due_at)· échéance {{ $task->due_at->format('d/m/Y H:i') }}@endif</div>
+                            </div>
+                            @if($task->status !== 'done')
+                                <form method="POST" action="{{ route('admin.crm.tasks.complete', $task->id) }}">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button class="btn btn-sm btn-success">Terminer</button>
+                                </form>
+                            @endif
+                        </div>
+                    @endforeach
                 </div>
             </div>
 

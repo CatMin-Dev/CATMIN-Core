@@ -4,7 +4,11 @@ namespace Addons\CatminCrmLight\Services;
 
 use Addons\CatminCrmLight\Models\CrmCompany;
 use Addons\CatminCrmLight\Models\CrmContact;
+use Addons\CatminCrmLight\Models\CrmInteraction;
 use Addons\CatminCrmLight\Models\CrmNote;
+use Addons\CatminCrmLight\Services\CrmPipelineService;
+use Addons\CatminCrmLight\Services\CrmRelationService;
+use Addons\CatminCrmLight\Services\CrmWorkflowService;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -12,14 +16,25 @@ use Modules\Cache\Services\QueryCacheService;
 
 class CrmAdminService
 {
+    public function __construct(
+        private readonly CrmRelationService $relationService,
+        private readonly CrmPipelineService $pipelineService,
+        private readonly CrmWorkflowService $workflowService,
+    ) {
+    }
+
     /** @param array<string,mixed> $filters */
     public function contacts(array $filters = []): LengthAwarePaginator
     {
         $q = trim((string) ($filters['q'] ?? ''));
+        $pipelineStage = trim((string) ($filters['pipeline_stage'] ?? ''));
+        $source = trim((string) ($filters['source'] ?? ''));
+        $interactionFrom = trim((string) ($filters['interaction_from'] ?? ''));
+        $interactionTo = trim((string) ($filters['interaction_to'] ?? ''));
         $page = max(1, (int) request()->query('page', 1));
-        $key = 'contacts.' . md5(json_encode([$q, $page]));
+        $key = 'contacts.' . md5(json_encode([$q, $pipelineStage, $source, $interactionFrom, $interactionTo, $page]));
 
-        return QueryCacheService::remember('crm', $key, 90, function () use ($q): LengthAwarePaginator {
+        return QueryCacheService::remember('crm', $key, 90, function () use ($q, $pipelineStage, $source, $interactionFrom, $interactionTo): LengthAwarePaginator {
             return CrmContact::query()
                 ->with('company:id,name')
                 ->when($q !== '', function ($builder) use ($q): void {
@@ -28,9 +43,15 @@ class CrmAdminService
                             ->orWhere('last_name', 'like', '%' . $q . '%')
                             ->orWhere('email', 'like', '%' . $q . '%')
                             ->orWhere('phone', 'like', '%' . $q . '%')
+                            ->orWhere('pipeline_stage', 'like', '%' . $q . '%')
+                            ->orWhere('source', 'like', '%' . $q . '%')
                             ->orWhereHas('company', fn ($cq) => $cq->where('name', 'like', '%' . $q . '%'));
                     });
                 })
+                    ->when($pipelineStage !== '', fn ($builder) => $builder->where('pipeline_stage', $pipelineStage))
+                    ->when($source !== '', fn ($builder) => $builder->where('source', $source))
+                    ->when($interactionFrom !== '', fn ($builder) => $builder->whereDate('last_interaction_at', '>=', $interactionFrom))
+                    ->when($interactionTo !== '', fn ($builder) => $builder->whereDate('last_interaction_at', '<=', $interactionTo))
                 ->orderByDesc('created_at')
                 ->paginate(25)
                 ->withQueryString();
@@ -48,6 +69,8 @@ class CrmAdminService
             'phone' => $payload['phone'] ?? null,
             'position' => $payload['position'] ?? null,
             'status' => (string) ($payload['status'] ?? 'lead'),
+            'pipeline_stage' => (string) ($payload['pipeline_stage'] ?? 'new'),
+            'source' => (string) ($payload['source'] ?? 'admin'),
             'tags' => $payload['tags'] ?? null,
             'notes' => $payload['notes'] ?? null,
             'metadata' => ['source' => 'admin'],
@@ -62,16 +85,19 @@ class CrmAdminService
     public function updateContact(CrmContact $contact, array $payload): CrmContact
     {
         $contact->update([
-            'crm_company_id' => $payload['crm_company_id'] ?? null,
             'first_name' => (string) $payload['first_name'],
             'last_name' => $payload['last_name'] ?? null,
             'email' => $payload['email'] ?? null,
             'phone' => $payload['phone'] ?? null,
             'position' => $payload['position'] ?? null,
             'status' => (string) ($payload['status'] ?? $contact->status),
+            'pipeline_stage' => (string) ($payload['pipeline_stage'] ?? $contact->pipeline_stage ?? 'new'),
+            'source' => (string) ($payload['source'] ?? $contact->source ?? 'admin'),
             'tags' => $payload['tags'] ?? null,
             'notes' => $payload['notes'] ?? null,
         ]);
+
+        $this->relationService->attachContactToCompany($contact, isset($payload['crm_company_id']) ? (int) $payload['crm_company_id'] : null);
 
         $this->invalidateCache();
 
@@ -160,6 +186,69 @@ class CrmAdminService
         return $note;
     }
 
+    /**
+     * @param array<string,mixed> $payload
+     */
+    public function addInteraction(CrmContact $contact, array $payload): CrmInteraction
+    {
+        $interaction = $this->workflowService->addInteraction($contact, $payload);
+        $this->addNote($contact, (string) $payload['content'], (string) ($payload['type'] ?? 'note'), 'crm.workflow');
+        $this->invalidateCache();
+
+        return $interaction;
+    }
+
+    /**
+     * @param array<string,mixed> $payload
+     */
+    public function createTask(CrmContact $contact, array $payload): \Addons\CatminCrmLight\Models\CrmTask
+    {
+        $task = $this->workflowService->createTask($contact, $payload);
+        $this->addNote($contact, 'Tache creee: ' . $task->title, 'task', 'crm.workflow');
+        $this->invalidateCache();
+
+        return $task;
+    }
+
+    public function completeTask(\Addons\CatminCrmLight\Models\CrmTask $task): \Addons\CatminCrmLight\Models\CrmTask
+    {
+        $task = $this->workflowService->completeTask($task);
+        $contact = $task->contact;
+
+        if ($contact) {
+            $this->addNote($contact, 'Tache completee: ' . $task->title, 'task_done', 'crm.workflow');
+        }
+
+        $this->invalidateCache();
+
+        return $task;
+    }
+
+    public function movePipeline(CrmContact $contact, string $toStage): CrmContact
+    {
+        $updated = $this->pipelineService->move($contact, $toStage);
+        $this->addNote($updated, 'Pipeline -> ' . $toStage, 'pipeline', 'crm.pipeline');
+        $this->invalidateCache();
+
+        return $updated;
+    }
+
+    /**
+     * @return array<string,int>
+     */
+    public function pipelineMetrics(): array
+    {
+        return $this->pipelineService->metrics();
+    }
+
+    /**
+     * @return array<int,string>
+     */
+    public function pipelineStages(): array
+    {
+        return $this->pipelineService->stages();
+    }
+
     /** @return array<int, array<string,mixed>> */
     public function contactTimeline(CrmContact $contact): array
     {
@@ -176,6 +265,42 @@ class CrmAdminService
                 'content' => (string) $note->content,
                 'date' => optional($note->created_at)?->toIso8601String(),
             ];
+        }
+
+        if (DB::getSchemaBuilder()->hasTable('crm_interactions')) {
+            $interactionRows = DB::table('crm_interactions')
+                ->where('crm_contact_id', $contact->id)
+                ->orderByDesc('happened_at')
+                ->limit(20)
+                ->get(['type', 'subject', 'content', 'happened_at']);
+
+            foreach ($interactionRows as $row) {
+                $items[] = [
+                    'source' => 'crm',
+                    'type' => (string) ($row->type ?? 'interaction'),
+                    'title' => (string) ($row->subject ?: 'Interaction CRM'),
+                    'content' => (string) ($row->content ?? ''),
+                    'date' => optional($row->happened_at)?->toIso8601String(),
+                ];
+            }
+        }
+
+        if (DB::getSchemaBuilder()->hasTable('crm_tasks')) {
+            $taskRows = DB::table('crm_tasks')
+                ->where('crm_contact_id', $contact->id)
+                ->orderByDesc('created_at')
+                ->limit(20)
+                ->get(['title', 'status', 'due_at', 'created_at']);
+
+            foreach ($taskRows as $row) {
+                $items[] = [
+                    'source' => 'crm',
+                    'type' => 'task',
+                    'title' => 'Tache: ' . (string) ($row->title ?? 'N/A'),
+                    'content' => 'Statut: ' . (string) ($row->status ?? 'open'),
+                    'date' => optional($row->due_at ?? $row->created_at)?->toIso8601String(),
+                ];
+            }
         }
 
         $email = trim((string) ($contact->email ?? ''));

@@ -2,7 +2,7 @@
     "name": "CATMIN CRM Light",
     "slug": "catmin-crm-light",
     "description": "CRM l\u00e9ger: contacts, entreprises, notes et int\u00e9grations",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "author": "CATMIN Team",
     "required_core_version": "4.0.0",
     "required_php_version": "8.3.0",
@@ -58,7 +58,9 @@
         "module.crm.create",
         "module.crm.edit",
         "module.crm.delete",
-        "module.crm.timeline"
+        "module.crm.timeline",
+        "module.crm.pipeline",
+        "module.crm.tasks"
     ],
     "permissions": [
         "module.crm.menu",
@@ -66,6 +68,8 @@
         "module.crm.create",
         "module.crm.edit",
         "module.crm.delete",
-        "module.crm.timeline"
+        "module.crm.timeline",
+        "module.crm.pipeline",
+        "module.crm.tasks"
     ]
 }

@@ -7,4 +7,6 @@ return [
     'module.crm.edit',
     'module.crm.delete',
     'module.crm.timeline',
+    'module.crm.pipeline',
+    'module.crm.tasks',
 ];

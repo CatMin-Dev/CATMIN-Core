@@ -16,14 +16,46 @@
     <div class="card mb-4">
         <div class="card-body">
             <form method="GET" action="{{ route('admin.crm.contacts.index') }}" class="row g-2 align-items-end">
-                <div class="col-md-10">
+                <div class="col-md-4">
                     <label class="form-label">Recherche</label>
                     <input type="text" name="q" class="form-control" placeholder="Nom, email, téléphone, entreprise" value="{{ request('q') }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Pipeline</label>
+                    <select class="form-select" name="pipeline_stage">
+                        <option value="">Toutes</option>
+                        @foreach($pipelineStages as $stage)
+                            <option value="{{ $stage }}" @selected(request('pipeline_stage') === $stage)>{{ ucfirst($stage) }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Source</label>
+                    <input type="text" name="source" class="form-control" value="{{ request('source') }}" placeholder="admin, forms...">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Interaction de</label>
+                    <input type="date" name="interaction_from" class="form-control" value="{{ request('interaction_from') }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">à</label>
+                    <input type="date" name="interaction_to" class="form-control" value="{{ request('interaction_to') }}">
                 </div>
                 <div class="col-md-2">
                     <button class="btn btn-outline-primary w-100">Rechercher</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body d-flex flex-wrap gap-2">
+            @foreach($pipelineMetrics as $stage => $count)
+                <a href="{{ route('admin.crm.contacts.index', ['pipeline_stage' => $stage]) }}" class="btn btn-sm btn-outline-secondary">
+                    {{ ucfirst($stage) }} <span class="badge text-bg-light ms-1">{{ $count }}</span>
+                </a>
+            @endforeach
+            <a href="{{ route('admin.crm.pipeline.index') }}" class="btn btn-sm btn-primary ms-auto">Vue pipeline</a>
         </div>
     </div>
 
@@ -68,6 +100,18 @@
                             </select>
                         </div>
                         <div class="col-12">
+                            <label class="form-label">Pipeline</label>
+                            <select name="pipeline_stage" class="form-select">
+                                @foreach($pipelineStages as $stage)
+                                    <option value="{{ $stage }}" @selected($stage === 'new')>{{ ucfirst($stage) }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Source</label>
+                            <input type="text" name="source" class="form-control" value="admin">
+                        </div>
+                        <div class="col-12">
                             <button class="btn btn-primary">Créer</button>
                         </div>
                     </form>
@@ -87,6 +131,7 @@
                             <tr>
                                 <th>Contact</th>
                                 <th>Entreprise</th>
+                                <th>Pipeline</th>
                                 <th>Statut</th>
                                 <th></th>
                             </tr>
@@ -99,6 +144,17 @@
                                         <small class="text-muted">{{ $contact->email ?? '—' }}</small>
                                     </td>
                                     <td>{{ $contact->company->name ?? '—' }}</td>
+                                    <td>
+                                        <form method="POST" action="{{ route('admin.crm.contacts.pipeline.move', $contact->id) }}">
+                                            @csrf
+                                            @method('PATCH')
+                                            <select name="pipeline_stage" class="form-select form-select-sm" onchange="this.form.submit()">
+                                                @foreach($pipelineStages as $stage)
+                                                    <option value="{{ $stage }}" @selected(($contact->pipeline_stage ?? 'new') === $stage)>{{ ucfirst($stage) }}</option>
+                                                @endforeach
+                                            </select>
+                                        </form>
+                                    </td>
                                     <td><span class="badge text-bg-light">{{ ucfirst($contact->status) }}</span></td>
                                     <td class="text-end">
                                         <a href="{{ route('admin.crm.contacts.show', $contact->id) }}" class="btn btn-sm btn-outline-primary">Fiche</a>

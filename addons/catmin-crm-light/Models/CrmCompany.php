@@ -28,4 +28,14 @@ class CrmCompany extends Model
     {
         return $this->hasMany(CrmContact::class, 'crm_company_id');
     }
+
+    public function interactions(): HasMany
+    {
+        return $this->hasMany(CrmInteraction::class, 'crm_company_id');
+    }
+
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(CrmTask::class, 'crm_company_id');
+    }
 }

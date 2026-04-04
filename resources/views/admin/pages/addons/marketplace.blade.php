@@ -44,12 +44,17 @@
                 <h2 class="h6 mb-0">Registry addons distribues</h2>
                 <div class="small text-muted">Catalogue local pret pour usage prive ou registre futur.</div>
             </div>
-            <form method="post" action="{{ route('admin.addons.marketplace.rebuild') }}">
-                @csrf
-                <button class="btn btn-sm btn-outline-primary" type="submit">
-                    <i class="bi bi-arrow-repeat me-1"></i>Rebuild index
-                </button>
-            </form>
+            <div class="d-flex gap-2">
+                <a href="{{ route('admin.addons.bundles.index') }}" class="btn btn-sm btn-outline-dark">
+                    <i class="bi bi-boxes me-1"></i>Bundles
+                </a>
+                <form method="post" action="{{ route('admin.addons.marketplace.rebuild') }}">
+                    @csrf
+                    <button class="btn btn-sm btn-outline-primary" type="submit">
+                        <i class="bi bi-arrow-repeat me-1"></i>Rebuild index
+                    </button>
+                </form>
+            </div>
         </div>
         <div class="table-responsive">
             <table class="table table-sm align-middle mb-0">

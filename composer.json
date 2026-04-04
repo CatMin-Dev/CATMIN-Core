@@ -44,6 +44,7 @@
             "Addons\\CatminProfileExtensions\\": "addons/catmin-profile-extensions/",
             "Addons\\CatminSlider\\": "addons/catmin-slider/",
             "Addons\\CatminBackupS3\\": "addons/catmin-backup-s3/",
+            "Addons\\CatminForms\\": "addons/catmin-forms/",
             "Modules\\": "modules/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/",

@@ -131,6 +131,9 @@
                     <a class="btn btn-sm btn-outline-primary" href="{{ route('admin.addons.marketplace.index') }}">
                         <i class="bi bi-bag me-1"></i>Marketplace
                     </a>
+                    <a class="btn btn-sm btn-outline-dark" href="{{ route('admin.addons.bundles.index') }}">
+                        <i class="bi bi-boxes me-1"></i>Bundles
+                    </a>
                 @endif
             </div>
         </div>

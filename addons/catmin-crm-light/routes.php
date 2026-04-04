@@ -32,6 +32,26 @@ Route::middleware(['web', 'catmin.admin'])
             ->middleware('catmin.permission:module.crm.timeline')
             ->name('contacts.notes.store');
 
+        Route::post('/crm/contacts/{crmContact}/interactions', [CrmContactController::class, 'addInteraction'])
+            ->middleware('catmin.permission:module.crm.timeline')
+            ->name('contacts.interactions.store');
+
+        Route::post('/crm/contacts/{crmContact}/tasks', [CrmContactController::class, 'addTask'])
+            ->middleware('catmin.permission:module.crm.tasks')
+            ->name('contacts.tasks.store');
+
+        Route::patch('/crm/tasks/{crmTask}/complete', [CrmContactController::class, 'completeTask'])
+            ->middleware('catmin.permission:module.crm.tasks')
+            ->name('tasks.complete');
+
+        Route::patch('/crm/contacts/{crmContact}/pipeline', [CrmContactController::class, 'movePipeline'])
+            ->middleware('catmin.permission:module.crm.pipeline')
+            ->name('contacts.pipeline.move');
+
+        Route::get('/crm/pipeline', [CrmContactController::class, 'pipeline'])
+            ->middleware('catmin.permission:module.crm.pipeline')
+            ->name('pipeline.index');
+
         Route::post('/crm/contacts/{crmContact}/mail', [CrmContactController::class, 'sendMail'])
             ->middleware('catmin.permission:module.crm.edit')
             ->name('contacts.mail.send');

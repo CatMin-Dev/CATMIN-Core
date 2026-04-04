@@ -1,0 +1,25 @@
+{
+  "slug": "association-events",
+  "name": "Association Events",
+  "description": "Pack evenementiel pour associations: pages evenements, preinscriptions, formulaires et communication.",
+  "required_modules": [
+    "cat-pages",
+    "cat-users"
+  ],
+  "addons_included": [
+    "cat-event",
+    "catmin-event-shop-bridge",
+    "catmin-slider",
+    "catmin-forms"
+  ],
+  "optional_addons": [
+    "cat-logger",
+    "cat-mailer"
+  ],
+  "install_order": [
+    "cat-event",
+    "catmin-event-shop-bridge",
+    "catmin-slider",
+    "catmin-forms"
+  ]
+}

@@ -13,4 +13,5 @@ return [
 
     'slug' => 'catmin-crm-light',
     'category' => 'business',
+    'pipeline_stages' => ['new', 'contacted', 'qualified', 'won', 'lost', 'archived'],
 ];

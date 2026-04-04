@@ -1,0 +1,25 @@
+{
+  "slug": "services-booking",
+  "name": "Services Booking",
+  "description": "Pack prise de rendez-vous: moteur disponibilites, CRM leads et formulaires qualifiants.",
+  "required_modules": [
+    "cat-users",
+    "cat-pages"
+  ],
+  "addons_included": [
+    "catmin-booking",
+    "catmin-crm-light",
+    "catmin-profile-extensions",
+    "catmin-forms"
+  ],
+  "optional_addons": [
+    "cat-mailer",
+    "cat-logger"
+  ],
+  "install_order": [
+    "catmin-crm-light",
+    "catmin-booking",
+    "catmin-profile-extensions",
+    "catmin-forms"
+  ]
+}

@@ -47,3 +47,23 @@ CRM léger: contacts, entreprises, notes et intégrations
 - Ajouter les services metier dans `Services`.
 - Ajouter les migrations necessaires dans `Migrations`.
 - Completer les listeners/events specifiques metier.
+
+## CRM light evolue (prompt 433)
+
+### Pipeline retenu
+- `new`, `contacted`, `qualified`, `won`, `lost`, `archived`
+
+### Relations
+- un contact peut etre lie a une entreprise (`crm_company_id`)
+- une entreprise expose tous ses contacts lies
+
+### Workflows
+- interactions (`call`, `email`, `meeting`, `note`, `task`, `imported`)
+- taches (`open`, `done`) avec echeance
+- timeline unifiee (CRM + booking + event)
+
+### Filtres
+- recherche texte
+- filtre pipeline
+- filtre source
+- filtre date de derniere interaction

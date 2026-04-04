@@ -18,12 +18,16 @@ class CrmContact extends Model
         'phone',
         'position',
         'status',
+        'pipeline_stage',
+        'source',
         'tags',
         'notes',
+        'last_interaction_at',
         'metadata',
     ];
 
     protected $casts = [
+        'last_interaction_at' => 'datetime',
         'metadata' => 'array',
     ];
 
@@ -35,6 +39,16 @@ class CrmContact extends Model
     public function crmNotes(): HasMany
     {
         return $this->hasMany(CrmNote::class, 'crm_contact_id')->orderByDesc('created_at');
+    }
+
+    public function interactions(): HasMany
+    {
+        return $this->hasMany(CrmInteraction::class, 'crm_contact_id')->orderByDesc('happened_at');
+    }
+
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(CrmTask::class, 'crm_contact_id')->orderByDesc('created_at');
     }
 
     public function fullName(): string
