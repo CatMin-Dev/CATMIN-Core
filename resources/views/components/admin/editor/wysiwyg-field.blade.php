@@ -96,7 +96,7 @@
                 <button type="button" class="btn btn-sm btn-outline-secondary" data-editor-action="media-picker" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Insérer une image"><i class="bi bi-image me-1"></i>Media</button>
                 <button type="button" class="btn btn-sm btn-outline-info" data-editor-action="toggle-html" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Basculer en édition HTML"><i class="bi bi-code-slash me-1"></i><span data-editor-html-toggle-label>HTML</span></button>
 
-                @if($hasTool('panel'))
+                @if($hasTool('panel') && $panelEnabled)
                 <div class="ms-auto d-flex gap-1">
                     <button type="button" class="btn btn-sm btn-outline-primary" data-editor-action="toggle-panel" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Afficher la bibliothèque">
                         <i class="bi bi-layout-sidebar"></i> Snippets / Blocs
@@ -116,6 +116,13 @@
                               spellcheck="false"
                               style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace; min-height: 22rem;"></textarea>
                 </div>
+                        $integration = editor_field((string) $scope, (string) $field, ['component' => 'wysiwyg-field']);
+                        $mode = (string) ($integration['mode'] ?? 'simple');
+                        $enabled = (bool) ($integration['enabled'] ?? false);
+                        $mediaAllowed = (bool) ($integration['media_allowed'] ?? false);
+                        $panelEnabled = (bool) ($integration['panel_enabled'] ?? false);
+                        $snippetItems = (array) ($integration['snippets'] ?? $manager->snippetItems(['scope' => $scope, 'field' => $field]));
+                        $blockItems = (array) ($integration['blocks'] ?? $manager->blockItems(['scope' => $scope, 'field' => $field]));
 
                 <aside class="catmin-editor-panel border-start" data-editor-panel @if(!$hasTool('panel')) hidden @endif>
                     <div class="p-3 border-bottom d-flex justify-content-between align-items-center">

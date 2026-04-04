@@ -51,39 +51,65 @@ class WysiwygManager
      */
     public function isFieldEnabled(string $scope, string $field, array $context = []): bool
     {
+        return $this->fieldMode($scope, $field, $context) !== 'simple';
+    }
+
+    /**
+     * @param array<string,mixed> $context
+     */
+    public function fieldMode(string $scope, string $field, array $context = []): string
+    {
         if (!config('catmin_editor.enabled', true)) {
-            return false;
+            return 'simple';
         }
 
         foreach (self::$fieldResolvers as $resolver) {
             try {
                 $decision = $resolver($scope, $field, $context);
                 if ($decision !== null) {
-                    return (bool) $decision;
+                    return (bool) $decision ? 'rich+assets' : 'simple';
                 }
             } catch (\Throwable) {
                 // Ignore failing resolver to keep editor integration robust.
             }
         }
 
+        /** @var FieldEditorIntegrationService $integration */
+        $integration = app(FieldEditorIntegrationService::class);
+        $resolved = $integration->resolve($scope, $field, $context);
+
+        $mode = (string) ($resolved['mode'] ?? 'simple');
+        if ($mode !== 'simple') {
+            return $mode;
+        }
+
+        // Legacy compatibility: static and dynamic field rules from previous editor versions.
         $fieldsConfig = (array) config('catmin_editor.fields', []);
         $nestedEnabled = (bool) data_get($fieldsConfig, $scope . '.' . $field, false);
         $flatEnabled = (bool) data_get((array) ($fieldsConfig[$scope] ?? []), $field, false);
-        $staticEnabled = $nestedEnabled || $flatEnabled;
-        $dynamicRules = $this->dynamicFieldRules();
-
-        if ($dynamicRules === []) {
-            return $staticEnabled;
+        if ($nestedEnabled || $flatEnabled) {
+            return 'rich+assets';
         }
 
         $needle = $scope . '.' . $field;
-        foreach ($dynamicRules as $rule) {
+        foreach ($this->dynamicFieldRules() as $rule) {
             if (fnmatch($rule, $needle)) {
-                return true;
+                return 'rich+assets';
             }
         }
 
-        return $staticEnabled;
+        return 'simple';
+    }
+
+    /**
+     * @param array<string,mixed> $context
+     */
+    public function fieldIntegration(string $scope, string $field, array $context = []): array
+    {
+        /** @var FieldEditorIntegrationService $integration */
+        $integration = app(FieldEditorIntegrationService::class);
+
+        return $integration->resolve($scope, $field, $context);
     }
 
     /**
@@ -114,6 +140,16 @@ class WysiwygManager
      */
     public function snippetItems(array $context = []): array
     {
+        if (isset($context['scope'], $context['field'])) {
+            /** @var FieldEditorIntegrationService $integration */
+            $integration = app(FieldEditorIntegrationService::class);
+            $resolved = $integration->resolve((string) $context['scope'], (string) $context['field'], $context);
+
+            if (is_array($resolved['snippets'] ?? null)) {
+                return (array) $resolved['snippets'];
+            }
+        }
+
         $dynamic = SettingService::get('addon.cat_wysiwyg.snippets', []);
         $dynamicItems = [];
         foreach ((array) $dynamic as $item) {
@@ -158,6 +194,16 @@ class WysiwygManager
      */
     public function blockItems(array $context = []): array
     {
+        if (isset($context['scope'], $context['field'])) {
+            /** @var FieldEditorIntegrationService $integration */
+            $integration = app(FieldEditorIntegrationService::class);
+            $resolved = $integration->resolve((string) $context['scope'], (string) $context['field'], $context);
+
+            if (is_array($resolved['blocks'] ?? null)) {
+                return (array) $resolved['blocks'];
+            }
+        }
+
         $dynamic = SettingService::get('addon.cat_wysiwyg.blocks', []);
         $dynamicItems = [];
         foreach ((array) $dynamic as $item) {

@@ -24,7 +24,16 @@
                 </div>
                 <div class="col-12">
                     <label class="form-label">Description</label>
-                    <textarea name="description" class="form-control" rows="6">{{ old('description', $event?->description) }}</textarea>
+                    <x-admin.editor.wysiwyg-field
+                        name="description"
+                        id="event_description"
+                        label="Description"
+                        :value="old('description', $event?->description)"
+                        :scope="isset($event) && $event?->exists ? 'events.edit' : 'events.create'"
+                        field="description"
+                        placeholder="Description de l'evenement"
+                        help-text="Mode auto: structured pour event (snippets + blocs + media)."
+                    />
                 </div>
                 <div class="col-md-6">
                     <label class="form-label fw-semibold">Début <span class="text-danger">*</span></label>

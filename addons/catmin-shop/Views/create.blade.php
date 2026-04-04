@@ -48,8 +48,16 @@
                     </div>
                 </div>
                 <div class="col-12">
-                    <label class="form-label">Description</label>
-                    <textarea name="description" rows="6" class="form-control">{{ old('description') }}</textarea>
+                    <x-admin.editor.wysiwyg-field
+                        name="description"
+                        id="shop_description_create"
+                        label="Description"
+                        :value="old('description')"
+                        scope="shop.create"
+                        field="description"
+                        placeholder="Description produit"
+                        help-text="Mode auto: rich+assets pour shop (WYSIWYG + snippets + media)."
+                    />
                 </div>
                 <div class="col-12 col-md-3">
                     <label class="form-label">Stock</label>

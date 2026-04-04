@@ -513,3 +513,19 @@ if (!function_exists('setting_text')) {
         return (string) setting($key, $default);
     }
 }
+
+if (!function_exists('editor_field')) {
+    /**
+     * Resolve editor mode/snippets/blocks for a scoped field.
+     *
+     * @param array<string,mixed> $context
+     * @return array<string,mixed>
+     */
+    function editor_field(string $scope, string $field, array $context = []): array
+    {
+        /** @var \App\Services\Editor\FieldEditorIntegrationService $service */
+        $service = app(\App\Services\Editor\FieldEditorIntegrationService::class);
+
+        return $service->resolve($scope, $field, $context);
+    }
+}
