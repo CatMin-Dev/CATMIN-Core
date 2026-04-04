@@ -595,6 +595,235 @@ body {
     background: #fff;
 }
 
+.catmin-nav-v2 {
+    display: grid;
+    gap: 0.4rem;
+}
+
+.catmin-master {
+    position: relative;
+}
+
+.catmin-master__btn {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1.5rem 1fr auto;
+    align-items: center;
+    gap: 0.6rem;
+    border: 0;
+    background: transparent;
+    color: var(--catmin-sidebar-color);
+    border-radius: 0.75rem;
+    padding: 0.65rem 0.75rem;
+    text-align: left;
+}
+
+.catmin-master__btn:hover,
+.catmin-master__btn:focus {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.catmin-master.is-active > .catmin-master__btn {
+    background: var(--catmin-sidebar-active-bg);
+    color: #fff;
+}
+
+.catmin-master__chevron {
+    transition: transform 0.15s ease;
+}
+
+.catmin-master__panel {
+    display: none;
+    padding: 0.3rem 0.3rem 0.4rem 2.1rem;
+}
+
+.catmin-master__panel.is-open {
+    display: block;
+}
+
+.catmin-master__panel.is-open + .catmin-nav-flyout {
+    pointer-events: none;
+}
+
+.catmin-sub {
+    margin-bottom: 0.55rem;
+}
+
+.catmin-sub__title {
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 0.35rem 0;
+}
+
+.catmin-nav-leaf {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    border-radius: 0.55rem;
+    padding: 0.45rem 0.55rem;
+}
+
+.catmin-nav-leaf:hover,
+.catmin-nav-leaf:focus {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.catmin-nav-leaf.is-active {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.catmin-nav-flyout {
+    position: fixed;
+    left: calc(var(--catmin-sidebar-width) - 0.5rem);
+    top: 1rem;
+    bottom: 1rem;
+    width: 340px;
+    z-index: 1080;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-6px);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.catmin-nav-flyout.is-open {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(0);
+}
+
+.catmin-nav-flyout__panel {
+    height: 100%;
+    overflow: auto;
+    border-radius: 0.9rem;
+    background: #2c0010;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 16px 30px rgba(0, 0, 0, 0.25);
+    padding: 0.8rem;
+}
+
+.catmin-nav-flyout__title {
+    color: #fff;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.catmin-nav-flyout__group {
+    margin-bottom: 0.8rem;
+}
+
+.catmin-nav-flyout__group-title {
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.35rem;
+}
+
+body.catmin-nav-collapsed {
+    --catmin-sidebar-width: 88px;
+}
+
+body.catmin-nav-collapsed .catmin-nav-brand__text,
+body.catmin-nav-collapsed .catmin-master__label,
+body.catmin-nav-collapsed .catmin-master__chevron,
+body.catmin-nav-collapsed .catmin-master__panel {
+    display: none;
+}
+
+body.catmin-nav-collapsed .catmin-master__btn {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    padding: 0.65rem 0.35rem;
+}
+
+body.catmin-nav-collapsed .catmin-master__icon {
+    font-size: 1.1rem;
+}
+
+.catmin-breadcrumbs ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: #6b7280;
+    font-size: 0.78rem;
+}
+
+.catmin-breadcrumbs li:not(:last-child)::after {
+    content: '/';
+    margin-left: 0.4rem;
+    opacity: 0.6;
+}
+
+.catmin-breadcrumbs a {
+    color: #4b5563;
+    text-decoration: none;
+}
+
+.catmin-command-surface {
+    position: relative;
+    width: min(420px, 40vw);
+}
+
+.catmin-command-surface__results {
+    display: none;
+    position: absolute;
+    top: calc(100% + 0.3rem);
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid #dee3eb;
+    border-radius: 0.7rem;
+    box-shadow: 0 10px 22px rgba(17, 24, 39, 0.1);
+    max-height: 320px;
+    overflow: auto;
+    z-index: 1100;
+}
+
+.catmin-command-surface:focus-within .catmin-command-surface__results {
+    display: block;
+}
+
+.catmin-command-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.6rem;
+    padding: 0.5rem 0.65rem;
+    color: #111827;
+    text-decoration: none;
+}
+
+.catmin-command-item:hover,
+.catmin-command-item:focus {
+    background: #f5f7fb;
+}
+
+.catmin-command-item small {
+    color: #6b7280;
+}
+
+.catmin-dashboard-zones {
+    display: grid;
+    gap: 1rem;
+}
+
+.catmin-zone {
+    background: transparent;
+}
+
+.catmin-zone__header {
+    margin-bottom: 0.6rem;
+}
+
 /* Preview pane for live editor */
 .catmin-editor-preview {
     width: 350px;

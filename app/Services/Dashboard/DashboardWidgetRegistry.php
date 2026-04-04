@@ -100,6 +100,9 @@ class DashboardWidgetRegistry
             'type' => (string) ($widget['type'] ?? 'list'),
             'tone' => (string) ($widget['tone'] ?? 'secondary'),
             'order' => (int) ($widget['order'] ?? 100),
+            'zone' => (string) ($widget['zone'] ?? 'secondary'),
+            'priority' => (int) ($widget['priority'] ?? ($widget['order'] ?? 100)),
+            'span' => (string) ($widget['span'] ?? 'half'),
             'items' => is_array($widget['items'] ?? null)
                 ? collect($widget['items'])->filter(fn ($item) => is_array($item))->values()->all()
                 : [],

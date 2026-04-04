@@ -615,6 +615,13 @@ return [
                         'active_when' => ['addons.marketplace.*'],
                         'permission' => 'addon.registry.view',
                     ],
+                    [
+                        'label' => 'Bundles Addons',
+                        'icon' => 'bi bi-boxes',
+                        'route' => 'addons.bundles.index',
+                        'active_when' => ['addons.bundles.*'],
+                        'permission' => 'addon.registry.view',
+                    ],
                 ],
             ],
             [
@@ -758,6 +765,7 @@ return [
     */
     'features' => [
         'legacy_preview_enabled' => true,
+        'admin_navigation_v2' => true,
         'admin_authentication_enabled' => true,
         'module_system_enabled' => false, // Enable when modules are ready
         'api_enabled' => false,

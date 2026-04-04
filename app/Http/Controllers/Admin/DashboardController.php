@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Services\AdminRuntimeInfoService;
 use App\Services\AddonManager;
 use App\Services\Dashboard\DashboardKpiService;
+use App\Services\Dashboard\DashboardLayoutService;
 use App\Services\Dashboard\DashboardWidgetRegistry;
 use App\Services\ModuleConfigService;
 use App\Services\ModuleLoader;
@@ -30,6 +31,7 @@ class DashboardController extends Controller
 {
     public function __construct(
         private readonly DashboardKpiService $dashboardKpiService,
+        private readonly DashboardLayoutService $dashboardLayoutService,
         private readonly AdminRuntimeInfoService $adminRuntimeInfoService
     )
     {
@@ -53,10 +55,13 @@ class DashboardController extends Controller
             ->values()
             ->all();
 
+        $dashboardLayout = $this->dashboardLayoutService->build($dashboardWidgets, $dashboard);
+
         return view('admin.pages.dashboard', [
             'currentPage' => 'dashboard',
             'dashboard' => $dashboard,
             'dashboardWidgets' => $dashboardWidgets,
+            'dashboardLayout' => $dashboardLayout,
             'stats' => [
                 'users' => User::count(),
                 'roles' => Role::count(),

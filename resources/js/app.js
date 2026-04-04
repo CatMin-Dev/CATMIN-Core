@@ -1,4 +1,6 @@
 import 'bootstrap';
+import './catmin-navigation/index.js';
+import './catmin-topbar/index.js';
 
 function slugify(value) {
 	return String(value || '')
