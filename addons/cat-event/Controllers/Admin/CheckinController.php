@@ -7,51 +7,53 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Addons\CatEvent\Models\Event;
-use Addons\CatEvent\Models\EventTicket;
-use Addons\CatEvent\Services\EventAdminService;
+use Addons\CatEvent\Services\EventCheckinService;
 
 class CheckinController extends Controller
 {
-    public function __construct(private readonly EventAdminService $service)
+    public function __construct(private readonly EventCheckinService $service)
     {
     }
 
-    public function index(Event $event): View
+    public function index(Request $request, Event $event): View
     {
+        $filters = [
+            'status' => (string) $request->query('status', ''),
+            'q' => (string) $request->query('q', ''),
+        ];
+
         return view()->file(base_path('addons/cat-event/Views/checkin/index.blade.php'), [
             'currentPage' => 'events',
             'event'       => $event,
-            'checkins'    => $event->checkins()->with('participant', 'ticket')->orderByDesc('checkin_at')->paginate(50),
-            'stats'       => [
-                'total_tickets'     => $event->tickets()->where('status', '!=', 'cancelled')->count(),
-                'checkins_done'     => $event->checkins()->count(),
-                'remaining'         => max(0, $event->tickets()->where('status', 'active')->count()),
-            ],
+            'checkins'    => $this->service->attendanceListing($event, $filters),
+            'stats'       => $this->service->attendanceStats($event),
+            'filters'     => $filters,
         ]);
     }
 
     public function store(Request $request, Event $event): RedirectResponse
     {
         $validated = $request->validate([
-            'ticket_number' => ['required', 'string'],
+            'ticket_code' => ['required', 'string', 'max:500'],
+            'checkin_method' => ['nullable', 'string', 'max:30'],
+            'gate' => ['nullable', 'string', 'max:120'],
+            'notes' => ['nullable', 'string', 'max:1000'],
         ]);
-
-        $ticket = EventTicket::query()
-            ->where('event_id', $event->id)
-            ->where('ticket_number', $validated['ticket_number'])
-            ->first();
-
-        if ($ticket === null) {
-            return back()->withErrors(['ticket_number' => 'Billet introuvable pour cet événement.']);
-        }
 
         try {
             $adminUser = auth()->user();
-            $this->service->checkin($ticket, 'manual', $adminUser ? (int) $adminUser->id : null);
+            $this->service->checkinByCode(
+                $event,
+                $validated['ticket_code'],
+                (string) ($validated['checkin_method'] ?? 'manual'),
+                $adminUser ? (int) $adminUser->id : null,
+                $validated['gate'] ?? null,
+                $validated['notes'] ?? null,
+            );
         } catch (\RuntimeException $e) {
-            return back()->withErrors(['ticket_number' => $e->getMessage()]);
+            return back()->withErrors(['ticket_code' => $e->getMessage()])->withInput();
         }
 
-        return back()->with('status', 'Check-in effectué avec succès.');
+        return back()->with('status', 'Check-in validé avec succès.');
     }
 }

@@ -12,7 +12,11 @@ class EventCheckin extends Model
     protected $fillable = [
         'event_id',
         'event_ticket_id',
+        'ticket_id',
         'event_participant_id',
+        'checked_in_by',
+        'checked_in_at',
+        'location',
         'checkin_at',
         'checkin_method',
         'admin_user_id',
@@ -21,6 +25,7 @@ class EventCheckin extends Model
 
     protected $casts = [
         'checkin_at' => 'datetime',
+        'checked_in_at' => 'datetime',
     ];
 
     public function event(): BelongsTo

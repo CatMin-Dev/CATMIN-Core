@@ -13,16 +13,23 @@ class EventTicket extends Model
     protected $fillable = [
         'event_id',
         'event_participant_id',
+        'participant_id',
+        'source',
         'ticket_number',
+        'code',
+        'token',
         'qr_code',
+        'qr_payload',
         'status',
         'checkin_at',
         'issued_at',
+        'used_at',
     ];
 
     protected $casts = [
         'checkin_at' => 'datetime',
         'issued_at'  => 'datetime',
+        'used_at'    => 'datetime',
     ];
 
     public function event(): BelongsTo
@@ -47,6 +54,11 @@ class EventTicket extends Model
 
     public function isActive(): bool
     {
-        return $this->status === 'active';
+        return in_array($this->status, ['active', 'issued'], true);
+    }
+
+    public function publicCode(): string
+    {
+        return (string) ($this->code ?: $this->ticket_number);
     }
 }

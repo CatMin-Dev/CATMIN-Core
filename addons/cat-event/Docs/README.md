@@ -34,3 +34,40 @@ Addon de gestion complète d'événements : CRUD, sessions multi-dates, inscript
 - **Logger** : toutes les actions sensibles sont journalisées
 - **Mailer** : email de confirmation envoyé à l'inscription
 - **Webhooks** : `event.created`, `event.participant.registered`, `event.checkin.done`
+
+## Cycle billet
+1. **issued**: billet créé (source `manual|shop|import`) avec code unique + token.
+2. **used**: billet validé au check-in (horodatage `used_at`).
+3. **cancelled**: billet annulé (refusé au check-in).
+4. **invalid**: billet marqué invalide (refusé au check-in).
+
+Le code public reste rétro-compatible avec `ticket_number` et est exposé via `code`.
+
+## Format QR / code
+- Le QR encode un payload JSON:
+	- `v`: version de payload
+	- `type`: `catmin.event.ticket`
+	- `event_id`
+	- `ticket_code`
+	- `token`
+- Le rendu QR est stocké en data URI SVG dans `event_tickets.qr_code`.
+
+## Flow check-in
+1. Agent terrain ouvre `/admin/events/{event}/checkin` (mobile-friendly).
+2. Saisie manuelle du code ou scan QR (caméra navigateur).
+3. Validation de sécurité:
+	 - événement non `cancelled|completed`
+	 - ticket existant pour l'événement
+	 - ticket non `cancelled|invalid`
+	 - ticket pas déjà `used`
+4. Si valide: ticket passe `used`, check-in créé, participant `attended`.
+5. Si invalide/doublon: refus immédiat + log.
+
+## Gestion doublons / annulations
+- **Idempotence**: check-in verrouille le billet (`lockForUpdate`) pour empêcher les doubles validations concurrentes.
+- **Doublon**: deuxième scan du même ticket => refus explicite.
+- **Billet annulé/invalide**: refus explicite.
+
+## Bridge Shop
+- Le bridge `catmin-event-shop-bridge` continue d'émettre des billets via le flux participant.
+- Les billets shop sont tagués source `shop` quand le service d'émission est utilisé avec cette source.

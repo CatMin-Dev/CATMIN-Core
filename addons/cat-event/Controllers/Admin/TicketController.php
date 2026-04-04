@@ -8,10 +8,14 @@ use Illuminate\View\View;
 use Addons\CatEvent\Models\Event;
 use Addons\CatEvent\Models\EventTicket;
 use Addons\CatEvent\Services\EventAdminService;
+use Addons\CatEvent\Services\EventTicketService;
 
 class TicketController extends Controller
 {
-    public function __construct(private readonly EventAdminService $service)
+    public function __construct(
+        private readonly EventAdminService $service,
+        private readonly EventTicketService $ticketService,
+    )
     {
     }
 
@@ -29,5 +33,12 @@ class TicketController extends Controller
         $this->service->cancelTicket($ticket);
 
         return back()->with('status', 'Billet annulé.');
+    }
+
+    public function regenerate(Event $event, EventTicket $ticket): RedirectResponse
+    {
+        $this->ticketService->regenerate($ticket);
+
+        return back()->with('status', 'Billet régénéré (token/QR rafraîchis).');
     }
 }

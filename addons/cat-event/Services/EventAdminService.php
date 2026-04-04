@@ -2,8 +2,8 @@
 
 namespace Addons\CatEvent\Services;
 
+use App\Services\CatminEventBus;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Modules\Logger\Services\SystemLogService;
 use Modules\Mailer\Services\MailerAdminService;
@@ -12,6 +12,8 @@ use Addons\CatEvent\Models\EventSession;
 use Addons\CatEvent\Models\EventParticipant;
 use Addons\CatEvent\Models\EventTicket;
 use Addons\CatEvent\Models\EventCheckin;
+use Addons\CatEvent\Services\EventTicketService;
+use Addons\CatEvent\Services\EventCheckinService;
 
 class EventAdminService
 {
@@ -200,25 +202,25 @@ class EventAdminService
 
     public function generateTicket(Event $event, EventParticipant $participant): EventTicket
     {
-        $ticketNumber = strtoupper('EVT-' . $event->id . '-' . Str::random(8));
-        $qrCode       = base64_encode($ticketNumber . '|' . $participant->email . '|' . $event->id);
+        /** @var EventTicketService $ticketService */
+        $ticketService = app(EventTicketService::class);
 
-        /** @var EventTicket $ticket */
-        $ticket = EventTicket::query()->create([
-            'event_id'             => $event->id,
-            'event_participant_id' => $participant->id,
-            'ticket_number'        => $ticketNumber,
-            'qr_code'              => $qrCode,
-            'status'               => 'active',
-            'issued_at'            => now(),
-        ]);
-
-        return $ticket;
+        return $ticketService->issue($event, $participant, 'manual');
     }
 
     public function cancelTicket(EventTicket $ticket): EventTicket
     {
-        $ticket->update(['status' => 'cancelled']);
+        $ticket->update([
+            'status' => 'cancelled',
+            'used_at' => null,
+            'checkin_at' => null,
+        ]);
+
+        CatminEventBus::dispatch('event.ticket.cancelled', [
+            'event_id' => $ticket->event_id,
+            'participant_id' => $ticket->event_participant_id,
+            'ticket_id' => $ticket->id,
+        ]);
 
         $this->logAudit('event.ticket.cancelled', 'Billet annulé', ['ticket_id' => $ticket->id]);
 
@@ -229,34 +231,19 @@ class EventAdminService
 
     public function checkin(EventTicket $ticket, string $method = 'manual', ?int $adminUserId = null): EventCheckin
     {
-        if ($ticket->status === 'used') {
-            throw new \RuntimeException('Ce billet a déjà été utilisé pour un check-in.');
-        }
+        /** @var EventCheckinService $checkinService */
+        $checkinService = app(EventCheckinService::class);
 
-        /** @var EventCheckin $checkin */
-        $checkin = DB::transaction(function () use ($ticket, $method, $adminUserId): EventCheckin {
-            $ticket->update(['status' => 'used', 'checkin_at' => now()]);
+        $event = $ticket->event()->firstOrFail();
 
-            /** @var EventCheckin $c */
-            $c = EventCheckin::query()->create([
-                'event_id'             => $ticket->event_id,
-                'event_ticket_id'      => $ticket->id,
-                'event_participant_id' => $ticket->event_participant_id,
-                'checkin_at'           => now(),
-                'checkin_method'       => $method,
-                'admin_user_id'        => $adminUserId,
-            ]);
-
-            return $c;
-        });
-
-        $this->logAudit('event.checkin.done', 'Check-in effectué', [
-            'ticket_id'   => $ticket->id,
-            'checkin_id'  => $checkin->id,
-            'method'      => $method,
-        ]);
-
-        return $checkin;
+        return $checkinService->checkinByCode(
+            $event,
+            $ticket->publicCode(),
+            $method,
+            $adminUserId,
+            null,
+            null
+        );
     }
 
     // ─── Helpers ───────────────────────────────────────────────────────────────

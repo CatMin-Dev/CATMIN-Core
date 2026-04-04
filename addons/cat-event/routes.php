@@ -73,20 +73,24 @@ Route::middleware(['web', 'catmin.admin'])
         // ── Billets ────────────────────────────────────────────────────────────
 
         Route::get('/events/{event}/tickets', [TicketController::class, 'index'])
-            ->middleware('catmin.permission:module.events.list')
+            ->middleware('catmin.permission:event.ticket.view')
             ->name('events.tickets');
 
         Route::patch('/events/{event}/tickets/{ticket}/cancel', [TicketController::class, 'cancel'])
             ->middleware('catmin.permission:module.events.edit')
             ->name('events.tickets.cancel');
 
+        Route::patch('/events/{event}/tickets/{ticket}/regenerate', [TicketController::class, 'regenerate'])
+            ->middleware('catmin.permission:event.ticket.regenerate')
+            ->name('events.tickets.regenerate');
+
         // ── Check-in ───────────────────────────────────────────────────────────
 
         Route::get('/events/{event}/checkin', [CheckinController::class, 'index'])
-            ->middleware('catmin.permission:module.events.checkin')
+            ->middleware('catmin.permission:event.checkin.index')
             ->name('events.checkin');
 
         Route::post('/events/{event}/checkin', [CheckinController::class, 'store'])
-            ->middleware('catmin.permission:module.events.checkin')
+            ->middleware('catmin.permission:event.checkin.validate')
             ->name('events.checkin.store');
     });
