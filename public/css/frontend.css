@@ -1,0 +1,144 @@
+/*
+ * CATMIN — Public Frontend CSS
+ * ============================
+ * Loaded via Vite as a companion to Bootstrap 5 (CDN).
+ * Contains ONLY public site rules — no admin Chrome, no Bootstrap
+ * import (that comes from CDN in the layout head).
+ */
+
+/* ── Base ─────────────────────────────────────────────────────────────── */
+
+:root {
+    --cf-font-sans:       'Segoe UI', system-ui, -apple-system, sans-serif;
+    --cf-color-body:      #1a1a2e;
+    --cf-color-muted:     #6c757d;
+    --cf-color-accent:    #0d6efd;
+    --cf-color-bg:        #f8f9fa;
+    --cf-color-card:      #ffffff;
+    --cf-border-radius:   0.5rem;
+    --cf-shadow:          0 2px 12px rgba(0, 0, 0, .06);
+    --cf-transition:      0.18s ease;
+}
+
+html,
+body {
+    font-family: var(--cf-font-sans);
+    color: var(--cf-color-body);
+    background-color: var(--cf-color-bg);
+}
+
+/* ── Navbar ───────────────────────────────────────────────────────────── */
+
+.cf-navbar {
+    border-bottom: 1px solid rgba(0, 0, 0, .07);
+    background: var(--cf-color-card);
+}
+
+.cf-navbar .navbar-brand {
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+/* ── Main content wrapper ─────────────────────────────────────────────── */
+
+.cf-main {
+    min-height: 60vh;
+    padding-top: 2.5rem;
+    padding-bottom: 3rem;
+}
+
+/* ── Cards ────────────────────────────────────────────────────────────── */
+
+.cf-card {
+    border: 1px solid rgba(0, 0, 0, .07);
+    border-radius: var(--cf-border-radius);
+    box-shadow: var(--cf-shadow);
+    background: var(--cf-color-card);
+    transition: box-shadow var(--cf-transition);
+}
+
+.cf-card:hover {
+    box-shadow: 0 6px 24px rgba(0, 0, 0, .1);
+}
+
+/* ── Article listing card ─────────────────────────────────────────────── */
+
+.cf-article-card .cf-article-thumb {
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    border-radius: var(--cf-border-radius) var(--cf-border-radius) 0 0;
+    width: 100%;
+}
+
+.cf-article-card .cf-article-meta {
+    font-size: .82rem;
+    color: var(--cf-color-muted);
+}
+
+/* ── Article detail ───────────────────────────────────────────────────── */
+
+.cf-article-body {
+    font-size: 1.05rem;
+    line-height: 1.78;
+}
+
+.cf-article-body img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--cf-border-radius);
+    margin: 0.75rem 0;
+}
+
+.cf-article-body h2,
+.cf-article-body h3 {
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+}
+
+.cf-article-body blockquote {
+    border-left: 4px solid var(--cf-color-accent);
+    padding: 0.5rem 1rem;
+    color: var(--cf-color-muted);
+    font-style: italic;
+}
+
+/* ── Contact form ─────────────────────────────────────────────────────── */
+
+.cf-contact-card {
+    max-width: 680px;
+    margin: 0 auto;
+}
+
+/* ── Map ──────────────────────────────────────────────────────────────── */
+
+#cf-public-map {
+    height: 520px;
+    border-radius: var(--cf-border-radius);
+    border: 1px solid rgba(0, 0, 0, .08);
+}
+
+/* ── Footer ───────────────────────────────────────────────────────────── */
+
+.cf-footer {
+    border-top: 1px solid rgba(0, 0, 0, .07);
+    background: var(--cf-color-card);
+    font-size: .88rem;
+    color: var(--cf-color-muted);
+    padding: 1.4rem 0;
+    text-align: center;
+}
+
+/* ── Alerts / flash ───────────────────────────────────────────────────── */
+
+.cf-flash {
+    border-radius: var(--cf-border-radius);
+    margin-bottom: 1.5rem;
+}
+
+/* ── Breadcrumb ───────────────────────────────────────────────────────── */
+
+.cf-breadcrumb {
+    background: transparent;
+    padding: 0;
+    font-size: .88rem;
+}

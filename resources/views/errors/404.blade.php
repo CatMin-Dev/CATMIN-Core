@@ -12,7 +12,7 @@
     <link rel="stylesheet"
           href="{{ config('catmin_frontend.bootstrap_css', 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css') }}"
           crossorigin="anonymous">
-    @vite('resources/css/frontend.css')
+    <link rel="stylesheet" href="{{ asset('css/frontend.css') }}">
 </head>
 <body>
 
@@ -39,6 +39,6 @@
 
     <script src="{{ config('catmin_frontend.bootstrap_js', 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js') }}"
             crossorigin="anonymous"></script>
-    @vite('resources/js/frontend.js')
+    <script src="{{ asset('js/frontend.js') }}" defer></script>
 </body>
 </html>

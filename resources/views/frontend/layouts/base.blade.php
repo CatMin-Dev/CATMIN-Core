@@ -21,15 +21,15 @@
         <meta property="og:image" content="{{ $seo['og']['image'] }}">
     @endif
 
-    {{-- External CSS — Bootstrap 5 from CDN. NO admin bundle loaded here. --}}
-    <link rel="stylesheet"
-          href="{{ config('catmin_frontend.bootstrap_css') }}"
-          crossorigin="anonymous">
+        {{-- External CSS — Bootstrap 5 from CDN. NO admin bundle loaded here. --}}
+        <link rel="stylesheet"
+            href="{{ config('catmin_frontend.bootstrap_css') }}"
+            crossorigin="anonymous">
 
-    {{-- Site-specific frontend CSS overrides (compiled by Vite, no admin classes) --}}
-    @vite('resources/css/frontend.css')
+        {{-- Site-specific frontend CSS — static file, no admin classes --}}
+        <link rel="stylesheet" href="{{ asset('css/frontend.css') }}?v={{ filemtime(public_path('css/frontend.css')) }}">
 
-    {{-- Per-view head stack (Leaflet CSS, etc.) --}}
+        {{-- Per-view head stack (Leaflet CSS, etc.) --}}
     @stack('head_css')
 
     @yield('head_extra')
@@ -80,8 +80,8 @@
     {{-- External JS — Bootstrap Bundle from CDN. NO admin JS. --}}
     <script src="{{ config('catmin_frontend.bootstrap_js') }}" crossorigin="anonymous"></script>
 
-    {{-- Site-specific frontend JS (no admin code) --}}
-    @vite('resources/js/frontend.js')
+    {{-- Site-specific frontend JS — static file, no admin code --}}
+    <script src="{{ asset('js/frontend.js') }}?v={{ filemtime(public_path('js/frontend.js')) }}" defer></script>
 
     {{-- Per-view scripts (Leaflet, etc.) --}}
     @stack('foot_js')
