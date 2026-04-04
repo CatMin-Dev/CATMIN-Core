@@ -45,7 +45,7 @@ class ParticipantController extends Controller
     public function updateStatus(Request $request, Event $event, EventParticipant $participant): RedirectResponse
     {
         $validated = $request->validate([
-            'status' => ['required', Rule::in(['pending', 'confirmed', 'cancelled', 'attended'])],
+            'status' => ['required', Rule::in(['pending', 'approved', 'confirmed', 'cancelled', 'waitlisted', 'ticketed', 'attended'])],
         ]);
 
         $this->service->updateParticipantStatus($participant, $validated['status']);

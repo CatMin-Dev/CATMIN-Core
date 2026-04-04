@@ -96,8 +96,32 @@
                     <label class="form-check-label" for="registration_enabled">Inscriptions ouvertes</label>
                 </div>
                 <div class="mb-3">
+                    <label class="form-label">Mode de participation</label>
+                    <select name="participation_mode" class="form-select">
+                        @php($mode = old('participation_mode', $event?->participation_mode ?? 'free_registration'))
+                        <option value="free_registration" @selected($mode === 'free_registration')>Inscription libre</option>
+                        <option value="approval_required" @selected($mode === 'approval_required')>Preinscription avec validation</option>
+                        <option value="ticket_required" @selected($mode === 'ticket_required')>Billet requis (bridge shop)</option>
+                        <option value="external_link" @selected($mode === 'external_link')>Lien externe</option>
+                        <option value="disabled" @selected($mode === 'disabled')>Inscription desactivee</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Lien externe</label>
+                    <input type="url" name="external_url" class="form-control" value="{{ old('external_url', $event?->external_url) }}" placeholder="https://...">
+                </div>
+                <div class="mb-3">
                     <label class="form-label">Capacité max</label>
                     <input type="number" name="capacity" class="form-control" min="1" value="{{ old('capacity', $event?->capacity) }}" placeholder="Illimitée">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Places max par inscription</label>
+                    <input type="number" name="max_places_per_registration" class="form-control" min="1" max="20" value="{{ old('max_places_per_registration', $event?->max_places_per_registration ?? 1) }}">
+                </div>
+                <div class="mb-3 form-check form-switch">
+                    <input class="form-check-input" type="checkbox" name="allow_waitlist" id="allow_waitlist" value="1"
+                        @checked(old('allow_waitlist', $event?->allow_waitlist ?? false))>
+                    <label class="form-check-label" for="allow_waitlist">Activer la liste d'attente</label>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Date limite inscription</label>

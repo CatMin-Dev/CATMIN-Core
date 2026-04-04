@@ -17,13 +17,17 @@ class EventParticipant extends Model
         'last_name',
         'email',
         'phone',
+        'seats_count',
         'status',
+        'source',
+        'idempotency_key',
         'notes',
         'registered_at',
         'confirmed_at',
     ];
 
     protected $casts = [
+        'seats_count' => 'integer',
         'registered_at' => 'datetime',
         'confirmed_at'  => 'datetime',
     ];

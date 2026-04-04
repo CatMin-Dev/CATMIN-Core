@@ -16,6 +16,9 @@ class BookingSlot extends Model
         'end_at',
         'capacity',
         'booked_count',
+        'status',
+        'allow_overbooking',
+        'blocked_reason',
         'is_active',
     ];
 
@@ -24,6 +27,7 @@ class BookingSlot extends Model
         'end_at' => 'datetime',
         'capacity' => 'integer',
         'booked_count' => 'integer',
+        'allow_overbooking' => 'boolean',
         'is_active' => 'boolean',
     ];
 

@@ -98,6 +98,10 @@ class EventController extends Controller
             'is_free'               => ['nullable', 'boolean'],
             'ticket_price'          => ['nullable', 'numeric', 'min:0'],
             'registration_enabled'  => ['nullable', 'boolean'],
+            'participation_mode'    => ['required', Rule::in($this->service->participationModes())],
+            'external_url'          => ['nullable', 'url', 'max:500'],
+            'allow_waitlist'        => ['nullable', 'boolean'],
+            'max_places_per_registration' => ['nullable', 'integer', 'min:1', 'max:20'],
             'registration_deadline' => ['nullable', 'date'],
         ]);
     }

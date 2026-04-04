@@ -25,6 +25,10 @@ class Event extends Model
         'is_free',
         'ticket_price',
         'registration_enabled',
+        'participation_mode',
+        'external_url',
+        'allow_waitlist',
+        'max_places_per_registration',
         'registration_deadline',
         'published_at',
     ];
@@ -36,6 +40,8 @@ class Event extends Model
         'published_at'          => 'datetime',
         'is_free'               => 'boolean',
         'registration_enabled'  => 'boolean',
+        'allow_waitlist'        => 'boolean',
+        'max_places_per_registration' => 'integer',
         'ticket_price'          => 'decimal:2',
     ];
 
@@ -75,6 +81,8 @@ class Event extends Model
 
     public function isPublished(): bool
     {
-        return $this->status === 'published' && $this->published_at !== null && $this->published_at->isPast();
+        return in_array($this->status, ['published', 'sold_out', 'finished'], true)
+            && $this->published_at !== null
+            && $this->published_at->isPast();
     }
 }

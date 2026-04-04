@@ -5,15 +5,26 @@ namespace Addons\CatminBooking\Services;
 use Addons\CatminBooking\Models\Booking;
 use Addons\CatminBooking\Models\BookingService;
 use Addons\CatminBooking\Models\BookingSlot;
+use Addons\CatminBooking\Services\AvailabilityEngine;
+use Addons\CatminBooking\Services\BookingCalendarService;
+use Addons\CatminBooking\Services\BookingPolicyService;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use Illuminate\Support\Carbon;
 use Modules\Cache\Services\QueryCacheService;
 use Modules\Webhooks\Services\WebhookDispatcher;
 
 class BookingAdminService
 {
+    public function __construct(
+        private readonly AvailabilityEngine $availabilityEngine,
+        private readonly BookingPolicyService $policyService,
+        private readonly BookingCalendarService $calendarService,
+    ) {
+    }
+
     /**
      * @param array<string, mixed> $filters
      */
@@ -45,6 +56,8 @@ class BookingAdminService
             'slug' => $this->uniqueServiceSlug($slugBase),
             'description' => $payload['description'] ?? null,
             'duration_minutes' => (int) $payload['duration_minutes'],
+            'buffer_before_minutes' => max(0, (int) ($payload['buffer_before_minutes'] ?? 0)),
+            'buffer_after_minutes' => max(0, (int) ($payload['buffer_after_minutes'] ?? 0)),
             'price_cents' => (int) round(((float) ($payload['price'] ?? 0)) * 100),
             'is_active' => (bool) ($payload['is_active'] ?? true),
             'metadata' => [
@@ -71,6 +84,8 @@ class BookingAdminService
             'slug' => $this->uniqueServiceSlug($slugBase, (int) $service->id),
             'description' => $payload['description'] ?? null,
             'duration_minutes' => (int) $payload['duration_minutes'],
+            'buffer_before_minutes' => max(0, (int) ($payload['buffer_before_minutes'] ?? 0)),
+            'buffer_after_minutes' => max(0, (int) ($payload['buffer_after_minutes'] ?? 0)),
             'price_cents' => (int) round(((float) ($payload['price'] ?? 0)) * 100),
             'is_active' => (bool) ($payload['is_active'] ?? true),
         ]);
@@ -122,6 +137,9 @@ class BookingAdminService
             'end_at' => $endAt,
             'capacity' => max(1, (int) $payload['capacity']),
             'booked_count' => 0,
+            'status' => (string) ($payload['status'] ?? 'open'),
+            'allow_overbooking' => (bool) ($payload['allow_overbooking'] ?? false),
+            'blocked_reason' => ($payload['blocked_reason'] ?? '') !== '' ? (string) $payload['blocked_reason'] : null,
             'is_active' => (bool) ($payload['is_active'] ?? true),
         ]);
 
@@ -146,6 +164,9 @@ class BookingAdminService
             'start_at' => $startAt,
             'end_at' => $endAt,
             'capacity' => max((int) $slot->booked_count, (int) ($payload['capacity'] ?? $slot->capacity)),
+            'status' => (string) ($payload['status'] ?? $slot->status ?? 'open'),
+            'allow_overbooking' => (bool) ($payload['allow_overbooking'] ?? $slot->allow_overbooking),
+            'blocked_reason' => ($payload['blocked_reason'] ?? null) !== '' ? ($payload['blocked_reason'] ?? null) : null,
             'is_active' => (bool) ($payload['is_active'] ?? $slot->is_active),
         ]);
 
@@ -193,13 +214,14 @@ class BookingAdminService
         return DB::transaction(function () use ($payload): Booking {
             /** @var BookingSlot $slot */
             $slot = BookingSlot::query()->lockForUpdate()->findOrFail((int) $payload['booking_slot_id']);
+            $email = strtolower(trim((string) $payload['customer_email']));
 
-            if (!$slot->is_active) {
-                throw new \RuntimeException('Ce créneau est inactif.');
+            if (!$this->availabilityEngine->canConfirm($slot, (string) ($payload['status'] ?? 'pending'))) {
+                throw new \RuntimeException('Ce créneau n\'est pas disponible selon les règles métier.');
             }
 
-            if ($slot->remainingCapacity() <= 0) {
-                throw new \RuntimeException('Ce créneau est complet.');
+            if ($this->availabilityEngine->hasDuplicateBooking($slot, $email)) {
+                throw new \RuntimeException('Une réservation existe déjà pour ce client sur ce créneau.');
             }
 
             /** @var Booking $booking */
@@ -208,7 +230,7 @@ class BookingAdminService
                 'booking_slot_id' => (int) $slot->id,
                 'status' => (string) ($payload['status'] ?? 'pending'),
                 'customer_name' => (string) $payload['customer_name'],
-                'customer_email' => strtolower(trim((string) $payload['customer_email'])),
+                'customer_email' => $email,
                 'customer_phone' => $payload['customer_phone'] ?? null,
                 'notes' => $payload['notes'] ?? null,
                 'internal_note' => $payload['internal_note'] ?? null,
@@ -217,9 +239,11 @@ class BookingAdminService
                 'cancelled_at' => (($payload['status'] ?? 'pending') === 'cancelled') ? now() : null,
             ]);
 
-            $slot->update([
-                'booked_count' => ((int) $slot->booked_count) + 1,
-            ]);
+            if ($this->policyService->consumesCapacity((string) ($payload['status'] ?? 'pending'))) {
+                $slot->update([
+                    'booked_count' => ((int) $slot->booked_count) + 1,
+                ]);
+            }
 
             $this->dispatchWebhook('booking.created', $booking);
             $this->sendBookingMail($booking, 'created');
@@ -232,22 +256,25 @@ class BookingAdminService
 
     public function updateBookingStatus(Booking $booking, string $status, ?string $internalNote = null): Booking
     {
-        if (!in_array($status, ['pending', 'confirmed', 'cancelled'], true)) {
+        if (!in_array($status, $this->policyService->allowedStatuses(), true)) {
             throw new \InvalidArgumentException('Statut de réservation invalide.');
         }
 
         DB::transaction(function () use ($booking, $status, $internalNote): void {
             $previousStatus = (string) $booking->status;
 
-            if ($previousStatus === 'cancelled' && $status !== 'cancelled') {
+            $previousConsumes = $this->policyService->consumesCapacity($previousStatus);
+            $nextConsumes = $this->policyService->consumesCapacity($status);
+
+            if (!$previousConsumes && $nextConsumes) {
                 $slot = BookingSlot::query()->lockForUpdate()->findOrFail((int) $booking->booking_slot_id);
-                if ($slot->remainingCapacity() <= 0) {
+                if (!$this->availabilityEngine->canConfirm($slot, $status)) {
                     throw new \RuntimeException('Impossible de réactiver la réservation: créneau complet.');
                 }
                 $slot->update(['booked_count' => ((int) $slot->booked_count) + 1]);
             }
 
-            if ($previousStatus !== 'cancelled' && $status === 'cancelled') {
+            if ($previousConsumes && !$nextConsumes) {
                 $slot = BookingSlot::query()->lockForUpdate()->findOrFail((int) $booking->booking_slot_id);
                 $slot->update(['booked_count' => max(0, ((int) $slot->booked_count) - 1)]);
             }
@@ -256,7 +283,7 @@ class BookingAdminService
                 'status' => $status,
                 'internal_note' => $internalNote,
                 'confirmed_at' => $status === 'confirmed' ? now() : $booking->confirmed_at,
-                'cancelled_at' => $status === 'cancelled' ? now() : null,
+                'cancelled_at' => $status === 'cancelled' ? now() : $booking->cancelled_at,
             ]);
         });
 
@@ -280,7 +307,7 @@ class BookingAdminService
      */
     public function statuses(): array
     {
-        return ['pending', 'confirmed', 'cancelled'];
+        return $this->policyService->allowedStatuses();
     }
 
     /**
@@ -291,25 +318,7 @@ class BookingAdminService
         $key = 'calendar.' . md5($from . '|' . $to);
 
         return QueryCacheService::remember('booking', $key, 60, function () use ($from, $to): array {
-            $slots = BookingSlot::query()
-                ->with('service:id,name')
-                ->whereBetween('start_at', [$from, $to])
-                ->orderBy('start_at')
-                ->get();
-
-            return [
-                'slots' => $slots->map(fn (BookingSlot $slot) => [
-                    'id' => (int) $slot->id,
-                    'service_id' => (int) $slot->booking_service_id,
-                    'service_name' => (string) ($slot->service->name ?? ''),
-                    'start_at' => optional($slot->start_at)?->toIso8601String(),
-                    'end_at' => optional($slot->end_at)?->toIso8601String(),
-                    'capacity' => (int) $slot->capacity,
-                    'booked_count' => (int) $slot->booked_count,
-                    'remaining' => $slot->remainingCapacity(),
-                    'is_active' => (bool) $slot->is_active,
-                ])->values()->all(),
-            ];
+            return $this->calendarService->range($from, $to, null);
         });
     }
 
@@ -343,15 +352,22 @@ class BookingAdminService
 
     private function assertNoSlotCollision(int $serviceId, string $startAt, string $endAt, ?int $excludeSlotId = null): void
     {
+        $service = BookingService::query()->find($serviceId);
+        $bufferBefore = max(0, (int) ($service?->buffer_before_minutes ?? 0));
+        $bufferAfter = max(0, (int) ($service?->buffer_after_minutes ?? 0));
+
+        $effectiveStart = Carbon::parse($startAt)->subMinutes($bufferBefore)->toDateTimeString();
+        $effectiveEnd = Carbon::parse($endAt)->addMinutes($bufferAfter)->toDateTimeString();
+
         $conflict = BookingSlot::query()
             ->where('booking_service_id', $serviceId)
             ->when($excludeSlotId !== null, fn ($q) => $q->where('id', '!=', $excludeSlotId))
-            ->where(function ($q) use ($startAt, $endAt): void {
-                $q->whereBetween('start_at', [$startAt, $endAt])
-                  ->orWhereBetween('end_at', [$startAt, $endAt])
-                  ->orWhere(function ($inner) use ($startAt, $endAt): void {
-                      $inner->where('start_at', '<=', $startAt)
-                            ->where('end_at', '>=', $endAt);
+            ->where(function ($q) use ($effectiveStart, $effectiveEnd): void {
+                $q->whereBetween('start_at', [$effectiveStart, $effectiveEnd])
+                  ->orWhereBetween('end_at', [$effectiveStart, $effectiveEnd])
+                  ->orWhere(function ($inner) use ($effectiveStart, $effectiveEnd): void {
+                      $inner->where('start_at', '<=', $effectiveStart)
+                            ->where('end_at', '>=', $effectiveEnd);
                   });
             })
             ->exists();

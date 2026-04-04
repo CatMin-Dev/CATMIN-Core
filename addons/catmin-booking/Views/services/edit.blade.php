@@ -34,6 +34,14 @@
                     <label class="form-label">Prix (€)</label>
                     <input type="number" min="0" step="0.01" name="price" class="form-control" value="{{ old('price', number_format($serviceItem->price_cents / 100, 2, '.', '')) }}">
                 </div>
+                <div class="col-md-3">
+                    <label class="form-label">Buffer avant (min)</label>
+                    <input type="number" min="0" max="180" step="5" name="buffer_before_minutes" class="form-control" value="{{ old('buffer_before_minutes', $serviceItem->buffer_before_minutes ?? 0) }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Buffer apres (min)</label>
+                    <input type="number" min="0" max="180" step="5" name="buffer_after_minutes" class="form-control" value="{{ old('buffer_after_minutes', $serviceItem->buffer_after_minutes ?? 0) }}">
+                </div>
                 <div class="col-md-6 d-flex align-items-end">
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" value="1" name="is_active" id="service_active" @checked(old('is_active', $serviceItem->is_active))>

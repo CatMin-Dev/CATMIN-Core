@@ -6,6 +6,23 @@ use Addons\CatEvent\Controllers\Admin\ParticipantController;
 use Addons\CatEvent\Controllers\Admin\TicketController;
 use Addons\CatEvent\Controllers\Admin\CheckinController;
 use Addons\CatEvent\Controllers\Admin\SessionController;
+use Addons\CatEvent\Controllers\PublicEventController;
+
+Route::middleware(['web', 'catmin.frontend.available'])
+    ->group(function (): void {
+        Route::get('/events/{slug}', [PublicEventController::class, 'show'])
+            ->where('slug', '[A-Za-z0-9\-]+')
+            ->name('frontend.events.show');
+
+        Route::post('/events/{slug}/register', [PublicEventController::class, 'register'])
+            ->where('slug', '[A-Za-z0-9\-]+')
+            ->middleware('throttle:10,1')
+            ->name('frontend.events.register');
+
+        Route::get('/events/{slug}/confirmation/{participant}', [PublicEventController::class, 'confirmation'])
+            ->where('slug', '[A-Za-z0-9\-]+')
+            ->name('frontend.events.confirmation');
+    });
 
 Route::middleware(['web', 'catmin.admin'])
     ->prefix(config('catmin.admin.path', 'admin'))

@@ -188,7 +188,7 @@ class EventCheckinService
 
     private function assertEventAllowsCheckin(Event $event): void
     {
-        if (in_array($event->status, ['cancelled', 'completed'], true)) {
+        if (in_array($event->status, ['cancelled', 'archived', 'finished', 'completed'], true)) {
             throw new \RuntimeException('Le check-in est fermé pour cet événement.');
         }
     }

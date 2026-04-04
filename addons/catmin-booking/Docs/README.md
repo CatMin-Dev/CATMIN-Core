@@ -48,3 +48,24 @@ Addon de réservation services/créneaux/réservations
 - Ajouter les services metier dans `Services`.
 - Ajouter les migrations necessaires dans `Migrations`.
 - Completer les listeners/events specifiques metier.
+
+## Moteur disponibilite V4 (prompt 432)
+
+### Services metier
+- `AvailabilityEngine`: calcule disponibilite, blocages, conflits
+- `BookingPolicyService`: regles de statut, capacite, fermetures
+- `BookingCalendarService`: expose les donnees calendrier (jour/semaine/mois)
+
+### Capacite et conflits
+- capacite par slot
+- surbooking optionnel (`allow_overbooking`)
+- fermeture manuelle (`status=closed|blocked`, `blocked_reason`)
+- collision de creneaux avec buffers service (`buffer_before_minutes`, `buffer_after_minutes`)
+- prevention doublon email/slot
+
+### Etats reservation
+- `pending`, `confirmed`, `cancelled`, `completed`, `no_show`
+
+### API interne calendrier
+- `GET /admin/booking/api/calendar?from=...&to=...&booking_service_id=...`
+- `GET /admin/booking/api/slots/{id}` (detail + dernieres reservations)

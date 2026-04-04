@@ -5,6 +5,7 @@ namespace Addons\CatEvent\Services;
 use App\Services\CatminEventBus;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Modules\Logger\Services\SystemLogService;
 use Modules\Mailer\Services\MailerAdminService;
 use Addons\CatEvent\Models\Event;
@@ -46,7 +47,12 @@ class EventAdminService
 
     public function statuses(): array
     {
-        return ['draft', 'published', 'cancelled', 'completed'];
+        return ['draft', 'published', 'sold_out', 'cancelled', 'archived', 'finished'];
+    }
+
+    public function participationModes(): array
+    {
+        return ['free_registration', 'approval_required', 'ticket_required', 'external_link', 'disabled'];
     }
 
     // ─── CRUD Event ────────────────────────────────────────────────────────────
@@ -288,6 +294,10 @@ class EventAdminService
             'is_free'               => (bool) ($payload['is_free'] ?? true),
             'ticket_price'          => (float) ($payload['ticket_price'] ?? 0),
             'registration_enabled'  => (bool) ($payload['registration_enabled'] ?? true),
+            'participation_mode'    => (string) ($payload['participation_mode'] ?? 'free_registration'),
+            'external_url'          => ($payload['external_url'] ?? '') !== '' ? (string) $payload['external_url'] : null,
+            'allow_waitlist'        => (bool) ($payload['allow_waitlist'] ?? false),
+            'max_places_per_registration' => max(1, (int) ($payload['max_places_per_registration'] ?? 1)),
             'registration_deadline' => ($payload['registration_deadline'] ?? '') !== '' ? (string) $payload['registration_deadline'] : null,
             'published_at'          => ($payload['status'] ?? 'draft') === 'published' ? now()->toDateTimeString() : null,
         ];

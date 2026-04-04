@@ -107,7 +107,7 @@
                             <form method="POST" action="{{ route('admin.events.participants.status', [$event->id, $participant->id]) }}" class="d-inline">
                                 @csrf @method('PATCH')
                                 <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
-                                    @foreach(['pending','confirmed','cancelled','attended'] as $s)
+                                    @foreach(['pending','approved','confirmed','cancelled','waitlisted','ticketed','attended'] as $s)
                                         <option value="{{ $s }}" @selected($participant->status === $s)>{{ ucfirst($s) }}</option>
                                     @endforeach
                                 </select>

@@ -14,6 +14,8 @@ class BookingService extends Model
         'slug',
         'description',
         'duration_minutes',
+        'buffer_before_minutes',
+        'buffer_after_minutes',
         'price_cents',
         'is_active',
         'metadata',
@@ -21,6 +23,8 @@ class BookingService extends Model
 
     protected $casts = [
         'duration_minutes' => 'integer',
+        'buffer_before_minutes' => 'integer',
+        'buffer_after_minutes' => 'integer',
         'price_cents' => 'integer',
         'is_active' => 'boolean',
         'metadata' => 'array',

@@ -39,6 +39,24 @@
                     <label class="form-label">Capacité</label>
                     <input type="number" min="1" max="300" name="capacity" class="form-control" value="1" required>
                 </div>
+                <div class="col-md-2">
+                    <label class="form-label">Statut</label>
+                    <select name="status" class="form-select">
+                        <option value="open">Ouvert</option>
+                        <option value="closed">Fermé</option>
+                        <option value="blocked">Bloqué</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Raison blocage (optionnel)</label>
+                    <input type="text" name="blocked_reason" class="form-control" maxlength="255">
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="1" name="allow_overbooking" id="allow_overbooking">
+                        <label class="form-check-label" for="allow_overbooking">Surbooking</label>
+                    </div>
+                </div>
                 <div class="col-md-1 d-flex align-items-end">
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" value="1" name="is_active" checked>
@@ -65,6 +83,7 @@
                         <th>Fin</th>
                         <th>Capacité</th>
                         <th>Réservé</th>
+                        <th>Statut</th>
                         <th>Actif</th>
                     </tr>
                 </thead>
@@ -76,10 +95,15 @@
                             <td>{{ optional($slot->end_at)->format('d/m/Y H:i') }}</td>
                             <td>{{ $slot->capacity }}</td>
                             <td>{{ $slot->booked_count }}</td>
+                            <td>
+                                <span class="badge {{ $slot->status === 'open' ? 'text-bg-success' : ($slot->status === 'closed' ? 'text-bg-warning' : 'text-bg-danger') }}">
+                                    {{ ucfirst($slot->status ?? 'open') }}
+                                </span>
+                            </td>
                             <td><span class="badge {{ $slot->is_active ? 'text-bg-success' : 'text-bg-secondary' }}">{{ $slot->is_active ? 'Oui' : 'Non' }}</span></td>
                         </tr>
                     @empty
-                        <tr><td colspan="6" class="text-center text-muted py-4">Aucun créneau.</td></tr>
+                        <tr><td colspan="7" class="text-center text-muted py-4">Aucun créneau.</td></tr>
                     @endforelse
                 </tbody>
             </table>

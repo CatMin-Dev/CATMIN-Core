@@ -74,4 +74,8 @@ Route::middleware(['web', 'catmin.admin'])
         Route::get('/booking/api/calendar', [BookingApiController::class, 'calendar'])
             ->middleware('catmin.permission:module.booking.api')
             ->name('api.calendar');
+
+        Route::get('/booking/api/slots/{bookingSlot}', [BookingApiController::class, 'slotDetails'])
+            ->middleware('catmin.permission:module.booking.api')
+            ->name('api.slot-details');
     });

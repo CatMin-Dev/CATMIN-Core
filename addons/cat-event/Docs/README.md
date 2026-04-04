@@ -35,6 +35,26 @@ Addon de gestion complète d'événements : CRUD, sessions multi-dates, inscript
 - **Mailer** : email de confirmation envoyé à l'inscription
 - **Webhooks** : `event.created`, `event.participant.registered`, `event.checkin.done`
 
+## Parcours public (prompt 431)
+- Route publique: `GET /events/{slug}`
+- Inscription publique: `POST /events/{slug}/register`
+- Confirmation signée: `GET /events/{slug}/confirmation/{participant}`
+
+### Modes de participation
+- `free_registration`: inscription directe, participant confirmé
+- `approval_required`: inscription en attente (`pending`)
+- `ticket_required`: CTA redirigé vers Shop bridge si actif
+- `external_link`: CTA vers URL externe
+- `disabled`: inscription fermée
+
+### Règles de capacité
+- capacité stricte respectée côté serveur
+- liste d'attente possible via `allow_waitlist`
+- idempotence formulaire via `form_token` + `idempotency_key`
+
+### Statuts participant supportés
+- `pending`, `approved`, `confirmed`, `cancelled`, `waitlisted`, `ticketed`, `attended`
+
 ## Cycle billet
 1. **issued**: billet créé (source `manual|shop|import`) avec code unique + token.
 2. **used**: billet validé au check-in (horodatage `used_at`).

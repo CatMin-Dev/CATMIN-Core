@@ -30,6 +30,8 @@ class BookingServiceController extends Controller
             'slug' => ['nullable', 'string', 'max:191', 'regex:/^[a-z0-9\-]+$/'],
             'description' => ['nullable', 'string', 'max:2000'],
             'duration_minutes' => ['required', 'integer', 'min:5', 'max:480'],
+            'buffer_before_minutes' => ['nullable', 'integer', 'min:0', 'max:180'],
+            'buffer_after_minutes' => ['nullable', 'integer', 'min:0', 'max:180'],
             'price' => ['nullable', 'numeric', 'min:0', 'max:999999'],
             'is_active' => ['nullable', 'boolean'],
         ]);
@@ -55,6 +57,8 @@ class BookingServiceController extends Controller
             'slug' => ['nullable', 'string', 'max:191', 'regex:/^[a-z0-9\-]+$/'],
             'description' => ['nullable', 'string', 'max:2000'],
             'duration_minutes' => ['required', 'integer', 'min:5', 'max:480'],
+            'buffer_before_minutes' => ['nullable', 'integer', 'min:0', 'max:180'],
+            'buffer_after_minutes' => ['nullable', 'integer', 'min:0', 'max:180'],
             'price' => ['nullable', 'numeric', 'min:0', 'max:999999'],
             'is_active' => ['nullable', 'boolean'],
         ]);

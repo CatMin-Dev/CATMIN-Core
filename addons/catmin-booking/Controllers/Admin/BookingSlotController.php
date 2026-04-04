@@ -32,6 +32,9 @@ class BookingSlotController extends Controller
             'start_at' => ['required', 'date'],
             'end_at' => ['required', 'date', 'after:start_at'],
             'capacity' => ['required', 'integer', 'min:1', 'max:300'],
+            'status' => ['nullable', 'in:open,closed,blocked'],
+            'allow_overbooking' => ['nullable', 'boolean'],
+            'blocked_reason' => ['nullable', 'string', 'max:255'],
             'is_active' => ['nullable', 'boolean'],
         ]);
 
@@ -48,6 +51,9 @@ class BookingSlotController extends Controller
             'start_at' => ['required', 'date'],
             'end_at' => ['required', 'date', 'after:start_at'],
             'capacity' => ['required', 'integer', 'min:1', 'max:300'],
+            'status' => ['nullable', 'in:open,closed,blocked'],
+            'allow_overbooking' => ['nullable', 'boolean'],
+            'blocked_reason' => ['nullable', 'string', 'max:255'],
             'is_active' => ['nullable', 'boolean'],
         ]);
 

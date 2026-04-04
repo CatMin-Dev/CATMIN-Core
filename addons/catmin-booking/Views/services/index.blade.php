@@ -38,6 +38,14 @@
                             <label class="form-label">Prix (€)</label>
                             <input type="number" min="0" step="0.01" name="price" class="form-control" value="0">
                         </div>
+                        <div class="col-6">
+                            <label class="form-label">Buffer avant (min)</label>
+                            <input type="number" min="0" max="180" step="5" name="buffer_before_minutes" class="form-control" value="0">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Buffer apres (min)</label>
+                            <input type="number" min="0" max="180" step="5" name="buffer_after_minutes" class="form-control" value="0">
+                        </div>
                         <div class="col-12">
                             <label class="form-label">Description</label>
                             <textarea name="description" rows="3" class="form-control"></textarea>
@@ -67,6 +75,7 @@
                                 <th>Nom</th>
                                 <th>Durée</th>
                                 <th>Prix</th>
+                                <th>Buffer (av/ap)</th>
                                 <th>Statut</th>
                                 <th></th>
                             </tr>
@@ -80,6 +89,7 @@
                                     </td>
                                     <td>{{ $item->duration_minutes }} min</td>
                                     <td>{{ number_format($item->price_cents / 100, 2) }} €</td>
+                                    <td>{{ (int) ($item->buffer_before_minutes ?? 0) }}/{{ (int) ($item->buffer_after_minutes ?? 0) }} min</td>
                                     <td>
                                         <span class="badge {{ $item->is_active ? 'text-bg-success' : 'text-bg-secondary' }}">
                                             {{ $item->is_active ? 'Actif' : 'Inactif' }}
@@ -95,7 +105,7 @@
                                     </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="5" class="text-center text-muted py-4">Aucun service.</td></tr>
+                                <tr><td colspan="6" class="text-center text-muted py-4">Aucun service.</td></tr>
                             @endforelse
                         </tbody>
                     </table>
