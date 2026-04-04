@@ -14,6 +14,9 @@ use App\Http\Controllers\Admin\TwoFactorController;
 use App\Http\Controllers\Admin\UpdateController;
 use App\Http\Controllers\Frontend\HomeController;
 use App\Http\Controllers\Frontend\PageController;
+use App\Http\Controllers\Frontend\ArticleController;
+use App\Http\Controllers\Frontend\ContactController;
+use App\Http\Controllers\Frontend\PublicMapController;
 use App\Http\Controllers\InstallController;
 use Illuminate\Support\Facades\Route;
 
@@ -50,9 +53,29 @@ Route::middleware('catmin.frontend.available')->group(function (): void {
     Route::get('/' . config('catmin.frontend.path', 'site'), HomeController::class)
         ->name('frontend.home');
 
+    // ── Pages ────────────────────────────────────────────────────────
     Route::get('/page/{slug}', PageController::class)
         ->where('slug', '[A-Za-z0-9\-\/]+')
         ->name('frontend.page');
+
+    // ── Articles ─────────────────────────────────────────────────────
+    $articlesPrefix = config('catmin_frontend.articles_prefix', 'articles');
+    Route::get('/' . $articlesPrefix, [ArticleController::class, 'index'])
+        ->name('frontend.articles.index');
+    Route::get('/' . $articlesPrefix . '/{slug}', [ArticleController::class, 'show'])
+        ->where('slug', '[A-Za-z0-9\-]+')
+        ->name('frontend.articles.show');
+
+    // ── Contact form ─────────────────────────────────────────────────
+    Route::get('/contact', [ContactController::class, 'show'])
+        ->name('frontend.contact');
+    Route::post('/contact', [ContactController::class, 'send'])
+        ->middleware('throttle:catmin-contact')
+        ->name('frontend.contact.send');
+
+    // ── Public map ───────────────────────────────────────────────────
+    Route::get('/carte', PublicMapController::class)
+        ->name('frontend.map');
 });
 
 // ========== ADMIN ROUTES ==========

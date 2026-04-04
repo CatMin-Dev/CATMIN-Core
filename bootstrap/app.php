@@ -45,6 +45,14 @@ return Application::configure(basePath: dirname(__DIR__))
                 return Limit::perMinute(5)->by($request->ip() . '|' . $email);
             });
 
+            RateLimiter::for('catmin-contact', function (Request $request) {
+                return Limit::perMinute(3)->by($request->ip())
+                    ->response(function () {
+                        return redirect()->route('frontend.contact')
+                            ->withErrors(['message' => 'Trop de tentatives. Attendez quelques minutes.']);
+                    });
+            });
+
             ModuleLoader::registerRoutes(app('router'));
             AddonLoader::registerRoutes(app('router'));
             CatminHookLoader::load();
