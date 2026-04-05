@@ -11,7 +11,7 @@ use Core\versioning\Version;
     <meta name="robots" content="noindex, nofollow">
     <title>CATMIN Admin</title>
     <link rel="stylesheet" href="/odin-color.css">
-    <link rel="stylesheet" href="/assets/css/bootstrap-5.3.8-placeholder.css">
+    <link rel="stylesheet" href="/assets/vendor/bootstrap/5.3.8/css/bootstrap.min.css">
 </head>
 <body class="container py-5">
 <h1 class="mb-3">CATMIN Admin</h1>

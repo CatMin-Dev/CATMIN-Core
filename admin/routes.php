@@ -6,30 +6,12 @@ use Admin\controllers\AuthController;
 use Core\http\Request;
 use Core\http\Response;
 use Core\http\View;
+use Core\security\SecurityManager;
 
-$authMiddleware = static function (Request $request, callable $next): Response {
-    $controller = new AuthController();
-
-    if (!$controller->requiresAuth()) {
-        return Response::html('', 302, ['Location' => $controller->adminBasePath() . '/login']);
-    }
-
-    $result = $next($request);
-
-    return $result instanceof Response ? $result : Response::html((string) $result);
-};
-
-$reauthMiddleware = static function (Request $request, callable $next): Response {
-    $controller = new AuthController();
-
-    if (!$controller->requiresRecentReauth()) {
-        return Response::html('', 302, ['Location' => $controller->adminBasePath() . '/reauth']);
-    }
-
-    $result = $next($request);
-
-    return $result instanceof Response ? $result : Response::html((string) $result);
-};
+$security = new SecurityManager(Request::capture(), 'admin');
+$authRequired = $security->adminAuthRequiredMiddleware();
+$csrfCheck = $security->csrfCheckMiddleware();
+$recentPassword = $security->recentPasswordRequiredMiddleware();
 
 return [
     [
@@ -41,24 +23,25 @@ return [
         'method' => 'POST',
         'path' => '/login',
         'handler' => static fn (Request $request): Response => (new AuthController())->login($request),
+        'middleware' => [$csrfCheck],
     ],
     [
         'method' => 'GET',
         'path' => '/logout',
         'handler' => static fn (): Response => (new AuthController())->logout(),
-        'middleware' => [$authMiddleware],
+        'middleware' => [$authRequired],
     ],
     [
         'method' => 'GET',
         'path' => '/reauth',
         'handler' => static fn (): Response => (new AuthController())->showReauth(),
-        'middleware' => [$authMiddleware],
+        'middleware' => [$authRequired],
     ],
     [
         'method' => 'POST',
         'path' => '/reauth',
         'handler' => static fn (Request $request): Response => (new AuthController())->reauth($request),
-        'middleware' => [$authMiddleware],
+        'middleware' => [$authRequired, $csrfCheck],
     ],
     [
         'method' => 'GET',
@@ -68,12 +51,12 @@ return [
             $user = $controller->currentUser();
             return View::make('dashboard', ['user' => $user, 'adminBase' => $controller->adminBasePath()], 'admin');
         },
-        'middleware' => [$authMiddleware],
+        'middleware' => [$authRequired],
     ],
     [
         'method' => 'POST',
         'path' => '/sensitive-check',
         'handler' => static fn (): Response => Response::json(['ok' => true, 'message' => 'Sensitive action allowed']),
-        'middleware' => [$authMiddleware, $reauthMiddleware],
+        'middleware' => [$authRequired, $recentPassword, $csrfCheck],
     ],
 ];

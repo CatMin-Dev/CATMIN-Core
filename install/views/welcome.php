@@ -9,7 +9,7 @@ declare(strict_types=1);
     <meta name="robots" content="noindex, nofollow">
     <title>CATMIN Installer</title>
     <link rel="stylesheet" href="/odin-color.css">
-    <link rel="stylesheet" href="/assets/css/bootstrap-5.3.8-placeholder.css">
+    <link rel="stylesheet" href="/assets/vendor/bootstrap/5.3.8/css/bootstrap.min.css">
 </head>
 <body class="container py-5">
     <h1 class="mb-3">CATMIN Installer</h1>

@@ -8,6 +8,7 @@ use Core\http\Request;
 use Core\http\Response;
 use Core\logs\Logger;
 use Core\router\Router;
+use Core\security\SecurityManager;
 use Core\support\PathManager;
 use Throwable;
 
@@ -24,6 +25,14 @@ final class Kernel
     {
         $this->boot();
 
+        $security = new SecurityManager($request, CATMIN_AREA);
+        $security->boot();
+
+        $denied = $security->enforceIpWhitelist();
+        if ($denied instanceof Response) {
+            return $security->apply($denied);
+        }
+
         try {
             $response = $this->router->dispatch($request, CATMIN_AREA);
         } catch (Throwable $exception) {
@@ -36,7 +45,7 @@ final class Kernel
             $response = Response::text('Internal Server Error', 500);
         }
 
-        return $response->withHeader('X-Robots-Tag', 'noindex, nofollow');
+        return $security->apply($response);
     }
 
     private function boot(): void
