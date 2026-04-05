@@ -24,3 +24,16 @@ if (!function_exists('config')) {
         return Config::get($key, $default);
     }
 }
+
+if (!function_exists('env')) {
+    function env(string $key, mixed $default = null): mixed
+    {
+        $value = getenv($key);
+
+        if ($value === false || $value === '') {
+            return $default;
+        }
+
+        return $value;
+    }
+}

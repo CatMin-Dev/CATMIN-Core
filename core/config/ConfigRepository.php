@@ -31,9 +31,24 @@ final class ConfigRepository
         $this->items[$key] = $value;
     }
 
+    public function setByPath(string $key, mixed $value): void
+    {
+        $segments = explode('.', $key);
+        $cursor = &$this->items;
+
+        foreach ($segments as $segment) {
+            if (!isset($cursor[$segment]) || !is_array($cursor[$segment])) {
+                $cursor[$segment] = [];
+            }
+            $cursor = &$cursor[$segment];
+        }
+
+        $cursor = $value;
+    }
+
     public function get(string $key, mixed $default = null): mixed
     {
-        if ($key == '') {
+        if ($key === '') {
             return $this->items;
         }
 
