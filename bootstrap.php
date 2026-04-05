@@ -20,17 +20,22 @@ if (!defined('CATMIN_AREA')) {
 require_once CATMIN_CORE . '/support/helpers.php';
 
 spl_autoload_register(static function (string $class): void {
-    $prefix = 'Core\\';
+    $prefixMap = [
+        'Core\\' => CATMIN_CORE . '/',
+        'Admin\\' => CATMIN_ADMIN . '/',
+    ];
 
-    if (!str_starts_with($class, $prefix)) {
-        return;
-    }
+    foreach ($prefixMap as $prefix => $basePath) {
+        if (!str_starts_with($class, $prefix)) {
+            continue;
+        }
 
-    $relative = substr($class, strlen($prefix));
-    $path = CATMIN_CORE . '/' . str_replace('\\', '/', $relative) . '.php';
+        $relative = substr($class, strlen($prefix));
+        $path = $basePath . str_replace('\\', '/', $relative) . '.php';
 
-    if (is_file($path)) {
-        require_once $path;
+        if (is_file($path)) {
+            require_once $path;
+        }
     }
 });
 
