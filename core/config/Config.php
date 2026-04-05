@@ -6,43 +6,34 @@ namespace Core\config;
 
 final class Config
 {
-    private static array $items = [];
+    private static ?ConfigRepository $repository = null;
 
     public static function loadDirectory(string $directory): void
     {
-        if (!is_dir($directory)) {
-            return;
+        self::repository()->loadDirectory($directory);
+    }
+
+    public static function repository(): ConfigRepository
+    {
+        if (self::$repository === null) {
+            self::$repository = new ConfigRepository();
         }
 
-        foreach (glob(rtrim($directory, '/') . '/*.php') ?: [] as $file) {
-            $key = basename($file, '.php');
-            $data = require $file;
-            self::$items[$key] = is_array($data) ? $data : [];
-        }
+        return self::$repository;
     }
 
     public static function get(string $key, mixed $default = null): mixed
     {
-        $segments = explode('.', $key);
-        $value = self::$items;
-
-        foreach ($segments as $segment) {
-            if (!is_array($value) || !array_key_exists($segment, $value)) {
-                return $default;
-            }
-            $value = $value[$segment];
-        }
-
-        return $value;
+        return self::repository()->get($key, $default);
     }
 
     public static function set(string $key, mixed $value): void
     {
-        self::$items[$key] = $value;
+        self::repository()->set($key, $value);
     }
 
     public static function all(): array
     {
-        return self::$items;
+        return self::repository()->all();
     }
 }

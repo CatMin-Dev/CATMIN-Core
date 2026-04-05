@@ -12,6 +12,45 @@ final class Response
         private readonly array $headers = []
     ) {}
 
+    public static function html(string $content, int $status = 200, array $headers = []): self
+    {
+        return new self($content, $status, $headers);
+    }
+
+    public static function json(array $payload, int $status = 200, array $headers = []): self
+    {
+        $headers['Content-Type'] = 'application/json; charset=UTF-8';
+        return new self((string) json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), $status, $headers);
+    }
+
+    public static function text(string $content, int $status = 200, array $headers = []): self
+    {
+        $headers['Content-Type'] = 'text/plain; charset=UTF-8';
+        return new self($content, $status, $headers);
+    }
+
+    public function withHeader(string $name, string $value): self
+    {
+        $headers = $this->headers;
+        $headers[$name] = $value;
+        return new self($this->content, $this->status, $headers);
+    }
+
+    public function status(): int
+    {
+        return $this->status;
+    }
+
+    public function content(): string
+    {
+        return $this->content;
+    }
+
+    public function headers(): array
+    {
+        return $this->headers;
+    }
+
     public function send(): void
     {
         http_response_code($this->status);

@@ -8,35 +8,55 @@ use Core\http\Request;
 use Core\http\Response;
 use Core\logs\Logger;
 use Core\router\Router;
+use Core\support\PathManager;
+use Throwable;
 
 final class Kernel
 {
-    public function __construct(private readonly Router $router) {}
+    private bool $booted = false;
+
+    public function __construct(
+        private readonly Router $router,
+        private readonly PathManager $paths = new PathManager()
+    ) {}
 
     public function handle(Request $request): Response
     {
-        $content = $this->router->dispatch($request);
+        $this->boot();
 
-        if ($content !== null) {
-            return new Response($content);
+        try {
+            $response = $this->router->dispatch($request, CATMIN_AREA);
+        } catch (Throwable $exception) {
+            Logger::error('Kernel dispatch failure', [
+                'message' => $exception->getMessage(),
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
+            ]);
+
+            $response = Response::text('Internal Server Error', 500);
         }
 
-        $view = match (CATMIN_AREA) {
-            'admin' => CATMIN_ADMIN . '/views/dashboard.php',
-            default => CATMIN_FRONT . '/views/home.php',
-        };
+        return $response->withHeader('X-Robots-Tag', 'noindex, nofollow');
+    }
 
-        if (!is_file($view)) {
-            Logger::error('Missing fallback view', ['view' => $view, 'area' => CATMIN_AREA]);
-            return new Response('View not found', 500);
+    private function boot(): void
+    {
+        if ($this->booted) {
+            return;
         }
 
-        ob_start();
-        require $view;
-        $output = (string) ob_get_clean();
+        foreach (['front', 'admin', 'install'] as $group) {
+            $routesFile = $this->paths->routesFile($group);
+            if (!is_file($routesFile)) {
+                continue;
+            }
 
-        return new Response($output, 200, [
-            'X-Robots-Tag' => CATMIN_AREA === 'front' ? 'noindex, nofollow' : 'noindex, nofollow',
-        ]);
+            $routes = require $routesFile;
+            if (is_array($routes)) {
+                $this->router->loadGroup($group, $routes);
+            }
+        }
+
+        $this->booted = true;
     }
 }
