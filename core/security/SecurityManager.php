@@ -100,7 +100,8 @@ final class SecurityManager
         return static function (Request $request, callable $next): Response {
             $lockFile = CATMIN_STORAGE . '/install/installed.lock';
             if (is_file($lockFile)) {
-                return Response::text('Installer is locked.', 403);
+                $adminPath = '/' . trim((string) Config::get('security.admin_path', 'admin'), '/');
+                return Response::html('', 302, ['Location' => $adminPath . '/login']);
             }
 
             $result = $next($request);

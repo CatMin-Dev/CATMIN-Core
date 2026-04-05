@@ -23,6 +23,7 @@ spl_autoload_register(static function (string $class): void {
     $prefixMap = [
         'Core\\' => CATMIN_CORE . '/',
         'Admin\\' => CATMIN_ADMIN . '/',
+        'Install\\' => CATMIN_INSTALL . '/',
     ];
 
     foreach ($prefixMap as $prefix => $basePath) {
