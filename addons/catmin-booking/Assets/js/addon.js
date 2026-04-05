@@ -1,1 +1,0 @@
-// catmin-booking addon scripts

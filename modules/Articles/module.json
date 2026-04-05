@@ -1,9 +1,0 @@
-{
-  "name": "Articles",
-  "slug": "articles",
-  "enabled": true,
-  "version": "1.0.0",
-  "description": "Module unifie Articles: fusion des contenus Blog et News.",
-  "depends": ["core", "media", "seo"],
-  "provides": ["content", "editorial", "news"]
-}
