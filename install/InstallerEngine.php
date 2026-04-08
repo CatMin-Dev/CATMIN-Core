@@ -554,8 +554,14 @@ final class InstallerEngine
             ['ui', 'show_debug', '0', false],
 
             ['maintenance', 'enabled', '0', false],
+            ['maintenance', 'level', '1', false],
+            ['maintenance', 'reason', '', false],
             ['maintenance', 'message', 'Maintenance en cours', false],
             ['maintenance', 'allow_admin', '1', false],
+            ['maintenance', 'allowed_ips', '', false],
+            ['maintenance', 'allowed_admin_ids', '', false],
+            ['maintenance', 'started_at', '', false],
+            ['maintenance', 'enabled_by', '', false],
             ['maintenance', 'last_backup', '-', false],
             ['maintenance', 'last_restore', '-', false],
 

@@ -19,6 +19,12 @@ $breadcrumbs = [
 
 $csrf = htmlspecialchars((new CsrfManager())->token(), ENT_QUOTES, 'UTF-8');
 $maintenance = (bool) ($state['maintenance'] ?? false);
+$maintenanceLevel = (int) ($state['maintenance_level'] ?? 1);
+$maintenanceReason = (string) ($state['maintenance_reason'] ?? '');
+$maintenanceMessage = (string) ($state['maintenance_message'] ?? 'Maintenance en cours');
+$maintenanceAllowAdmin = (bool) ($state['maintenance_allow_admin'] ?? true);
+$maintenanceAllowedIps = (string) ($state['maintenance_allowed_ips'] ?? '');
+$maintenanceAllowedAdminIds = (string) ($state['maintenance_allowed_admin_ids'] ?? '');
 
 ob_start();
 ?>
@@ -33,15 +39,50 @@ ob_start();
         <h3 class="h6 mb-0">Maintenance</h3>
     </div>
     <div class="card-body pt-2">
-        <form method="post" action="<?= htmlspecialchars($adminBase . '/maintenance/toggle', ENT_QUOTES, 'UTF-8') ?>" class="d-flex align-items-center gap-3">
+        <form method="post" action="<?= htmlspecialchars($adminBase . '/maintenance/toggle', ENT_QUOTES, 'UTF-8') ?>" class="d-grid gap-3">
             <input type="hidden" name="_csrf" value="<?= $csrf ?>">
-            <label class="form-check form-switch m-0">
-                <input class="form-check-input" type="checkbox" name="maintenance" value="1" <?= $maintenance ? 'checked' : '' ?>>
-                <span class="form-check-label"><?= $maintenance ? 'Mode active' : 'Mode inactif' ?></span>
-            </label>
-            <button class="btn btn-sm btn-primary" type="submit">Appliquer</button>
+            <div class="d-flex align-items-center gap-3">
+                <label class="form-check form-switch m-0">
+                    <input class="form-check-input" type="checkbox" name="maintenance" value="1" <?= $maintenance ? 'checked' : '' ?>>
+                    <span class="form-check-label"><?= $maintenance ? 'Mode active' : 'Mode inactif' ?></span>
+                </label>
+                <label class="form-check m-0">
+                    <input class="form-check-input" type="checkbox" name="maintenance_allow_admin" value="1" <?= $maintenanceAllowAdmin ? 'checked' : '' ?>>
+                    <span class="form-check-label">Autoriser admin (hors superadmin)</span>
+                </label>
+            </div>
+            <div class="row g-3">
+                <div class="col-12 col-lg-3">
+                    <label class="form-label">Niveau</label>
+                    <select class="form-select" name="maintenance_level">
+                        <?php for ($i = 1; $i <= 3; $i++): ?>
+                            <option value="<?= $i ?>" <?= $maintenanceLevel === $i ? 'selected' : '' ?>>Niveau <?= $i ?></option>
+                        <?php endfor; ?>
+                    </select>
+                </div>
+                <div class="col-12 col-lg-9">
+                    <label class="form-label">Motif</label>
+                    <input class="form-control" type="text" name="maintenance_reason" value="<?= htmlspecialchars($maintenanceReason, ENT_QUOTES, 'UTF-8') ?>" placeholder="Ex: Mise a jour schema DB">
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Message public</label>
+                    <input class="form-control" type="text" name="maintenance_message" value="<?= htmlspecialchars($maintenanceMessage, ENT_QUOTES, 'UTF-8') ?>" placeholder="Maintenance en cours, merci de patienter.">
+                </div>
+                <div class="col-12 col-lg-6">
+                    <label class="form-label">Whitelist IP (une par ligne ou separees par virgule)</label>
+                    <textarea class="form-control" name="maintenance_allowed_ips" rows="2" placeholder="127.0.0.1, 192.168.1.10"><?= htmlspecialchars($maintenanceAllowedIps, ENT_QUOTES, 'UTF-8') ?></textarea>
+                </div>
+                <div class="col-12 col-lg-6">
+                    <label class="form-label">Whitelist Admin IDs</label>
+                    <input class="form-control" type="text" name="maintenance_allowed_admin_ids" value="<?= htmlspecialchars($maintenanceAllowedAdminIds, ENT_QUOTES, 'UTF-8') ?>" placeholder="1,2,3">
+                </div>
+            </div>
+            <div>
+                <button class="btn btn-sm btn-primary" type="submit">Appliquer</button>
+            </div>
         </form>
-        <p class="small text-body-secondary mt-3 mb-1">Dernier backup: <?= htmlspecialchars((string) ($state['last_backup'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></p>
+        <p class="small text-body-secondary mt-3 mb-1">Activee par: <?= htmlspecialchars((string) ($state['maintenance_enabled_by'] ?? '-'), ENT_QUOTES, 'UTF-8') ?> · Debut: <?= htmlspecialchars((string) ($state['maintenance_started_at'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></p>
+        <p class="small text-body-secondary mb-1">Dernier backup: <?= htmlspecialchars((string) ($state['last_backup'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></p>
         <p class="small text-body-secondary mb-0">Dernier restore: <?= htmlspecialchars((string) ($state['last_restore'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></p>
     </div>
 </section>

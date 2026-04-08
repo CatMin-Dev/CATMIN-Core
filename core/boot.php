@@ -110,27 +110,8 @@ final class CoreBoot
 
     private static function initErrorHandling(): void
     {
-        require_once CATMIN_CORE . '/error-dispatcher.php';
-        set_exception_handler(static function (Throwable $throwable): void {
-            Core\logs\Logger::error('Unhandled exception', [
-                'file' => $throwable->getFile(),
-                'line' => $throwable->getLine(),
-                'message' => substr($throwable->getMessage(), 0, 180),
-            ]);
-
-            (new CoreErrorDispatcher())->outputForFatal(500);
-        });
-
-        set_error_handler(static function (int $severity, string $message, string $file, int $line): bool {
-            Core\logs\Logger::error('Runtime error', [
-                'severity' => $severity,
-                'file' => $file,
-                'line' => $line,
-                'message' => substr($message, 0, 180),
-            ]);
-
-            return false;
-        });
+        require_once CATMIN_CORE . '/failsafe/FailsafeManager.php';
+        Core\failsafe\FailsafeManager::register();
     }
 
     private static function initSession(): void

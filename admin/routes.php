@@ -8,6 +8,8 @@ use Core\http\Request;
 use Core\http\Response;
 use Core\http\View;
 use Core\security\SecurityManager;
+use Core\system\HealthCheckService;
+use Core\system\MonitoringService;
 use Core\versioning\Version;
 
 require_once CATMIN_CORE . '/module-loader.php';
@@ -401,6 +403,14 @@ $loadSystemState = static function (\PDO $pdo, string $settingsTable, string $ba
 
     return [
         'maintenance' => (bool) $readCoreSetting($pdo, $settingsTable, 'maintenance', 'enabled', false),
+        'maintenance_level' => max(1, min(3, (int) $readCoreSetting($pdo, $settingsTable, 'maintenance', 'level', 1))),
+        'maintenance_reason' => (string) $readCoreSetting($pdo, $settingsTable, 'maintenance', 'reason', ''),
+        'maintenance_message' => (string) $readCoreSetting($pdo, $settingsTable, 'maintenance', 'message', 'Maintenance en cours'),
+        'maintenance_allow_admin' => (bool) $readCoreSetting($pdo, $settingsTable, 'maintenance', 'allow_admin', true),
+        'maintenance_allowed_ips' => (string) $readCoreSetting($pdo, $settingsTable, 'maintenance', 'allowed_ips', ''),
+        'maintenance_allowed_admin_ids' => (string) $readCoreSetting($pdo, $settingsTable, 'maintenance', 'allowed_admin_ids', ''),
+        'maintenance_started_at' => (string) $readCoreSetting($pdo, $settingsTable, 'maintenance', 'started_at', ''),
+        'maintenance_enabled_by' => (string) $readCoreSetting($pdo, $settingsTable, 'maintenance', 'enabled_by', ''),
         'last_backup' => $lastBackup,
         'last_restore' => (string) $readCoreSetting($pdo, $settingsTable, 'maintenance', 'last_restore', '-'),
     ];
@@ -410,6 +420,30 @@ $saveSystemState = static function (\PDO $pdo, string $settingsTable, array $sta
     $ok = true;
     if (array_key_exists('maintenance', $state)) {
         $ok = $ok && $upsertCoreSetting($pdo, $settingsTable, 'maintenance', 'enabled', ((bool) $state['maintenance']) ? '1' : '0', false);
+    }
+    if (array_key_exists('maintenance_level', $state)) {
+        $ok = $ok && $upsertCoreSetting($pdo, $settingsTable, 'maintenance', 'level', (string) max(1, min(3, (int) $state['maintenance_level'])), false);
+    }
+    if (array_key_exists('maintenance_reason', $state)) {
+        $ok = $ok && $upsertCoreSetting($pdo, $settingsTable, 'maintenance', 'reason', trim((string) $state['maintenance_reason']), false);
+    }
+    if (array_key_exists('maintenance_message', $state)) {
+        $ok = $ok && $upsertCoreSetting($pdo, $settingsTable, 'maintenance', 'message', trim((string) $state['maintenance_message']), false);
+    }
+    if (array_key_exists('maintenance_allow_admin', $state)) {
+        $ok = $ok && $upsertCoreSetting($pdo, $settingsTable, 'maintenance', 'allow_admin', ((bool) $state['maintenance_allow_admin']) ? '1' : '0', false);
+    }
+    if (array_key_exists('maintenance_allowed_ips', $state)) {
+        $ok = $ok && $upsertCoreSetting($pdo, $settingsTable, 'maintenance', 'allowed_ips', trim((string) $state['maintenance_allowed_ips']), false);
+    }
+    if (array_key_exists('maintenance_allowed_admin_ids', $state)) {
+        $ok = $ok && $upsertCoreSetting($pdo, $settingsTable, 'maintenance', 'allowed_admin_ids', trim((string) $state['maintenance_allowed_admin_ids']), false);
+    }
+    if (array_key_exists('maintenance_started_at', $state)) {
+        $ok = $ok && $upsertCoreSetting($pdo, $settingsTable, 'maintenance', 'started_at', trim((string) $state['maintenance_started_at']), false);
+    }
+    if (array_key_exists('maintenance_enabled_by', $state)) {
+        $ok = $ok && $upsertCoreSetting($pdo, $settingsTable, 'maintenance', 'enabled_by', trim((string) $state['maintenance_enabled_by']), false);
     }
     if (array_key_exists('last_backup', $state)) {
         $ok = $ok && $upsertCoreSetting($pdo, $settingsTable, 'maintenance', 'last_backup', (string) $state['last_backup'], false);
@@ -624,10 +658,15 @@ return [
                 }
             }
 
+            $healthSnapshot = (new HealthCheckService())->run();
+            $monitoringSnapshot = (new MonitoringService())->snapshot();
+            $securityAlerts = (int) (($monitoringSnapshot['widgets']['security_alerts']['count'] ?? 0));
+            $criticalErrors = (int) (($monitoringSnapshot['widgets']['critical_errors']['count'] ?? 0));
+
             $stats = [
                 ['title' => 'Admins actifs', 'value' => $user !== null ? '1' : '0', 'hint' => 'Compte courant actif', 'tone' => 'success', 'icon' => 'bi-people'],
                 ['title' => 'Modules actifs', 'value' => (string) ((int) ($modulesStats['active'] ?? 0)), 'hint' => ((int) ($modulesStats['errors'] ?? 0)) > 0 ? ((int) ($modulesStats['errors'] ?? 0) . ' module(s) en erreur') : 'Etat modules OK', 'tone' => ((int) ($modulesStats['errors'] ?? 0)) > 0 ? 'warning' : 'success', 'icon' => 'bi-puzzle'],
-                ['title' => 'Alertes securite', 'value' => '0', 'hint' => 'Aucun blocage actif', 'tone' => 'success', 'icon' => 'bi-shield-check'],
+                ['title' => 'Alertes securite', 'value' => (string) $securityAlerts, 'hint' => $securityAlerts > 0 ? 'Verifier le monitoring systeme' : 'Aucune alerte active', 'tone' => $securityAlerts > 0 ? 'warning' : 'success', 'icon' => 'bi-shield-check'],
                 ['title' => 'Dernier backup', 'value' => $lastBackup, 'hint' => $lastBackupHint, 'tone' => $lastBackup === '-' ? 'info' : 'success', 'icon' => 'bi-database-check'],
             ];
 
@@ -637,17 +676,25 @@ return [
                 ['title' => 'Installer lock', 'meta' => is_file(CATMIN_STORAGE . '/install.lock') ? 'Present' : 'Absent', 'status' => is_file(CATMIN_STORAGE . '/install.lock') ? 'LOCK' : 'WARN', 'variant' => is_file(CATMIN_STORAGE . '/install.lock') ? 'success' : 'warning'],
             ];
 
-            $health = [
-                ['label' => 'PHP', 'value' => PHP_VERSION, 'variant' => 'info'],
-                ['label' => 'ENV', 'value' => (string) config('app.env', 'production'), 'variant' => 'neutral'],
-                ['label' => 'Storage writable', 'value' => is_writable(CATMIN_STORAGE) ? 'Oui' : 'Non', 'variant' => is_writable(CATMIN_STORAGE) ? 'success' : 'danger'],
-                ['label' => '.env', 'value' => is_file(CATMIN_ROOT . '/.env') ? 'Present' : 'Absent', 'variant' => is_file(CATMIN_ROOT . '/.env') ? 'success' : 'warning'],
-            ];
+            $health = array_map(static function (array $line): array {
+                $variant = match ((string) ($line['status'] ?? 'unknown')) {
+                    'healthy' => 'success',
+                    'warning' => 'warning',
+                    'critical' => 'danger',
+                    default => 'neutral',
+                };
+                return [
+                    'label' => (string) ($line['label'] ?? '-'),
+                    'value' => (string) ($line['detail'] ?? '-'),
+                    'variant' => $variant,
+                ];
+            }, array_slice((array) ($healthSnapshot['checks'] ?? []), 0, 6));
 
             $events = [
                 ['label' => 'Core boot', 'status' => 'OK', 'date' => date('Y-m-d H:i')],
                 ['label' => 'Routing engine', 'status' => 'OK', 'date' => date('Y-m-d H:i')],
                 ['label' => 'Admin layout shell', 'status' => 'OK', 'date' => date('Y-m-d H:i')],
+                ['label' => 'Monitoring errors', 'status' => $criticalErrors > 0 ? 'WARN' : 'OK', 'date' => date('Y-m-d H:i')],
             ];
 
             $versionInfo = [
@@ -671,6 +718,7 @@ return [
                 'health' => $health,
                 'events' => $events,
                 'versionInfo' => $versionInfo,
+                'monitoring' => $monitoringSnapshot,
             ], 'admin');
         },
         'middleware' => [$authRequired],
@@ -990,6 +1038,38 @@ return [
 
     [
         'method' => 'GET',
+        'path' => '/system/health',
+        'handler' => static function (): Response {
+            $controller = new AuthController();
+            $adminBase = $controller->adminBasePath();
+            $snapshot = (new HealthCheckService())->run();
+
+            return View::make('system.health', [
+                'adminBase' => $adminBase,
+                'snapshot' => $snapshot,
+            ], 'admin');
+        },
+        'middleware' => [$authRequired],
+    ],
+
+    [
+        'method' => 'GET',
+        'path' => '/system/monitoring',
+        'handler' => static function (): Response {
+            $controller = new AuthController();
+            $adminBase = $controller->adminBasePath();
+            $snapshot = (new MonitoringService())->snapshot();
+
+            return View::make('system.monitoring', [
+                'adminBase' => $adminBase,
+                'snapshot' => $snapshot,
+            ], 'admin');
+        },
+        'middleware' => [$authRequired],
+    ],
+
+    [
+        'method' => 'GET',
         'path' => '/cron',
         'handler' => static function (Request $request) use ($coreCronTasksTable, $coreLogsTable, $ensureCronTasksTable, $seedDefaultCronTasks, $ensureCronDirectory): Response {
             $controller = new AuthController();
@@ -1199,7 +1279,16 @@ return [
             $adminBase = $controller->adminBasePath();
             $pdo = (new ConnectionManager())->connection();
             $state = $loadSystemState($pdo, $coreSettingsTable, $coreBackupsTable);
-            $state['maintenance'] = ((string) $request->input('maintenance', '0')) === '1';
+            $enabled = ((string) $request->input('maintenance', '0')) === '1';
+            $state['maintenance'] = $enabled;
+            $state['maintenance_level'] = max(1, min(3, (int) $request->input('maintenance_level', (int) ($state['maintenance_level'] ?? 1))));
+            $state['maintenance_reason'] = trim((string) $request->input('maintenance_reason', (string) ($state['maintenance_reason'] ?? '')));
+            $state['maintenance_message'] = trim((string) $request->input('maintenance_message', (string) ($state['maintenance_message'] ?? 'Maintenance en cours')));
+            $state['maintenance_allow_admin'] = ((string) $request->input('maintenance_allow_admin', '0')) === '1';
+            $state['maintenance_allowed_ips'] = trim((string) $request->input('maintenance_allowed_ips', (string) ($state['maintenance_allowed_ips'] ?? '')));
+            $state['maintenance_allowed_admin_ids'] = trim((string) $request->input('maintenance_allowed_admin_ids', (string) ($state['maintenance_allowed_admin_ids'] ?? '')));
+            $state['maintenance_started_at'] = $enabled ? date('Y-m-d H:i:s') : '';
+            $state['maintenance_enabled_by'] = (string) (($controller->currentUser()['username'] ?? '') ?: ($controller->currentUser()['email'] ?? ''));
             $ok = $saveSystemState($pdo, $coreSettingsTable, $state);
             if ($ok) {
                 $appendCoreLog(
@@ -1207,7 +1296,12 @@ return [
                     $coreLogsTable,
                     'system',
                     'warning',
-                    $state['maintenance'] ? 'Maintenance activee' : 'Maintenance desactivee'
+                    $state['maintenance'] ? 'Maintenance activee' : 'Maintenance desactivee',
+                    [
+                        'level' => (int) ($state['maintenance_level'] ?? 1),
+                        'reason' => (string) ($state['maintenance_reason'] ?? ''),
+                        'enabled_by' => (string) ($state['maintenance_enabled_by'] ?? ''),
+                    ]
                 );
             }
             return $redirect($adminBase . '/maintenance', [

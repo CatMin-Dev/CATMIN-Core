@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Core\http\Response;
+use Core\failsafe\SafeViewRenderer;
 
 final class CoreErrorDispatcher
 {
@@ -69,7 +70,10 @@ final class CoreErrorDispatcher
     {
         $file = CATMIN_CORE . '/views/errors/' . $name . '.php';
         if (!is_file($file)) {
-            return $this->failsafeHtml($context);
+            $file = CATMIN_CORE . '/views/errors/generic-failsafe.php';
+            if (!is_file($file)) {
+                return $this->failsafeHtml($context);
+            }
         }
 
         try {
@@ -85,9 +89,8 @@ final class CoreErrorDispatcher
     private function failsafeHtml(array $context): string
     {
         $status = (int) ($context['status'] ?? 500);
-        $title = htmlspecialchars((string) ($context['title'] ?? 'Erreur'), ENT_QUOTES, 'UTF-8');
-        $message = htmlspecialchars((string) ($context['message'] ?? 'Une erreur est survenue.'), ENT_QUOTES, 'UTF-8');
-        return '<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>CATMIN Error</title></head><body style="font-family:system-ui,Segoe UI,Arial,sans-serif;background:#fafaf9;color:#1c1917;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;"><main style="max-width:640px;padding:24px;border:1px solid #e7e5e4;border-radius:12px;background:#fff;"><h1 style="margin:0 0 8px 0;font-size:1.5rem;">' . $status . ' - ' . $title . '</h1><p style="margin:0 0 16px 0;">' . $message . '</p><a href="/" style="color:#c2234d;text-decoration:none;">Retour accueil</a></main></body></html>';
+        $title = (string) ($context['title'] ?? 'Erreur');
+        $message = (string) ($context['message'] ?? 'Une erreur est survenue.');
+        return (new SafeViewRenderer())->renderMinimal($status, $title, $message);
     }
 }
-

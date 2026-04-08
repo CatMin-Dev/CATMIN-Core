@@ -398,6 +398,24 @@
     background: var(--palette-rose-500);
 }
 
+.cat-topbar-alert-count {
+    position: absolute;
+    right: -6px;
+    top: -6px;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    background: var(--palette-rose-500);
+    color: var(--palette-stone-50);
+    font-size: 0.675rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    line-height: 1;
+}
+
 .cat-topbar-link {
     border: 0;
     background: transparent;

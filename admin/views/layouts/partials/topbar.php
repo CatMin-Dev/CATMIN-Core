@@ -1,5 +1,14 @@
 <?php
 $userLabel = (string) ($user['username'] ?? $user['email'] ?? 'admin');
+$alertsCount = 0;
+try {
+    $pdo = (new \Core\database\ConnectionManager())->connection();
+    $table = (string) config('database.prefixes.admin', 'admin_') . 'security_events';
+    $stmt = $pdo->query('SELECT COUNT(*) FROM ' . $table . ' WHERE severity IN (\'warning\', \'error\', \'critical\')');
+    $alertsCount = (int) (($stmt !== false ? $stmt->fetchColumn() : 0) ?: 0);
+} catch (\Throwable) {
+    $alertsCount = 0;
+}
 $topIconSvg = static function (string $name): string {
     return match ($name) {
         'menu' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>',
@@ -38,8 +47,11 @@ $topIconSvg = static function (string $name): string {
             </ul>
         </div>
 
-        <button type="button" class="cat-icon-btn has-dot" aria-label="Notifications">
+        <button type="button" class="cat-icon-btn has-dot" aria-label="Notifications" title="<?= $alertsCount > 0 ? ('Alertes: ' . $alertsCount) : 'Alerte: 0' ?>">
             <?= $topIconSvg('bell') ?>
+            <?php if ($alertsCount > 0): ?>
+                <span class="cat-topbar-alert-count"><?= $alertsCount > 99 ? '99+' : $alertsCount ?></span>
+            <?php endif; ?>
         </button>
         <button type="button" class="cat-icon-btn" aria-label="Apps">
             <?= $topIconSvg('apps') ?>

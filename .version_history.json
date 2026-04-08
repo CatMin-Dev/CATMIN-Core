@@ -1,5 +1,17 @@
 [
   {
+    "version": "0.3.0-dev.7",
+    "date": "2026-04-08",
+    "scope": "core",
+    "changes": [
+      "global failsafe handlers with incident classification, secure logging and safe fallback renderer",
+      "maintenance engine upgraded with levels, reason/message, IP/admin whitelist and superadmin bypass guardrails",
+      "system health check and monitoring services exposed in admin pages and dashboard widgets",
+      "native minimal CLI tool added (version/health/cache/logs/install/maintenance/modules/admin hard reset)"
+    ],
+    "prompt": "041-045"
+  },
+  {
     "version": "0.3.0-dev.6",
     "date": "2026-04-08",
     "scope": "release",

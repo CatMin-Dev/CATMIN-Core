@@ -11,6 +11,7 @@ use Core\config\Config;
 use Core\database\ConnectionManager;
 use Core\http\Request;
 use Core\http\Response;
+use Core\maintenance\MaintenanceEngine;
 require_once CATMIN_CORE . '/error-dispatcher.php';
 
 final class SecurityManager
@@ -194,19 +195,20 @@ final class SecurityManager
     public function maintenanceModeMiddleware(): callable
     {
         return function (Request $request, callable $next): Response {
-            if (!$this->isMaintenanceEnabled()) {
+            $engine = new MaintenanceEngine();
+            if (!$engine->isEnabled()) {
                 $result = $next($request);
                 return $result instanceof Response ? $result : Response::html((string) $result);
             }
 
-            $allowAdmin = $this->isMaintenanceAdminBypassEnabled();
-            if ($this->area === 'admin' && $allowAdmin) {
+            if ($engine->allowsCurrentRequest($this->area)) {
                 $result = $next($request);
                 return $result instanceof Response ? $result : Response::html((string) $result);
             }
 
+            $state = $engine->state();
             return (new \CoreErrorDispatcher())->maintenance([
-                'message' => 'CATMIN est en maintenance. Merci de réessayer plus tard.',
+                'message' => (string) ($state['message'] ?? 'CATMIN est en maintenance. Merci de réessayer plus tard.'),
             ]);
         };
     }
@@ -238,31 +240,4 @@ final class SecurityManager
         return (string) ($_SERVER['SERVER_PORT'] ?? '') === '443';
     }
 
-    private function isMaintenanceEnabled(): bool
-    {
-        try {
-            $pdo = (new ConnectionManager())->connection();
-            $table = (string) Config::get('database.prefixes.core', 'core_') . 'settings';
-            $stmt = $pdo->prepare('SELECT setting_value FROM ' . $table . ' WHERE category = :category AND setting_key = :setting_key LIMIT 1');
-            $stmt->execute(['category' => 'maintenance', 'setting_key' => 'enabled']);
-            $value = (string) ($stmt->fetchColumn() ?: '0');
-            return in_array(strtolower($value), ['1', 'true', 'yes', 'on'], true);
-        } catch (\Throwable) {
-            return false;
-        }
-    }
-
-    private function isMaintenanceAdminBypassEnabled(): bool
-    {
-        try {
-            $pdo = (new ConnectionManager())->connection();
-            $table = (string) Config::get('database.prefixes.core', 'core_') . 'settings';
-            $stmt = $pdo->prepare('SELECT setting_value FROM ' . $table . ' WHERE category = :category AND setting_key = :setting_key LIMIT 1');
-            $stmt->execute(['category' => 'maintenance', 'setting_key' => 'allow_admin']);
-            $value = (string) ($stmt->fetchColumn() ?: '1');
-            return in_array(strtolower($value), ['1', 'true', 'yes', 'on'], true);
-        } catch (\Throwable) {
-            return true;
-        }
-    }
 }

@@ -48,8 +48,14 @@ final class CoreSettingsSchema
             'security.admin_noindex' => ['group' => 'security', 'type' => 'bool', 'default' => (bool) config('security.admin_noindex', true), 'autoload' => true, 'protected' => true, 'system' => true],
 
             'maintenance.enabled' => ['group' => 'maintenance', 'type' => 'bool', 'default' => false, 'autoload' => true, 'protected' => false, 'system' => true],
+            'maintenance.level' => ['group' => 'maintenance', 'type' => 'int', 'default' => 1, 'autoload' => true, 'protected' => false, 'system' => true],
+            'maintenance.reason' => ['group' => 'maintenance', 'type' => 'string', 'default' => '', 'autoload' => true, 'protected' => false, 'system' => true],
             'maintenance.message' => ['group' => 'maintenance', 'type' => 'string', 'default' => 'Maintenance en cours', 'autoload' => true, 'protected' => false, 'system' => true],
             'maintenance.allow_admin' => ['group' => 'maintenance', 'type' => 'bool', 'default' => true, 'autoload' => true, 'protected' => false, 'system' => true],
+            'maintenance.allowed_ips' => ['group' => 'maintenance', 'type' => 'string', 'default' => '', 'autoload' => true, 'protected' => true, 'system' => true],
+            'maintenance.allowed_admin_ids' => ['group' => 'maintenance', 'type' => 'string', 'default' => '', 'autoload' => true, 'protected' => true, 'system' => true],
+            'maintenance.started_at' => ['group' => 'maintenance', 'type' => 'string', 'default' => '', 'autoload' => false, 'protected' => true, 'system' => true],
+            'maintenance.enabled_by' => ['group' => 'maintenance', 'type' => 'string', 'default' => '', 'autoload' => false, 'protected' => true, 'system' => true],
             'maintenance.last_backup' => ['group' => 'maintenance', 'type' => 'string', 'default' => '-', 'autoload' => false, 'protected' => true, 'system' => true],
             'maintenance.last_restore' => ['group' => 'maintenance', 'type' => 'string', 'default' => '-', 'autoload' => false, 'protected' => true, 'system' => true],
 

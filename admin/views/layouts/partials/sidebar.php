@@ -30,6 +30,8 @@ $navGroups = [
         'label' => 'Système',
         'icon' => 'speedometer2',
         'children' => [
+            ['key' => 'monitoring', 'label' => 'Monitoring', 'href' => $adminBase . '/system/monitoring'],
+            ['key' => 'health', 'label' => 'Health check', 'href' => $adminBase . '/system/health'],
             ['key' => 'logs', 'label' => 'Journaux', 'href' => $adminBase . '/logs'],
             ['key' => 'cron', 'label' => 'Cron', 'href' => $adminBase . '/cron'],
             ['key' => 'maintenance', 'label' => 'Maintenance', 'href' => $adminBase . '/maintenance'],

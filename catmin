@@ -1,0 +1,222 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+require_once __DIR__ . '/bootstrap.php';
+require_once CATMIN_CORE . '/module-loader.php';
+
+use Core\database\ConnectionManager;
+use Core\system\HealthCheckService;
+use Core\versioning\Version;
+
+$args = $argv;
+array_shift($args);
+$command = strtolower(trim((string) ($args[0] ?? 'help')));
+$params = array_slice($args, 1);
+
+$out = static function (string $line = ''): void {
+    fwrite(STDOUT, $line . PHP_EOL);
+};
+
+$err = static function (string $line): void {
+    fwrite(STDERR, $line . PHP_EOL);
+};
+
+$confirm = static function (string $question): bool {
+    fwrite(STDOUT, $question . ' [y/N] ');
+    $input = trim((string) fgets(STDIN));
+    return in_array(strtolower($input), ['y', 'yes'], true);
+};
+
+$withDb = static function (callable $callback) use ($err): int {
+    try {
+        $pdo = (new ConnectionManager())->connection();
+        return (int) $callback($pdo);
+    } catch (\Throwable $e) {
+        $err('DB indisponible: ' . $e->getMessage());
+        return 1;
+    }
+};
+
+$showHelp = static function () use ($out): int {
+    $out('CATMIN CLI');
+    $out('Usage: php catmin <command>');
+    $out('');
+    $out('Commandes:');
+    $out('  help                  Affiche cette aide');
+    $out('  version               Version core et DB');
+    $out('  health                Health checks essentiels');
+    $out('  cache:clear           Vide les caches runtime');
+    $out('  logs:show [n]         Affiche les n derniers logs (defaut: 50)');
+    $out('  install:status        Etat install/lock');
+    $out('  admin:hard-reset      Reset mot de passe superadmin (confirmation)');
+    $out('  maintenance:on        Active la maintenance');
+    $out('  maintenance:off       Desactive la maintenance');
+    $out('  modules:list          Liste des modules detectes');
+    return 0;
+};
+
+$setSetting = static function (\PDO $pdo, string $category, string $key, string $value): void {
+    $table = (string) config('database.prefixes.core', 'core_') . 'settings';
+    $select = $pdo->prepare('SELECT id FROM ' . $table . ' WHERE category = :category AND setting_key = :setting_key LIMIT 1');
+    $select->execute(['category' => $category, 'setting_key' => $key]);
+    $id = $select->fetchColumn();
+    if ($id === false) {
+        $insert = $pdo->prepare('INSERT INTO ' . $table . ' (category, setting_key, setting_value, is_public, updated_at) VALUES (:category, :setting_key, :setting_value, 0, CURRENT_TIMESTAMP)');
+        $insert->execute(['category' => $category, 'setting_key' => $key, 'setting_value' => $value]);
+        return;
+    }
+    $update = $pdo->prepare('UPDATE ' . $table . ' SET setting_value = :setting_value, updated_at = CURRENT_TIMESTAMP WHERE id = :id');
+    $update->execute(['setting_value' => $value, 'id' => (int) $id]);
+};
+
+$commandHandlers = [
+    'help' => static fn () => $showHelp(),
+    'version' => static function () use ($out, $withDb): int {
+        $out('Core: ' . Version::current());
+        return $withDb(static function (\PDO $pdo) use ($out): int {
+            $table = (string) config('database.prefixes.core', 'core_') . 'db_versions';
+            $stmt = $pdo->query('SELECT schema_version FROM ' . $table . ' ORDER BY id DESC LIMIT 1');
+            $dbVersion = (string) (($stmt !== false ? $stmt->fetchColumn() : null) ?: 'unknown');
+            $out('DB: ' . $dbVersion);
+            return 0;
+        });
+    },
+    'health' => static function () use ($out): int {
+        $snapshot = (new HealthCheckService())->run();
+        $out('Global: ' . strtoupper((string) ($snapshot['global'] ?? 'unknown')));
+        foreach ((array) ($snapshot['checks'] ?? []) as $check) {
+            $out(sprintf('- [%s] %s :: %s', strtoupper((string) ($check['status'] ?? 'unknown')), (string) ($check['label'] ?? '-'), (string) ($check['detail'] ?? '')));
+        }
+        return 0;
+    },
+    'cache:clear' => static function () use ($out): int {
+        $targets = [
+            CATMIN_STORAGE . '/cache',
+            CATMIN_STORAGE . '/config',
+            CATMIN_ROOT . '/cache',
+        ];
+        $deleted = 0;
+        foreach ($targets as $target) {
+            if (!is_dir($target)) {
+                continue;
+            }
+            $it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($target, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::CHILD_FIRST);
+            foreach ($it as $file) {
+                if ($file->isFile()) {
+                    @unlink($file->getPathname());
+                    $deleted++;
+                }
+            }
+        }
+        $out('Cache clear: OK (' . $deleted . ' fichiers).');
+        return 0;
+    },
+    'logs:show' => static function () use ($params, $out): int {
+        $limit = max(1, (int) ($params[0] ?? 50));
+        $file = CATMIN_STORAGE . '/logs/catmin.log';
+        if (!is_file($file)) {
+            $out('Aucun log trouvé.');
+            return 0;
+        }
+        $lines = (array) file($file, FILE_IGNORE_NEW_LINES);
+        foreach (array_slice($lines, -$limit) as $line) {
+            $out((string) $line);
+        }
+        return 0;
+    },
+    'install:status' => static function () use ($out): int {
+        $locked = is_file(CATMIN_STORAGE . '/install.lock') || is_file(CATMIN_STORAGE . '/install/installed.lock');
+        $out('Install lock: ' . ($locked ? 'ON' : 'OFF'));
+        $out('Install route: ' . ($locked ? 'LOCKED' : 'AVAILABLE'));
+        return 0;
+    },
+    'admin:hard-reset' => static function () use ($confirm, $params, $withDb, $err, $out): int {
+        $yes = in_array('--yes', $params, true);
+        if (!$yes && !$confirm('Confirmer reset superadmin ?')) {
+            $out('Annulé.');
+            return 1;
+        }
+
+        return $withDb(static function (\PDO $pdo) use ($params, $err, $out): int {
+            $password = '';
+            foreach ($params as $idx => $arg) {
+                if ($arg === '--password' && isset($params[$idx + 1])) {
+                    $password = (string) $params[$idx + 1];
+                }
+            }
+            if ($password === '') {
+                $password = bin2hex(random_bytes(8));
+            }
+
+            $adminPrefix = (string) config('database.prefixes.admin', 'admin_');
+            $usersTable = $adminPrefix . 'users';
+            $rolesTable = $adminPrefix . 'roles';
+
+            $find = $pdo->query('SELECT u.id FROM ' . $usersTable . ' u INNER JOIN ' . $rolesTable . ' r ON r.id = u.role_id WHERE r.slug = \'super-admin\' ORDER BY u.id ASC LIMIT 1');
+            $id = (int) (($find !== false ? $find->fetchColumn() : 0) ?: 0);
+            if ($id <= 0) {
+                $err('Aucun compte superadmin trouvé.');
+                return 1;
+            }
+
+            $hash = password_hash($password, PASSWORD_DEFAULT);
+            $update = $pdo->prepare('UPDATE ' . $usersTable . ' SET password_hash = :password_hash, updated_at = CURRENT_TIMESTAMP WHERE id = :id');
+            $ok = $update->execute(['password_hash' => $hash, 'id' => $id]);
+            if (!$ok) {
+                $err('Reset échoué.');
+                return 1;
+            }
+
+            $out('Superadmin reset: OK');
+            $out('Nouveau mot de passe: ' . $password);
+            return 0;
+        });
+    },
+    'maintenance:on' => static function () use ($withDb, $setSetting, $out): int {
+        return $withDb(static function (\PDO $pdo) use ($setSetting, $out): int {
+            $setSetting($pdo, 'maintenance', 'enabled', '1');
+            $setSetting($pdo, 'maintenance', 'started_at', date('Y-m-d H:i:s'));
+            $out('Maintenance: ON');
+            return 0;
+        });
+    },
+    'maintenance:off' => static function () use ($withDb, $setSetting, $out): int {
+        return $withDb(static function (\PDO $pdo) use ($setSetting, $out): int {
+            $setSetting($pdo, 'maintenance', 'enabled', '0');
+            $setSetting($pdo, 'maintenance', 'started_at', '');
+            $out('Maintenance: OFF');
+            return 0;
+        });
+    },
+    'modules:list' => static function () use ($out): int {
+        $loader = new \CoreModuleLoader();
+        $snapshot = $loader->scan();
+        foreach ((array) ($snapshot['modules'] ?? []) as $module) {
+            $manifest = (array) ($module['manifest'] ?? []);
+            $scope = (string) ($module['scope'] ?? 'unknown');
+            $slug = (string) ($manifest['slug'] ?? 'unknown');
+            $version = (string) ($manifest['version'] ?? '-');
+            $state = (string) ($module['state'] ?? 'detected');
+            $errors = (array) ($module['errors'] ?? []);
+            $out(sprintf('%s/%s v%s [%s]%s', $scope, $slug, $version, $state, $errors !== [] ? (' errors=' . count($errors)) : ''));
+        }
+        return 0;
+    },
+];
+
+if (!array_key_exists($command, $commandHandlers)) {
+    $err('Commande inconnue: ' . $command);
+    $showHelp();
+    exit(1);
+}
+
+try {
+    $exitCode = (int) $commandHandlers[$command]();
+    exit($exitCode);
+} catch (\Throwable $e) {
+    $err('Erreur CLI: ' . $e->getMessage());
+    exit(1);
+}
+

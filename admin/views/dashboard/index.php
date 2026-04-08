@@ -14,6 +14,7 @@ $pageActions = [];
 ob_start();
 ?>
 <?php require __DIR__ . '/partials/stats.php'; ?>
+<?php require __DIR__ . '/partials/monitoring-summary.php'; ?>
 
 <section class="row g-3">
     <div class="col-12 col-xl-7"><?php require __DIR__ . '/partials/activity.php'; ?></div>

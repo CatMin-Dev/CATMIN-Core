@@ -19,6 +19,7 @@ if (!defined('CATMIN_AREA')) {
 
 require_once CATMIN_CORE . '/support/helpers.php';
 require_once CATMIN_CORE . '/error-dispatcher.php';
+require_once CATMIN_CORE . '/failsafe/FailsafeManager.php';
 
 spl_autoload_register(static function (string $class): void {
     $prefixMap = [
@@ -53,27 +54,4 @@ define('CATMIN_IS_DOCKER', $detector->isDocker());
 $loader = new Core\config\RuntimeConfigLoader(Core\config\Config::repository(), $envManager);
 $loader->load(CATMIN_CONFIG, CATMIN_STORAGE . '/config/runtime.json');
 Core\versioning\VersionHistory::syncCurrentVersion();
-
-set_exception_handler(static function (Throwable $throwable): void {
-    Core\logs\Logger::error(
-        'Unhandled exception',
-        [
-            'file' => $throwable->getFile(),
-            'line' => $throwable->getLine(),
-            'message' => substr($throwable->getMessage(), 0, 180),
-        ]
-    );
-
-    (new CoreErrorDispatcher())->outputForFatal(500);
-});
-
-set_error_handler(static function (int $severity, string $message, string $file, int $line): bool {
-    Core\logs\Logger::error('Runtime error', [
-        'severity' => $severity,
-        'file' => $file,
-        'line' => $line,
-        'message' => substr($message, 0, 180),
-    ]);
-
-    return false;
-});
+Core\failsafe\FailsafeManager::register();
