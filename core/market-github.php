@@ -6,11 +6,13 @@ final class CoreMarketGithub
 {
     private string $repo;
     private string $apiBase;
+    private string $branch;
 
-    public function __construct(?string $repo = null)
+    public function __construct(?string $repo = null, ?string $branch = null)
     {
         $repo = $repo !== null ? trim($repo) : trim((string) env('CATMIN_PUBLIC_MODULES_REPO', 'CatMin-Dev/CATMIN-Modules'));
         $this->repo = $repo !== '' ? $repo : 'CatMin-Dev/CATMIN-Modules';
+        $this->branch = $branch !== null && trim($branch) !== '' ? trim($branch) : 'main';
         $this->apiBase = 'https://api.github.com/repos/' . $this->repo;
     }
 
@@ -51,7 +53,7 @@ final class CoreMarketGithub
                     continue;
                 }
 
-                $zipUrl = 'https://codeload.github.com/' . $this->repo . '/zip/refs/heads/main';
+                $zipUrl = 'https://codeload.github.com/' . $this->repo . '/zip/refs/heads/' . rawurlencode($this->branch);
                 $items[] = [
                     'scope' => $scope,
                     'slug' => (string) ($manifest['slug'] ?? $slug),
@@ -62,7 +64,7 @@ final class CoreMarketGithub
                     'catmin_max' => (string) ($manifest['catmin_max'] ?? ''),
                     'manifest' => $manifest,
                     'zip_url' => $zipUrl,
-                    'path_in_zip' => 'CATMIN-Modules-main/modules/' . $scope . '/' . $slug,
+                    'path_in_zip' => basename($this->repo) . '-' . $this->branch . '/modules/' . $scope . '/' . $slug,
                 ];
             }
         }

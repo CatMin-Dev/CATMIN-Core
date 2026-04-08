@@ -16,10 +16,12 @@ $breadcrumbs = [
 $catalog = is_array($catalog ?? null) ? $catalog : [];
 $items = is_array($catalog['items'] ?? null) ? $catalog['items'] : [];
 $stats = is_array($catalog['stats'] ?? null) ? $catalog['stats'] : [];
+$policy = is_array($catalog['policy'] ?? null) ? $catalog['policy'] : [];
 $error = trim((string) ($catalog['error'] ?? ''));
 $search = strtolower(trim((string) ($filters['q'] ?? '')));
 $status = strtolower(trim((string) ($filters['status'] ?? 'all')));
 $scope = strtolower(trim((string) ($filters['scope'] ?? 'all')));
+$trustFilter = strtolower(trim((string) ($filters['trust'] ?? (((bool) ($policy['show_community_by_default'] ?? false)) ? 'all' : 'non-community'))));
 
 $scopes = [];
 foreach ($items as $item) {
@@ -28,12 +30,19 @@ foreach ($items as $item) {
 $scopes = array_values(array_unique(array_filter($scopes, static fn (string $v): bool => $v !== '')));
 sort($scopes);
 
-$items = array_values(array_filter($items, static function (array $item) use ($search, $status, $scope): bool {
+$items = array_values(array_filter($items, static function (array $item) use ($search, $status, $scope, $trustFilter): bool {
     $label = strtolower(trim((string) (($item['name'] ?? '') . ' ' . ($item['slug'] ?? '') . ' ' . ($item['description'] ?? ''))));
     if ($search !== '' && !str_contains($label, $search)) {
         return false;
     }
     if ($scope !== 'all' && strtolower((string) ($item['scope'] ?? '')) !== $scope) {
+        return false;
+    }
+    $repoTrust = strtolower((string) ($item['repo_trust_level'] ?? 'community'));
+    if ($trustFilter === 'non-community' && $repoTrust === 'community') {
+        return false;
+    }
+    if (in_array($trustFilter, ['official', 'trusted', 'community', 'blocked'], true) && $repoTrust !== $trustFilter) {
         return false;
     }
 
@@ -98,6 +107,16 @@ ob_start();
                     <?php endforeach; ?>
                 </select>
             </div>
+            <div class="col-6 col-lg-2">
+                <label class="form-label mb-1"><?= htmlspecialchars(__('settings.module_repositories.trust_level'), ENT_QUOTES, 'UTF-8') ?></label>
+                <select class="form-select" name="trust">
+                    <option value="all" <?= $trustFilter === 'all' ? 'selected' : '' ?>><?= htmlspecialchars(__('common.all'), ENT_QUOTES, 'UTF-8') ?></option>
+                    <option value="non-community" <?= $trustFilter === 'non-community' ? 'selected' : '' ?>><?= htmlspecialchars(__('market.filter.non_community'), ENT_QUOTES, 'UTF-8') ?></option>
+                    <option value="official" <?= $trustFilter === 'official' ? 'selected' : '' ?>><?= htmlspecialchars(__('common.official'), ENT_QUOTES, 'UTF-8') ?></option>
+                    <option value="trusted" <?= $trustFilter === 'trusted' ? 'selected' : '' ?>><?= htmlspecialchars(__('common.trusted'), ENT_QUOTES, 'UTF-8') ?></option>
+                    <option value="community" <?= $trustFilter === 'community' ? 'selected' : '' ?>><?= htmlspecialchars(__('common.community'), ENT_QUOTES, 'UTF-8') ?></option>
+                </select>
+            </div>
             <div class="col-12 col-lg-2">
                 <div class="d-grid gap-2">
                     <button class="btn btn-primary" type="submit"><?= htmlspecialchars(__('common.filter'), ENT_QUOTES, 'UTF-8') ?></button>
@@ -115,6 +134,7 @@ ob_start();
             <tr>
                 <th><?= htmlspecialchars(__('common.module'), ENT_QUOTES, 'UTF-8') ?></th>
                 <th><?= htmlspecialchars(__('common.version'), ENT_QUOTES, 'UTF-8') ?></th>
+                <th><?= htmlspecialchars(__('market.repository'), ENT_QUOTES, 'UTF-8') ?></th>
                 <th><?= htmlspecialchars(__('market.compatibility'), ENT_QUOTES, 'UTF-8') ?></th>
                 <th><?= htmlspecialchars(__('modules.table.integrity'), ENT_QUOTES, 'UTF-8') ?></th>
                 <th><?= htmlspecialchars(__('modules.table.signature'), ENT_QUOTES, 'UTF-8') ?></th>
@@ -124,7 +144,7 @@ ob_start();
             </thead>
             <tbody>
             <?php if ($items === []): ?>
-                <tr><td colspan="7" class="text-center py-5 text-body-secondary"><?= htmlspecialchars(__('market.empty'), ENT_QUOTES, 'UTF-8') ?></td></tr>
+                <tr><td colspan="8" class="text-center py-5 text-body-secondary"><?= htmlspecialchars(__('market.empty'), ENT_QUOTES, 'UTF-8') ?></td></tr>
             <?php endif; ?>
             <?php foreach ($items as $item): ?>
                 <?php
@@ -147,6 +167,16 @@ ob_start();
                         <?php if ($installed): ?>
                             <small class="d-block text-body-secondary mt-1"><?= htmlspecialchars(__('market.installed_version'), ENT_QUOTES, 'UTF-8') ?>: <?= htmlspecialchars((string) ($item['installed_version'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></small>
                         <?php endif; ?>
+                    </td>
+                    <td>
+                        <?php $repoTrust = strtolower((string) ($item['repo_trust_level'] ?? 'community')); ?>
+                        <p class="mb-1 fw-semibold"><?= htmlspecialchars((string) ($item['repo_name'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></p>
+                        <span class="badge <?= $repoTrust === 'official' ? 'text-bg-success' : ($repoTrust === 'trusted' ? 'text-bg-info' : ($repoTrust === 'blocked' ? 'text-bg-danger' : 'text-bg-warning')) ?>">
+                            <?= htmlspecialchars(__('common.' . $repoTrust), ENT_QUOTES, 'UTF-8') ?>
+                        </span>
+                        <?php foreach ((array) ($item['trust_warnings'] ?? []) as $trustWarning): ?>
+                            <small class="d-block text-danger mt-1"><?= htmlspecialchars((string) $trustWarning, ENT_QUOTES, 'UTF-8') ?></small>
+                        <?php endforeach; ?>
                     </td>
                     <td>
                         <?php if ($compatible): ?>
@@ -202,7 +232,8 @@ ob_start();
                             <input type="hidden" name="_csrf" value="<?= $csrf ?>">
                             <input type="hidden" name="scope" value="<?= htmlspecialchars($moduleScope, ENT_QUOTES, 'UTF-8') ?>">
                             <input type="hidden" name="slug" value="<?= htmlspecialchars($slug, ENT_QUOTES, 'UTF-8') ?>">
-                            <button type="submit" class="btn btn-sm <?= $hasUpdate ? 'btn-warning' : 'btn-primary' ?>" <?= !$compatible ? 'disabled' : '' ?>>
+                            <input type="hidden" name="repository_slug" value="<?= htmlspecialchars((string) ($item['repo_slug'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                            <button type="submit" class="btn btn-sm <?= $hasUpdate ? 'btn-warning' : 'btn-primary' ?>" <?= (!$compatible || !((bool) ($item['install_allowed'] ?? true))) ? 'disabled' : '' ?>>
                                 <?= htmlspecialchars($hasUpdate ? __('market.action.update') : __('market.action.install'), ENT_QUOTES, 'UTF-8') ?>
                             </button>
                         </form>

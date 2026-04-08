@@ -48,6 +48,7 @@ $navGroups = [
             ['key' => 'mail', 'label' => __('nav.mail'), 'href' => $adminBase . '/settings/mail'],
             ['key' => 'security', 'label' => __('nav.security'), 'href' => $adminBase . '/settings/security'],
             ['key' => 'apps', 'label' => __('nav.apps'), 'href' => $adminBase . '/settings/apps'],
+            ['key' => 'module-repositories', 'label' => __('nav.module_repositories'), 'href' => $adminBase . '/settings/module-repositories'],
         ],
     ],
 ];

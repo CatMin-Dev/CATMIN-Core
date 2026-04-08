@@ -25,6 +25,7 @@ require_once CATMIN_CORE . '/db-upgrade-runner.php';
 require_once CATMIN_CORE . '/updater.php';
 require_once CATMIN_CORE . '/market-engine.php';
 require_once CATMIN_CORE . '/update-center.php';
+require_once CATMIN_CORE . '/module-repository-registry.php';
 
 $security = new SecurityManager(Request::capture(), 'admin');
 $authRequired = $security->adminAuthRequiredMiddleware();
@@ -1052,6 +1053,7 @@ return [
                     'q' => (string) $request->input('q', ''),
                     'status' => (string) $request->input('status', 'all'),
                     'scope' => (string) $request->input('scope', 'all'),
+                    'trust' => (string) $request->input('trust', ''),
                 ],
                 'message' => (string) ($flash['message'] ?? ''),
                 'messageType' => (string) ($flash['type'] ?? 'success'),
@@ -1149,6 +1151,7 @@ return [
                 'mail' => 'mail',
                 'security' => 'security',
                 'apps' => 'apps',
+                'module-repositories', 'market' => 'module-repositories',
                 default => 'general',
             };
             return $redirect($adminBase . '/settings/' . $section, [
@@ -1162,13 +1165,14 @@ return [
     [
         'method' => 'GET',
         'path' => '/settings/{section}',
-        'where' => ['section' => 'general|mail|security|apps'],
+        'where' => ['section' => 'general|mail|security|apps|module-repositories'],
         'handler' => static function (Request $request, string $section) use ($consumeFlash, $appsRepository): Response {
             $controller = new AuthController();
             $adminBase = $controller->adminBasePath();
             $engine = new CoreSettingsEngine();
             $flash = $consumeFlash();
             $section = strtolower(trim($section));
+            $registry = new CoreModuleRepositoryRegistry();
 
             if ($section === 'apps') {
                 return View::make('settings.apps', [
@@ -1177,6 +1181,20 @@ return [
                     'message' => (string) ($flash['message'] ?? ''),
                     'messageType' => (string) ($flash['type'] ?? 'success'),
                     'activeSettingsNav' => 'apps',
+                ], 'admin');
+            }
+
+            if ($section === 'module-repositories') {
+                $repositories = $registry->listRepositories();
+                $policy = $registry->policy();
+
+                return View::make('settings.module-repositories', [
+                    'adminBase' => $adminBase,
+                    'repositories' => $repositories,
+                    'policy' => $policy,
+                    'message' => (string) ($flash['message'] ?? ''),
+                    'messageType' => (string) ($flash['type'] ?? 'success'),
+                    'activeSettingsNav' => 'module-repositories',
                 ], 'admin');
             }
 
@@ -1240,6 +1258,7 @@ return [
                 'mail' => 'mail',
                 'security' => 'security',
                 'apps' => 'apps',
+                'module-repositories', 'market' => 'module-repositories',
                 default => 'general',
             };
             $postedTimezone = trim((string) ($post['timezone'] ?? ($data['general']['timezone'] ?? 'UTC')));
@@ -1315,12 +1334,13 @@ return [
     [
         'method' => 'POST',
         'path' => '/settings/{section}',
-        'where' => ['section' => 'general|mail|security|apps'],
+        'where' => ['section' => 'general|mail|security|apps|module-repositories'],
         'handler' => static function (Request $request, string $section) use ($upsertCoreSetting, $redirect, $coreSettingsTable, $appendCoreLog, $coreLogsTable, $appsValidator, $appsRepository, $notificationsRepository): Response {
             $controller = new AuthController();
             $adminBase = $controller->adminBasePath();
             $pdo = (new ConnectionManager())->connection();
             $engine = new CoreSettingsEngine();
+            $registry = new CoreModuleRepositoryRegistry();
 
             $data = $engine->all();
             $data['general'] = is_array($data['general'] ?? null) ? $data['general'] : [];
@@ -1334,6 +1354,7 @@ return [
                 'mail' => 'mail',
                 'security' => 'security',
                 'apps' => 'apps',
+                'module-repositories', 'market' => 'module-repositories',
                 default => 'general',
             };
 
@@ -1383,6 +1404,52 @@ return [
                 return $redirect($adminBase . '/settings/apps', [
                     'msg' => $ok ? 'Apps enregistrees.' : ($errorMessage !== '' ? ('Echec operation apps. ' . $errorMessage) : 'Echec operation apps.'),
                     'mt' => $ok ? 'success' : 'danger',
+                ]);
+            }
+
+            if ($section === 'module-repositories') {
+                $action = strtolower(trim((string) ($post['action'] ?? 'create')));
+                $id = (int) ($post['repository_id'] ?? 0);
+
+                $result = ['ok' => false, 'message' => 'Action non supportée.'];
+                if ($action === 'create') {
+                    $result = $registry->addRepository($post);
+                } elseif ($action === 'update' && $id > 0) {
+                    $result = $registry->updateRepository($id, $post);
+                } elseif ($action === 'toggle' && $id > 0) {
+                    $row = $registry->listRepositories();
+                    $current = null;
+                    foreach ($row as $repoRow) {
+                        if ((int) ($repoRow['id'] ?? 0) === $id) {
+                            $current = $repoRow;
+                            break;
+                        }
+                    }
+                    $enabled = (bool) (($current['is_enabled'] ?? false));
+                    $result = $enabled ? $registry->disableRepository($id) : $registry->enableRepository($id);
+                } elseif ($action === 'check' && $id > 0) {
+                    $result = $registry->checkRepository($id);
+                } elseif ($action === 'block' && $id > 0) {
+                    $candidate = null;
+                    foreach ($registry->listRepositories() as $repoRow) {
+                        if ((int) ($repoRow['id'] ?? 0) === $id) {
+                            $candidate = $repoRow;
+                            break;
+                        }
+                    }
+                    if (is_array($candidate)) {
+                        $candidate['trust_level'] = 'blocked';
+                        $result = $registry->updateRepository($id, $candidate);
+                    }
+                } elseif ($action === 'delete' && $id > 0) {
+                    $result = $registry->removeRepository($id);
+                } elseif ($action === 'save_policy') {
+                    $result = $registry->savePolicy($post);
+                }
+
+                return $redirect($adminBase . '/settings/module-repositories', [
+                    'msg' => (string) ($result['message'] ?? 'Opération terminée.'),
+                    'mt' => (bool) ($result['ok'] ?? false) ? 'success' : 'danger',
                 ]);
             }
             $postedTimezone = trim((string) ($post['timezone'] ?? ($data['general']['timezone'] ?? 'UTC')));
@@ -2272,6 +2339,7 @@ return [
 
             $scope = strtolower(trim((string) $request->input('scope', '')));
             $slug = strtolower(trim((string) $request->input('slug', '')));
+            $repositorySlug = strtolower(trim((string) $request->input('repository_slug', '')));
             if ($scope === '' || $slug === '') {
                 return $redirect($adminBase . '/modules/market', [
                     'msg' => 'Module invalide.',
@@ -2286,7 +2354,9 @@ return [
                 if (!is_array($item)) {
                     continue;
                 }
-                if (strtolower((string) ($item['scope'] ?? '')) === $scope && strtolower((string) ($item['slug'] ?? '')) === $slug) {
+                if (strtolower((string) ($item['scope'] ?? '')) === $scope
+                    && strtolower((string) ($item['slug'] ?? '')) === $slug
+                    && ($repositorySlug === '' || strtolower((string) ($item['repo_slug'] ?? '')) === $repositorySlug)) {
                     $target = $item;
                     break;
                 }
