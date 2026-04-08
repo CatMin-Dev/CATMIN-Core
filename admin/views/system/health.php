@@ -48,12 +48,12 @@ ob_start();
                 <thead><tr><th>Check</th><th>Statut</th><th>Détail</th></tr></thead>
                 <tbody>
                 <?php foreach ($checks as $check): ?>
-                    <?php $status = (string) ($check['status'] ?? 'unknown'); ?>
+                    <?php $checkStatus = (string) ($check['status'] ?? 'unknown'); ?>
                     <tr>
                         <td><?= htmlspecialchars((string) ($check['label'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                         <td>
-                            <span class="badge <?= $status === 'critical' ? 'text-bg-danger' : ($status === 'warning' ? 'text-bg-warning' : ($status === 'healthy' ? 'text-bg-success' : 'text-bg-secondary')) ?>">
-                                <?= htmlspecialchars($status, ENT_QUOTES, 'UTF-8') ?>
+                            <span class="badge <?= $checkStatus === 'critical' ? 'text-bg-danger' : ($checkStatus === 'warning' ? 'text-bg-warning' : ($checkStatus === 'healthy' ? 'text-bg-success' : 'text-bg-secondary')) ?>">
+                                <?= htmlspecialchars($checkStatus, ENT_QUOTES, 'UTF-8') ?>
                             </span>
                         </td>
                         <td class="text-body-secondary"><?= htmlspecialchars((string) ($check['detail'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
@@ -67,4 +67,3 @@ ob_start();
 <?php
 $content = (string) ob_get_clean();
 require CATMIN_ADMIN . '/views/layouts/admin.php';
-

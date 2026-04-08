@@ -52,8 +52,19 @@ final class MaintenanceEngine
             $state['enabled'] = in_array(strtolower((string) ($state['enabled'] ?? '0')), ['1', 'true', 'yes', 'on'], true);
             $state['allow_admin'] = in_array(strtolower((string) ($state['allow_admin'] ?? '1')), ['1', 'true', 'yes', 'on'], true);
             $state['level'] = max(1, min(3, (int) ($state['level'] ?? 1)));
-            $state['allowed_ips'] = $this->parseList((string) ($state['allowed_ips'] ?? ''));
-            $state['allowed_admin_ids'] = array_map('intval', $this->parseList((string) ($state['allowed_admin_ids'] ?? '')));
+            $allowedIpsRaw = $state['allowed_ips'] ?? '';
+            if (is_array($allowedIpsRaw)) {
+                $state['allowed_ips'] = array_values(array_unique(array_map(static fn ($v): string => trim((string) $v), $allowedIpsRaw)));
+            } else {
+                $state['allowed_ips'] = $this->parseList((string) $allowedIpsRaw);
+            }
+
+            $allowedAdminRaw = $state['allowed_admin_ids'] ?? '';
+            if (is_array($allowedAdminRaw)) {
+                $state['allowed_admin_ids'] = array_values(array_unique(array_map('intval', $allowedAdminRaw)));
+            } else {
+                $state['allowed_admin_ids'] = array_map('intval', $this->parseList((string) $allowedAdminRaw));
+            }
 
             return $state;
         } catch (\Throwable) {
@@ -127,4 +138,3 @@ final class MaintenanceEngine
         return array_values(array_unique($parts));
     }
 }
-
