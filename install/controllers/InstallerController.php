@@ -7,6 +7,7 @@ namespace Install\controllers;
 use Core\http\Request;
 use Core\http\Response;
 use Core\http\View;
+use Core\security\CsrfManager;
 require_once CATMIN_CORE . '/error-dispatcher.php';
 use Install\InstallerEngine;
 use Install\InstallerStateMachine;
@@ -117,13 +118,18 @@ final class InstallerController
     public function testDatabase(Request $request): Response
     {
         if ($this->engine->isLocked()) {
-            return Response::json(['ok' => false, 'message' => 'Installer locked.'], 423);
+            return Response::json([
+                'ok' => false,
+                'message' => 'Installer locked.',
+                'csrf' => (new CsrfManager())->token(),
+            ], 423);
         }
 
         $payload = $request->post();
         unset($payload['_csrf']);
 
         $result = $this->engine->testDatabaseConnection($payload);
+        $result['csrf'] = (new CsrfManager())->token();
         $status = ($result['ok'] ?? false) ? 200 : 422;
 
         return Response::json($result, $status);

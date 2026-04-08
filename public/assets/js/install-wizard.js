@@ -150,6 +150,15 @@ document.addEventListener('DOMContentLoaded', function () {
                     return { ok: response.ok, payload: payload };
                 });
             }).then(function (result) {
+                if (
+                    csrfInput
+                    && result.payload
+                    && typeof result.payload.csrf === 'string'
+                    && result.payload.csrf.length > 0
+                ) {
+                    csrfInput.value = result.payload.csrf;
+                }
+
                 if (!dbTestResult) {
                     return;
                 }

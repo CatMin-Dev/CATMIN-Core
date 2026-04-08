@@ -111,7 +111,10 @@ final class SecurityManager
                     return (new \CoreErrorDispatcher())->response(419);
                 }
 
-                if ((bool) Config::get('security.csrf_rotate_on_validation', true)) {
+                if (
+                    $this->area !== 'install'
+                    && (bool) Config::get('security.csrf_rotate_on_validation', true)
+                ) {
                     $this->csrf->regenerate();
                 }
             }
