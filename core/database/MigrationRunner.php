@@ -68,10 +68,15 @@ final class MigrationRunner
                     ]);
                 }
 
-                $pdo->commit();
+                // Some engines (MySQL/MariaDB) may auto-commit on DDL.
+                if ($pdo->inTransaction()) {
+                    $pdo->commit();
+                }
                 $executed[] = $name;
             } catch (\Throwable $exception) {
-                $pdo->rollBack();
+                if ($pdo->inTransaction()) {
+                    $pdo->rollBack();
+                }
                 throw $exception;
             }
         }

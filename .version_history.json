@@ -1,5 +1,15 @@
 [
     {
+        "version": "0.3.0-dev.10",
+        "date": "2026-04-08",
+        "scope": "install",
+        "changes": [
+            "fixed first execution failure on mysql/mariadb installers: migration runner now checks PDO::inTransaction before commit/rollback",
+            "prevented false \"There is no active transaction\" after DDL implicit commit"
+        ],
+        "prompt": "hotfix-execution-transaction"
+    },
+    {
         "version": "0.3.0-dev.9",
         "date": "2026-04-08",
         "scope": "install",
