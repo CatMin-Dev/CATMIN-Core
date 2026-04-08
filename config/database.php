@@ -12,7 +12,7 @@ return [
     'connections' => [
         'sqlite' => [
             'driver' => 'sqlite',
-            'database' => (string) env('CATMIN_DB_SQLITE_PATH', base_path('storage/database.sqlite')),
+            'database' => (string) env('CATMIN_DB_SQLITE_PATH', base_path('db/database.sqlite')),
         ],
         'mysql' => [
             'driver' => 'mysql',

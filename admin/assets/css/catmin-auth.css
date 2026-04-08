@@ -1,0 +1,71 @@
+.cat-auth-shell {
+    width: min(560px, 94vw);
+    margin: 0 auto;
+}
+
+.cat-card.cat-auth-card {
+    border: 1px solid color-mix(in srgb, var(--palette-stone-900) 12%, transparent);
+    border-radius: 1rem;
+    background: color-mix(in srgb, #ffffff 92%, transparent);
+    backdrop-filter: blur(8px);
+    overflow: hidden;
+    box-shadow: var(--bs-box-shadow);
+}
+
+.cat-auth-header {
+    padding: 1rem 1rem .5rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--palette-stone-900) 10%, transparent);
+}
+
+.cat-auth-logo {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+}
+
+.cat-auth-body-content {
+    padding: 1rem 1rem 1.25rem;
+}
+
+.cat-form-group .form-label {
+    font-weight: 600;
+    color: var(--palette-stone-700);
+}
+
+.cat-auth-form .form-control {
+    border-radius: .75rem;
+    min-height: 2.8rem;
+}
+
+.cat-auth-form .input-group .form-control {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.cat-auth-form .input-group .btn {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.cat-alert {
+    border-radius: .8rem;
+}
+
+.cat-password-strength .progress {
+    height: .4rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--palette-stone-300) 45%, transparent);
+}
+
+.cat-password-strength .progress-bar {
+    transition: width 160ms ease, background-color 160ms ease;
+}
+
+:root[data-bs-theme="dark"] .cat-card.cat-auth-card {
+    background: color-mix(in srgb, var(--palette-stone-800) 92%, transparent);
+    border-color: color-mix(in srgb, var(--palette-stone-100) 16%, transparent);
+}
+
+:root[data-bs-theme="dark"] .cat-auth-header {
+    border-bottom-color: color-mix(in srgb, var(--palette-stone-100) 14%, transparent);
+}

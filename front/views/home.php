@@ -8,10 +8,11 @@ use Core\versioning\Version;
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="robots" content="noindex, nofollow">
+    <meta name="robots" content="noindex, nofollow, noarchive">
     <title>CATMIN Front</title>
     <link rel="stylesheet" href="/odin-color.css">
     <link rel="stylesheet" href="/assets/vendor/bootstrap/5.3.8/css/bootstrap.min.css">
+    <script src="/assets/js/odin-color.js?v=1"></script>
 </head>
 <body class="container py-5">
     <h1 class="mb-3">CATMIN Front</h1>

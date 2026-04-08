@@ -37,6 +37,7 @@ final class SessionManager
             'ip' => $ipAddress,
             'user_agent' => substr($userAgent, 0, 255),
             'logged_at' => time(),
+            'last_activity' => time(),
         ];
 
         $_SESSION[self::REAUTH_KEY] = time();
@@ -58,7 +59,45 @@ final class SessionManager
         $this->start();
         $auth = $_SESSION[self::AUTH_KEY] ?? null;
 
-        return is_array($auth) && isset($auth['user_id'], $auth['token']);
+        if (!is_array($auth) || !isset($auth['user_id'], $auth['token'])) {
+            return false;
+        }
+
+        $timeout = (int) Config::get('security.session_lifetime', 7200);
+        $lastActivity = isset($auth['last_activity']) ? (int) $auth['last_activity'] : 0;
+        if ($lastActivity <= 0 || (time() - $lastActivity) > $timeout) {
+            $this->logout();
+            return false;
+        }
+
+        if ((bool) Config::get('security.bind_session_fingerprint', true)) {
+            $currentIp = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+            $currentUa = substr((string) ($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255);
+            $savedIp = (string) ($auth['ip'] ?? '');
+            $savedUa = (string) ($auth['user_agent'] ?? '');
+            if ($savedIp !== '' && $currentIp !== '' && !hash_equals($savedIp, $currentIp)) {
+                $this->logout();
+                return false;
+            }
+            if ($savedUa !== '' && $currentUa !== '' && !hash_equals($savedUa, $currentUa)) {
+                $this->logout();
+                return false;
+            }
+        }
+
+        $table = (string) Config::get('database.prefixes.admin', 'admin_') . 'sessions';
+        $exists = $this->pdo->prepare('SELECT id FROM ' . $table . ' WHERE session_token = :session_token LIMIT 1');
+        $exists->execute(['session_token' => (string) $auth['token']]);
+        if ($exists->fetchColumn() === false) {
+            $this->logout();
+            return false;
+        }
+
+        $_SESSION[self::AUTH_KEY]['last_activity'] = time();
+        $touch = $this->pdo->prepare('UPDATE ' . $table . ' SET last_activity_at = CURRENT_TIMESTAMP WHERE session_token = :session_token');
+        $touch->execute(['session_token' => (string) $auth['token']]);
+
+        return true;
     }
 
     public function userId(): ?int

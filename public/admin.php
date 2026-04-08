@@ -2,10 +2,18 @@
 
 declare(strict_types=1);
 
-define('CATMIN_AREA', 'admin');
-require dirname(__DIR__) . '/bootstrap.php';
+$_SERVER['CATMIN_FORCE_AREA'] = 'admin';
 
-$router = new Core\router\Router();
-$kernel = new Core\kernel\Kernel($router);
-$response = $kernel->handle(Core\http\Request::capture());
-$response->send();
+if (!isset($_SERVER['REQUEST_URI']) || (string) $_SERVER['REQUEST_URI'] === '' || (string) $_SERVER['REQUEST_URI'] === '/admin.php') {
+    $_SERVER['REQUEST_URI'] = '/admin/login';
+}
+
+require_once dirname(__DIR__) . '/core/env.php';
+require_once dirname(__DIR__) . '/core/config.php';
+require_once dirname(__DIR__) . '/core/security.php';
+require_once dirname(__DIR__) . '/core/loader.php';
+require_once dirname(__DIR__) . '/core/boot.php';
+require_once dirname(__DIR__) . '/core/router.php';
+
+CoreBoot::init();
+Router::dispatch();

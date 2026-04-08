@@ -8,6 +8,16 @@ use RuntimeException;
 
 final class InstallerStateMachine
 {
+    public const STATES = [
+        'not_started',
+        'in_progress',
+        'step_validated',
+        'executing',
+        'completed',
+        'failed',
+        'locked',
+    ];
+
     public const STEPS = [
         'precheck',
         'legal',
@@ -26,6 +36,11 @@ final class InstallerStateMachine
     public function hasStep(string $step): bool
     {
         return in_array($step, self::STEPS, true);
+    }
+
+    public function hasState(string $state): bool
+    {
+        return in_array($state, self::STATES, true);
     }
 
     public function next(string $step): ?string
@@ -48,6 +63,10 @@ final class InstallerStateMachine
 
         $maxCompleted = -1;
         foreach ($context->completed() as $step) {
+            if (!$this->hasStep($step)) {
+                continue;
+            }
+
             $index = $this->indexOf($step);
             if ($index > $maxCompleted) {
                 $maxCompleted = $index;

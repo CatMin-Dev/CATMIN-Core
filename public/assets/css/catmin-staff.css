@@ -1,0 +1,34 @@
+.cat-staff-table td,
+.cat-staff-table th {
+    vertical-align: middle;
+}
+
+.cat-staff-table-wrap {
+    overflow-x: auto;
+    overflow-y: visible;
+}
+
+.cat-staff-table-wrap .dropdown {
+    position: static;
+}
+
+.cat-staff-table-wrap .dropdown-menu {
+    z-index: 1200;
+}
+
+.cat-avatar-dot {
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--palette-rose-600);
+    color: var(--palette-stone-50);
+    font-size: .78rem;
+    font-weight: 700;
+}
+
+[data-bulk-bar] {
+    border-left: 3px solid var(--palette-rose-500);
+}

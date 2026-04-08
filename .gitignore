@@ -1,0 +1,30 @@
+.env
+.env.local
+.env.production
+
+# Runtime data
+storage/logs/*.log
+storage/cache/*
+storage/install/sessions/*
+storage/updates/releases/*
+storage/updates/reports/*
+logs/*.log
+cache/*
+sessions/*
+tmp/*
+
+# Keep runtime dirs tracked
+!storage/cache/.gitkeep
+!storage/logs/.gitkeep
+!storage/backups/.gitkeep
+!storage/updates/releases/.gitkeep
+!storage/updates/reports/.gitkeep
+!storage/install/sessions/.gitkeep
+!cache/.gitkeep
+!logs/.gitkeep
+!sessions/.gitkeep
+!tmp/.gitkeep
+
+# Tooling
+.vscode/
+node_modules/

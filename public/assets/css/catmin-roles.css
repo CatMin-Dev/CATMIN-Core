@@ -1,0 +1,13 @@
+.cat-permissions-matrix .form-check {
+    background: color-mix(in srgb, var(--palette-stone-100) 65%, transparent);
+}
+
+.cat-permissions-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.5rem;
+}
+
+.cat-permissions-matrix .form-check-input:checked + .small {
+    font-weight: 700;
+}

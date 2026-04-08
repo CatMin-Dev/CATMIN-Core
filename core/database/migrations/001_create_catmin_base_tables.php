@@ -149,6 +149,19 @@ return static function (SchemaBuilder $schema, array $prefixes): void {
         ['name' => 'ix_core_backups_status', 'columns' => ['status']],
     ]);
 
+    $schema->create($core . 'cron_tasks', [
+        ['name' => 'id', 'type' => 'bigint', 'primary' => true, 'auto_increment' => true],
+        ['name' => 'name', 'type' => 'string', 'length' => 191],
+        ['name' => 'script_path', 'type' => 'string', 'length' => 255],
+        ['name' => 'schedule_expr', 'type' => 'string', 'length' => 120],
+        ['name' => 'is_active', 'type' => 'boolean', 'default' => false],
+        ['name' => 'last_run_at', 'type' => 'datetime', 'nullable' => true],
+        ['name' => 'created_at', 'type' => 'datetime', 'default' => 'CURRENT_TIMESTAMP'],
+        ['name' => 'updated_at', 'type' => 'datetime', 'nullable' => true],
+    ], [
+        ['name' => 'ix_core_cron_tasks_active', 'columns' => ['is_active']],
+    ]);
+
     $schema->create($core . 'notifications', [
         ['name' => 'id', 'type' => 'bigint', 'primary' => true, 'auto_increment' => true],
         ['name' => 'target_type', 'type' => 'string', 'length' => 60],

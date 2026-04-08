@@ -12,15 +12,29 @@ return [
             return ['ok' => false, 'message' => 'Invalid database driver.', 'data' => []];
         }
 
+        $defaultPorts = [
+            'sqlite' => 0,
+            'mysql' => 3306,
+            'mariadb' => 3306,
+            'pgsql' => 5432,
+            'sqlsrv' => 1433,
+        ];
+        $defaultPort = (int) ($defaultPorts[$driver] ?? 0);
+        $rawPort = trim((string) ($input['port'] ?? ''));
+
         $payload = [
             'driver' => $driver,
-            'sqlite_path' => (string) ($input['sqlite_path'] ?? base_path('storage/database.sqlite')),
+            'sqlite_path' => trim((string) ($input['sqlite_path'] ?? 'db/database.sqlite')),
             'host' => (string) ($input['host'] ?? '127.0.0.1'),
-            'port' => (int) ($input['port'] ?? 0),
-            'database' => (string) ($input['database'] ?? ''),
+            'port' => $rawPort === '' ? $defaultPort : (int) $rawPort,
+            'database' => trim((string) ($input['database'] ?? 'catmin')),
             'username' => (string) ($input['username'] ?? ''),
             'password' => (string) ($input['password'] ?? ''),
         ];
+
+        if ($driver === 'sqlite' && $payload['sqlite_path'] === '') {
+            return ['ok' => false, 'message' => 'SQLite path required.', 'data' => []];
+        }
 
         if ($driver !== 'sqlite' && $payload['database'] === '') {
             return ['ok' => false, 'message' => 'Database name required.', 'data' => []];

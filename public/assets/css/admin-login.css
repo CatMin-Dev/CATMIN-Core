@@ -1,0 +1,109 @@
+body.admin-login-page,
+body.cat-auth-body {
+    min-height: 100vh;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: linear-gradient(-45deg, var(--palette-rose-500), var(--palette-rose-800), var(--palette-rose-700), var(--palette-rose-300));
+    background-size: 400% 400%;
+    animation: admin-login-gradient 15s ease infinite;
+}
+
+@keyframes admin-login-gradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.admin-login-main,
+.cat-auth-main {
+    flex: 1;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.admin-login-shell {
+    width: min(520px, 92vw);
+    margin: 0 auto;
+}
+
+.admin-login-frame {
+    border: 1px solid rgba(31, 38, 47, 0.12);
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 10px 36px rgba(31, 38, 47, 0.08);
+    overflow: hidden;
+    box-shadow: var(--bs-box-shadow);
+}
+
+.admin-login-brand {
+    background: rgba(255, 255, 255, 0.9);
+    border-bottom: 1px solid rgba(31, 38, 47, 0.12);
+}
+
+.admin-logo {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+}
+
+.admin-login-title {
+    letter-spacing: -0.02em;
+    font-weight: 800;
+}
+
+.admin-login-panel {
+    max-width: 420px;
+}
+
+.admin-login-form .form-label {
+    font-weight: 600;
+    color: var(--palette-stone-700);
+}
+
+.admin-login-form .form-control {
+    border-radius: .75rem;
+    border-color: rgba(118, 131, 153, 0.25);
+    min-height: 2.8rem;
+}
+
+.admin-login-form .form-control:focus {
+    border-color: rgba(226, 53, 97, 0.45);
+    box-shadow: 0 0 0 .2rem rgba(226, 53, 97, 0.16);
+}
+
+.btn-catmin-login {
+    --bs-btn-color: #fff;
+    --bs-btn-bg: var(--palette-rose-500);
+    --bs-btn-border-color: var(--palette-rose-500);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: var(--palette-rose-600);
+    --bs-btn-hover-border-color: var(--palette-rose-600);
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: var(--palette-rose-700);
+    --bs-btn-active-border-color: var(--palette-rose-700);
+    --bs-btn-focus-shadow-rgb: 226, 53, 97;
+    border-radius: .8rem;
+    font-weight: 700;
+}
+
+.admin-app-auth-placeholder {
+    border: 1px dashed rgba(118, 131, 153, 0.36);
+    border-radius: .9rem;
+    background: rgba(255, 255, 255, 0.72);
+    padding: .9rem;
+}
+
+.admin-login-footer {
+    width: 100%;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.95);
+    font-size: .84rem;
+    font-weight: 500;
+    padding: .35rem 1rem 1rem;
+}

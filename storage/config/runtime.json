@@ -1,0 +1,16 @@
+{
+    "app": {
+        "name": "CATMIN",
+        "url": "/"
+    },
+    "security": {
+        "admin_path": "admin",
+        "ip_whitelist_enabled": false,
+        "ip_whitelist": [
+            "192.168.0.129"
+        ]
+    },
+    "database": {
+        "default": "mysql"
+    }
+}

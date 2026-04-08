@@ -10,7 +10,8 @@ final class InstallerContext
         private array $data = [],
         private array $completed = [],
         private string $currentStep = 'precheck',
-        private array $meta = []
+        private array $meta = [],
+        private string $state = 'not_started'
     ) {}
 
     public static function fromArray(array $payload): self
@@ -19,7 +20,8 @@ final class InstallerContext
             is_array($payload['data'] ?? null) ? $payload['data'] : [],
             is_array($payload['completed'] ?? null) ? array_values(array_map('strval', $payload['completed'])) : [],
             (string) ($payload['current_step'] ?? 'precheck'),
-            is_array($payload['meta'] ?? null) ? $payload['meta'] : []
+            is_array($payload['meta'] ?? null) ? $payload['meta'] : [],
+            (string) ($payload['state'] ?? 'not_started')
         );
     }
 
@@ -30,6 +32,7 @@ final class InstallerContext
             'completed' => $this->completed,
             'current_step' => $this->currentStep,
             'meta' => $this->meta,
+            'state' => $this->state,
         ];
     }
 
@@ -47,6 +50,11 @@ final class InstallerContext
         $this->data[$step] = $payload;
     }
 
+    public function clearStepData(string $step): void
+    {
+        unset($this->data[$step]);
+    }
+
     public function completed(): array
     {
         return $this->completed;
@@ -57,6 +65,14 @@ final class InstallerContext
         if (!in_array($step, $this->completed, true)) {
             $this->completed[] = $step;
         }
+    }
+
+    public function unmarkCompleted(string $step): void
+    {
+        $this->completed = array_values(array_filter(
+            $this->completed,
+            static fn (string $done): bool => $done !== $step
+        ));
     }
 
     public function currentStep(): string
@@ -74,6 +90,11 @@ final class InstallerContext
         $this->meta[$key] = $value;
     }
 
+    public function clearMeta(string $key): void
+    {
+        unset($this->meta[$key]);
+    }
+
     public function meta(string $key, mixed $default = null): mixed
     {
         return $this->meta[$key] ?? $default;
@@ -88,5 +109,16 @@ final class InstallerContext
         if (isset($this->data['superadmin']['password'])) {
             $this->data['superadmin']['password'] = '__redacted__';
         }
+    }
+
+    public function state(): string
+    {
+        return $this->state;
+    }
+
+    public function setState(string $state): void
+    {
+        $allowed = ['not_started', 'in_progress', 'step_validated', 'executing', 'completed', 'failed', 'locked'];
+        $this->state = in_array($state, $allowed, true) ? $state : 'in_progress';
     }
 }

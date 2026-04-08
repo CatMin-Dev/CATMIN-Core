@@ -10,6 +10,8 @@ final class RuntimeConfigLoader
 {
     private const ALLOWED_RUNTIME_KEYS = [
         'security.admin_path',
+        'security.ip_whitelist_enabled',
+        'security.ip_whitelist',
         'app.name',
         'app.url',
         'database.default',

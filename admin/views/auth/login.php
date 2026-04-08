@@ -3,32 +3,76 @@
 declare(strict_types=1);
 
 use Core\security\CsrfManager;
-?><!doctype html>
-<html lang="fr">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="robots" content="noindex, nofollow">
-    <title>CATMIN Admin Login</title>
-    <link rel="stylesheet" href="/odin-color.css">
-    <link rel="stylesheet" href="/assets/vendor/bootstrap/5.3.8/css/bootstrap.min.css">
-</head>
-<body class="container py-5">
-<h1 class="mb-3">Connexion Admin</h1>
-<?php if (!empty($error)): ?>
-    <p style="color:#b42318;"><?= htmlspecialchars((string) $error, ENT_QUOTES, 'UTF-8') ?></p>
-<?php endif; ?>
-<form method="post" action="<?= htmlspecialchars((string) ($adminBase ?? '/admin') . '/login', ENT_QUOTES, 'UTF-8') ?>">
-    <input type="hidden" name="_csrf" value="<?= htmlspecialchars((new CsrfManager())->token(), ENT_QUOTES, 'UTF-8') ?>">
-    <div class="mb-3">
-        <label for="identifier">Email ou username</label>
-        <input id="identifier" name="identifier" type="text" required>
-    </div>
-    <div class="mb-3">
-        <label for="password">Mot de passe</label>
-        <input id="password" name="password" type="password" required>
-    </div>
-    <button type="submit">Se connecter</button>
-</form>
-</body>
-</html>
+
+$appAuthModules = [];
+$moduleDirs = glob(CATMIN_MODULES . '/*', GLOB_ONLYDIR);
+if (is_array($moduleDirs)) {
+    foreach ($moduleDirs as $dir) {
+        $name = strtolower(trim(basename($dir)));
+        if ($name === '') {
+            continue;
+        }
+        if (preg_match('/(oauth|sso|social|google|github|oidc|auth)/', $name) === 1) {
+            $appAuthModules[] = $name;
+        }
+    }
+}
+$showAppAuthBlock = $appAuthModules !== [];
+
+ob_start();
+?>
+<div class="cat-auth-shell">
+    <section class="cat-card cat-auth-card">
+        <header class="cat-auth-header text-center">
+            <img src="/assets/logo-color.png" alt="CATMIN" class="cat-auth-logo mb-2">
+            <h1 class="h4 fw-bold mb-1">Connexion Admin</h1>
+            <p class="text-secondary mb-0">Acces securise a l'interface CATMIN.</p>
+        </header>
+
+        <div class="cat-auth-body-content">
+            <?php if (!empty($error)): ?>
+                <div class="alert alert-danger cat-alert" role="alert"><?= htmlspecialchars((string) $error, ENT_QUOTES, 'UTF-8') ?></div>
+            <?php endif; ?>
+
+            <form class="cat-auth-form" method="post" action="<?= htmlspecialchars((string) ($adminBase ?? '/admin') . '/login', ENT_QUOTES, 'UTF-8') ?>">
+                <input type="hidden" name="_csrf" value="<?= htmlspecialchars((new CsrfManager())->token(), ENT_QUOTES, 'UTF-8') ?>">
+
+                <div class="cat-form-group mb-3">
+                    <label class="form-label" for="identifier">Email ou username</label>
+                    <input class="form-control" id="identifier" name="identifier" type="text" autocomplete="username" required data-auth-autofocus>
+                </div>
+
+                <div class="cat-form-group mb-3">
+                    <label class="form-label" for="password">Mot de passe</label>
+                    <div class="input-group">
+                        <input class="form-control" id="password" name="password" type="password" autocomplete="current-password" required>
+                        <button class="btn btn-outline-secondary" type="button" data-password-toggle="#password" aria-label="Afficher/masquer le mot de passe">
+                            Voir
+                        </button>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+                    <span class="small text-body-secondary">Reset mot de passe: superadmin uniquement via gestion interne.</span>
+                    <a class="small text-decoration-none" href="<?= htmlspecialchars((string) ($adminBase ?? '/admin') . '/locked', ENT_QUOTES, 'UTF-8') ?>">Compte verrouillé</a>
+                </div>
+
+                <button class="btn btn-catmin-login w-100 cat-btn" type="submit">Se connecter</button>
+            </form>
+
+            <?php if ($showAppAuthBlock): ?>
+                <div class="admin-app-auth-placeholder mt-3">
+                    <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                        <strong>Connexion via APP</strong>
+                        <span class="badge text-bg-dark">Bientot disponible</span>
+                    </div>
+                    <p class="small text-secondary mb-0 mt-2">Zone reservee aux connecteurs OAuth/SSO (Google, GitHub, etc.) quand les modules sont actives.</p>
+                </div>
+            <?php endif; ?>
+        </div>
+    </section>
+</div>
+<?php
+$authTitle = 'Connexion';
+$authContent = (string) ob_get_clean();
+require dirname(__DIR__) . '/layouts/auth.php';

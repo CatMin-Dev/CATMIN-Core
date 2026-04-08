@@ -1,0 +1,12 @@
+User-agent: *
+Disallow: /core/
+Disallow: /config/
+Disallow: /database/
+Disallow: /db/
+Disallow: /storage/
+Disallow: /cache/
+Disallow: /logs/
+Disallow: /sessions/
+Disallow: /tmp/
+Disallow: /install/
+Allow: /

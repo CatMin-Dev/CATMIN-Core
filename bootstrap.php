@@ -18,6 +18,7 @@ if (!defined('CATMIN_AREA')) {
 }
 
 require_once CATMIN_CORE . '/support/helpers.php';
+require_once CATMIN_CORE . '/error-dispatcher.php';
 
 spl_autoload_register(static function (string $class): void {
     $prefixMap = [
@@ -51,6 +52,7 @@ define('CATMIN_IS_DOCKER', $detector->isDocker());
 
 $loader = new Core\config\RuntimeConfigLoader(Core\config\Config::repository(), $envManager);
 $loader->load(CATMIN_CONFIG, CATMIN_STORAGE . '/config/runtime.json');
+Core\versioning\VersionHistory::syncCurrentVersion();
 
 set_exception_handler(static function (Throwable $throwable): void {
     Core\logs\Logger::error(
@@ -62,8 +64,7 @@ set_exception_handler(static function (Throwable $throwable): void {
         ]
     );
 
-    http_response_code(500);
-    echo 'Internal Server Error';
+    (new CoreErrorDispatcher())->outputForFatal(500);
 });
 
 set_error_handler(static function (int $severity, string $message, string $file, int $line): bool {

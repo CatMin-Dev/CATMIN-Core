@@ -6,10 +6,12 @@ namespace Install;
 
 final class InstallerSessionStore
 {
+    private const DEFAULT_INSTALL_SESSION = 'CATMIN_INSTALL_SESSID';
+
     public function __construct()
     {
         if (session_status() === PHP_SESSION_NONE) {
-            session_name('CATMIN_INSTALL_SESSID');
+            session_name((string) config('security.install_session_name', self::DEFAULT_INSTALL_SESSION));
             session_start();
         }
     }

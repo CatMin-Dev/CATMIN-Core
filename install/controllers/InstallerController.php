@@ -7,6 +7,7 @@ namespace Install\controllers;
 use Core\http\Request;
 use Core\http\Response;
 use Core\http\View;
+require_once CATMIN_CORE . '/error-dispatcher.php';
 use Install\InstallerEngine;
 use Install\InstallerStateMachine;
 
@@ -27,7 +28,7 @@ final class InstallerController
             return $this->redirectToAdminLogin();
         }
 
-        return Response::html('', 302, ['Location' => '/install/step?s=' . $this->engine->firstAccessibleStep()]);
+        return Response::html('', 302, ['Location' => $this->stepUrl($this->engine->firstAccessibleStep())]);
     }
 
     public function showStep(Request $request): Response
@@ -36,14 +37,16 @@ final class InstallerController
             return $this->redirectToAdminLogin();
         }
 
-        $requested = (string) $request->input('s', $this->engine->firstAccessibleStep());
+        $requested = $this->resolveRequestedStep($request);
+        $firstAccessible = $this->engine->firstAccessibleStep();
+
         if (!$this->state->hasStep($requested)) {
-            $requested = $this->engine->firstAccessibleStep();
+            return Response::html('', 302, ['Location' => $this->stepUrl($firstAccessible)]);
         }
 
         $context = $this->engine->context();
         if (!$this->state->canAccess($requested, $context)) {
-            $requested = $this->engine->firstAccessibleStep();
+            return Response::html('', 302, ['Location' => $this->stepUrl($firstAccessible)]);
         }
 
         $definition = require CATMIN_INSTALL . '/steps/' . $requested . '.php';
@@ -94,7 +97,7 @@ final class InstallerController
             return Response::html('', 302, ['Location' => '/install/report']);
         }
 
-        return Response::html('', 302, ['Location' => '/install/step?s=' . $next]);
+        return Response::html('', 302, ['Location' => $this->stepUrl($next)]);
     }
 
     public function showReport(): Response
@@ -111,10 +114,59 @@ final class InstallerController
         ], 'install');
     }
 
+    public function testDatabase(Request $request): Response
+    {
+        if ($this->engine->isLocked()) {
+            return Response::json(['ok' => false, 'message' => 'Installer locked.'], 423);
+        }
+
+        $payload = $request->post();
+        unset($payload['_csrf']);
+
+        $result = $this->engine->testDatabaseConnection($payload);
+        $status = ($result['ok'] ?? false) ? 200 : 422;
+
+        return Response::json($result, $status);
+    }
+
+    public function reset(Request $request): Response
+    {
+        if ($this->engine->isLocked()) {
+            return $this->redirectToAdminLogin();
+        }
+
+        $this->engine->resetProgress();
+
+        return Response::html('', 302, ['Location' => $this->stepUrl('precheck')]);
+    }
+
     private function redirectToAdminLogin(): Response
     {
         $adminPath = '/' . trim((string) config('security.admin_path', 'admin'), '/');
+        return (new \CoreErrorDispatcher())->installLocked([
+            'admin_login' => $adminPath . '/login',
+            'message' => 'Installation déjà verrouillée. Accède au panel via le login admin.',
+        ]);
+    }
 
-        return Response::html('', 302, ['Location' => $adminPath . '/login']);
+    private function resolveRequestedStep(Request $request): string
+    {
+        $query = $request->query();
+        $fromQuery = isset($query['s']) ? (string) $query['s'] : '';
+        if ($fromQuery !== '') {
+            return $fromQuery;
+        }
+
+        $path = $request->path();
+        if (str_starts_with($path, '/step/')) {
+            return (string) trim(substr($path, strlen('/step/')), '/');
+        }
+
+        return $this->engine->firstAccessibleStep();
+    }
+
+    private function stepUrl(string $step): string
+    {
+        return '/install/step/' . rawurlencode($step);
     }
 }

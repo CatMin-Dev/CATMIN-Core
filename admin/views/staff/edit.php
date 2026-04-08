@@ -1,0 +1,50 @@
+<?php
+
+declare(strict_types=1);
+
+use Core\security\CsrfManager;
+
+$pageTitle = 'Editer compte';
+$pageDescription = 'Modification controlee du compte staff/admin.';
+$activeNav = 'staff';
+$breadcrumbs = [
+    ['label' => 'Admin', 'href' => $adminBase . '/'],
+    ['label' => 'Staff / Admins', 'href' => $adminBase . '/staff'],
+    ['label' => (string) ($staff['username'] ?? 'Compte')],
+];
+$pageActions = [
+    ['label' => 'Voir fiche', 'href' => $adminBase . '/staff/' . (int) ($staff['id'] ?? 0), 'class' => 'btn btn-outline-secondary btn-sm'],
+];
+
+$isSuperAdmin = ((string) ($staff['role_slug'] ?? '') === 'super-admin');
+
+ob_start();
+?>
+<?php if ($isSuperAdmin): ?>
+    <div class="alert alert-warning">Compte SuperAdmin protege: role/statut non retrogradables depuis UI.</div>
+<?php endif; ?>
+<form method="post" action="<?= htmlspecialchars((string) ($adminBase . '/staff/' . (int) ($staff['id'] ?? 0) . '/edit'), ENT_QUOTES, 'UTF-8') ?>" class="row g-3">
+    <input type="hidden" name="_csrf" value="<?= htmlspecialchars((new CsrfManager())->token(), ENT_QUOTES, 'UTF-8') ?>">
+    <div class="col-12 col-xl-8">
+        <?php $isEdit = true; require __DIR__ . '/partials/form.php'; ?>
+    </div>
+    <div class="col-12 col-xl-4 d-grid gap-3">
+        <div class="card"><div class="card-body small">
+            <h3 class="h6">Meta</h3>
+            <p class="mb-1">Derniere connexion: <?= htmlspecialchars((string) ($staff['last_login_at'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></p>
+            <p class="mb-0">Creation: <?= htmlspecialchars((string) ($staff['created_at'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></p>
+        </div></div>
+        <div class="card"><div class="card-body small">
+            <h3 class="h6">Securite</h3>
+            <p class="mb-0">Actions sensibles protegees par reauth.</p>
+        </div></div>
+    </div>
+    <div class="col-12 d-flex gap-2">
+        <button class="btn btn-primary" type="submit">Enregistrer</button>
+        <a class="btn btn-outline-secondary" href="<?= htmlspecialchars((string) ($adminBase . '/staff/' . (int) ($staff['id'] ?? 0)), ENT_QUOTES, 'UTF-8') ?>">Annuler</a>
+    </div>
+</form>
+<script src="/assets/js/catmin-staff.js?v=1"></script>
+<?php
+$content = (string) ob_get_clean();
+require CATMIN_ADMIN . '/views/layouts/admin.php';

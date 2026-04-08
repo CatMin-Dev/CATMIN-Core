@@ -1,0 +1,18 @@
+.cat-module-stat-card .h4 {
+    letter-spacing: -0.02em;
+}
+
+.cat-modules-table td,
+.cat-modules-table th {
+    vertical-align: middle;
+}
+
+.cat-modules-table-wrap {
+    overflow-x: auto;
+    overflow-y: visible;
+}
+
+.cat-module-errors {
+    font-size: 0.84rem;
+    color: var(--palette-red-700);
+}

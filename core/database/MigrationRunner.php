@@ -48,13 +48,25 @@ final class MigrationRunner
                 $migration($schema, $prefixes);
 
                 $table = ($prefixes['core'] ?? 'core_') . 'db_versions';
-                $sql = 'INSERT INTO ' . $table . ' (migration, schema_version, batch, applied_at) VALUES (:migration, :schema_version, :batch, CURRENT_TIMESTAMP)';
-                $stmt = $pdo->prepare($sql);
-                $stmt->execute([
-                    'migration' => $name,
-                    'schema_version' => $schemaVersion,
-                    'batch' => $batch,
-                ]);
+                $checksum = @hash_file('sha256', $file) ?: null;
+                if ($this->hasChecksumColumn($pdo, $table, $driver)) {
+                    $sql = 'INSERT INTO ' . $table . ' (migration, schema_version, checksum, batch, applied_at) VALUES (:migration, :schema_version, :checksum, :batch, CURRENT_TIMESTAMP)';
+                    $stmt = $pdo->prepare($sql);
+                    $stmt->execute([
+                        'migration' => $name,
+                        'schema_version' => $schemaVersion,
+                        'checksum' => $checksum,
+                        'batch' => $batch,
+                    ]);
+                } else {
+                    $sql = 'INSERT INTO ' . $table . ' (migration, schema_version, batch, applied_at) VALUES (:migration, :schema_version, :batch, CURRENT_TIMESTAMP)';
+                    $stmt = $pdo->prepare($sql);
+                    $stmt->execute([
+                        'migration' => $name,
+                        'schema_version' => $schemaVersion,
+                        'batch' => $batch,
+                    ]);
+                }
 
                 $pdo->commit();
                 $executed[] = $name;
@@ -96,5 +108,34 @@ final class MigrationRunner
         $current = $stmt !== false ? (int) $stmt->fetchColumn() : 0;
 
         return $current + 1;
+    }
+
+    private function hasChecksumColumn(PDO $pdo, string $table, string $driver): bool
+    {
+        try {
+            if ($driver === 'sqlite') {
+                $columns = $pdo->query('PRAGMA table_info(' . $table . ')');
+                if ($columns === false) {
+                    return false;
+                }
+                foreach ($columns->fetchAll(PDO::FETCH_ASSOC) ?: [] as $row) {
+                    if ((string) ($row['name'] ?? '') === 'checksum') {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            $stmt = $pdo->prepare(
+                'SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = :table_name AND COLUMN_NAME = :column_name'
+            );
+            $stmt->execute([
+                'table_name' => $table,
+                'column_name' => 'checksum',
+            ]);
+            return (int) ($stmt->fetchColumn() ?: 0) > 0;
+        } catch (\Throwable) {
+            return false;
+        }
     }
 }

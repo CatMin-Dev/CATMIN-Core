@@ -2,10 +2,12 @@
 
 declare(strict_types=1);
 
-define('CATMIN_AREA', 'front');
-require dirname(__DIR__) . '/bootstrap.php';
+require_once dirname(__DIR__) . '/core/env.php';
+require_once dirname(__DIR__) . '/core/config.php';
+require_once dirname(__DIR__) . '/core/security.php';
+require_once dirname(__DIR__) . '/core/loader.php';
+require_once dirname(__DIR__) . '/core/boot.php';
+require_once dirname(__DIR__) . '/core/router.php';
 
-$router = new Core\router\Router();
-$kernel = new Core\kernel\Kernel($router);
-$response = $kernel->handle(Core\http\Request::capture());
-$response->send();
+CoreBoot::init();
+Router::dispatch();

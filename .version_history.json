@@ -1,0 +1,47 @@
+[
+  {
+    "version": "0.3.0-dev.4",
+    "date": "2026-04-08",
+    "scope": "release",
+    "changes": [
+      "release packaging cleaned for fresh install (no installed lock, no recovery artifacts, no bundled sqlite runtime db)",
+      "standalone zip output moved to repository root release folder",
+      "github README refreshed with badges, php prerequisites and release commands"
+    ],
+    "prompt": "release-cleanup"
+  },
+  {
+    "version": "0.3.0-dev.3",
+    "date": "2026-04-08",
+    "scope": "core",
+    "changes": [
+      "standalone zip packaging finalization with root entry files, release docs and verified build artifacts",
+      "release scripts improved with manifest generation and robust package verification checks",
+      "ui/feature pre-lock review completed with targeted cta and safety confirmations fixes"
+    ],
+    "prompt": "035-036"
+  },
+  {
+    "version": "0.3.0-dev.0",
+    "date": "2026-04-06",
+    "scope": "core",
+    "changes": [
+      "standalone routing engine added (request/response/collection/resolver/dispatcher/pipeline/guard/context)",
+      "strict route resolution with zone separation and admin custom path safety",
+      "module routes loading conventions with manifest guards and conflict checks",
+      "routing exceptions + URL generator + route helpers integrated into core router facade"
+    ],
+    "prompt": "010-CATMIN-CORE-ROUTING-ENGINE-X100"
+  },
+  {
+    "version": "0.2.0-dev.0",
+    "date": "2026-04-06",
+    "scope": "core",
+    "changes": [
+      "standalone boot system entrypoints via core/env|config|security|boot|router",
+      "core install-lock guard supports storage/install.lock and storage/install/installed.lock",
+      "global security bootstrap now applies baseline headers and request input sanitation"
+    ],
+    "prompt": "009-CATMIN-CORE-BOOT-X100"
+  }
+]
