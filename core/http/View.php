@@ -13,6 +13,8 @@ final class View
     {
         $pathManager = new PathManager();
         $viewPath = $pathManager->viewPath($area, $template);
+        $httpStatus = $status;
+        $httpHeaders = $headers;
 
         if (!is_file($viewPath)) {
             throw new RuntimeException('View not found: ' . $viewPath);
@@ -24,6 +26,6 @@ final class View
         require $viewPath;
         $content = (string) ob_get_clean();
 
-        return Response::html($content, $status, $headers);
+        return Response::html($content, $httpStatus, $httpHeaders);
     }
 }
