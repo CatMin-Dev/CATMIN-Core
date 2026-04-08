@@ -149,10 +149,7 @@ final class InstallerController
     private function redirectToAdminLogin(): Response
     {
         $adminPath = '/' . trim((string) config('security.admin_path', 'admin'), '/');
-        return (new \CoreErrorDispatcher())->installLocked([
-            'admin_login' => $adminPath . '/login',
-            'message' => 'Installation déjà verrouillée. Accède au panel via le login admin.',
-        ]);
+        return Response::html('', 302, ['Location' => $adminPath . '/login']);
     }
 
     private function resolveRequestedStep(Request $request): string

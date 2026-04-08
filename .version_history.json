@@ -1,5 +1,14 @@
 [
     {
+        "version": "0.3.0-dev.12",
+        "date": "2026-04-08",
+        "scope": "install",
+        "changes": [
+            "after final lock, installer endpoints now redirect directly to admin login instead of rendering 423 failsafe page"
+        ],
+        "prompt": "hotfix-lock-redirect-login"
+    },
+    {
         "version": "0.3.0-dev.11",
         "date": "2026-04-08",
         "scope": "install",
