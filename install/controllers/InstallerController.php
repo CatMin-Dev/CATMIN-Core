@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Install\controllers;
 
+require_once CATMIN_CORE . '/backup-download-token.php';
+
 use Core\http\Request;
 use Core\http\Response;
 use Core\http\View;
@@ -144,6 +146,51 @@ final class InstallerController
         $this->engine->resetProgress();
 
         return Response::html('', 302, ['Location' => $this->stepUrl('precheck')]);
+    }
+
+    public function downloadInitialBackup(Request $request): Response
+    {
+        if ($this->engine->isLocked()) {
+            return Response::text('Download link expired.', 403);
+        }
+
+        $token = trim((string) $request->input('t', ''));
+        $context = $this->engine->context();
+        $backupMeta = $context->meta('install_backup', []);
+        if (!is_array($backupMeta)) {
+            return Response::text('Backup not available.', 404);
+        }
+
+        $tokenManager = new \CoreBackupDownloadToken();
+        if (!$tokenManager->isValid($backupMeta, $token)) {
+            \Core\logs\Logger::warning('Installer initial backup download denied', [
+                'reason' => 'invalid_or_expired_token',
+            ]);
+            return Response::text('Invalid or expired token.', 403);
+        }
+
+        $path = (string) ($backupMeta['path'] ?? '');
+        $name = (string) ($backupMeta['name'] ?? 'catmin-initial-db-backup.sql');
+        if ($path === '' || !is_file($path)) {
+            return Response::text('Backup file missing.', 404);
+        }
+
+        \Core\logs\Logger::info('Installer initial backup downloaded', [
+            'name' => $name,
+            'size' => (int) (@filesize($path) ?: 0),
+        ]);
+
+        $mime = str_ends_with(strtolower($name), '.sqlite')
+            ? 'application/vnd.sqlite3'
+            : 'application/sql';
+
+        return Response::html((string) file_get_contents($path), 200, [
+            'Content-Type' => $mime,
+            'Content-Disposition' => 'attachment; filename="' . addslashes($name) . '"',
+            'Content-Length' => (string) (int) (@filesize($path) ?: 0),
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma' => 'no-cache',
+        ]);
     }
 
     private function redirectToAdminLogin(): Response

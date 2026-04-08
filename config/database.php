@@ -6,7 +6,7 @@ $defaultDriver = (string) env('CATMIN_DB_DRIVER', 'sqlite');
 
 return [
     'default' => $defaultDriver,
-    'schema_version' => '0.1.0-dev.2',
+    'schema_version' => '0.1.0-dev.3',
     'migrations_path' => base_path('core/database/migrations'),
     'seeders_path' => base_path('core/database/seeders'),
     'connections' => [

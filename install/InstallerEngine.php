@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Install;
 
+require_once CATMIN_CORE . '/backup-exporter.php';
+require_once CATMIN_CORE . '/backup-download-token.php';
+require_once CATMIN_CORE . '/install-backup-cleanup.php';
+
 use Core\auth\PasswordHasher;
 use Core\config\Config;
 use Core\config\EnvManager;
@@ -256,6 +260,9 @@ final class InstallerEngine
             $this->writeRuntimeConfiguration($identity, $security, $driver);
             $this->writeEnvFile($identity, $security, $db);
 
+            $backupMeta = $this->generateInitialBackupMeta($driver);
+            $context->setMeta('install_backup', $backupMeta);
+
             return [
                 'ok' => true,
                 'message' => 'Execution completed.',
@@ -270,9 +277,10 @@ final class InstallerEngine
                         static fn (array $m): string => (string) ($m['name'] ?? ''),
                         array_filter($plannedModules, static fn (mixed $m): bool => is_array($m) && !empty($m['enabled']))
                     )),
-                    'warnings' => [],
+                    'warnings' => !empty($backupMeta['ok']) ? [] : [($backupMeta['error'] ?? 'Backup initial non disponible.')],
                     'errors' => [],
                     'executed_at' => date('c'),
+                    'install_backup' => $backupMeta,
                 ],
             ];
         } catch (\Throwable $exception) {
@@ -426,6 +434,50 @@ final class InstallerEngine
         }
 
         return $codes;
+    }
+
+    private function generateInitialBackupMeta(string $driver): array
+    {
+        $exporter = new \CoreBackupExporter();
+        $tokenManager = new \CoreBackupDownloadToken();
+        $cleanup = new \CoreInstallBackupCleanup();
+
+        $cleanup->purgeExpired(86400);
+        $backup = $exporter->exportInitialInstall($driver);
+        if (!($backup['ok'] ?? false)) {
+            \Core\logs\Logger::warning('Installer initial backup generation failed', [
+                'driver' => $driver,
+                'error' => (string) ($backup['error'] ?? 'unknown'),
+            ]);
+            return [
+                'ok' => false,
+                'error' => (string) ($backup['error'] ?? 'Backup generation failed.'),
+                'path' => '',
+                'name' => '',
+                'size' => 0,
+                'token' => '',
+                'expires_at' => 0,
+            ];
+        }
+
+        $issued = $tokenManager->issue(900);
+        $meta = [
+            'ok' => true,
+            'error' => '',
+            'path' => (string) ($backup['path'] ?? ''),
+            'name' => (string) ($backup['name'] ?? ''),
+            'size' => (int) ($backup['size'] ?? 0),
+            'token' => (string) ($issued['token'] ?? ''),
+            'expires_at' => (int) ($issued['expires_at'] ?? 0),
+        ];
+
+        \Core\logs\Logger::info('Installer initial backup generated', [
+            'driver' => $driver,
+            'name' => $meta['name'],
+            'size' => $meta['size'],
+        ]);
+
+        return $meta;
     }
 
     private function ping(PDO $pdo, string $driver): void

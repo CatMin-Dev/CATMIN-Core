@@ -21,16 +21,6 @@ $isActive = ((int) ($staff['is_active'] ?? 0)) === 1;
 
 ob_start();
 ?>
-<?php if (!empty($message)): ?>
-    <?php
-    $messageText = (string) $message;
-    $message = $messageText;
-    $type = (string) ($messageType ?? 'info');
-    $dismissible = true;
-    require CATMIN_ADMIN . '/views/components/alerts/inline.php';
-    ?>
-<?php endif; ?>
-
 <section class="card">
     <div class="card-body d-flex flex-wrap justify-content-between gap-3">
         <div>

@@ -222,38 +222,6 @@ ob_start();
         <a class="btn btn-outline-secondary" href="<?= htmlspecialchars($adminBase . '/settings/' . $section, ENT_QUOTES, 'UTF-8') ?>">Recharger</a>
     </div>
 </form>
-
-<?php if ($message !== ''): ?>
-    <?php
-    $toastClass = match ($messageType) {
-        'success' => 'text-bg-success',
-        'warning' => 'text-bg-warning',
-        'danger', 'error' => 'text-bg-danger',
-        default => 'text-bg-primary',
-    };
-    ?>
-    <div class="position-fixed top-0 end-0 p-3" style="z-index: 1080;">
-        <div id="settings-toast" class="toast <?= htmlspecialchars($toastClass, ENT_QUOTES, 'UTF-8') ?>" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="3000">
-            <div class="d-flex align-items-center">
-                <div class="toast-body">
-                    <?= htmlspecialchars($message, ENT_QUOTES, 'UTF-8') ?>
-                </div>
-            </div>
-        </div>
-    </div>
-    <script>
-    (function () {
-      var toastEl = document.getElementById('settings-toast');
-      if (!toastEl) return;
-      if (window.bootstrap && typeof window.bootstrap.Toast === 'function') {
-        var toast = new window.bootstrap.Toast(toastEl, { autohide: true, delay: 3000 });
-        toast.show();
-        return;
-      }
-      setTimeout(function () { toastEl.remove(); }, 3000);
-    }());
-    </script>
-<?php endif; ?>
 <?php
 $content = (string) ob_get_clean();
 require CATMIN_ADMIN . '/views/layouts/admin.php';

@@ -13,16 +13,6 @@ $pageActions = [];
 
 ob_start();
 ?>
-<?php if (!empty($message)): ?>
-    <?php
-    $messageText = (string) $message;
-    $message = $messageText;
-    $type = (string) ($messageType ?? 'success');
-    $dismissible = true;
-    require CATMIN_ADMIN . '/views/components/alerts/inline.php';
-    ?>
-<?php endif; ?>
-
 <section class="card mb-3">
     <div class="card-body py-2 d-flex justify-content-between align-items-center">
         <span class="small text-body-secondary">Gestion des comptes administrateurs</span>

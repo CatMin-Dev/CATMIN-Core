@@ -64,4 +64,11 @@ $routes[] = [
     'middleware' => [$installAvailability],
 ];
 
+$routes[] = [
+    'method' => 'GET',
+    'path' => '/backup/download',
+    'handler' => static fn (Request $request): Response => (new InstallerController())->downloadInitialBackup($request),
+    'middleware' => [$installAvailability],
+];
+
 return $routes;

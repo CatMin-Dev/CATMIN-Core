@@ -37,3 +37,19 @@ if (!function_exists('env')) {
         return $value;
     }
 }
+
+if (!function_exists('__')) {
+    function __(string $key, array $replace = [], ?string $locale = null): string
+    {
+        require_once CATMIN_CORE . '/i18n-engine.php';
+        return (new CoreI18nEngine())->t($key, $replace, $locale);
+    }
+}
+
+if (!function_exists('catmin_locale')) {
+    function catmin_locale(): string
+    {
+        require_once CATMIN_CORE . '/i18n-engine.php';
+        return (new CoreI18nEngine())->locale();
+    }
+}

@@ -15,6 +15,11 @@ use Core\versioning\Version;
 require_once CATMIN_CORE . '/module-loader.php';
 require_once CATMIN_CORE . '/module-activator.php';
 require_once CATMIN_CORE . '/settings-engine.php';
+require_once CATMIN_CORE . '/i18n-engine.php';
+require_once CATMIN_CORE . '/notifications-bridge.php';
+require_once CATMIN_CORE . '/notifications-dispatcher.php';
+require_once CATMIN_CORE . '/apps-repository.php';
+require_once CATMIN_CORE . '/apps-validator.php';
 
 $security = new SecurityManager(Request::capture(), 'admin');
 $authRequired = $security->adminAuthRequiredMiddleware();
@@ -57,6 +62,10 @@ $consumeFlash = static function (): array {
         'type' => (string) ($flash['type'] ?? 'success'),
     ];
 };
+
+$appsRepository = new CoreAppsRepository();
+$appsValidator = new CoreAppsValidator();
+$notificationsRepository = new CoreNotificationsRepository();
 
 $redirect = static function (string $path, array $query = []) use ($pushFlash): Response {
     $flashMsg = trim((string) ($query['msg'] ?? ''));
@@ -999,6 +1008,84 @@ return [
 
     [
         'method' => 'GET',
+        'path' => '/locale/{locale}',
+        'where' => ['locale' => 'fr|en'],
+        'handler' => static function (Request $request, string $locale) use ($redirect): Response {
+            if (session_status() !== PHP_SESSION_ACTIVE) {
+                @session_start();
+            }
+            $locale = in_array($locale, ['fr', 'en'], true) ? $locale : 'fr';
+            (new CoreI18nEngine())->setLocale($locale);
+
+            $controller = new AuthController();
+            $adminBase = $controller->adminBasePath();
+            $target = trim((string) ($request->input('next', '')));
+            if ($target === '' || !str_starts_with($target, $adminBase)) {
+                $target = $adminBase . '/';
+            }
+
+            return Response::html('', 302, ['Location' => $target]);
+        },
+        'middleware' => [$authRequired],
+    ],
+
+    [
+        'method' => 'GET',
+        'path' => '/notifications',
+        'handler' => static function () use ($notificationsRepository): Response {
+            $controller = new AuthController();
+            $adminBase = $controller->adminBasePath();
+            $rows = $notificationsRepository->listAll(250);
+
+            return View::make('notifications.index', [
+                'adminBase' => $adminBase,
+                'rows' => $rows,
+            ], 'admin');
+        },
+        'middleware' => [$authRequired],
+    ],
+
+    [
+        'method' => 'GET',
+        'path' => '/notifications/read/{id}',
+        'where' => ['id' => '[0-9]+'],
+        'handler' => static function (Request $request, string $id) use ($notificationsRepository): Response {
+            $controller = new AuthController();
+            $adminBase = $controller->adminBasePath();
+            $notificationId = (int) $id;
+            if ($notificationId > 0) {
+                $notificationsRepository->markRead($notificationId);
+            }
+
+            $next = trim((string) $request->input('next', ''));
+            if ($next !== '' && str_starts_with($next, $adminBase)) {
+                return Response::html('', 302, ['Location' => $next]);
+            }
+
+            return Response::html('', 302, ['Location' => $adminBase . '/notifications']);
+        },
+        'middleware' => [$authRequired],
+    ],
+
+    [
+        'method' => 'GET',
+        'path' => '/notifications/mark-all-read',
+        'handler' => static function (Request $request) use ($notificationsRepository): Response {
+            $controller = new AuthController();
+            $adminBase = $controller->adminBasePath();
+            $notificationsRepository->markAllRead();
+            $next = trim((string) $request->input('next', ''));
+            if ($next !== '' && str_starts_with($next, $adminBase)) {
+                return Response::html('', 302, ['Location' => $next]);
+            }
+
+            return Response::html('', 302, ['Location' => $adminBase . '/notifications']);
+        },
+        'middleware' => [$authRequired],
+    ],
+
+    [
+        'method' => 'GET',
         'path' => '/settings',
         'handler' => static function (Request $request) use ($redirect): Response {
             $controller = new AuthController();
@@ -1007,6 +1094,7 @@ return [
             $section = match ($section) {
                 'mail' => 'mail',
                 'security' => 'security',
+                'apps' => 'apps',
                 default => 'general',
             };
             return $redirect($adminBase . '/settings/' . $section, [
@@ -1020,12 +1108,24 @@ return [
     [
         'method' => 'GET',
         'path' => '/settings/{section}',
-        'where' => ['section' => 'general|mail|security'],
-        'handler' => static function (Request $request, string $section) use ($consumeFlash): Response {
+        'where' => ['section' => 'general|mail|security|apps'],
+        'handler' => static function (Request $request, string $section) use ($consumeFlash, $appsRepository): Response {
             $controller = new AuthController();
             $adminBase = $controller->adminBasePath();
             $engine = new CoreSettingsEngine();
             $flash = $consumeFlash();
+            $section = strtolower(trim($section));
+
+            if ($section === 'apps') {
+                return View::make('settings.apps', [
+                    'adminBase' => $adminBase,
+                    'apps' => $appsRepository->listAll(),
+                    'message' => (string) ($flash['message'] ?? ''),
+                    'messageType' => (string) ($flash['type'] ?? 'success'),
+                    'activeSettingsNav' => 'apps',
+                ], 'admin');
+            }
+
             $settings = $engine->all();
             if (!isset($settings['general']) || !is_array($settings['general'])) {
                 $settings['general'] = [];
@@ -1046,7 +1146,6 @@ return [
             $settings['interface'] = $settings['ui'];
             $settings['email'] = $settings['mail'];
 
-            $section = strtolower(trim($section));
             $activeNav = match ($section) {
                 'security' => 'security',
                 'mail' => 'mail',
@@ -1083,6 +1182,12 @@ return [
             $data['maintenance'] = is_array($data['maintenance'] ?? null) ? $data['maintenance'] : [];
             $post = $request->post();
             $section = strtolower(trim((string) ($post['section'] ?? 'general')));
+            $section = match ($section) {
+                'mail' => 'mail',
+                'security' => 'security',
+                'apps' => 'apps',
+                default => 'general',
+            };
             $postedTimezone = trim((string) ($post['timezone'] ?? ($data['general']['timezone'] ?? 'UTC')));
             if (!in_array($postedTimezone, \DateTimeZone::listIdentifiers(), true)) {
                 $postedTimezone = (string) ($data['general']['timezone'] ?? 'UTC');
@@ -1156,8 +1261,8 @@ return [
     [
         'method' => 'POST',
         'path' => '/settings/{section}',
-        'where' => ['section' => 'general|mail|security'],
-        'handler' => static function (Request $request, string $section) use ($upsertCoreSetting, $redirect, $coreSettingsTable, $appendCoreLog, $coreLogsTable): Response {
+        'where' => ['section' => 'general|mail|security|apps'],
+        'handler' => static function (Request $request, string $section) use ($upsertCoreSetting, $redirect, $coreSettingsTable, $appendCoreLog, $coreLogsTable, $appsValidator, $appsRepository, $notificationsRepository): Response {
             $controller = new AuthController();
             $adminBase = $controller->adminBasePath();
             $pdo = (new ConnectionManager())->connection();
@@ -1174,8 +1279,51 @@ return [
             $section = match ($section) {
                 'mail' => 'mail',
                 'security' => 'security',
+                'apps' => 'apps',
                 default => 'general',
             };
+
+            if ($section === 'apps') {
+                $action = strtolower(trim((string) ($post['action'] ?? 'create')));
+                $appId = (int) ($post['app_id'] ?? 0);
+                $validation = $appsValidator->validate($post);
+
+                if (in_array($action, ['create', 'update'], true) && !($validation['ok'] ?? false)) {
+                    return $redirect($adminBase . '/settings/apps', [
+                        'msg' => implode(' ', (array) ($validation['errors'] ?? ['Validation app invalide.'])),
+                        'mt' => 'danger',
+                    ]);
+                }
+
+                $ok = false;
+                if ($action === 'create') {
+                    $ok = $appsRepository->create((array) ($validation['data'] ?? []));
+                    if ($ok) {
+                        $notificationsRepository->push([
+                            'title' => 'Nouvelle app',
+                            'message' => 'App ajoutee dans le launcher topbar.',
+                            'type' => 'success',
+                            'source' => 'settings.apps',
+                            'action_url' => $adminBase . '/settings/apps',
+                        ]);
+                    }
+                } elseif ($action === 'update') {
+                    $ok = $appsRepository->update($appId, (array) ($validation['data'] ?? []));
+                } elseif ($action === 'delete') {
+                    $ok = $appsRepository->delete($appId);
+                } elseif ($action === 'toggle') {
+                    $current = $appsRepository->find($appId);
+                    if (is_array($current)) {
+                        $current['is_enabled'] = !((bool) ($current['is_enabled'] ?? false));
+                        $ok = $appsRepository->update($appId, $current);
+                    }
+                }
+
+                return $redirect($adminBase . '/settings/apps', [
+                    'msg' => $ok ? 'Apps enregistrees.' : 'Echec operation apps.',
+                    'mt' => $ok ? 'success' : 'danger',
+                ]);
+            }
             $postedTimezone = trim((string) ($post['timezone'] ?? ($data['general']['timezone'] ?? 'UTC')));
             if (!in_array($postedTimezone, \DateTimeZone::listIdentifiers(), true)) {
                 $postedTimezone = (string) ($data['general']['timezone'] ?? 'UTC');

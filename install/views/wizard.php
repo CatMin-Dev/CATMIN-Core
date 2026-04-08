@@ -90,6 +90,8 @@ if (!function_exists('install_markdown_to_html')) {
 
 $contextData = is_object($context) && method_exists($context, 'data') ? $context->data($step) : [];
 $contextData = is_array($contextData) ? $contextData : [];
+$installBackup = is_object($context) && method_exists($context, 'meta') ? $context->meta('install_backup', []) : [];
+$installBackup = is_array($installBackup) ? $installBackup : [];
 $completedSteps = is_object($context) && method_exists($context, 'completed') ? $context->completed() : [];
 $completedSteps = is_array($completedSteps) ? $completedSteps : [];
 $csrf = (new CsrfManager())->token();
@@ -614,6 +616,35 @@ if ($step === 'precheck') {
                     <div class="col-12"><?php if (is_array($codes) && $codes !== []): ?><div class="alert alert-warning">Enregistre ces recovery codes immédiatement.</div><div class="row g-2"><?php foreach ($codes as $code): ?><div class="col-sm-6 col-lg-4"><code class="d-block p-2 bg-light border rounded"><?= htmlspecialchars((string) $code, ENT_QUOTES, 'UTF-8') ?></code></div><?php endforeach; ?></div><?php else: ?><div class="alert alert-secondary mb-0">Les recovery codes seront générés à cette étape.</div><?php endif; ?></div>
                 <?php elseif ($step === 'report'): ?>
                     <div class="col-12"><div class="alert alert-success mb-0">Le rapport d'installation est prêt. Passe ensuite au lock final.</div></div>
+                    <?php if (!empty($installBackup['ok'])): ?>
+                        <?php
+                        $downloadUrl = '/install/backup/download?t=' . rawurlencode((string) ($installBackup['token'] ?? ''));
+                        $expiresAt = (int) ($installBackup['expires_at'] ?? 0);
+                        ?>
+                        <div class="col-12">
+                            <div class="alert alert-info mb-0">
+                                <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+                                    <div>
+                                        <strong>Backup initial DB créé:</strong>
+                                        <?= htmlspecialchars((string) ($installBackup['name'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
+                                        (<?= number_format(((int) ($installBackup['size'] ?? 0)) / 1024, 1, '.', ' ') ?> KB)
+                                        <?php if ($expiresAt > 0): ?>
+                                            <div class="small">Lien temporaire valable jusqu'à <?= htmlspecialchars(date('Y-m-d H:i:s', $expiresAt), ENT_QUOTES, 'UTF-8') ?></div>
+                                        <?php endif; ?>
+                                    </div>
+                                    <a class="btn btn-outline-primary btn-sm" href="<?= htmlspecialchars($downloadUrl, ENT_QUOTES, 'UTF-8') ?>">Télécharger le backup initial</a>
+                                </div>
+                                <div class="small mt-2">Télécharge ce backup immédiatement et conserve-le hors serveur. Le lien sera invalide après lock final.</div>
+                            </div>
+                        </div>
+                    <?php else: ?>
+                        <div class="col-12">
+                            <div class="alert alert-warning mb-0">
+                                Backup initial non disponible: <?= htmlspecialchars((string) ($installBackup['error'] ?? 'échec génération backup'), ENT_QUOTES, 'UTF-8') ?>.
+                                L'installation peut continuer, mais configure une sauvegarde DB immédiatement après.
+                            </div>
+                        </div>
+                    <?php endif; ?>
                 <?php elseif ($step === 'lock'): ?>
                     <div class="col-12"><div class="alert alert-danger mb-0">Action irréversible: verrouillage final et neutralisation de l'installateur.</div></div>
                     <div class="col-12"><div class="form-check mt-2"><input class="form-check-input" type="checkbox" value="1" id="confirm_lock" name="confirm_lock" required><label class="form-check-label" for="confirm_lock">Je confirme le lock final.</label></div></div>

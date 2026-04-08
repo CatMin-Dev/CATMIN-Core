@@ -308,6 +308,10 @@
     --palette-stone-300: #d6d3d1;
     --palette-stone-400: #a8a29e;
     --palette-stone-500: #78716c;
+
+    /* Light: primary follows secondary family */
+    --bs-primary: var(--palette-stone-700);
+    --bs-primary-rgb: 68, 64, 60;
 }
 
 :root[data-bs-theme="dark"] {
@@ -339,6 +343,10 @@
     --bs-border-color: var(--palette-stone-700);
     --bs-link-color: var(--palette-rose-300);
     --bs-link-hover-color: var(--palette-rose-200);
+
+    /* Dark: CATMIN primary */
+    --bs-primary: var(--palette-rose-500);
+    --bs-primary-rgb: 226, 53, 97;
 }
 
 :root[data-bs-theme="corporate"] {
@@ -372,6 +380,10 @@
     --bs-secondary-color: var(--palette-stone-600);
     --bs-tertiary-bg: var(--palette-stone-100);
     --bs-border-color: var(--palette-stone-300);
+
+    /* Corporate: CATMIN primary */
+    --bs-primary: var(--palette-rose-500);
+    --bs-primary-rgb: 226, 53, 97;
 }
 
 ::selection {

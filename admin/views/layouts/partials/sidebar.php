@@ -45,6 +45,7 @@ $navGroups = [
             ['key' => 'general', 'label' => 'Général', 'href' => $adminBase . '/settings/general'],
             ['key' => 'mail', 'label' => 'Mail', 'href' => $adminBase . '/settings/mail'],
             ['key' => 'security', 'label' => 'Sécurité', 'href' => $adminBase . '/settings/security'],
+            ['key' => 'apps', 'label' => 'Apps', 'href' => $adminBase . '/settings/apps'],
         ],
     ],
 ];
