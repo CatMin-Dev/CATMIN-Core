@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.3.0-dev.5",
+    "date": "2026-04-08",
+    "scope": "routing",
+    "changes": [
+      "boot area resolution now reads runtime admin_path before route zone detection",
+      "legacy /admin/* URLs are redirected to configured admin_path to avoid login 404 after path changes",
+      "public/admin.php default URI now targets configured admin login path"
+    ],
+    "prompt": "hotfix-admin-path-404"
+  },
+  {
     "version": "0.3.0-dev.4",
     "date": "2026-04-08",
     "scope": "release",

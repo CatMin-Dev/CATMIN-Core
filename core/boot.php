@@ -12,9 +12,10 @@ final class CoreBoot
             return;
         }
 
-        self::resolveArea();
         CoreEnv::load();
         CoreConfig::load();
+        self::resolveArea();
+        self::redirectLegacyAdminPath();
         CoreSecurity::init();
 
         self::checkInstallLock();
@@ -48,11 +49,39 @@ final class CoreBoot
             return;
         }
 
-        $securityConfig = is_file(CATMIN_CONFIG . '/security.php') ? require CATMIN_CONFIG . '/security.php' : [];
-        $adminPath = '/' . trim((string) ($securityConfig['admin_path'] ?? 'admin'), '/');
+        $adminPath = '/' . trim((string) config('security.admin_path', 'admin'), '/');
         $adminPath = $adminPath === '//' ? '/admin' : $adminPath;
 
         define('CATMIN_AREA', $adminPath !== '/' && ($path === $adminPath || str_starts_with($path, $adminPath . '/')) ? 'admin' : 'front');
+    }
+
+    private static function redirectLegacyAdminPath(): void
+    {
+        if (CATMIN_AREA === 'install') {
+            return;
+        }
+
+        $uri = (string) ($_SERVER['REQUEST_URI'] ?? '/');
+        $path = (string) parse_url($uri, PHP_URL_PATH);
+        $path = '/' . trim($path, '/');
+        $path = $path === '//' ? '/' : $path;
+
+        $adminSlug = trim((string) config('security.admin_path', 'admin'), '/');
+        if ($adminSlug === '' || $adminSlug === 'admin') {
+            return;
+        }
+
+        if ($path !== '/admin' && !str_starts_with($path, '/admin/')) {
+            return;
+        }
+
+        $suffix = $path === '/admin' ? '' : substr($path, strlen('/admin'));
+        $targetPath = '/' . $adminSlug . $suffix;
+        $query = (string) parse_url($uri, PHP_URL_QUERY);
+        $target = $targetPath . ($query !== '' ? ('?' . $query) : '');
+
+        header('Location: ' . $target, true, 302);
+        exit;
     }
 
     private static function checkInstallLock(): void
