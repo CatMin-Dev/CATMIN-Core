@@ -33,7 +33,39 @@ $coreLogsTable = $corePrefix . 'logs';
 $coreBackupsTable = $corePrefix . 'backups';
 $coreCronTasksTable = $corePrefix . 'cron_tasks';
 
-$redirect = static function (string $path, array $query = []): Response {
+$pushFlash = static function (string $message, string $type = 'success'): void {
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        @session_start();
+    }
+    $_SESSION['catmin_admin_flash'] = [
+        'message' => $message,
+        'type' => $type,
+    ];
+};
+
+$consumeFlash = static function (): array {
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        @session_start();
+    }
+    $flash = $_SESSION['catmin_admin_flash'] ?? null;
+    unset($_SESSION['catmin_admin_flash']);
+    if (!is_array($flash)) {
+        return ['message' => '', 'type' => 'success'];
+    }
+    return [
+        'message' => (string) ($flash['message'] ?? ''),
+        'type' => (string) ($flash['type'] ?? 'success'),
+    ];
+};
+
+$redirect = static function (string $path, array $query = []) use ($pushFlash): Response {
+    $flashMsg = trim((string) ($query['msg'] ?? ''));
+    $flashType = trim((string) ($query['mt'] ?? 'success'));
+    unset($query['msg'], $query['mt']);
+    if ($flashMsg !== '') {
+        $pushFlash($flashMsg, $flashType !== '' ? $flashType : 'success');
+    }
+
     $qs = $query !== [] ? ('?' . http_build_query($query)) : '';
     return Response::html('', 302, ['Location' => $path . $qs]);
 };
@@ -378,7 +410,7 @@ $loadSystemLogs = static function (\PDO $pdo, string $table, int $limit = 200): 
 
 $listBackups = static function (\PDO $pdo, string $table): array {
     try {
-        $stmt = $pdo->query('SELECT id, backup_type, status, file_path, checksum, size_bytes, created_at FROM ' . $table . ' ORDER BY created_at DESC LIMIT 200');
+        $stmt = $pdo->query("SELECT id, backup_type, status, file_path, checksum, size_bytes, created_at FROM " . $table . " WHERE backup_type != 'restore' ORDER BY created_at DESC LIMIT 200");
         $rows = $stmt !== false ? ($stmt->fetchAll(\PDO::FETCH_ASSOC) ?: []) : [];
         return array_map(static fn (array $r): array => [
             'id' => (int) ($r['id'] ?? 0),
@@ -388,6 +420,7 @@ $listBackups = static function (\PDO $pdo, string $table): array {
             'status' => (string) ($r['status'] ?? ''),
             'size' => (int) ($r['size_bytes'] ?? 0),
             'date' => (string) ($r['created_at'] ?? ''),
+            'exists' => is_file((string) ($r['file_path'] ?? '')),
         ], $rows);
     } catch (\Throwable) {
         return [];
@@ -520,6 +553,7 @@ $seedDefaultCronTasks = static function (\PDO $pdo, string $table): void {
         ['name' => 'Core Cache Cleanup', 'script_path' => 'core/cron/core-cache-cleanup.php', 'schedule_expr' => '0 */6 * * *'],
         ['name' => 'Core Logs Rotate', 'script_path' => 'core/cron/core-logs-rotate.php', 'schedule_expr' => '10 2 * * *'],
         ['name' => 'Core Health Check', 'script_path' => 'core/cron/core-health-check.php', 'schedule_expr' => '*/15 * * * *'],
+        ['name' => 'Core Backup', 'script_path' => 'core/cron/core-backup.php', 'schedule_expr' => '30 2 * * *'],
     ];
 
     foreach ($defaults as $task) {
@@ -540,6 +574,124 @@ $seedDefaultCronTasks = static function (\PDO $pdo, string $table): void {
             'is_active' => 0,
         ]);
     }
+};
+
+$ensureSuperAdminPermissions = static function (\PDO $pdo) use ($rolesTable, $permissionsTable, $rolePermissionsTable): void {
+    $roleStmt = $pdo->prepare('SELECT id FROM ' . $rolesTable . ' WHERE slug = :slug LIMIT 1');
+    $roleStmt->execute(['slug' => 'super-admin']);
+    $roleId = (int) ($roleStmt->fetchColumn() ?: 0);
+    if ($roleId <= 0) {
+        return;
+    }
+
+    $permRows = $pdo->query('SELECT id FROM ' . $permissionsTable . ' ORDER BY id ASC');
+    $permissionIds = $permRows !== false ? ($permRows->fetchAll(\PDO::FETCH_COLUMN) ?: []) : [];
+    if (!is_array($permissionIds) || $permissionIds === []) {
+        return;
+    }
+
+    $findPivot = $pdo->prepare('SELECT id FROM ' . $rolePermissionsTable . ' WHERE role_id = :role_id AND permission_id = :permission_id LIMIT 1');
+    $insertPivot = $pdo->prepare('INSERT INTO ' . $rolePermissionsTable . ' (role_id, permission_id) VALUES (:role_id, :permission_id)');
+    foreach ($permissionIds as $permissionIdRaw) {
+        $permissionId = (int) $permissionIdRaw;
+        if ($permissionId <= 0) {
+            continue;
+        }
+        $findPivot->execute(['role_id' => $roleId, 'permission_id' => $permissionId]);
+        if ($findPivot->fetchColumn() !== false) {
+            continue;
+        }
+        $insertPivot->execute(['role_id' => $roleId, 'permission_id' => $permissionId]);
+    }
+};
+
+$buildSqlDump = static function (\PDO $pdo): string {
+    $driver = (string) $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME);
+    $lines = [
+        '-- CATMIN SQL dump',
+        '-- Generated: ' . date('c'),
+        '-- Driver: ' . $driver,
+        '',
+    ];
+
+    $quoteIdent = static function (string $identifier) use ($driver): string {
+        if ($driver === 'pgsql') {
+            return '"' . str_replace('"', '""', $identifier) . '"';
+        }
+        return '`' . str_replace('`', '``', $identifier) . '`';
+    };
+
+    $exportRows = static function (string $tableName) use ($pdo, $quoteIdent, &$lines): void {
+        $tableIdent = $quoteIdent($tableName);
+        $rowsStmt = $pdo->query('SELECT * FROM ' . $tableIdent);
+        $rows = $rowsStmt !== false ? ($rowsStmt->fetchAll(\PDO::FETCH_ASSOC) ?: []) : [];
+        if (!is_array($rows) || $rows === []) {
+            return;
+        }
+        foreach ($rows as $row) {
+            $columns = [];
+            $values = [];
+            foreach ($row as $col => $value) {
+                $columns[] = $quoteIdent((string) $col);
+                if ($value === null) {
+                    $values[] = 'NULL';
+                } elseif (is_bool($value)) {
+                    $values[] = $value ? '1' : '0';
+                } elseif (is_int($value) || is_float($value) || (is_string($value) && preg_match('/^-?[0-9]+(?:\.[0-9]+)?$/', $value) === 1)) {
+                    $values[] = (string) $value;
+                } else {
+                    $values[] = $pdo->quote((string) $value);
+                }
+            }
+            $lines[] = 'INSERT INTO ' . $tableIdent . ' (' . implode(', ', $columns) . ') VALUES (' . implode(', ', $values) . ');';
+        }
+        $lines[] = '';
+    };
+
+    if ($driver === 'sqlite') {
+        $tablesStmt = $pdo->query("SELECT name, sql FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name ASC");
+        $tables = $tablesStmt !== false ? ($tablesStmt->fetchAll(\PDO::FETCH_ASSOC) ?: []) : [];
+        foreach ($tables as $table) {
+            $name = (string) ($table['name'] ?? '');
+            $sql = trim((string) ($table['sql'] ?? ''));
+            if ($name === '' || $sql === '') {
+                continue;
+            }
+            $lines[] = $sql . ';';
+            $lines[] = '';
+            $exportRows($name);
+        }
+    } else {
+        $tables = [];
+        if (in_array($driver, ['mysql', 'mariadb'], true)) {
+            $tablesStmt = $pdo->query('SHOW TABLES');
+            $tables = $tablesStmt !== false ? ($tablesStmt->fetchAll(\PDO::FETCH_COLUMN) ?: []) : [];
+            foreach ($tables as $tableNameRaw) {
+                $tableName = (string) $tableNameRaw;
+                if ($tableName === '') {
+                    continue;
+                }
+                $createStmt = $pdo->query('SHOW CREATE TABLE ' . $quoteIdent($tableName));
+                $createRow = $createStmt !== false ? $createStmt->fetch(\PDO::FETCH_ASSOC) : false;
+                if (is_array($createRow)) {
+                    $createSql = '';
+                    foreach ($createRow as $k => $v) {
+                        if (is_string($k) && stripos($k, 'create table') !== false) {
+                            $createSql = (string) $v;
+                            break;
+                        }
+                    }
+                    if ($createSql !== '') {
+                        $lines[] = $createSql . ';';
+                        $lines[] = '';
+                    }
+                }
+                $exportRows($tableName);
+            }
+        }
+    }
+
+    return implode(PHP_EOL, $lines) . PHP_EOL;
 };
 
 return [
@@ -670,10 +822,11 @@ return [
                 ['title' => 'Dernier backup', 'value' => $lastBackup, 'hint' => $lastBackupHint, 'tone' => $lastBackup === '-' ? 'info' : 'success', 'icon' => 'bi-database-check'],
             ];
 
+            $installLockPresent = is_file(CATMIN_STORAGE . '/install.lock') || is_file(CATMIN_STORAGE . '/install/installed.lock');
             $activity = [
                 ['title' => 'Connexion admin', 'meta' => 'Session active en cours', 'status' => 'OK', 'variant' => 'success'],
                 ['title' => 'Route admin', 'meta' => $adminBase, 'status' => 'INFO', 'variant' => 'info'],
-                ['title' => 'Installer lock', 'meta' => is_file(CATMIN_STORAGE . '/install.lock') ? 'Present' : 'Absent', 'status' => is_file(CATMIN_STORAGE . '/install.lock') ? 'LOCK' : 'WARN', 'variant' => is_file(CATMIN_STORAGE . '/install.lock') ? 'success' : 'warning'],
+                ['title' => 'Installer lock', 'meta' => $installLockPresent ? 'Present' : 'Absent', 'status' => $installLockPresent ? 'LOCK' : 'WARN', 'variant' => $installLockPresent ? 'success' : 'warning'],
             ];
 
             $health = array_map(static function (array $line): array {
@@ -727,9 +880,10 @@ return [
     [
         'method' => 'GET',
         'path' => '/modules',
-        'handler' => static function (Request $request) use ($scanModules): Response {
+        'handler' => static function (Request $request) use ($scanModules, $consumeFlash): Response {
             $controller = new AuthController();
             $adminBase = $controller->adminBasePath();
+            $flash = $consumeFlash();
 
             $scan = $scanModules();
             $rows = (array) ($scan['rows'] ?? []);
@@ -776,8 +930,8 @@ return [
                     'scope' => $scope,
                 ],
                 'activeView' => 'manager',
-                'message' => (string) $request->input('msg', ''),
-                'messageType' => (string) $request->input('mt', 'success'),
+                'message' => (string) ($flash['message'] ?? ''),
+                'messageType' => (string) ($flash['type'] ?? 'success'),
             ], 'admin');
         },
         'middleware' => [$authRequired],
@@ -786,9 +940,10 @@ return [
     [
         'method' => 'GET',
         'path' => '/modules/status',
-        'handler' => static function (Request $request) use ($scanModules): Response {
+        'handler' => static function (Request $request) use ($scanModules, $consumeFlash): Response {
             $controller = new AuthController();
             $adminBase = $controller->adminBasePath();
+            $flash = $consumeFlash();
 
             $scan = $scanModules();
             $rows = (array) ($scan['rows'] ?? []);
@@ -835,8 +990,8 @@ return [
                     'scope' => $scope,
                 ],
                 'activeView' => 'status',
-                'message' => (string) $request->input('msg', ''),
-                'messageType' => (string) $request->input('mt', 'success'),
+                'message' => (string) ($flash['message'] ?? ''),
+                'messageType' => (string) ($flash['type'] ?? 'success'),
             ], 'admin');
         },
         'middleware' => [$authRequired],
@@ -845,10 +1000,32 @@ return [
     [
         'method' => 'GET',
         'path' => '/settings',
-        'handler' => static function (Request $request): Response {
+        'handler' => static function (Request $request) use ($redirect): Response {
+            $controller = new AuthController();
+            $adminBase = $controller->adminBasePath();
+            $section = strtolower(trim((string) $request->input('section', 'general')));
+            $section = match ($section) {
+                'mail' => 'mail',
+                'security' => 'security',
+                default => 'general',
+            };
+            return $redirect($adminBase . '/settings/' . $section, [
+                'msg' => (string) $request->input('msg', ''),
+                'mt' => (string) $request->input('mt', 'success'),
+            ]);
+        },
+        'middleware' => [$authRequired],
+    ],
+
+    [
+        'method' => 'GET',
+        'path' => '/settings/{section}',
+        'where' => ['section' => 'general|mail|security'],
+        'handler' => static function (Request $request, string $section) use ($consumeFlash): Response {
             $controller = new AuthController();
             $adminBase = $controller->adminBasePath();
             $engine = new CoreSettingsEngine();
+            $flash = $consumeFlash();
             $settings = $engine->all();
             if (!isset($settings['general']) || !is_array($settings['general'])) {
                 $settings['general'] = [];
@@ -867,8 +1044,9 @@ return [
             }
             // Compat avec vue existante (attend "interface")
             $settings['interface'] = $settings['ui'];
+            $settings['email'] = $settings['mail'];
 
-            $section = strtolower(trim((string) $request->input('section', 'general')));
+            $section = strtolower(trim($section));
             $activeNav = match ($section) {
                 'security' => 'security',
                 'mail' => 'mail',
@@ -880,8 +1058,8 @@ return [
                 'adminBase' => $adminBase,
                 'settings' => $settings,
                 'section' => $section,
-                'message' => (string) $request->input('msg', ''),
-                'messageType' => (string) $request->input('mt', 'success'),
+                'message' => (string) ($flash['message'] ?? ''),
+                'messageType' => (string) ($flash['type'] ?? 'success'),
                 'activeSettingsNav' => $activeNav,
             ], 'admin');
         },
@@ -922,15 +1100,16 @@ return [
                 'password_min' => max(8, (int) ($post['password_min'] ?? ($data['security']['password_min'] ?? 12))),
                 'enforce_2fa' => ((string) ($post['enforce_2fa'] ?? '0')) === '1',
             ];
-            $data['email'] = [
+            $mailSource = is_array($data['mail'] ?? null) ? $data['mail'] : (is_array($data['email'] ?? null) ? $data['email'] : []);
+            $data['mail'] = [
                 'enabled' => ((string) ($post['email_enabled'] ?? '0')) === '1',
-                'driver' => trim((string) ($post['email_driver'] ?? ($data['email']['driver'] ?? 'smtp'))),
-                'from_name' => trim((string) ($post['email_from_name'] ?? ($data['email']['from_name'] ?? 'CATMIN'))),
-                'from_email' => trim((string) ($post['email_from_email'] ?? ($data['email']['from_email'] ?? 'noreply@example.com'))),
-                'host' => trim((string) ($post['email_host'] ?? ($data['email']['host'] ?? ''))),
-                'port' => max(1, (int) ($post['email_port'] ?? ($data['email']['port'] ?? 587))),
-                'encryption' => trim((string) ($post['email_encryption'] ?? ($data['email']['encryption'] ?? 'tls'))),
-                'username' => trim((string) ($post['email_username'] ?? ($data['email']['username'] ?? ''))),
+                'driver' => trim((string) ($post['email_driver'] ?? ($mailSource['driver'] ?? 'smtp'))),
+                'from_name' => trim((string) ($post['email_from_name'] ?? ($mailSource['from_name'] ?? 'CATMIN'))),
+                'from_email' => trim((string) ($post['email_from_email'] ?? ($mailSource['from_email'] ?? 'noreply@example.com'))),
+                'host' => trim((string) ($post['email_host'] ?? ($mailSource['host'] ?? ''))),
+                'port' => max(1, (int) ($post['email_port'] ?? ($mailSource['port'] ?? 587))),
+                'encryption' => trim((string) ($post['email_encryption'] ?? ($mailSource['encryption'] ?? 'tls'))),
+                'username' => trim((string) ($post['email_username'] ?? ($mailSource['username'] ?? ''))),
             ];
             $data['ui'] = [
                 'theme_default' => trim((string) ($post['theme_default'] ?? ($data['ui']['theme_default'] ?? 'corporate'))),
@@ -945,7 +1124,9 @@ return [
             ];
 
             $ok = true;
-            foreach ($data as $group => $values) {
+            $persistableGroups = ['general', 'security', 'mail', 'ui', 'maintenance'];
+            foreach ($persistableGroups as $group) {
+                $values = $data[$group] ?? null;
                 if (!is_array($values)) {
                     continue;
                 }
@@ -964,8 +1145,100 @@ return [
             if ($ok) {
                 $appendCoreLog($pdo, $coreLogsTable, 'system', 'info', 'Parametres admin enregistres', ['section' => $section]);
             }
-            return $redirect($adminBase . '/settings', [
-                'section' => $section,
+            return $redirect($adminBase . '/settings/' . $section, [
+                'msg' => $ok ? 'Parametres enregistres en base.' : 'Echec ecriture base de donnees.',
+                'mt' => $ok ? 'success' : 'danger',
+            ]);
+        },
+        'middleware' => [$authRequired, $csrfCheck],
+    ],
+
+    [
+        'method' => 'POST',
+        'path' => '/settings/{section}',
+        'where' => ['section' => 'general|mail|security'],
+        'handler' => static function (Request $request, string $section) use ($upsertCoreSetting, $redirect, $coreSettingsTable, $appendCoreLog, $coreLogsTable): Response {
+            $controller = new AuthController();
+            $adminBase = $controller->adminBasePath();
+            $pdo = (new ConnectionManager())->connection();
+            $engine = new CoreSettingsEngine();
+
+            $data = $engine->all();
+            $data['general'] = is_array($data['general'] ?? null) ? $data['general'] : [];
+            $data['security'] = is_array($data['security'] ?? null) ? $data['security'] : [];
+            $data['mail'] = is_array($data['mail'] ?? null) ? $data['mail'] : [];
+            $data['ui'] = is_array($data['ui'] ?? null) ? $data['ui'] : [];
+            $data['maintenance'] = is_array($data['maintenance'] ?? null) ? $data['maintenance'] : [];
+            $post = $request->post();
+            $section = strtolower(trim($section));
+            $section = match ($section) {
+                'mail' => 'mail',
+                'security' => 'security',
+                default => 'general',
+            };
+            $postedTimezone = trim((string) ($post['timezone'] ?? ($data['general']['timezone'] ?? 'UTC')));
+            if (!in_array($postedTimezone, \DateTimeZone::listIdentifiers(), true)) {
+                $postedTimezone = (string) ($data['general']['timezone'] ?? 'UTC');
+            }
+
+            $data['general'] = [
+                'app_name' => trim((string) ($post['app_name'] ?? ($data['general']['app_name'] ?? 'CATMIN'))),
+                'app_env' => trim((string) ($post['app_env'] ?? ($data['general']['app_env'] ?? 'production'))),
+                'timezone' => $postedTimezone,
+                'admin_path' => trim((string) ($post['admin_path'] ?? ($data['general']['admin_path'] ?? 'admin'))),
+            ];
+            $data['security'] = [
+                'session_minutes' => max(15, (int) ($post['session_minutes'] ?? ($data['security']['session_minutes'] ?? 120))),
+                'max_attempts' => max(3, (int) ($post['max_attempts'] ?? ($data['security']['max_attempts'] ?? 5))),
+                'password_min' => max(8, (int) ($post['password_min'] ?? ($data['security']['password_min'] ?? 12))),
+                'enforce_2fa' => ((string) ($post['enforce_2fa'] ?? '0')) === '1',
+            ];
+            $mailSource = is_array($data['mail'] ?? null) ? $data['mail'] : [];
+            $data['mail'] = [
+                'enabled' => ((string) ($post['email_enabled'] ?? '0')) === '1',
+                'driver' => trim((string) ($post['email_driver'] ?? ($mailSource['driver'] ?? 'smtp'))),
+                'from_name' => trim((string) ($post['email_from_name'] ?? ($mailSource['from_name'] ?? 'CATMIN'))),
+                'from_email' => trim((string) ($post['email_from_email'] ?? ($mailSource['from_email'] ?? 'noreply@example.com'))),
+                'host' => trim((string) ($post['email_host'] ?? ($mailSource['host'] ?? ''))),
+                'port' => max(1, (int) ($post['email_port'] ?? ($mailSource['port'] ?? 587))),
+                'encryption' => trim((string) ($post['email_encryption'] ?? ($mailSource['encryption'] ?? 'tls'))),
+                'username' => trim((string) ($post['email_username'] ?? ($mailSource['username'] ?? ''))),
+            ];
+            $data['ui'] = [
+                'theme_default' => trim((string) ($post['theme_default'] ?? ($data['ui']['theme_default'] ?? 'corporate'))),
+                'compact_sidebar' => ((string) ($post['compact_sidebar'] ?? '0')) === '1',
+                'table_density' => trim((string) ($post['table_density'] ?? ($data['ui']['table_density'] ?? 'comfortable'))),
+                'show_debug' => ((string) ($post['show_debug'] ?? '0')) === '1',
+            ];
+            $data['maintenance'] = [
+                'enabled' => ((string) ($post['maintenance_enabled'] ?? '0')) === '1',
+                'message' => trim((string) ($post['maintenance_message'] ?? ($data['maintenance']['message'] ?? 'Maintenance en cours'))),
+                'allow_admin' => ((string) ($post['maintenance_allow_admin'] ?? '0')) === '1',
+            ];
+
+            $ok = true;
+            $persistableGroups = ['general', 'security', 'mail', 'ui', 'maintenance'];
+            foreach ($persistableGroups as $group) {
+                $values = $data[$group] ?? null;
+                if (!is_array($values)) {
+                    continue;
+                }
+                foreach ($values as $key => $value) {
+                    if (!$engine->set((string) $group . '.' . (string) $key, $value, true)) {
+                        $ok = false;
+                    }
+                }
+            }
+            $ok = $ok && $engine->save();
+            if ($ok) {
+                $ok = $ok && $upsertCoreSetting($pdo, $coreSettingsTable, 'app', 'name', (string) $data['general']['app_name'], true);
+                $ok = $ok && $upsertCoreSetting($pdo, $coreSettingsTable, 'security', 'admin_path', (string) $data['general']['admin_path'], false);
+                $ok = $ok && $upsertCoreSetting($pdo, $coreSettingsTable, 'system', 'timezone', (string) $data['general']['timezone'], true);
+            }
+            if ($ok) {
+                $appendCoreLog($pdo, $coreLogsTable, 'system', 'info', 'Parametres admin enregistres', ['section' => $section]);
+            }
+            return $redirect($adminBase . '/settings/' . $section, [
                 'msg' => $ok ? 'Parametres enregistres en base.' : 'Echec ecriture base de donnees.',
                 'mt' => $ok ? 'success' : 'danger',
             ]);
@@ -1071,10 +1344,11 @@ return [
     [
         'method' => 'GET',
         'path' => '/cron',
-        'handler' => static function (Request $request) use ($coreCronTasksTable, $coreLogsTable, $ensureCronTasksTable, $seedDefaultCronTasks, $ensureCronDirectory): Response {
+        'handler' => static function (Request $request) use ($coreCronTasksTable, $coreLogsTable, $ensureCronTasksTable, $seedDefaultCronTasks, $ensureCronDirectory, $consumeFlash): Response {
             $controller = new AuthController();
             $adminBase = $controller->adminBasePath();
             $pdo = (new ConnectionManager())->connection();
+            $flash = $consumeFlash();
             $ensureCronDirectory();
             $ensureCronTasksTable($pdo, $coreCronTasksTable);
             $seedDefaultCronTasks($pdo, $coreCronTasksTable);
@@ -1095,8 +1369,8 @@ return [
                 'adminBase' => $adminBase,
                 'tasks' => $tasks,
                 'history' => $history,
-                'message' => (string) $request->input('msg', ''),
-                'messageType' => (string) $request->input('mt', 'success'),
+                'message' => (string) ($flash['message'] ?? ''),
+                'messageType' => (string) ($flash['type'] ?? 'success'),
             ], 'admin');
         },
         'middleware' => [$authRequired],
@@ -1252,10 +1526,11 @@ return [
     [
         'method' => 'GET',
         'path' => '/maintenance',
-        'handler' => static function (Request $request) use ($loadSystemState, $listBackups, $coreSettingsTable, $coreBackupsTable): Response {
+        'handler' => static function (Request $request) use ($loadSystemState, $listBackups, $coreSettingsTable, $coreBackupsTable, $consumeFlash): Response {
             $controller = new AuthController();
             $adminBase = $controller->adminBasePath();
             $pdo = (new ConnectionManager())->connection();
+            $flash = $consumeFlash();
 
             $state = $loadSystemState($pdo, $coreSettingsTable, $coreBackupsTable);
             $backups = $listBackups($pdo, $coreBackupsTable);
@@ -1264,8 +1539,8 @@ return [
                 'adminBase' => $adminBase,
                 'state' => $state,
                 'backups' => $backups,
-                'message' => (string) $request->input('msg', ''),
-                'messageType' => (string) $request->input('mt', 'success'),
+                'message' => (string) ($flash['message'] ?? ''),
+                'messageType' => (string) ($flash['type'] ?? 'success'),
             ], 'admin');
         },
         'middleware' => [$authRequired],
@@ -1315,7 +1590,7 @@ return [
     [
         'method' => 'POST',
         'path' => '/maintenance/backup/create',
-        'handler' => static function () use ($saveSystemState, $redirect, $coreSettingsTable, $coreBackupsTable, $appendCoreLog, $coreLogsTable): Response {
+        'handler' => static function () use ($saveSystemState, $redirect, $coreSettingsTable, $coreBackupsTable, $appendCoreLog, $coreLogsTable, $buildSqlDump): Response {
             $controller = new AuthController();
             $adminBase = $controller->adminBasePath();
             $pdo = (new ConnectionManager())->connection();
@@ -1323,12 +1598,50 @@ return [
             if (!is_dir($dir)) {
                 @mkdir($dir, 0775, true);
             }
-            $filename = 'backup-' . date('Ymd-His') . '.txt';
-            $target = $dir . '/' . $filename;
-            $ok = @file_put_contents($target, 'CATMIN backup placeholder ' . date('c') . PHP_EOL) !== false;
+            $driver = (string) config('database.default', 'sqlite');
+            $createdAt = date('Y-m-d H:i:s');
+            $filename = date('YmdHis');
+            $ok = false;
+            $target = '';
+            $size = 0;
+            $checksum = '';
+
+            $zipName = $filename . '.zip';
+            $target = $dir . '/' . $zipName;
+            $meta = [
+                'generated_at' => date('c'),
+                'driver' => $driver,
+                'app_env' => (string) config('app.env', 'production'),
+                'version' => Version::current(),
+            ];
+            $sqlDump = $buildSqlDump($pdo);
+
+            if (class_exists('ZipArchive')) {
+                $zip = new \ZipArchive();
+                $opened = $zip->open($target, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+                if ($opened === true) {
+                    $zip->addFromString('dump.sql', $sqlDump);
+                    $zip->addFromString('meta.json', (string) json_encode($meta, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+                    if ($driver === 'sqlite') {
+                        $sqlitePath = (string) config('database.connections.sqlite.database', CATMIN_ROOT . '/db/database.sqlite');
+                        if (is_file($sqlitePath)) {
+                            $zip->addFile($sqlitePath, 'database.sqlite');
+                        }
+                    }
+                    $ok = $zip->close();
+                    $filename = $zipName;
+                }
+            }
+
+            if (!$ok) {
+                $sqlName = $filename . '.sql';
+                $target = $dir . '/' . $sqlName;
+                $ok = @file_put_contents($target, $sqlDump) !== false;
+                $filename = $sqlName;
+            }
+
             $size = $ok ? (int) (@filesize($target) ?: 0) : 0;
             $checksum = $ok ? (string) (@hash_file('sha256', $target) ?: '') : '';
-            $createdAt = date('Y-m-d H:i:s');
 
             $insert = $pdo->prepare(
                 'INSERT INTO ' . $coreBackupsTable . ' (backup_type, status, file_path, checksum, size_bytes, created_at) VALUES (:backup_type, :status, :file_path, :checksum, :size_bytes, :created_at)'
@@ -1351,6 +1664,172 @@ return [
 
             return $redirect($adminBase . '/maintenance', [
                 'msg' => $ok ? 'Sauvegarde creee: ' . $filename : 'Echec creation sauvegarde.',
+                'mt' => $ok ? 'success' : 'danger',
+            ]);
+        },
+        'middleware' => [$authRequired, $csrfCheck],
+    ],
+
+    [
+        'method' => 'GET',
+        'path' => '/maintenance/backup/download',
+        'handler' => static function (Request $request) use ($redirect, $coreBackupsTable): Response {
+            $controller = new AuthController();
+            $adminBase = $controller->adminBasePath();
+            $pdo = (new ConnectionManager())->connection();
+            $backup = trim((string) $request->input('backup', ''));
+            if ($backup === '') {
+                return $redirect($adminBase . '/maintenance', ['msg' => 'Backup invalide.', 'mt' => 'danger']);
+            }
+
+            $stmt = $pdo->prepare('SELECT file_path FROM ' . $coreBackupsTable . ' WHERE backup_type != \'restore\' ORDER BY created_at DESC');
+            $stmt->execute();
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            $rows = is_array($rows) ? $rows : [];
+
+            $selected = null;
+            foreach ($rows as $row) {
+                $path = (string) ($row['file_path'] ?? '');
+                if ($path !== '' && basename($path) === basename($backup)) {
+                    $selected = $path;
+                    break;
+                }
+            }
+
+            if ($selected === null || !is_file($selected)) {
+                return $redirect($adminBase . '/maintenance', ['msg' => 'Backup introuvable.', 'mt' => 'danger']);
+            }
+
+            $real = realpath($selected);
+            $allowedRoot = realpath(CATMIN_STORAGE . '/backups');
+            if (!is_string($real) || !is_string($allowedRoot) || !str_starts_with($real, $allowedRoot . '/')) {
+                return $redirect($adminBase . '/maintenance', ['msg' => 'Chemin backup refuse.', 'mt' => 'danger']);
+            }
+
+            $content = (string) @file_get_contents($real);
+            if ($content === '') {
+                return $redirect($adminBase . '/maintenance', ['msg' => 'Backup vide ou illisible.', 'mt' => 'danger']);
+            }
+
+            $ext = strtolower((string) pathinfo($real, PATHINFO_EXTENSION));
+            $mime = match ($ext) {
+                'zip' => 'application/zip',
+                'sql' => 'application/sql',
+                'json' => 'application/json',
+                default => 'application/octet-stream',
+            };
+
+            return Response::html($content, 200, [
+                'Content-Type' => $mime,
+                'Content-Disposition' => 'attachment; filename="' . basename($real) . '"',
+                'Cache-Control' => 'no-store',
+            ]);
+        },
+        'middleware' => [$authRequired],
+    ],
+
+    [
+        'method' => 'GET',
+        'path' => '/maintenance/backup/read',
+        'handler' => static function (Request $request) use ($redirect, $coreBackupsTable): Response {
+            $controller = new AuthController();
+            $adminBase = $controller->adminBasePath();
+            $pdo = (new ConnectionManager())->connection();
+            $backup = trim((string) $request->input('backup', ''));
+            if ($backup === '') {
+                return $redirect($adminBase . '/maintenance', ['msg' => 'Backup invalide.', 'mt' => 'danger']);
+            }
+
+            $stmt = $pdo->prepare('SELECT file_path FROM ' . $coreBackupsTable . ' WHERE backup_type != \'restore\' ORDER BY created_at DESC');
+            $stmt->execute();
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            $rows = is_array($rows) ? $rows : [];
+
+            $selected = null;
+            foreach ($rows as $row) {
+                $path = (string) ($row['file_path'] ?? '');
+                if ($path !== '' && basename($path) === basename($backup)) {
+                    $selected = $path;
+                    break;
+                }
+            }
+
+            if ($selected === null || !is_file($selected)) {
+                return $redirect($adminBase . '/maintenance', ['msg' => 'Backup introuvable.', 'mt' => 'danger']);
+            }
+
+            $real = realpath($selected);
+            $allowedRoot = realpath(CATMIN_STORAGE . '/backups');
+            if (!is_string($real) || !is_string($allowedRoot) || !str_starts_with($real, $allowedRoot . '/')) {
+                return $redirect($adminBase . '/maintenance', ['msg' => 'Chemin backup refuse.', 'mt' => 'danger']);
+            }
+
+            $ext = strtolower((string) pathinfo($real, PATHINFO_EXTENSION));
+            $isText = in_array($ext, ['txt', 'json', 'log', 'md', 'csv', 'sql'], true);
+            $raw = $isText ? ((string) @file_get_contents($real)) : '';
+            $preview = $isText ? mb_substr($raw, 0, 250000) : ('Fichier binaire (' . strtoupper($ext !== '' ? $ext : 'unknown') . ').');
+
+            return View::make('maintenance.read', [
+                'adminBase' => $adminBase,
+                'backupName' => basename($real),
+                'backupPath' => $real,
+                'backupSize' => (int) (@filesize($real) ?: 0),
+                'previewText' => $preview,
+                'isTextPreview' => $isText,
+            ], 'admin');
+        },
+        'middleware' => [$authRequired],
+    ],
+
+    [
+        'method' => 'POST',
+        'path' => '/maintenance/backup/delete',
+        'handler' => static function (Request $request) use ($redirect, $coreBackupsTable, $appendCoreLog, $coreLogsTable): Response {
+            $controller = new AuthController();
+            $adminBase = $controller->adminBasePath();
+            $pdo = (new ConnectionManager())->connection();
+            $backup = trim((string) $request->input('backup', ''));
+            if ($backup === '') {
+                return $redirect($adminBase . '/maintenance', ['msg' => 'Backup invalide.', 'mt' => 'danger']);
+            }
+
+            $stmt = $pdo->query('SELECT id, file_path FROM ' . $coreBackupsTable . ' WHERE backup_type != \'restore\' ORDER BY created_at DESC');
+            $rows = $stmt !== false ? ($stmt->fetchAll(\PDO::FETCH_ASSOC) ?: []) : [];
+            $targetId = 0;
+            $targetPath = '';
+            foreach ($rows as $row) {
+                $path = (string) ($row['file_path'] ?? '');
+                if ($path !== '' && basename($path) === basename($backup)) {
+                    $targetId = (int) ($row['id'] ?? 0);
+                    $targetPath = $path;
+                    break;
+                }
+            }
+
+            if ($targetId <= 0 || $targetPath === '') {
+                return $redirect($adminBase . '/maintenance', ['msg' => 'Backup introuvable.', 'mt' => 'danger']);
+            }
+
+            $real = realpath($targetPath);
+            $allowedRoot = realpath(CATMIN_STORAGE . '/backups');
+            if (!is_string($real) || !is_string($allowedRoot) || !str_starts_with($real, $allowedRoot . '/')) {
+                return $redirect($adminBase . '/maintenance', ['msg' => 'Chemin backup refuse.', 'mt' => 'danger']);
+            }
+
+            $fileDeleted = !is_file($real) || @unlink($real);
+            $dbDeleted = false;
+            if ($fileDeleted) {
+                $del = $pdo->prepare('DELETE FROM ' . $coreBackupsTable . ' WHERE id = :id');
+                $dbDeleted = $del->execute(['id' => $targetId]);
+            }
+
+            $ok = $fileDeleted && $dbDeleted;
+            if ($ok) {
+                $appendCoreLog($pdo, $coreLogsTable, 'backup', 'warning', 'Backup supprime', ['file' => basename($real)]);
+            }
+
+            return $redirect($adminBase . '/maintenance', [
+                'msg' => $ok ? ('Backup supprime: ' . basename($real)) : 'Echec suppression backup.',
                 'mt' => $ok ? 'success' : 'danger',
             ]);
         },
@@ -1433,10 +1912,11 @@ return [
     [
         'method' => 'GET',
         'path' => '/staff',
-        'handler' => static function (Request $request) use ($usersTable, $rolesTable): Response {
+        'handler' => static function (Request $request) use ($usersTable, $rolesTable, $consumeFlash): Response {
             $controller = new AuthController();
             $adminBase = $controller->adminBasePath();
             $pdo = (new ConnectionManager())->connection();
+            $flash = $consumeFlash();
 
             $search = trim((string) $request->input('q', ''));
             $role = trim((string) $request->input('role', ''));
@@ -1522,8 +2002,8 @@ return [
                     'page' => $page,
                     'pages' => $pages,
                 ],
-                'message' => (string) $request->input('msg', ''),
-                'messageType' => (string) $request->input('mt', 'success'),
+                'message' => (string) ($flash['message'] ?? ''),
+                'messageType' => (string) ($flash['type'] ?? 'success'),
             ], 'admin');
         },
         'middleware' => [$authRequired],
@@ -1854,10 +2334,12 @@ return [
     [
         'method' => 'GET',
         'path' => '/roles',
-        'handler' => static function (Request $request) use ($rolesTable, $usersTable): Response {
+        'handler' => static function (Request $request) use ($rolesTable, $usersTable, $ensureSuperAdminPermissions, $consumeFlash): Response {
             $controller = new AuthController();
             $adminBase = $controller->adminBasePath();
             $pdo = (new ConnectionManager())->connection();
+            $flash = $consumeFlash();
+            $ensureSuperAdminPermissions($pdo);
 
             $sql = 'SELECT r.id, r.name, r.slug, r.is_system, COUNT(u.id) AS users_count '
                 . 'FROM ' . $rolesTable . ' r '
@@ -1870,8 +2352,8 @@ return [
             return View::make('roles.index', [
                 'adminBase' => $adminBase,
                 'rows' => $rows,
-                'message' => (string) $request->input('msg', ''),
-                'messageType' => (string) $request->input('mt', 'success'),
+                'message' => (string) ($flash['message'] ?? ''),
+                'messageType' => (string) ($flash['type'] ?? 'success'),
             ], 'admin');
         },
         'middleware' => [$authRequired],
@@ -1879,10 +2361,11 @@ return [
     [
         'method' => 'GET',
         'path' => '/roles/create',
-        'handler' => static function () use ($permissionsTable, $buildPermissionsMatrix): Response {
+        'handler' => static function () use ($permissionsTable, $buildPermissionsMatrix, $ensureSuperAdminPermissions): Response {
             $controller = new AuthController();
             $adminBase = $controller->adminBasePath();
             $pdo = (new ConnectionManager())->connection();
+            $ensureSuperAdminPermissions($pdo);
 
             $permsStmt = $pdo->query('SELECT id, name, slug, description FROM ' . $permissionsTable . ' ORDER BY slug ASC');
             $permissions = $permsStmt !== false ? ($permsStmt->fetchAll(\PDO::FETCH_ASSOC) ?: []) : [];
@@ -1900,7 +2383,7 @@ return [
     [
         'method' => 'POST',
         'path' => '/roles/create',
-        'handler' => static function (Request $request) use ($rolesTable, $permissionsTable, $rolePermissionsTable, $buildPermissionsMatrix, $redirect): Response {
+        'handler' => static function (Request $request) use ($rolesTable, $permissionsTable, $rolePermissionsTable, $buildPermissionsMatrix, $redirect, $ensureSuperAdminPermissions): Response {
             $controller = new AuthController();
             $adminBase = $controller->adminBasePath();
             $pdo = (new ConnectionManager())->connection();
@@ -1947,6 +2430,7 @@ return [
                     $attach->execute(['role_id' => $roleId, 'permission_id' => $permissionId]);
                 }
             }
+            $ensureSuperAdminPermissions($pdo);
 
             return $redirect($adminBase . '/roles', ['msg' => 'Role cree.', 'mt' => 'success']);
         },
@@ -1955,10 +2439,11 @@ return [
     [
         'method' => 'GET',
         'path' => '/roles/{id}',
-        'handler' => static function (string $id) use ($rolesTable, $permissionsTable, $rolePermissionsTable, $usersTable): Response {
+        'handler' => static function (string $id) use ($rolesTable, $permissionsTable, $rolePermissionsTable, $usersTable, $ensureSuperAdminPermissions): Response {
             $controller = new AuthController();
             $adminBase = $controller->adminBasePath();
             $pdo = (new ConnectionManager())->connection();
+            $ensureSuperAdminPermissions($pdo);
 
             $roleStmt = $pdo->prepare('SELECT id, name, slug, is_system, created_at FROM ' . $rolesTable . ' WHERE id = :id LIMIT 1');
             $roleStmt->execute(['id' => (int) $id]);
@@ -1993,10 +2478,11 @@ return [
     [
         'method' => 'GET',
         'path' => '/roles/{id}/edit',
-        'handler' => static function (string $id) use ($rolesTable, $permissionsTable, $rolePermissionsTable, $buildPermissionsMatrix): Response {
+        'handler' => static function (string $id) use ($rolesTable, $permissionsTable, $rolePermissionsTable, $buildPermissionsMatrix, $ensureSuperAdminPermissions): Response {
             $controller = new AuthController();
             $adminBase = $controller->adminBasePath();
             $pdo = (new ConnectionManager())->connection();
+            $ensureSuperAdminPermissions($pdo);
 
             $roleStmt = $pdo->prepare('SELECT id, name, slug, is_system FROM ' . $rolesTable . ' WHERE id = :id LIMIT 1');
             $roleStmt->execute(['id' => (int) $id]);
@@ -2031,7 +2517,7 @@ return [
     [
         'method' => 'POST',
         'path' => '/roles/{id}/edit',
-        'handler' => static function (Request $request, string $id) use ($rolesTable, $permissionsTable, $rolePermissionsTable, $buildPermissionsMatrix, $isCriticalRole, $redirect): Response {
+        'handler' => static function (Request $request, string $id) use ($rolesTable, $permissionsTable, $rolePermissionsTable, $buildPermissionsMatrix, $isCriticalRole, $redirect, $ensureSuperAdminPermissions): Response {
             $controller = new AuthController();
             $adminBase = $controller->adminBasePath();
             $pdo = (new ConnectionManager())->connection();
@@ -2091,8 +2577,45 @@ return [
                     $attach->execute(['role_id' => (int) $id, 'permission_id' => $permissionId]);
                 }
             }
+            $ensureSuperAdminPermissions($pdo);
 
             return $redirect($adminBase . '/roles/' . (int) $id, ['msg' => 'Role mis a jour.', 'mt' => 'success']);
+        },
+        'middleware' => [$authRequired, $csrfCheck],
+    ],
+
+    [
+        'method' => 'POST',
+        'path' => '/roles/{id}/delete',
+        'handler' => static function (string $id) use ($rolesTable, $rolePermissionsTable, $usersTable, $isCriticalRole, $redirect): Response {
+            $controller = new AuthController();
+            $adminBase = $controller->adminBasePath();
+            $pdo = (new ConnectionManager())->connection();
+
+            $roleStmt = $pdo->prepare('SELECT id, name, slug, is_system FROM ' . $rolesTable . ' WHERE id = :id LIMIT 1');
+            $roleStmt->execute(['id' => (int) $id]);
+            $role = $roleStmt->fetch(\PDO::FETCH_ASSOC);
+            if (!is_array($role)) {
+                return $redirect($adminBase . '/roles', ['msg' => 'Role introuvable.', 'mt' => 'danger']);
+            }
+            if ($isCriticalRole($role)) {
+                return $redirect($adminBase . '/roles', ['msg' => 'SuperAdmin/role critique non supprimable.', 'mt' => 'warning']);
+            }
+
+            $countUsers = $pdo->prepare('SELECT COUNT(*) FROM ' . $usersTable . ' WHERE role_id = :role_id');
+            $countUsers->execute(['role_id' => (int) $id]);
+            $usedBy = (int) ($countUsers->fetchColumn() ?: 0);
+            if ($usedBy > 0) {
+                return $redirect($adminBase . '/roles', ['msg' => 'Role attribue a des comptes: suppression refusee.', 'mt' => 'danger']);
+            }
+
+            $pdo->prepare('DELETE FROM ' . $rolePermissionsTable . ' WHERE role_id = :role_id')->execute(['role_id' => (int) $id]);
+            $ok = $pdo->prepare('DELETE FROM ' . $rolesTable . ' WHERE id = :id LIMIT 1')->execute(['id' => (int) $id]);
+
+            return $redirect($adminBase . '/roles', [
+                'msg' => $ok ? 'Role supprime.' : 'Echec suppression role.',
+                'mt' => $ok ? 'success' : 'danger',
+            ]);
         },
         'middleware' => [$authRequired, $csrfCheck],
     ],

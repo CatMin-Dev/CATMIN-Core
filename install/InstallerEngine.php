@@ -596,6 +596,7 @@ final class InstallerEngine
             ['name' => 'Core Cache Cleanup', 'script_path' => 'core/cron/core-cache-cleanup.php', 'schedule_expr' => '0 */6 * * *'],
             ['name' => 'Core Logs Rotate', 'script_path' => 'core/cron/core-logs-rotate.php', 'schedule_expr' => '10 2 * * *'],
             ['name' => 'Core Health Check', 'script_path' => 'core/cron/core-health-check.php', 'schedule_expr' => '*/15 * * * *'],
+            ['name' => 'Core Backup', 'script_path' => 'core/cron/core-backup.php', 'schedule_expr' => '30 2 * * *'],
         ];
 
         foreach ($defaultCronTasks as $task) {

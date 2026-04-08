@@ -9,9 +9,7 @@ $breadcrumbs = [
     ['label' => 'Admin', 'href' => $adminBase . '/'],
     ['label' => 'Staff / Admins'],
 ];
-$pageActions = [
-    ['label' => 'Ajouter un compte', 'href' => $adminBase . '/staff/create', 'class' => 'btn btn-primary btn-sm'],
-];
+$pageActions = [];
 
 ob_start();
 ?>
@@ -24,6 +22,13 @@ ob_start();
     require CATMIN_ADMIN . '/views/components/alerts/inline.php';
     ?>
 <?php endif; ?>
+
+<section class="card mb-3">
+    <div class="card-body py-2 d-flex justify-content-between align-items-center">
+        <span class="small text-body-secondary">Gestion des comptes administrateurs</span>
+        <a class="btn btn-primary btn-sm" href="<?= htmlspecialchars((string) ($adminBase . '/staff/create'), ENT_QUOTES, 'UTF-8') ?>">Ajouter un compte</a>
+    </div>
+</section>
 
 <?php require __DIR__ . '/partials/filters.php'; ?>
 <?php require __DIR__ . '/partials/bulk-bar.php'; ?>

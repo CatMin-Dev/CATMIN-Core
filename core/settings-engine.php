@@ -202,8 +202,26 @@ final class CoreSettingsEngine
         $defaults = $this->registry->defaultsFlat();
         $cacheData = $this->cache->load();
         if (is_array($cacheData) && $cacheData !== []) {
-            $this->data = array_merge($defaults, $cacheData);
+            $legacyMap = [
+                'backup.local.enabled' => 'backup.local_enabled',
+                'legal.bundle.version' => 'legal.bundle_version',
+            ];
+            $normalized = [];
+            foreach ($cacheData as $key => $value) {
+                $rawKey = trim((string) $key);
+                if ($rawKey === '') {
+                    continue;
+                }
+                $finalKey = $legacyMap[$rawKey] ?? $rawKey;
+                if ($this->registry->schemaFor($finalKey) === null) {
+                    continue;
+                }
+                $normalized[$finalKey] = $value;
+            }
+
+            $this->data = array_merge($defaults, $normalized);
             $this->loaded = true;
+            $this->cache->save($this->data);
             return;
         }
 
@@ -289,4 +307,3 @@ final class CoreSettingsEngine
         return is_scalar($value) || $value === null ? $value : '[complex]';
     }
 }
-

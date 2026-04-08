@@ -9,9 +9,7 @@ $breadcrumbs = [
     ['label' => 'Admin', 'href' => $adminBase . '/'],
     ['label' => 'Roles & Permissions'],
 ];
-$pageActions = [
-    ['label' => 'Creer un role', 'href' => $adminBase . '/roles/create', 'class' => 'btn btn-primary btn-sm'],
-];
+$pageActions = [];
 
 ob_start();
 ?>
@@ -24,6 +22,12 @@ ob_start();
     require CATMIN_ADMIN . '/views/components/alerts/inline.php';
     ?>
 <?php endif; ?>
+<section class="card mb-3">
+    <div class="card-body py-2 d-flex justify-content-between align-items-center">
+        <span class="small text-body-secondary">Matrice des rôles administrateurs</span>
+        <a class="btn btn-primary btn-sm" href="<?= htmlspecialchars((string) ($adminBase . '/roles/create'), ENT_QUOTES, 'UTF-8') ?>">Créer un rôle</a>
+    </div>
+</section>
 <?php require __DIR__ . '/partials/table.php'; ?>
 <script src="/assets/js/catmin-roles.js?v=2"></script>
 <?php

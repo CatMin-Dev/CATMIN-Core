@@ -1,7 +1,9 @@
 <?php
 
 declare(strict_types=1);
+use Core\security\CsrfManager;
 $rows = isset($rows) && is_array($rows) ? $rows : [];
+$csrfToken = htmlspecialchars((new CsrfManager())->token(), ENT_QUOTES, 'UTF-8');
 ?>
 <section class="card">
     <div class="table-responsive">
@@ -38,6 +40,12 @@ $rows = isset($rows) && is_array($rows) ? $rows : [];
                         <td class="text-end">
                             <a href="<?= htmlspecialchars((string) ($adminBase ?? '/admin') . '/roles/' . (int) ($row['id'] ?? 0), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-sm btn-outline-secondary">Voir</a>
                             <a href="<?= htmlspecialchars((string) ($adminBase ?? '/admin') . '/roles/' . (int) ($row['id'] ?? 0) . '/edit', ENT_QUOTES, 'UTF-8') ?>" class="btn btn-sm btn-outline-primary">Editer</a>
+                            <?php if (!$critical): ?>
+                                <form method="post" action="<?= htmlspecialchars((string) ($adminBase ?? '/admin') . '/roles/' . (int) ($row['id'] ?? 0) . '/delete', ENT_QUOTES, 'UTF-8') ?>" class="d-inline">
+                                    <input type="hidden" name="_csrf" value="<?= $csrfToken ?>">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Supprimer ce rôle ?');">Supprimer</button>
+                                </form>
+                            <?php endif; ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>

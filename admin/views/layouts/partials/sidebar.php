@@ -42,9 +42,9 @@ $navGroups = [
         'label' => 'Paramètres',
         'icon' => 'gear',
         'children' => [
-            ['key' => 'general', 'label' => 'Général', 'href' => $adminBase . '/settings?section=general'],
-            ['key' => 'mail', 'label' => 'Mail', 'href' => $adminBase . '/settings?section=mail'],
-            ['key' => 'security', 'label' => 'Sécurité', 'href' => $adminBase . '/settings?section=security'],
+            ['key' => 'general', 'label' => 'Général', 'href' => $adminBase . '/settings/general'],
+            ['key' => 'mail', 'label' => 'Mail', 'href' => $adminBase . '/settings/mail'],
+            ['key' => 'security', 'label' => 'Sécurité', 'href' => $adminBase . '/settings/security'],
         ],
     ],
 ];

@@ -21,29 +21,22 @@ $pageDescription = '';
 $activeNav = $activeSettingsNav;
 $breadcrumbs = [
     ['label' => 'Admin', 'href' => $adminBase . '/'],
-    ['label' => 'Paramètres', 'href' => $adminBase . '/settings?section=general'],
+    ['label' => 'Paramètres', 'href' => $adminBase . '/settings/general'],
     ['label' => $sectionTitle],
 ];
 $csrf = htmlspecialchars((new CsrfManager())->token(), ENT_QUOTES, 'UTF-8');
 
 $general = (array) ($settings['general'] ?? []);
 $security = (array) ($settings['security'] ?? []);
-$email = (array) ($settings['email'] ?? []);
+$email = (array) ($settings['mail'] ?? ($settings['email'] ?? []));
 $interface = (array) ($settings['interface'] ?? []);
 $maintenance = (array) ($settings['maintenance'] ?? []);
 $timezones = \DateTimeZone::listIdentifiers();
 
 ob_start();
 ?>
-<?php if ($message !== ''): ?>
-    <div class="alert alert-<?= htmlspecialchars($messageType, ENT_QUOTES, 'UTF-8') ?> py-2 mb-3">
-        <?= htmlspecialchars($message, ENT_QUOTES, 'UTF-8') ?>
-    </div>
-<?php endif; ?>
-
-<form method="post" action="<?= htmlspecialchars($adminBase . '/settings', ENT_QUOTES, 'UTF-8') ?>" class="d-grid gap-3">
+<form method="post" action="<?= htmlspecialchars($adminBase . '/settings/' . $section, ENT_QUOTES, 'UTF-8') ?>" class="d-grid gap-3">
     <input type="hidden" name="_csrf" value="<?= $csrf ?>">
-    <input type="hidden" name="section" value="<?= htmlspecialchars($section, ENT_QUOTES, 'UTF-8') ?>">
 
     <?php if ($section === 'security'): ?>
         <section class="card">
@@ -226,9 +219,41 @@ ob_start();
 
     <div class="d-flex gap-2">
         <button class="btn btn-primary" type="submit">Enregistrer</button>
-        <a class="btn btn-outline-secondary" href="<?= htmlspecialchars($adminBase . '/settings', ENT_QUOTES, 'UTF-8') ?>">Recharger</a>
+        <a class="btn btn-outline-secondary" href="<?= htmlspecialchars($adminBase . '/settings/' . $section, ENT_QUOTES, 'UTF-8') ?>">Recharger</a>
     </div>
 </form>
+
+<?php if ($message !== ''): ?>
+    <?php
+    $toastClass = match ($messageType) {
+        'success' => 'text-bg-success',
+        'warning' => 'text-bg-warning',
+        'danger', 'error' => 'text-bg-danger',
+        default => 'text-bg-primary',
+    };
+    ?>
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 1080;">
+        <div id="settings-toast" class="toast <?= htmlspecialchars($toastClass, ENT_QUOTES, 'UTF-8') ?>" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="3000">
+            <div class="d-flex align-items-center">
+                <div class="toast-body">
+                    <?= htmlspecialchars($message, ENT_QUOTES, 'UTF-8') ?>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+    (function () {
+      var toastEl = document.getElementById('settings-toast');
+      if (!toastEl) return;
+      if (window.bootstrap && typeof window.bootstrap.Toast === 'function') {
+        var toast = new window.bootstrap.Toast(toastEl, { autohide: true, delay: 3000 });
+        toast.show();
+        return;
+      }
+      setTimeout(function () { toastEl.remove(); }, 3000);
+    }());
+    </script>
+<?php endif; ?>
 <?php
 $content = (string) ob_get_clean();
 require CATMIN_ADMIN . '/views/layouts/admin.php';

@@ -65,8 +65,41 @@ final class HealthCheckService
             $missing === [] ? 'Toutes présentes' : ('Manquantes: ' . implode(', ', $missing))
         );
 
-        $timezone = (string) config('app.timezone', 'UTC');
+        $timezone = $this->resolveTimezone();
         $checks[] = $this->mk('env.timezone', 'Timezone', $timezone !== '' ? 'healthy' : 'warning', $timezone !== '' ? $timezone : 'Non définie');
+    }
+
+    private function resolveTimezone(): string
+    {
+        try {
+            $pdo = (new ConnectionManager())->connection();
+            $table = (string) config('database.prefixes.core', 'core_') . 'settings';
+            $stmt = $pdo->prepare(
+                'SELECT category, setting_value FROM ' . $table . " WHERE setting_key = 'timezone' AND category IN ('general', 'system')"
+            );
+            $stmt->execute();
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            $rows = is_array($rows) ? $rows : [];
+
+            $map = [];
+            foreach ($rows as $row) {
+                $category = (string) ($row['category'] ?? '');
+                $value = trim((string) ($row['setting_value'] ?? ''));
+                if ($category !== '' && $value !== '') {
+                    $map[$category] = $value;
+                }
+            }
+
+            if (isset($map['general']) && in_array($map['general'], \DateTimeZone::listIdentifiers(), true)) {
+                return $map['general'];
+            }
+            if (isset($map['system']) && in_array($map['system'], \DateTimeZone::listIdentifiers(), true)) {
+                return $map['system'];
+            }
+        } catch (\Throwable) {
+        }
+
+        return (string) config('app.timezone', 'UTC');
     }
 
     private function addDatabaseChecks(array &$checks): void
@@ -199,4 +232,3 @@ final class HealthCheckService
         ];
     }
 }
-

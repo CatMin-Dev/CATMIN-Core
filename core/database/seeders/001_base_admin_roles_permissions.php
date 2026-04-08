@@ -68,4 +68,25 @@ return static function (\PDO $pdo, array $prefixes): void {
             ]);
         }
     }
+
+    // SuperAdmin doit toujours conserver toutes les permissions connues.
+    $allPermsStmt = $pdo->query('SELECT id FROM ' . $permissionsTable . ' ORDER BY id ASC');
+    $allPerms = $allPermsStmt !== false ? ($allPermsStmt->fetchAll(\PDO::FETCH_COLUMN) ?: []) : [];
+    foreach ($allPerms as $permIdRaw) {
+        $permId = (int) $permIdRaw;
+        if ($permId <= 0) {
+            continue;
+        }
+        $findPivot->execute([
+            'role_id' => $roleId,
+            'permission_id' => $permId,
+        ]);
+        if ($findPivot->fetchColumn() !== false) {
+            continue;
+        }
+        $attachPermission->execute([
+            'role_id' => $roleId,
+            'permission_id' => $permId,
+        ]);
+    }
 };

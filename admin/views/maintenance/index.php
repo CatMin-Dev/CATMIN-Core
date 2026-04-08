@@ -99,7 +99,7 @@ ob_start();
         <div class="table-responsive">
             <table class="table table-sm align-middle mb-0">
                 <thead>
-                <tr><th>Fichier</th><th>Taille</th><th>Date</th><th class="text-end">Restore</th></tr>
+                <tr><th>Fichier</th><th>Taille</th><th>Date</th><th class="text-end">Actions</th></tr>
                 </thead>
                 <tbody>
                 <?php if ($backups === []): ?>
@@ -111,10 +111,17 @@ ob_start();
                             <td><?= number_format(((int) ($backup['size'] ?? 0)) / 1024, 1, '.', ' ') ?> KB</td>
                             <td><?= htmlspecialchars((string) ($backup['date'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                             <td class="text-end">
+                                <a class="btn btn-sm btn-outline-primary" href="<?= htmlspecialchars($adminBase . '/maintenance/backup/download?backup=' . rawurlencode((string) ($backup['name'] ?? '')), ENT_QUOTES, 'UTF-8') ?>">Télécharger</a>
+                                <a class="btn btn-sm btn-outline-secondary" href="<?= htmlspecialchars($adminBase . '/maintenance/backup/read?backup=' . rawurlencode((string) ($backup['name'] ?? '')), ENT_QUOTES, 'UTF-8') ?>">Lire</a>
                                 <form method="post" action="<?= htmlspecialchars($adminBase . '/maintenance/restore', ENT_QUOTES, 'UTF-8') ?>" class="d-inline">
                                     <input type="hidden" name="_csrf" value="<?= $csrf ?>">
                                     <input type="hidden" name="backup" value="<?= htmlspecialchars((string) ($backup['name'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
                                     <button class="btn btn-sm btn-outline-warning" type="submit" onclick="return confirm('Confirmer la restauration simulee de cette sauvegarde ?');">Restore</button>
+                                </form>
+                                <form method="post" action="<?= htmlspecialchars($adminBase . '/maintenance/backup/delete', ENT_QUOTES, 'UTF-8') ?>" class="d-inline">
+                                    <input type="hidden" name="_csrf" value="<?= $csrf ?>">
+                                    <input type="hidden" name="backup" value="<?= htmlspecialchars((string) ($backup['name'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                                    <button class="btn btn-sm btn-outline-danger" type="submit" onclick="return confirm('Supprimer cette sauvegarde ?');">Supprimer</button>
                                 </form>
                             </td>
                         </tr>
