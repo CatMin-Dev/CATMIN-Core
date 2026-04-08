@@ -29,28 +29,60 @@ final class CoreUiTranslator
             return self::$maps[$locale];
         }
 
+        $map = [];
+
+        $jsonPath = CATMIN_ROOT . '/lang/' . $locale . '.json';
+        if (is_file($jsonPath)) {
+            $fromJson = $this->loadJsonUiMap($jsonPath);
+            if ($fromJson !== []) {
+                $map = array_merge($map, $fromJson);
+            }
+        }
+
         $path = CATMIN_ROOT . '/lang/' . $locale . '/ui-map.php';
-        if (!is_file($path)) {
-            self::$maps[$locale] = [];
+        if (is_file($path)) {
+            $loaded = require $path;
+            if (is_array($loaded)) {
+                foreach ($loaded as $from => $to) {
+                    if (!is_string($from) || !is_string($to) || $from === '') {
+                        continue;
+                    }
+                    $map[$from] = $to;
+                }
+            }
+        }
+
+        uksort($map, static fn (string $a, string $b): int => strlen($b) <=> strlen($a));
+        self::$maps[$locale] = $map;
+        return $map;
+    }
+
+    /** @return array<string,string> */
+    private function loadJsonUiMap(string $path): array
+    {
+        $raw = @file_get_contents($path);
+        if (!is_string($raw) || trim($raw) === '') {
             return [];
         }
 
-        $loaded = require $path;
-        if (!is_array($loaded)) {
-            self::$maps[$locale] = [];
+        $decoded = json_decode($raw, true);
+        if (!is_array($decoded)) {
+            return [];
+        }
+
+        $source = $decoded['ui_map'] ?? null;
+        if (!is_array($source)) {
             return [];
         }
 
         $map = [];
-        foreach ($loaded as $from => $to) {
+        foreach ($source as $from => $to) {
             if (!is_string($from) || !is_string($to) || $from === '') {
                 continue;
             }
             $map[$from] = $to;
         }
 
-        uksort($map, static fn (string $a, string $b): int => strlen($b) <=> strlen($a));
-        self::$maps[$locale] = $map;
         return $map;
     }
 }

@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-$pageTitle = 'Staff / Administrateurs';
-$pageDescription = 'Listing complet des comptes admin/staff avec filtres, tri et actions bulk.';
+$pageTitle = __('staff.title.index');
+$pageDescription = __('staff.description.index');
 $activeNav = 'staff';
 $breadcrumbs = [
     ['label' => 'Admin', 'href' => $adminBase . '/'],
-    ['label' => 'Staff / Admins'],
+    ['label' => __('nav.staff_admins')],
 ];
 $pageActions = [];
 
@@ -15,8 +15,8 @@ ob_start();
 ?>
 <section class="card mb-3">
     <div class="card-body py-2 d-flex justify-content-between align-items-center">
-        <span class="small text-body-secondary">Gestion des comptes administrateurs</span>
-        <a class="btn btn-primary btn-sm" href="<?= htmlspecialchars((string) ($adminBase . '/staff/create'), ENT_QUOTES, 'UTF-8') ?>">Ajouter un compte</a>
+        <span class="small text-body-secondary"><?= htmlspecialchars(__('staff.manage_accounts'), ENT_QUOTES, 'UTF-8') ?></span>
+        <a class="btn btn-primary btn-sm" href="<?= htmlspecialchars((string) ($adminBase . '/staff/create'), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars(__('staff.add_account'), ENT_QUOTES, 'UTF-8') ?></a>
     </div>
 </section>
 
@@ -25,7 +25,7 @@ ob_start();
 <?php require __DIR__ . '/partials/table.php'; ?>
 
 <section class="d-flex justify-content-between align-items-center mt-2 small text-body-secondary">
-    <span>Page <?= (int) ($pagination['page'] ?? 1) ?> / <?= (int) ($pagination['pages'] ?? 1) ?></span>
+    <span><?= htmlspecialchars(__('common.page'), ENT_QUOTES, 'UTF-8') ?> <?= (int) ($pagination['page'] ?? 1) ?> / <?= (int) ($pagination['pages'] ?? 1) ?></span>
     <div class="d-flex gap-2">
         <?php
         $currentPage = (int) ($pagination['page'] ?? 1);
@@ -33,8 +33,8 @@ ob_start();
         $queryBase = $filters;
         unset($queryBase['page']);
         ?>
-        <a class="btn btn-sm btn-outline-secondary <?= $currentPage <= 1 ? 'disabled' : '' ?>" href="<?= htmlspecialchars((string) ($adminBase . '/staff?' . http_build_query(array_merge($queryBase, ['page' => max(1, $currentPage - 1)]))), ENT_QUOTES, 'UTF-8') ?>">Precedent</a>
-        <a class="btn btn-sm btn-outline-secondary <?= $currentPage >= $maxPages ? 'disabled' : '' ?>" href="<?= htmlspecialchars((string) ($adminBase . '/staff?' . http_build_query(array_merge($queryBase, ['page' => min($maxPages, $currentPage + 1)]))), ENT_QUOTES, 'UTF-8') ?>">Suivant</a>
+        <a class="btn btn-sm btn-outline-secondary <?= $currentPage <= 1 ? 'disabled' : '' ?>" href="<?= htmlspecialchars((string) ($adminBase . '/staff?' . http_build_query(array_merge($queryBase, ['page' => max(1, $currentPage - 1)]))), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars(__('common.previous'), ENT_QUOTES, 'UTF-8') ?></a>
+        <a class="btn btn-sm btn-outline-secondary <?= $currentPage >= $maxPages ? 'disabled' : '' ?>" href="<?= htmlspecialchars((string) ($adminBase . '/staff?' . http_build_query(array_merge($queryBase, ['page' => min($maxPages, $currentPage + 1)]))), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars(__('common.next'), ENT_QUOTES, 'UTF-8') ?></a>
     </div>
 </section>
 

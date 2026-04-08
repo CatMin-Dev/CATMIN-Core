@@ -10,7 +10,7 @@ use Core\versioning\Version;
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow, noarchive">
     <title>CATMIN Front</title>
-    <link rel="stylesheet" href="/odin-color.css">
+    <link rel="stylesheet" href="/odin-color.css?v=14">
     <link rel="stylesheet" href="/assets/vendor/bootstrap/5.3.8/css/bootstrap.min.css">
     <script src="/assets/js/odin-color.js?v=1"></script>
 </head>

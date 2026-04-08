@@ -4,10 +4,10 @@ declare(strict_types=1);
 $events = isset($events) && is_array($events) ? $events : [];
 ?>
 <section class="card h-100">
-    <div class="card-header bg-transparent border-0 pt-3"><h3 class="h6 mb-0">Historique activite</h3></div>
+    <div class="card-header bg-transparent border-0 pt-3"><h3 class="h6 mb-0"><?= htmlspecialchars(__('staff.activity.title'), ENT_QUOTES, 'UTF-8') ?></h3></div>
     <div class="card-body pt-2">
         <?php if ($events === []): ?>
-            <p class="small text-body-secondary mb-0">Aucun evenement.</p>
+            <p class="small text-body-secondary mb-0"><?= htmlspecialchars(__('staff.activity.empty'), ENT_QUOTES, 'UTF-8') ?></p>
         <?php else: ?>
             <ul class="list-group list-group-flush">
                 <?php foreach ($events as $event): ?>

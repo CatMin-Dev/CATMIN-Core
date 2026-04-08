@@ -2,10 +2,9 @@
 $profile = is_array($topbar['profile'] ?? null) ? $topbar['profile'] : [];
 $userLabel = (string) ($profile['username'] ?? ($user['username'] ?? $user['email'] ?? 'admin'));
 $userRole = (string) ($profile['role'] ?? 'founder');
-$userId = (int) ($user['id'] ?? 0);
-$profileHref = $userId > 0
-    ? ($adminBase . '/staff/show?id=' . rawurlencode((string) $userId))
-    : ($adminBase . '/settings/general');
+$profileHref = $adminBase . '/settings/general';
+$supportHref = $adminBase . '/system/logs';
+$lockHref = $adminBase . '/locked';
 if ($userRole === '' || $userRole === 'super-admin') {
     $userRole = __('topbar.role.founder');
 }
@@ -18,10 +17,10 @@ if ($userRole === '' || $userRole === 'super-admin') {
             <small><?= htmlspecialchars($userRole, ENT_QUOTES, 'UTF-8') ?></small>
         </span>
     </button>
-    <ul class="dropdown-menu dropdown-menu-end">
-        <li><a class="dropdown-item" href="<?= htmlspecialchars($profileHref, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars(__('topbar.profile'), ENT_QUOTES, 'UTF-8') ?></a></li>
-        <li><a class="dropdown-item" href="<?= htmlspecialchars($adminBase . '/password/change', ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars(__('topbar.security'), ENT_QUOTES, 'UTF-8') ?></a></li>
-        <li><hr class="dropdown-divider"></li>
-        <li><a class="dropdown-item" href="<?= htmlspecialchars($adminBase . '/logout', ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars(__('topbar.logout'), ENT_QUOTES, 'UTF-8') ?></a></li>
+    <ul class="dropdown-menu dropdown-menu-end cat-theme-menu cat-profile-menu">
+        <li><a class="dropdown-item" href="<?= htmlspecialchars($profileHref, ENT_QUOTES, 'UTF-8') ?>"><i class="bi bi-person me-2"></i><?= htmlspecialchars(__('topbar.profile'), ENT_QUOTES, 'UTF-8') ?></a></li>
+        <li><a class="dropdown-item" href="<?= htmlspecialchars($supportHref, ENT_QUOTES, 'UTF-8') ?>"><i class="bi bi-life-preserver me-2"></i><?= htmlspecialchars(__('topbar.support'), ENT_QUOTES, 'UTF-8') ?></a></li>
+        <li><a class="dropdown-item" href="<?= htmlspecialchars($lockHref, ENT_QUOTES, 'UTF-8') ?>"><i class="bi bi-lock me-2"></i><?= htmlspecialchars(__('topbar.lock_screen'), ENT_QUOTES, 'UTF-8') ?></a></li>
+        <li><a class="dropdown-item" href="<?= htmlspecialchars($adminBase . '/logout', ENT_QUOTES, 'UTF-8') ?>"><i class="bi bi-box-arrow-right me-2"></i><?= htmlspecialchars(__('topbar.logout'), ENT_QUOTES, 'UTF-8') ?></a></li>
     </ul>
 </div>

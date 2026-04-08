@@ -10,13 +10,13 @@ $pagination = isset($pagination) && is_array($pagination) ? $pagination : ['tota
     <div class="card-body py-3">
         <div class="row g-2 align-items-end">
             <div class="col-12 col-xl-4">
-                <label class="form-label mb-1" for="staff-q">Recherche</label>
-                <input id="staff-q" type="search" class="form-control" name="q" value="<?= htmlspecialchars((string) ($filters['q'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" placeholder="Username / email">
+                <label class="form-label mb-1" for="staff-q"><?= htmlspecialchars(__('common.search'), ENT_QUOTES, 'UTF-8') ?></label>
+                <input id="staff-q" type="search" class="form-control" name="q" value="<?= htmlspecialchars((string) ($filters['q'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" placeholder="<?= htmlspecialchars(__('staff.filters.search_placeholder'), ENT_QUOTES, 'UTF-8') ?>">
             </div>
             <div class="col-6 col-xl-2">
-                <label class="form-label mb-1" for="staff-role">Role</label>
+                <label class="form-label mb-1" for="staff-role"><?= htmlspecialchars(__('common.role'), ENT_QUOTES, 'UTF-8') ?></label>
                 <select id="staff-role" class="form-select" name="role">
-                    <option value="">Tous</option>
+                    <option value=""><?= htmlspecialchars(__('common.all'), ENT_QUOTES, 'UTF-8') ?></option>
                     <?php foreach ($roleOptions as $role): ?>
                         <?php $slug = (string) ($role['slug'] ?? ''); ?>
                         <option value="<?= htmlspecialchars($slug, ENT_QUOTES, 'UTF-8') ?>" <?= ($slug === (string) ($filters['role'] ?? '')) ? 'selected' : '' ?>>
@@ -26,23 +26,23 @@ $pagination = isset($pagination) && is_array($pagination) ? $pagination : ['tota
                 </select>
             </div>
             <div class="col-6 col-xl-2">
-                <label class="form-label mb-1" for="staff-status">Statut</label>
+                <label class="form-label mb-1" for="staff-status"><?= htmlspecialchars(__('common.status'), ENT_QUOTES, 'UTF-8') ?></label>
                 <select id="staff-status" class="form-select" name="status">
-                    <option value="">Tous</option>
-                    <option value="active" <?= ((string) ($filters['status'] ?? '') === 'active') ? 'selected' : '' ?>>Actif</option>
-                    <option value="inactive" <?= ((string) ($filters['status'] ?? '') === 'inactive') ? 'selected' : '' ?>>Inactif</option>
+                    <option value=""><?= htmlspecialchars(__('common.all'), ENT_QUOTES, 'UTF-8') ?></option>
+                    <option value="active" <?= ((string) ($filters['status'] ?? '') === 'active') ? 'selected' : '' ?>><?= htmlspecialchars(__('common.active'), ENT_QUOTES, 'UTF-8') ?></option>
+                    <option value="inactive" <?= ((string) ($filters['status'] ?? '') === 'inactive') ? 'selected' : '' ?>><?= htmlspecialchars(__('common.inactive'), ENT_QUOTES, 'UTF-8') ?></option>
                 </select>
             </div>
             <div class="col-6 col-xl-2">
-                <label class="form-label mb-1" for="staff-sort">Tri</label>
+                <label class="form-label mb-1" for="staff-sort"><?= htmlspecialchars(__('common.sort'), ENT_QUOTES, 'UTF-8') ?></label>
                 <select id="staff-sort" class="form-select" name="sort">
                     <?php
                     $sortOptions = [
-                        'created_at' => 'Creation',
-                        'last_login_at' => 'Derniere connexion',
-                        'username' => 'Username',
-                        'email' => 'Email',
-                        'role' => 'Role',
+                        'created_at' => __('common.creation'),
+                        'last_login_at' => __('common.last_login'),
+                        'username' => __('common.username'),
+                        'email' => __('common.email'),
+                        'role' => __('common.role'),
                     ];
                     foreach ($sortOptions as $key => $label):
                     ?>
@@ -52,10 +52,10 @@ $pagination = isset($pagination) && is_array($pagination) ? $pagination : ['tota
             </div>
             <div class="col-6 col-xl-2 d-flex gap-2">
                 <input type="hidden" name="dir" value="<?= htmlspecialchars((string) ($filters['dir'] ?? 'desc'), ENT_QUOTES, 'UTF-8') ?>">
-                <button type="submit" class="btn btn-primary flex-grow-1">Filtrer</button>
-                <a href="<?= htmlspecialchars((string) ($adminBase ?? '/admin') . '/staff', ENT_QUOTES, 'UTF-8') ?>" class="btn btn-outline-secondary" data-staff-reset>Reset</a>
+                <button type="submit" class="btn btn-primary flex-grow-1"><?= htmlspecialchars(__('common.filter'), ENT_QUOTES, 'UTF-8') ?></button>
+                <a href="<?= htmlspecialchars((string) ($adminBase ?? '/admin') . '/staff', ENT_QUOTES, 'UTF-8') ?>" class="btn btn-outline-secondary" data-staff-reset><?= htmlspecialchars(__('common.reset'), ENT_QUOTES, 'UTF-8') ?></a>
             </div>
         </div>
-        <p class="small text-body-secondary mb-0 mt-2">Resultats: <strong><?= (int) ($pagination['total'] ?? 0) ?></strong></p>
+        <p class="small text-body-secondary mb-0 mt-2"><?= htmlspecialchars(__('common.results'), ENT_QUOTES, 'UTF-8') ?>: <strong><?= (int) ($pagination['total'] ?? 0) ?></strong></p>
     </div>
 </form>

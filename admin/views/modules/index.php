@@ -13,15 +13,15 @@ $message = trim((string) ($message ?? ''));
 $messageType = trim((string) ($messageType ?? 'success'));
 
 $isStatusView = $activeView === 'status';
-$pageTitle = $isStatusView ? 'Modules / Etat activation' : 'Gestionnaire modules';
+$pageTitle = $isStatusView ? __('modules.title.status') : __('modules.title.manager');
 $pageDescription = '';
 $activeNav = $isStatusView ? 'module-status' : 'module-manager';
 $breadcrumbs = [
     ['label' => 'Admin', 'href' => $adminBase . '/'],
-    ['label' => 'Modules', 'href' => $adminBase . '/modules'],
+    ['label' => __('nav.modules'), 'href' => $adminBase . '/modules'],
 ];
 if ($isStatusView) {
-    $breadcrumbs[] = ['label' => 'Etat activation'];
+    $breadcrumbs[] = ['label' => __('nav.module_status')];
 }
 
 $csrf = htmlspecialchars((new CsrfManager())->token(), ENT_QUOTES, 'UTF-8');
@@ -30,11 +30,11 @@ ob_start();
 ?>
 <?php if ($isStatusView): ?>
     <div class="alert alert-info py-2 mb-3">
-        Vue supervision: suivi des activations, dependances et erreurs modules.
+        <?= htmlspecialchars(__('modules.alert.status_view'), ENT_QUOTES, 'UTF-8') ?>
     </div>
 <?php else: ?>
     <div class="alert alert-secondary py-2 mb-3">
-        Vue gestionnaire: active/desactive les modules et controle leurs contraintes.
+        <?= htmlspecialchars(__('modules.alert.manager_view'), ENT_QUOTES, 'UTF-8') ?>
     </div>
 <?php endif; ?>
 
@@ -42,7 +42,7 @@ ob_start();
     <div class="col-12 col-md-6 col-xl-3">
         <article class="card cat-module-stat-card h-100">
             <div class="card-body">
-                <small class="text-body-secondary">Total modules</small>
+                <small class="text-body-secondary"><?= htmlspecialchars(__('modules.stats.total'), ENT_QUOTES, 'UTF-8') ?></small>
                 <p class="h4 mb-0"><?= (int) ($stats['total'] ?? 0) ?></p>
             </div>
         </article>
@@ -50,7 +50,7 @@ ob_start();
     <div class="col-12 col-md-6 col-xl-3">
         <article class="card cat-module-stat-card h-100">
             <div class="card-body">
-                <small class="text-body-secondary">Actifs</small>
+                <small class="text-body-secondary"><?= htmlspecialchars(__('modules.stats.active'), ENT_QUOTES, 'UTF-8') ?></small>
                 <p class="h4 mb-0 text-success"><?= (int) ($stats['active'] ?? 0) ?></p>
             </div>
         </article>
@@ -58,7 +58,7 @@ ob_start();
     <div class="col-12 col-md-6 col-xl-3">
         <article class="card cat-module-stat-card h-100">
             <div class="card-body">
-                <small class="text-body-secondary">Inactifs</small>
+                <small class="text-body-secondary"><?= htmlspecialchars(__('modules.stats.inactive'), ENT_QUOTES, 'UTF-8') ?></small>
                 <p class="h4 mb-0 text-warning"><?= (int) ($stats['inactive'] ?? 0) ?></p>
             </div>
         </article>
@@ -66,7 +66,7 @@ ob_start();
     <div class="col-12 col-md-6 col-xl-3">
         <article class="card cat-module-stat-card h-100">
             <div class="card-body">
-                <small class="text-body-secondary">Avec erreurs</small>
+                <small class="text-body-secondary"><?= htmlspecialchars(__('modules.stats.with_errors'), ENT_QUOTES, 'UTF-8') ?></small>
                 <p class="h4 mb-0 text-danger"><?= (int) ($stats['errors'] ?? 0) ?></p>
             </div>
         </article>
@@ -77,13 +77,13 @@ ob_start();
     <div class="card-body py-3">
         <div class="row g-2 align-items-end">
             <div class="col-12 col-lg-5">
-                <label class="form-label mb-1">Recherche</label>
-                <input class="form-control" type="text" name="q" value="<?= htmlspecialchars((string) ($filters['q'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" placeholder="Nom, slug, version, dependance...">
+                <label class="form-label mb-1"><?= htmlspecialchars(__('common.search'), ENT_QUOTES, 'UTF-8') ?></label>
+                <input class="form-control" type="text" name="q" value="<?= htmlspecialchars((string) ($filters['q'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" placeholder="<?= htmlspecialchars(__('modules.filters.search_placeholder'), ENT_QUOTES, 'UTF-8') ?>">
             </div>
             <div class="col-6 col-lg-3">
-                <label class="form-label mb-1">Scope</label>
+                <label class="form-label mb-1"><?= htmlspecialchars(__('common.scope'), ENT_QUOTES, 'UTF-8') ?></label>
                 <select class="form-select" name="scope">
-                    <option value="all">Tous</option>
+                    <option value="all"><?= htmlspecialchars(__('common.all'), ENT_QUOTES, 'UTF-8') ?></option>
                     <?php foreach ($scopes as $scope): ?>
                         <option value="<?= htmlspecialchars((string) $scope, ENT_QUOTES, 'UTF-8') ?>" <?= ((string) ($filters['scope'] ?? 'all') === (string) $scope) ? 'selected' : '' ?>>
                             <?= htmlspecialchars((string) $scope, ENT_QUOTES, 'UTF-8') ?>
@@ -92,15 +92,15 @@ ob_start();
                 </select>
             </div>
             <div class="col-6 col-lg-2">
-                <label class="form-label mb-1">Statut</label>
+                <label class="form-label mb-1"><?= htmlspecialchars(__('common.status'), ENT_QUOTES, 'UTF-8') ?></label>
                 <select class="form-select" name="status">
                     <?php
                     $statusOptions = [
-                        'all' => 'Tous',
-                        'active' => 'Actifs',
-                        'inactive' => 'Inactifs',
-                        'error' => 'Erreurs',
-                        'issues' => 'A corriger',
+                        'all' => __('common.all'),
+                        'active' => __('modules.status.active_plural'),
+                        'inactive' => __('modules.status.inactive_plural'),
+                        'error' => __('modules.status.errors'),
+                        'issues' => __('modules.status.to_fix'),
                     ];
                     foreach ($statusOptions as $value => $label):
                         ?>
@@ -112,8 +112,8 @@ ob_start();
             </div>
             <div class="col-12 col-lg-2">
                 <div class="d-grid gap-2">
-                    <button class="btn btn-primary" type="submit">Filtrer</button>
-                    <a class="btn btn-outline-secondary" href="<?= htmlspecialchars((string) ($isStatusView ? $adminBase . '/modules/status' : $adminBase . '/modules'), ENT_QUOTES, 'UTF-8') ?>">Reset</a>
+                    <button class="btn btn-primary" type="submit"><?= htmlspecialchars(__('common.filter'), ENT_QUOTES, 'UTF-8') ?></button>
+                    <a class="btn btn-outline-secondary" href="<?= htmlspecialchars((string) ($isStatusView ? $adminBase . '/modules/status' : $adminBase . '/modules'), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars(__('common.reset'), ENT_QUOTES, 'UTF-8') ?></a>
                 </div>
             </div>
         </div>
@@ -125,18 +125,18 @@ ob_start();
         <table class="table align-middle mb-0 cat-modules-table">
             <thead>
             <tr>
-                <th>Module</th>
-                <th>Version</th>
-                <th>Dependances</th>
-                <th>Etat</th>
-                <th>Erreurs</th>
-                <th class="text-end"><?= $isStatusView ? 'Diagnostic' : 'Activation' ?></th>
+                <th><?= htmlspecialchars(__('common.module'), ENT_QUOTES, 'UTF-8') ?></th>
+                <th><?= htmlspecialchars(__('common.version'), ENT_QUOTES, 'UTF-8') ?></th>
+                <th><?= htmlspecialchars(__('modules.table.dependencies'), ENT_QUOTES, 'UTF-8') ?></th>
+                <th><?= htmlspecialchars(__('modules.table.state'), ENT_QUOTES, 'UTF-8') ?></th>
+                <th><?= htmlspecialchars(__('modules.table.errors'), ENT_QUOTES, 'UTF-8') ?></th>
+                <th class="text-end"><?= htmlspecialchars($isStatusView ? __('modules.table.diagnostic') : __('modules.table.activation'), ENT_QUOTES, 'UTF-8') ?></th>
             </tr>
             </thead>
             <tbody>
             <?php if ($rows === []): ?>
                 <tr>
-                    <td colspan="6" class="text-center py-5 text-body-secondary">Aucun module trouve pour ce filtre.</td>
+                    <td colspan="6" class="text-center py-5 text-body-secondary"><?= htmlspecialchars(__('modules.table.empty'), ENT_QUOTES, 'UTF-8') ?></td>
                 </tr>
             <?php else: ?>
                 <?php foreach ($rows as $row): ?>
@@ -157,7 +157,7 @@ ob_start();
                         <td><span class="badge text-bg-light border"><?= htmlspecialchars($version, ENT_QUOTES, 'UTF-8') ?></span></td>
                         <td>
                             <?php if ($dependencies === []): ?>
-                                <small class="text-body-secondary">Aucune</small>
+                                <small class="text-body-secondary"><?= htmlspecialchars(__('common.none_feminine'), ENT_QUOTES, 'UTF-8') ?></small>
                             <?php else: ?>
                                 <div class="d-flex flex-wrap gap-1">
                                     <?php foreach ($dependencies as $dep): ?>
@@ -168,14 +168,14 @@ ob_start();
                         </td>
                         <td>
                             <?php if ($enabled): ?>
-                                <span class="badge text-bg-success">Actif</span>
+                                <span class="badge text-bg-success"><?= htmlspecialchars(__('common.active'), ENT_QUOTES, 'UTF-8') ?></span>
                             <?php else: ?>
-                                <span class="badge text-bg-warning">Inactif</span>
+                                <span class="badge text-bg-warning"><?= htmlspecialchars(__('common.inactive'), ENT_QUOTES, 'UTF-8') ?></span>
                             <?php endif; ?>
                         </td>
                         <td>
                             <?php if ($errors === []): ?>
-                                <span class="badge text-bg-success">OK</span>
+                                <span class="badge text-bg-success"><?= htmlspecialchars(__('common.ok'), ENT_QUOTES, 'UTF-8') ?></span>
                             <?php else: ?>
                                 <ul class="mb-0 ps-3 cat-module-errors">
                                     <?php foreach ($errors as $error): ?>
@@ -187,11 +187,11 @@ ob_start();
                         <td class="text-end">
                             <?php if ($isStatusView): ?>
                                 <?php if ($errors !== []): ?>
-                                    <span class="badge text-bg-danger">Action requise</span>
+                                    <span class="badge text-bg-danger"><?= htmlspecialchars(__('modules.table.action_required'), ENT_QUOTES, 'UTF-8') ?></span>
                                 <?php elseif ($enabled): ?>
-                                    <span class="badge text-bg-success">Sain</span>
+                                    <span class="badge text-bg-success"><?= htmlspecialchars(__('modules.table.healthy'), ENT_QUOTES, 'UTF-8') ?></span>
                                 <?php else: ?>
-                                    <span class="badge text-bg-warning">Inactif</span>
+                                    <span class="badge text-bg-warning"><?= htmlspecialchars(__('common.inactive'), ENT_QUOTES, 'UTF-8') ?></span>
                                 <?php endif; ?>
                             <?php else: ?>
                                 <form method="post" action="<?= htmlspecialchars($adminBase . '/modules/toggle', ENT_QUOTES, 'UTF-8') ?>" class="d-inline">
@@ -201,7 +201,7 @@ ob_start();
                                     <input type="hidden" name="target" value="<?= $enabled ? '0' : '1' ?>">
                                     <input type="hidden" name="return_to" value="<?= $isStatusView ? 'status' : 'manager' ?>">
                                     <button class="btn btn-sm <?= $enabled ? 'btn-outline-danger' : 'btn-outline-success' ?>" type="submit">
-                                        <?= $enabled ? 'Desactiver' : 'Activer' ?>
+                                        <?= htmlspecialchars($enabled ? __('common.disable') : __('common.enable'), ENT_QUOTES, 'UTF-8') ?>
                                     </button>
                                 </form>
                             <?php endif; ?>

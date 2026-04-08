@@ -7,22 +7,22 @@ $selectedPermissions = isset($selectedPermissions) && is_array($selectedPermissi
 ?>
 <section class="card">
     <div class="card-header bg-transparent border-0 pt-3 d-flex justify-content-between align-items-center">
-        <h3 class="h6 mb-0">Permissions Matrix</h3>
+        <h3 class="h6 mb-0"><?= htmlspecialchars(__('roles.matrix.title'), ENT_QUOTES, 'UTF-8') ?></h3>
         <label class="form-check form-switch m-0">
             <input class="form-check-input" type="checkbox" data-matrix-all>
-            <span class="form-check-label small">Tout selectionner</span>
+            <span class="form-check-label small"><?= htmlspecialchars(__('roles.matrix.select_all'), ENT_QUOTES, 'UTF-8') ?></span>
         </label>
     </div>
     <div class="card-body pt-2">
         <?php if ($permissionMatrix === []): ?>
-            <p class="small text-body-secondary mb-0">Aucune permission definie.</p>
+            <p class="small text-body-secondary mb-0"><?= htmlspecialchars(__('roles.matrix.empty'), ENT_QUOTES, 'UTF-8') ?></p>
         <?php else: ?>
             <div class="table-responsive">
                 <table class="table table-sm align-middle cat-permissions-matrix mb-0">
                     <thead>
                     <tr>
-                        <th>Module</th>
-                        <th>Actions</th>
+                        <th><?= htmlspecialchars(__('common.module'), ENT_QUOTES, 'UTF-8') ?></th>
+                        <th><?= htmlspecialchars(__('common.actions'), ENT_QUOTES, 'UTF-8') ?></th>
                     </tr>
                     </thead>
                     <tbody>

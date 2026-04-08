@@ -308,6 +308,10 @@
     --palette-stone-300: #d6d3d1;
     --palette-stone-400: #a8a29e;
     --palette-stone-500: #78716c;
+
+    /* Light: primary follows stone family */
+    --bs-primary: var(--palette-stone-700);
+    --bs-primary-rgb: 68, 64, 60;
 }
 
 :root[data-bs-theme="dark"] {
@@ -339,6 +343,10 @@
     --bs-border-color: var(--palette-stone-700);
     --bs-link-color: var(--palette-rose-300);
     --bs-link-hover-color: var(--palette-rose-200);
+
+    /* Dark: CATMIN primary */
+    --bs-primary: var(--palette-rose-500);
+    --bs-primary-rgb: 226, 53, 97;
 }
 
 :root[data-bs-theme="corporate"] {
@@ -372,6 +380,10 @@
     --bs-secondary-color: var(--palette-stone-600);
     --bs-tertiary-bg: var(--palette-stone-100);
     --bs-border-color: var(--palette-stone-300);
+
+    /* Corporate: CATMIN primary */
+    --bs-primary: var(--palette-rose-500);
+    --bs-primary-rgb: 226, 53, 97;
 }
 
 ::selection {
@@ -405,6 +417,45 @@ body {
     --bs-btn-hover-border-color: color-mix(in srgb, var(--bs-primary) 84%, black);
     --bs-btn-active-bg: color-mix(in srgb, var(--bs-primary) 74%, black);
     --bs-btn-active-border-color: color-mix(in srgb, var(--bs-primary) 70%, black);
+}
+
+.btn-outline-primary {
+    --bs-btn-color: var(--bs-primary);
+    --bs-btn-border-color: var(--bs-primary);
+    --bs-btn-hover-bg: var(--bs-primary);
+    --bs-btn-hover-border-color: var(--bs-primary);
+    --bs-btn-active-bg: color-mix(in srgb, var(--bs-primary) 84%, black);
+    --bs-btn-active-border-color: color-mix(in srgb, var(--bs-primary) 84%, black);
+    --bs-btn-active-color: var(--palette-stone-50);
+}
+
+.text-primary,
+.link-primary {
+    color: var(--bs-primary) !important;
+}
+
+.bg-primary {
+    background-color: rgba(var(--bs-primary-rgb), var(--bs-bg-opacity, 1)) !important;
+}
+
+.border-primary {
+    border-color: rgba(var(--bs-primary-rgb), var(--bs-border-opacity, 1)) !important;
+}
+
+.text-bg-primary {
+    color: var(--palette-stone-50) !important;
+    background-color: rgba(var(--bs-primary-rgb), var(--bs-bg-opacity, 1)) !important;
+}
+
+.form-check-input:checked,
+.form-check-input[type="checkbox"]:indeterminate {
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+}
+
+.form-check-input:focus {
+    border-color: color-mix(in srgb, var(--bs-primary) 55%, white);
+    box-shadow: 0 0 0 .25rem color-mix(in srgb, var(--bs-primary) 28%, transparent);
 }
 
 /* Runtime utility targets (classes are injected by odin-color.js) */

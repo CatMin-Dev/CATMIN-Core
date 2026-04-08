@@ -1,6 +1,6 @@
 <?php
 
 declare(strict_types=1);
-$title = 'Aucun compte staff/admin';
-$description = 'Ajoute un premier compte ou ajuste les filtres.';
+$title = __('staff.empty.title');
+$description = __('staff.empty.description');
 require CATMIN_ADMIN . '/views/components/empty-states/basic.php';

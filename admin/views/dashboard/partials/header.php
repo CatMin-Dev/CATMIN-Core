@@ -12,7 +12,7 @@ $welcome = 'Bienvenue ' . ($userName !== '' ? $userName : 'admin') . ', voici le
             <p class="text-body-secondary mb-0"><?= htmlspecialchars($welcome, ENT_QUOTES, 'UTF-8') ?></p>
         </div>
         <div class="d-flex flex-wrap gap-2">
-            <a class="btn btn-primary btn-sm" href="#catQuickActions">Actions rapides</a>
+            <a class="btn btn-primary btn-sm" href="#catQuickActions"><?= htmlspecialchars(__('dashboard.quick_actions.title'), ENT_QUOTES, 'UTF-8') ?></a>
             <a class="btn btn-outline-secondary btn-sm" href="#catNotificationsPanel">Notifications</a>
         </div>
     </div>

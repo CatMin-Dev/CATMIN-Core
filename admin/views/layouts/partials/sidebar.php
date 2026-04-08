@@ -2,50 +2,50 @@
 $navGroups = [
     [
         'key' => 'dashboard',
-        'label' => 'Dashboard',
+        'label' => __('nav.dashboard'),
         'icon' => 'house-door',
         'href' => $adminBase . '/',
         'children' => [],
     ],
     [
         'key' => 'administration',
-        'label' => 'Administration',
+        'label' => __('nav.administration'),
         'icon' => 'calendar3',
         'children' => [
-            ['key' => 'staff', 'label' => 'Staff / Admins', 'href' => $adminBase . '/staff'],
-            ['key' => 'roles', 'label' => 'Roles & Permissions', 'href' => $adminBase . '/roles'],
+            ['key' => 'staff', 'label' => __('nav.staff_admins'), 'href' => $adminBase . '/staff'],
+            ['key' => 'roles', 'label' => __('nav.roles_permissions'), 'href' => $adminBase . '/roles'],
         ],
     ],
     [
         'key' => 'modules',
-        'label' => 'Modules',
+        'label' => __('nav.modules'),
         'icon' => 'chat-left-text',
         'children' => [
-            ['key' => 'module-manager', 'label' => 'Gestionnaire', 'href' => $adminBase . '/modules'],
-            ['key' => 'module-status', 'label' => 'Etat activation', 'href' => $adminBase . '/modules/status'],
+            ['key' => 'module-manager', 'label' => __('nav.module_manager'), 'href' => $adminBase . '/modules'],
+            ['key' => 'module-status', 'label' => __('nav.module_status'), 'href' => $adminBase . '/modules/status'],
         ],
     ],
     [
         'key' => 'system',
-        'label' => 'Système',
+        'label' => __('nav.system'),
         'icon' => 'speedometer2',
         'children' => [
-            ['key' => 'monitoring', 'label' => 'Monitoring', 'href' => $adminBase . '/system/monitoring'],
-            ['key' => 'health', 'label' => 'Health check', 'href' => $adminBase . '/system/health'],
-            ['key' => 'logs', 'label' => 'Journaux', 'href' => $adminBase . '/logs'],
-            ['key' => 'cron', 'label' => 'Cron', 'href' => $adminBase . '/cron'],
-            ['key' => 'maintenance', 'label' => 'Maintenance', 'href' => $adminBase . '/maintenance'],
+            ['key' => 'monitoring', 'label' => __('nav.monitoring'), 'href' => $adminBase . '/system/monitoring'],
+            ['key' => 'health', 'label' => __('nav.health_check'), 'href' => $adminBase . '/system/health'],
+            ['key' => 'logs', 'label' => __('nav.logs'), 'href' => $adminBase . '/logs'],
+            ['key' => 'cron', 'label' => __('nav.cron'), 'href' => $adminBase . '/cron'],
+            ['key' => 'maintenance', 'label' => __('nav.maintenance'), 'href' => $adminBase . '/maintenance'],
         ],
     ],
     [
         'key' => 'settings',
-        'label' => 'Paramètres',
+        'label' => __('nav.settings'),
         'icon' => 'gear',
         'children' => [
-            ['key' => 'general', 'label' => 'Général', 'href' => $adminBase . '/settings/general'],
-            ['key' => 'mail', 'label' => 'Mail', 'href' => $adminBase . '/settings/mail'],
-            ['key' => 'security', 'label' => 'Sécurité', 'href' => $adminBase . '/settings/security'],
-            ['key' => 'apps', 'label' => 'Apps', 'href' => $adminBase . '/settings/apps'],
+            ['key' => 'general', 'label' => __('nav.general'), 'href' => $adminBase . '/settings/general'],
+            ['key' => 'mail', 'label' => __('nav.mail'), 'href' => $adminBase . '/settings/mail'],
+            ['key' => 'security', 'label' => __('nav.security'), 'href' => $adminBase . '/settings/security'],
+            ['key' => 'apps', 'label' => __('nav.apps'), 'href' => $adminBase . '/settings/apps'],
         ],
     ],
 ];
@@ -177,7 +177,7 @@ $sidebarIconSvg = static function (string $name): string {
         </a>
     </div>
 
-    <nav class="cat-sidebar-nav" aria-label="Navigation principale">
+    <nav class="cat-sidebar-nav" aria-label="<?= htmlspecialchars(__('nav.main'), ENT_QUOTES, 'UTF-8') ?>">
         <?php foreach ($navGroups as $group): ?>
             <?php
             $children = is_array($group['children'] ?? null) ? $group['children'] : [];

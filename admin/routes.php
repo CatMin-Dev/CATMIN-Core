@@ -20,6 +20,7 @@ require_once CATMIN_CORE . '/notifications-bridge.php';
 require_once CATMIN_CORE . '/notifications-dispatcher.php';
 require_once CATMIN_CORE . '/apps-repository.php';
 require_once CATMIN_CORE . '/apps-validator.php';
+require_once CATMIN_CORE . '/db-upgrade-runner.php';
 
 $security = new SecurityManager(Request::capture(), 'admin');
 $authRequired = $security->adminAuthRequiredMiddleware();
@@ -824,18 +825,19 @@ return [
             $securityAlerts = (int) (($monitoringSnapshot['widgets']['security_alerts']['count'] ?? 0));
             $criticalErrors = (int) (($monitoringSnapshot['widgets']['critical_errors']['count'] ?? 0));
 
+            $modulesErrors = (int) ($modulesStats['errors'] ?? 0);
             $stats = [
-                ['title' => 'Admins actifs', 'value' => $user !== null ? '1' : '0', 'hint' => 'Compte courant actif', 'tone' => 'success', 'icon' => 'bi-people'],
-                ['title' => 'Modules actifs', 'value' => (string) ((int) ($modulesStats['active'] ?? 0)), 'hint' => ((int) ($modulesStats['errors'] ?? 0)) > 0 ? ((int) ($modulesStats['errors'] ?? 0) . ' module(s) en erreur') : 'Etat modules OK', 'tone' => ((int) ($modulesStats['errors'] ?? 0)) > 0 ? 'warning' : 'success', 'icon' => 'bi-puzzle'],
-                ['title' => 'Alertes securite', 'value' => (string) $securityAlerts, 'hint' => $securityAlerts > 0 ? 'Verifier le monitoring systeme' : 'Aucune alerte active', 'tone' => $securityAlerts > 0 ? 'warning' : 'success', 'icon' => 'bi-shield-check'],
+                ['title' => __('dashboard.stats.admins'), 'value' => $user !== null ? '1' : '0', 'hint' => __('dashboard.stats.account_active'), 'tone' => 'success', 'icon' => 'bi-people'],
+                ['title' => __('dashboard.stats.modules'), 'value' => (string) ((int) ($modulesStats['active'] ?? 0)), 'hint' => $modulesErrors > 0 ? str_replace(':count', (string) $modulesErrors, __('dashboard.stats.modules_errors')) : __('dashboard.stats.modules_ok'), 'tone' => $modulesErrors > 0 ? 'warning' : 'success', 'icon' => 'bi-puzzle'],
+                ['title' => __('dashboard.stats.security_alerts'), 'value' => (string) $securityAlerts, 'hint' => $securityAlerts > 0 ? __('dashboard.stats.security_check') : __('dashboard.stats.no_alert'), 'tone' => $securityAlerts > 0 ? 'warning' : 'success', 'icon' => 'bi-shield-check'],
                 ['title' => 'Dernier backup', 'value' => $lastBackup, 'hint' => $lastBackupHint, 'tone' => $lastBackup === '-' ? 'info' : 'success', 'icon' => 'bi-database-check'],
             ];
 
             $installLockPresent = is_file(CATMIN_STORAGE . '/install.lock') || is_file(CATMIN_STORAGE . '/install/installed.lock');
             $activity = [
-                ['title' => 'Connexion admin', 'meta' => 'Session active en cours', 'status' => 'OK', 'variant' => 'success'],
-                ['title' => 'Route admin', 'meta' => $adminBase, 'status' => 'INFO', 'variant' => 'info'],
-                ['title' => 'Installer lock', 'meta' => $installLockPresent ? 'Present' : 'Absent', 'status' => $installLockPresent ? 'LOCK' : 'WARN', 'variant' => $installLockPresent ? 'success' : 'warning'],
+                ['title' => __('dashboard.activity.admin_login'), 'meta' => __('dashboard.activity.session_active'), 'status' => 'OK', 'variant' => 'success'],
+                ['title' => __('dashboard.activity.admin_route'), 'meta' => $adminBase, 'status' => 'INFO', 'variant' => 'info'],
+                ['title' => __('dashboard.activity.installer_lock'), 'meta' => $installLockPresent ? __('common.present') : __('common.absent'), 'status' => $installLockPresent ? 'LOCK' : 'WARN', 'variant' => $installLockPresent ? 'success' : 'warning'],
             ];
 
             $health = array_map(static function (array $line): array {
@@ -1284,6 +1286,12 @@ return [
             };
 
             if ($section === 'apps') {
+                try {
+                    (new \CoreDbUpgradeRunner())->run();
+                } catch (\Throwable $exception) {
+                    \Core\logs\Logger::warning('Apps settings auto-upgrade failed', ['error' => $exception->getMessage()]);
+                }
+
                 $action = strtolower(trim((string) ($post['action'] ?? 'create')));
                 $appId = (int) ($post['app_id'] ?? 0);
                 $validation = $appsValidator->validate($post);
@@ -1319,8 +1327,9 @@ return [
                     }
                 }
 
+                $errorMessage = trim($appsRepository->lastError());
                 return $redirect($adminBase . '/settings/apps', [
-                    'msg' => $ok ? 'Apps enregistrees.' : 'Echec operation apps.',
+                    'msg' => $ok ? 'Apps enregistrees.' : ($errorMessage !== '' ? ('Echec operation apps. ' . $errorMessage) : 'Echec operation apps.'),
                     'mt' => $ok ? 'success' : 'danger',
                 ]);
             }

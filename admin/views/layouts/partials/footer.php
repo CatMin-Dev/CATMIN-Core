@@ -55,6 +55,6 @@ $catminVersion = \Core\versioning\Version::current();
             · <?= htmlspecialchars((string) ($gitMeta['branch'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
             · <?= htmlspecialchars((string) ($gitMeta['commit'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
         </small>
-        <small class="cat-footer-right">© <?= date('Y') ?> CATMIN. Tous droits reserves.</small>
+        <small class="cat-footer-right">© <?= date('Y') ?> CATMIN. <?= htmlspecialchars(__('footer.rights'), ENT_QUOTES, 'UTF-8') ?></small>
     </div>
 </footer>

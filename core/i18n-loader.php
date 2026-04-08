@@ -12,6 +12,14 @@ final class CoreI18nLoader
         }
 
         $dictionary = [];
+        $jsonLangPath = CATMIN_ROOT . '/lang/' . $locale . '.json';
+        if (is_file($jsonLangPath)) {
+            $loadedJson = $this->loadJsonDictionary($jsonLangPath);
+            if ($loadedJson !== []) {
+                $dictionary = array_merge($dictionary, $loadedJson);
+            }
+        }
+
         $coreLangPath = CATMIN_ROOT . '/lang/' . $locale . '/core.php';
         if (is_file($coreLangPath)) {
             $loaded = require $coreLangPath;
@@ -46,6 +54,35 @@ final class CoreI18nLoader
                     : ('module.' . $slug . '.' . $key);
                 $dictionary[$finalKey] = (string) $value;
             }
+        }
+
+        return $dictionary;
+    }
+
+    /** @return array<string, string> */
+    private function loadJsonDictionary(string $path): array
+    {
+        $raw = @file_get_contents($path);
+        if (!is_string($raw) || trim($raw) === '') {
+            return [];
+        }
+
+        $decoded = json_decode($raw, true);
+        if (!is_array($decoded)) {
+            return [];
+        }
+
+        $source = $decoded;
+        if (isset($decoded['core']) && is_array($decoded['core'])) {
+            $source = $decoded['core'];
+        }
+
+        $dictionary = [];
+        foreach ($source as $key => $value) {
+            if (!is_string($key) || !is_string($value) || $key === '') {
+                continue;
+            }
+            $dictionary[$key] = $value;
         }
 
         return $dictionary;

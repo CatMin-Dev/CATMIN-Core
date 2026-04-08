@@ -13,7 +13,7 @@ $authContent = isset($authContent) ? (string) $authContent : '';
     <title><?= htmlspecialchars('CATMIN Admin - ' . $authTitle, ENT_QUOTES, 'UTF-8') ?></title>
     <link rel="icon" type="image/png" href="/favicon.png">
     <link rel="stylesheet" href="/assets/vendor/bootstrap/5.3.8/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/odin-color.css">
+    <link rel="stylesheet" href="/odin-color.css?v=14">
     <link rel="stylesheet" href="/assets/css/catmin-ui.css?v=7">
     <link rel="stylesheet" href="/assets/css/admin-login.css?v=2">
     <link rel="stylesheet" href="/assets/css/catmin-auth.css?v=1">
@@ -23,7 +23,7 @@ $authContent = isset($authContent) ? (string) $authContent : '';
 <main class="cat-auth-main">
     <?= $authContent ?>
 </main>
-<footer class="admin-login-footer">© <?= date('Y') ?> CATMIN. Tous droits reserves.</footer>
+<footer class="admin-login-footer">© <?= date('Y') ?> CATMIN. <?= htmlspecialchars(__('footer.rights'), ENT_QUOTES, 'UTF-8') ?></footer>
 <script src="/assets/js/catmin-auth.js?v=1"></script>
 </body>
 </html>

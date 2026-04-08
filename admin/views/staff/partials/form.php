@@ -12,20 +12,20 @@ $isSuperAdmin = isset($isSuperAdmin) ? (bool) $isSuperAdmin : false;
     <div class="card-body">
         <div class="row g-3">
             <div class="col-12 col-lg-6">
-                <label class="form-label">Username</label>
+                <label class="form-label"><?= htmlspecialchars(__('common.username'), ENT_QUOTES, 'UTF-8') ?></label>
                 <input type="text" name="username" class="form-control <?= isset($errors['username']) ? 'is-invalid' : '' ?>" value="<?= htmlspecialchars((string) ($values['username'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" required>
                 <?php if (isset($errors['username'])): ?><div class="invalid-feedback"><?= htmlspecialchars((string) $errors['username'], ENT_QUOTES, 'UTF-8') ?></div><?php endif; ?>
             </div>
             <div class="col-12 col-lg-6">
-                <label class="form-label">Email</label>
+                <label class="form-label"><?= htmlspecialchars(__('common.email'), ENT_QUOTES, 'UTF-8') ?></label>
                 <input type="email" name="email" class="form-control <?= isset($errors['email']) ? 'is-invalid' : '' ?>" value="<?= htmlspecialchars((string) ($values['email'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" required>
                 <?php if (isset($errors['email'])): ?><div class="invalid-feedback"><?= htmlspecialchars((string) $errors['email'], ENT_QUOTES, 'UTF-8') ?></div><?php endif; ?>
             </div>
 
             <div class="col-12 col-lg-6">
-                <label class="form-label">Role</label>
+                <label class="form-label"><?= htmlspecialchars(__('common.role'), ENT_QUOTES, 'UTF-8') ?></label>
                 <select name="role_id" class="form-select <?= isset($errors['role_id']) ? 'is-invalid' : '' ?>" <?= $isSuperAdmin ? 'disabled' : '' ?>>
-                    <option value="">Selectionner</option>
+                    <option value=""><?= htmlspecialchars(__('common.select'), ENT_QUOTES, 'UTF-8') ?></option>
                     <?php foreach ($roles as $role): ?>
                         <?php $id = (int) ($role['id'] ?? 0); ?>
                         <option value="<?= $id ?>" <?= ((string) ($values['role_id'] ?? '') === (string) $id) ? 'selected' : '' ?>><?= htmlspecialchars((string) ($role['name'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></option>
@@ -35,23 +35,23 @@ $isSuperAdmin = isset($isSuperAdmin) ? (bool) $isSuperAdmin : false;
                 <?php if (isset($errors['role_id'])): ?><div class="invalid-feedback"><?= htmlspecialchars((string) $errors['role_id'], ENT_QUOTES, 'UTF-8') ?></div><?php endif; ?>
             </div>
             <div class="col-12 col-lg-6">
-                <label class="form-label">Statut</label>
+                <label class="form-label"><?= htmlspecialchars(__('common.status'), ENT_QUOTES, 'UTF-8') ?></label>
                 <select name="is_active" class="form-select" <?= $isSuperAdmin ? 'disabled' : '' ?>>
-                    <option value="1" <?= ((string) ($values['is_active'] ?? '1') === '1') ? 'selected' : '' ?>>Actif</option>
-                    <option value="0" <?= ((string) ($values['is_active'] ?? '1') === '0') ? 'selected' : '' ?>>Inactif</option>
+                    <option value="1" <?= ((string) ($values['is_active'] ?? '1') === '1') ? 'selected' : '' ?>><?= htmlspecialchars(__('common.active'), ENT_QUOTES, 'UTF-8') ?></option>
+                    <option value="0" <?= ((string) ($values['is_active'] ?? '1') === '0') ? 'selected' : '' ?>><?= htmlspecialchars(__('common.inactive'), ENT_QUOTES, 'UTF-8') ?></option>
                 </select>
                 <?php if ($isSuperAdmin): ?><input type="hidden" name="is_active" value="1"><?php endif; ?>
             </div>
 
             <?php if (!$isEdit): ?>
                 <div class="col-12 col-lg-6">
-                    <label class="form-label">Mot de passe</label>
+                    <label class="form-label"><?= htmlspecialchars(__('common.password'), ENT_QUOTES, 'UTF-8') ?></label>
                     <input type="password" name="password" class="form-control <?= isset($errors['password']) ? 'is-invalid' : '' ?>" minlength="12" required data-staff-password>
-                    <div class="form-text">Minimum 12 caracteres.</div>
+                    <div class="form-text"><?= htmlspecialchars(__('staff.password.min_hint'), ENT_QUOTES, 'UTF-8') ?></div>
                     <?php if (isset($errors['password'])): ?><div class="invalid-feedback"><?= htmlspecialchars((string) $errors['password'], ENT_QUOTES, 'UTF-8') ?></div><?php endif; ?>
                 </div>
                 <div class="col-12 col-lg-6">
-                    <label class="form-label">Confirmation mot de passe</label>
+                    <label class="form-label"><?= htmlspecialchars(__('staff.password.confirm_label'), ENT_QUOTES, 'UTF-8') ?></label>
                     <input type="password" name="password_confirm" class="form-control <?= isset($errors['password_confirm']) ? 'is-invalid' : '' ?>" minlength="12" required>
                     <?php if (isset($errors['password_confirm'])): ?><div class="invalid-feedback"><?= htmlspecialchars((string) $errors['password_confirm'], ENT_QUOTES, 'UTF-8') ?></div><?php endif; ?>
                 </div>

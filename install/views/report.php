@@ -28,7 +28,7 @@ $metaReport = is_object($context) && method_exists($context, 'meta') ? $context-
     <title>CATMIN Installer Report</title>
     <link rel="icon" type="image/png" href="/favicon.png">
     <link rel="stylesheet" href="/assets/vendor/bootstrap/5.3.8/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/assets/css/odin-color.css">
+    <link rel="stylesheet" href="/assets/css/odin-color.css?v=14">
     <link rel="stylesheet" href="/assets/css/install-pro.css">
     <script src="/assets/js/odin-color.js?v=1"></script>
 </head>

@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-$pageTitle = 'Roles & Permissions';
-$pageDescription = 'Gestion des roles, criticite et securisation explicite des droits.';
+$pageTitle = __('roles.title.index');
+$pageDescription = __('roles.description.index');
 $activeNav = 'roles';
 $breadcrumbs = [
     ['label' => 'Admin', 'href' => $adminBase . '/'],
-    ['label' => 'Roles & Permissions'],
+    ['label' => __('nav.roles_permissions')],
 ];
 $pageActions = [];
 
@@ -15,8 +15,8 @@ ob_start();
 ?>
 <section class="card mb-3">
     <div class="card-body py-2 d-flex justify-content-between align-items-center">
-        <span class="small text-body-secondary">Matrice des rôles administrateurs</span>
-        <a class="btn btn-primary btn-sm" href="<?= htmlspecialchars((string) ($adminBase . '/roles/create'), ENT_QUOTES, 'UTF-8') ?>">Créer un rôle</a>
+        <span class="small text-body-secondary"><?= htmlspecialchars(__('roles.matrix_admin'), ENT_QUOTES, 'UTF-8') ?></span>
+        <a class="btn btn-primary btn-sm" href="<?= htmlspecialchars((string) ($adminBase . '/roles/create'), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars(__('roles.create_role'), ENT_QUOTES, 'UTF-8') ?></a>
     </div>
 </section>
 <?php require __DIR__ . '/partials/table.php'; ?>

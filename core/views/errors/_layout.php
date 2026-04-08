@@ -16,7 +16,7 @@ $adminLogin = (string) ($admin_login ?? '/admin/login');
     <title>CATMIN · <?= htmlspecialchars((string) $status, ENT_QUOTES, 'UTF-8') ?></title>
     <link rel="icon" type="image/png" href="/favicon.png">
     <link rel="stylesheet" href="/assets/vendor/bootstrap/5.3.8/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/assets/css/odin-color.css">
+    <link rel="stylesheet" href="/assets/css/odin-color.css?v=14">
 </head>
 <body class="min-vh-100 d-flex align-items-center justify-content-center p-3" style="background:linear-gradient(145deg,#9a1b3d 0%,#70142d 45%,#292524 100%);">
     <main class="card shadow-lg border-0" style="max-width:720px;width:100%;">
@@ -32,4 +32,3 @@ $adminLogin = (string) ($admin_login ?? '/admin/login');
     </main>
 </body>
 </html>
-

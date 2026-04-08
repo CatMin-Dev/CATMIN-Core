@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 use Core\security\CsrfManager;
 
-$pageTitle = 'Creer role';
-$pageDescription = 'Nouveau role avec permissions explicites (aucune permission implicite).';
+$pageTitle = __('roles.title.create');
+$pageDescription = __('roles.description.create');
 $activeNav = 'roles';
 $breadcrumbs = [
     ['label' => 'Admin', 'href' => $adminBase . '/'],
-    ['label' => 'Roles & Permissions', 'href' => $adminBase . '/roles'],
-    ['label' => 'Creation'],
+    ['label' => __('nav.roles_permissions'), 'href' => $adminBase . '/roles'],
+    ['label' => __('common.creation')],
 ];
 $pageActions = [];
 
@@ -21,8 +21,8 @@ ob_start();
     <?php require __DIR__ . '/partials/form.php'; ?>
     <?php require __DIR__ . '/partials/permissions-matrix.php'; ?>
     <div class="d-flex gap-2">
-        <button class="btn btn-primary" type="submit">Creer</button>
-        <a class="btn btn-outline-secondary" href="<?= htmlspecialchars((string) ($adminBase . '/roles'), ENT_QUOTES, 'UTF-8') ?>">Annuler</a>
+        <button class="btn btn-primary" type="submit"><?= htmlspecialchars(__('common.create'), ENT_QUOTES, 'UTF-8') ?></button>
+        <a class="btn btn-outline-secondary" href="<?= htmlspecialchars((string) ($adminBase . '/roles'), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars(__('common.cancel'), ENT_QUOTES, 'UTF-8') ?></a>
     </div>
 </form>
 <script src="/assets/js/catmin-roles.js?v=2"></script>
