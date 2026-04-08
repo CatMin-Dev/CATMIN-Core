@@ -1,6 +1,6 @@
 # CATMIN Standalone
 
-![Version](https://img.shields.io/badge/version-0.3.0--dev.3-ec407a)
+![Version](https://img.shields.io/badge/version-0.3.0--dev.6-ec407a)
 ![PHP](https://img.shields.io/badge/php-8.3%2B-777777)
 ![Package](https://img.shields.io/badge/package-standalone%20zip-3b82f6)
 ![Status](https://img.shields.io/badge/status-ready%20for%20install%20test-16a34a)

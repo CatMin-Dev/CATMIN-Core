@@ -1,5 +1,17 @@
 [
   {
+    "version": "0.3.0-dev.6",
+    "date": "2026-04-08",
+    "scope": "release",
+    "changes": [
+      "core test matrix documentation and smoke runner added (037)",
+      "release freeze, RC checklist and go/no-go templates documented (038)",
+      "legal finalization set completed and installer legal bundle extended (039)",
+      "terrain release execution plan and checklist documented (040)"
+    ],
+    "prompt": "037-040"
+  },
+  {
     "version": "0.3.0-dev.5",
     "date": "2026-04-08",
     "scope": "routing",
