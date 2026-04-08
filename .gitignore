@@ -28,3 +28,14 @@ tmp/*
 # Tooling
 .vscode/
 node_modules/
+
+# Runtime artifacts that must not be versioned
+storage/install/*
+!storage/install/.gitkeep
+!storage/install/sessions/
+!storage/install/sessions/.gitkeep
+!storage/install/reports/
+!storage/install/reports/.gitkeep
+storage/config/runtime.json
+db/database.sqlite
+logs/version-history.json

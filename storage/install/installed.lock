@@ -1,8 +1,0 @@
-{
-    "locked_at": "2026-04-06T14:19:44+00:00",
-    "payload": {
-        "version": "0.1.0-dev.7",
-        "report": "/var/www/catmin.local/catmin/storage/install/reports/install-report-20260406-141944.json",
-        "admin_path": "admin"
-    }
-}

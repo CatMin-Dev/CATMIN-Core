@@ -1,1 +1,0 @@
-Installer locked. You can now remove the /install directory from deployment if desired.
