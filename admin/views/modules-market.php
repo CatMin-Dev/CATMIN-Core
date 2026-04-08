@@ -1,0 +1,193 @@
+<?php
+
+declare(strict_types=1);
+
+use Core\security\CsrfManager;
+
+$pageTitle = __('market.title');
+$pageDescription = '';
+$activeNav = 'module-market';
+$breadcrumbs = [
+    ['label' => __('common.admin'), 'href' => $adminBase . '/'],
+    ['label' => __('nav.modules'), 'href' => $adminBase . '/modules'],
+    ['label' => __('market.title')],
+];
+
+$catalog = is_array($catalog ?? null) ? $catalog : [];
+$items = is_array($catalog['items'] ?? null) ? $catalog['items'] : [];
+$stats = is_array($catalog['stats'] ?? null) ? $catalog['stats'] : [];
+$error = trim((string) ($catalog['error'] ?? ''));
+$search = strtolower(trim((string) ($filters['q'] ?? '')));
+$status = strtolower(trim((string) ($filters['status'] ?? 'all')));
+$scope = strtolower(trim((string) ($filters['scope'] ?? 'all')));
+
+$scopes = [];
+foreach ($items as $item) {
+    $scopes[] = strtolower(trim((string) ($item['scope'] ?? 'unknown')));
+}
+$scopes = array_values(array_unique(array_filter($scopes, static fn (string $v): bool => $v !== '')));
+sort($scopes);
+
+$items = array_values(array_filter($items, static function (array $item) use ($search, $status, $scope): bool {
+    $label = strtolower(trim((string) (($item['name'] ?? '') . ' ' . ($item['slug'] ?? '') . ' ' . ($item['description'] ?? ''))));
+    if ($search !== '' && !str_contains($label, $search)) {
+        return false;
+    }
+    if ($scope !== 'all' && strtolower((string) ($item['scope'] ?? '')) !== $scope) {
+        return false;
+    }
+
+    $installed = (bool) ($item['installed'] ?? false);
+    $compatible = (bool) ($item['compatible'] ?? true);
+    $hasUpdate = (bool) ($item['has_update'] ?? false);
+
+    return match ($status) {
+        'installed' => $installed,
+        'not-installed' => !$installed,
+        'updates' => $hasUpdate,
+        'incompatible' => !$compatible,
+        default => true,
+    };
+}));
+
+$csrf = htmlspecialchars((new CsrfManager())->token(), ENT_QUOTES, 'UTF-8');
+
+ob_start();
+?>
+<section class="row g-3 mb-3">
+    <div class="col-6 col-xl-3"><div class="card h-100"><div class="card-body"><small class="text-body-secondary"><?= htmlspecialchars(__('market.stats.total'), ENT_QUOTES, 'UTF-8') ?></small><p class="h4 mb-0"><?= (int) ($stats['total'] ?? 0) ?></p></div></div></div>
+    <div class="col-6 col-xl-3"><div class="card h-100"><div class="card-body"><small class="text-body-secondary"><?= htmlspecialchars(__('market.stats.installed'), ENT_QUOTES, 'UTF-8') ?></small><p class="h4 mb-0 text-success"><?= (int) ($stats['installed'] ?? 0) ?></p></div></div></div>
+    <div class="col-6 col-xl-3"><div class="card h-100"><div class="card-body"><small class="text-body-secondary"><?= htmlspecialchars(__('market.stats.updates'), ENT_QUOTES, 'UTF-8') ?></small><p class="h4 mb-0 text-warning"><?= (int) ($stats['updates'] ?? 0) ?></p></div></div></div>
+    <div class="col-6 col-xl-3"><div class="card h-100"><div class="card-body"><small class="text-body-secondary"><?= htmlspecialchars(__('market.stats.incompatible'), ENT_QUOTES, 'UTF-8') ?></small><p class="h4 mb-0 text-danger"><?= (int) ($stats['incompatible'] ?? 0) ?></p></div></div></div>
+</section>
+
+<?php if ($error !== ''): ?>
+    <div class="alert alert-danger"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></div>
+<?php endif; ?>
+
+<form method="get" class="card mb-3">
+    <div class="card-body py-3">
+        <div class="row g-2 align-items-end">
+            <div class="col-12 col-lg-5">
+                <label class="form-label mb-1"><?= htmlspecialchars(__('common.search'), ENT_QUOTES, 'UTF-8') ?></label>
+                <input class="form-control" type="text" name="q" value="<?= htmlspecialchars($search, ENT_QUOTES, 'UTF-8') ?>" placeholder="<?= htmlspecialchars(__('market.filters.search_placeholder'), ENT_QUOTES, 'UTF-8') ?>">
+            </div>
+            <div class="col-6 col-lg-3">
+                <label class="form-label mb-1"><?= htmlspecialchars(__('common.scope'), ENT_QUOTES, 'UTF-8') ?></label>
+                <select class="form-select" name="scope">
+                    <option value="all"><?= htmlspecialchars(__('common.all'), ENT_QUOTES, 'UTF-8') ?></option>
+                    <?php foreach ($scopes as $scopeOption): ?>
+                        <option value="<?= htmlspecialchars($scopeOption, ENT_QUOTES, 'UTF-8') ?>" <?= $scopeOption === $scope ? 'selected' : '' ?>><?= htmlspecialchars($scopeOption, ENT_QUOTES, 'UTF-8') ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-6 col-lg-2">
+                <label class="form-label mb-1"><?= htmlspecialchars(__('common.status'), ENT_QUOTES, 'UTF-8') ?></label>
+                <select class="form-select" name="status">
+                    <?php
+                    $statusOptions = [
+                        'all' => __('common.all'),
+                        'installed' => __('market.status.installed'),
+                        'not-installed' => __('market.status.not_installed'),
+                        'updates' => __('market.status.updates'),
+                        'incompatible' => __('market.status.incompatible'),
+                    ];
+                    foreach ($statusOptions as $value => $label):
+                        ?>
+                        <option value="<?= htmlspecialchars($value, ENT_QUOTES, 'UTF-8') ?>" <?= $value === $status ? 'selected' : '' ?>><?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-12 col-lg-2">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-primary" type="submit"><?= htmlspecialchars(__('common.filter'), ENT_QUOTES, 'UTF-8') ?></button>
+                    <a class="btn btn-outline-secondary" href="<?= htmlspecialchars($adminBase . '/modules/market', ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars(__('common.reset'), ENT_QUOTES, 'UTF-8') ?></a>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<section class="card">
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead>
+            <tr>
+                <th><?= htmlspecialchars(__('common.module'), ENT_QUOTES, 'UTF-8') ?></th>
+                <th><?= htmlspecialchars(__('common.version'), ENT_QUOTES, 'UTF-8') ?></th>
+                <th><?= htmlspecialchars(__('market.compatibility'), ENT_QUOTES, 'UTF-8') ?></th>
+                <th><?= htmlspecialchars(__('common.status'), ENT_QUOTES, 'UTF-8') ?></th>
+                <th class="text-end"><?= htmlspecialchars(__('common.actions'), ENT_QUOTES, 'UTF-8') ?></th>
+            </tr>
+            </thead>
+            <tbody>
+            <?php if ($items === []): ?>
+                <tr><td colspan="5" class="text-center py-5 text-body-secondary"><?= htmlspecialchars(__('market.empty'), ENT_QUOTES, 'UTF-8') ?></td></tr>
+            <?php endif; ?>
+            <?php foreach ($items as $item): ?>
+                <?php
+                $moduleScope = strtolower(trim((string) ($item['scope'] ?? 'unknown')));
+                $slug = strtolower(trim((string) ($item['slug'] ?? 'unknown')));
+                $installed = (bool) ($item['installed'] ?? false);
+                $hasUpdate = (bool) ($item['has_update'] ?? false);
+                $compatible = (bool) ($item['compatible'] ?? true);
+                ?>
+                <tr>
+                    <td>
+                        <p class="mb-0 fw-semibold"><?= htmlspecialchars((string) ($item['name'] ?? $slug), ENT_QUOTES, 'UTF-8') ?></p>
+                        <small class="text-body-secondary"><?= htmlspecialchars($moduleScope . '/' . $slug, ENT_QUOTES, 'UTF-8') ?></small>
+                        <p class="small text-body-secondary mt-1 mb-0"><?= htmlspecialchars((string) ($item['description'] ?? ''), ENT_QUOTES, 'UTF-8') ?></p>
+                    </td>
+                    <td>
+                        <span class="badge text-bg-light border"><?= htmlspecialchars((string) ($item['version'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></span>
+                        <?php if ($installed): ?>
+                            <small class="d-block text-body-secondary mt-1"><?= htmlspecialchars(__('market.installed_version'), ENT_QUOTES, 'UTF-8') ?>: <?= htmlspecialchars((string) ($item['installed_version'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></small>
+                        <?php endif; ?>
+                    </td>
+                    <td>
+                        <?php if ($compatible): ?>
+                            <span class="badge text-bg-success"><?= htmlspecialchars(__('common.ok'), ENT_QUOTES, 'UTF-8') ?></span>
+                        <?php else: ?>
+                            <span class="badge text-bg-danger"><?= htmlspecialchars(__('market.status.incompatible'), ENT_QUOTES, 'UTF-8') ?></span>
+                            <ul class="mb-0 ps-3 small mt-1">
+                                <?php foreach ((array) ($item['compat_errors'] ?? []) as $errorRow): ?>
+                                    <li><?= htmlspecialchars((string) $errorRow, ENT_QUOTES, 'UTF-8') ?></li>
+                                <?php endforeach; ?>
+                            </ul>
+                        <?php endif; ?>
+                        <small class="d-block text-body-secondary mt-1">
+                            min: <?= htmlspecialchars((string) (($item['catmin_min'] ?? '') !== '' ? $item['catmin_min'] : '-'), ENT_QUOTES, 'UTF-8') ?>
+                            · max: <?= htmlspecialchars((string) (($item['catmin_max'] ?? '') !== '' ? $item['catmin_max'] : '-'), ENT_QUOTES, 'UTF-8') ?>
+                        </small>
+                    </td>
+                    <td>
+                        <?php if (!$installed): ?>
+                            <span class="badge text-bg-secondary"><?= htmlspecialchars(__('market.status.not_installed'), ENT_QUOTES, 'UTF-8') ?></span>
+                        <?php elseif ($hasUpdate): ?>
+                            <span class="badge text-bg-warning"><?= htmlspecialchars(__('market.status.updates'), ENT_QUOTES, 'UTF-8') ?></span>
+                        <?php elseif ((bool) ($item['enabled'] ?? false)): ?>
+                            <span class="badge text-bg-success"><?= htmlspecialchars(__('common.active'), ENT_QUOTES, 'UTF-8') ?></span>
+                        <?php else: ?>
+                            <span class="badge text-bg-warning"><?= htmlspecialchars(__('common.inactive'), ENT_QUOTES, 'UTF-8') ?></span>
+                        <?php endif; ?>
+                    </td>
+                    <td class="text-end">
+                        <form method="post" action="<?= htmlspecialchars($adminBase . '/modules/market/install', ENT_QUOTES, 'UTF-8') ?>" class="d-inline">
+                            <input type="hidden" name="_csrf" value="<?= $csrf ?>">
+                            <input type="hidden" name="scope" value="<?= htmlspecialchars($moduleScope, ENT_QUOTES, 'UTF-8') ?>">
+                            <input type="hidden" name="slug" value="<?= htmlspecialchars($slug, ENT_QUOTES, 'UTF-8') ?>">
+                            <button type="submit" class="btn btn-sm <?= $hasUpdate ? 'btn-warning' : 'btn-primary' ?>" <?= !$compatible ? 'disabled' : '' ?>>
+                                <?= htmlspecialchars($hasUpdate ? __('market.action.update') : __('market.action.install'), ENT_QUOTES, 'UTF-8') ?>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+</section>
+<?php
+$content = (string) ob_get_clean();
+require CATMIN_ADMIN . '/views/layouts/admin.php';
+

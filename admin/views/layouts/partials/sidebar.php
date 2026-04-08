@@ -23,6 +23,7 @@ $navGroups = [
         'children' => [
             ['key' => 'module-manager', 'label' => __('nav.module_manager'), 'href' => $adminBase . '/modules'],
             ['key' => 'module-status', 'label' => __('nav.module_status'), 'href' => $adminBase . '/modules/status'],
+            ['key' => 'module-market', 'label' => __('nav.module_market'), 'href' => $adminBase . '/modules/market'],
         ],
     ],
     [
@@ -32,6 +33,7 @@ $navGroups = [
         'children' => [
             ['key' => 'monitoring', 'label' => __('nav.monitoring'), 'href' => $adminBase . '/system/monitoring'],
             ['key' => 'health', 'label' => __('nav.health_check'), 'href' => $adminBase . '/system/health'],
+            ['key' => 'core-update', 'label' => __('nav.core_update'), 'href' => $adminBase . '/system/update'],
             ['key' => 'logs', 'label' => __('nav.logs'), 'href' => $adminBase . '/logs'],
             ['key' => 'cron', 'label' => __('nav.cron'), 'href' => $adminBase . '/cron'],
             ['key' => 'maintenance', 'label' => __('nav.maintenance'), 'href' => $adminBase . '/maintenance'],

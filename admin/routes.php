@@ -21,6 +21,8 @@ require_once CATMIN_CORE . '/notifications-dispatcher.php';
 require_once CATMIN_CORE . '/apps-repository.php';
 require_once CATMIN_CORE . '/apps-validator.php';
 require_once CATMIN_CORE . '/db-upgrade-runner.php';
+require_once CATMIN_CORE . '/updater.php';
+require_once CATMIN_CORE . '/market-engine.php';
 
 $security = new SecurityManager(Request::capture(), 'admin');
 $authRequired = $security->adminAuthRequiredMiddleware();
@@ -1010,6 +1012,32 @@ return [
 
     [
         'method' => 'GET',
+        'path' => '/modules/market',
+        'handler' => static function (Request $request) use ($consumeFlash): Response {
+            $controller = new AuthController();
+            $adminBase = $controller->adminBasePath();
+            $flash = $consumeFlash();
+
+            $engine = new CoreMarketEngine();
+            $catalog = $engine->catalog();
+
+            return View::make('modules-market', [
+                'adminBase' => $adminBase,
+                'catalog' => $catalog,
+                'filters' => [
+                    'q' => (string) $request->input('q', ''),
+                    'status' => (string) $request->input('status', 'all'),
+                    'scope' => (string) $request->input('scope', 'all'),
+                ],
+                'message' => (string) ($flash['message'] ?? ''),
+                'messageType' => (string) ($flash['type'] ?? 'success'),
+            ], 'admin');
+        },
+        'middleware' => [$authRequired],
+    ],
+
+    [
+        'method' => 'GET',
         'path' => '/locale/{locale}',
         'where' => ['locale' => 'fr|en'],
         'handler' => static function (Request $request, string $locale) use ($redirect): Response {
@@ -1496,6 +1524,85 @@ return [
             ], 'admin');
         },
         'middleware' => [$authRequired],
+    ],
+
+    [
+        'method' => 'GET',
+        'path' => '/system/update',
+        'handler' => static function () use ($consumeFlash): Response {
+            $controller = new AuthController();
+            $adminBase = $controller->adminBasePath();
+            $flash = $consumeFlash();
+
+            $updater = new CoreUpdater();
+            $check = $updater->check();
+
+            $reportFile = CATMIN_STORAGE . '/updates/reports/latest-github-update.json';
+            $report = [];
+            if (is_file($reportFile)) {
+                $decoded = json_decode((string) file_get_contents($reportFile), true);
+                if (is_array($decoded)) {
+                    $report = $decoded;
+                }
+            }
+
+            return View::make('system.update', [
+                'adminBase' => $adminBase,
+                'check' => $check,
+                'report' => $report,
+                'message' => (string) ($flash['message'] ?? ''),
+                'messageType' => (string) ($flash['type'] ?? 'success'),
+            ], 'admin');
+        },
+        'middleware' => [$authRequired],
+    ],
+
+    [
+        'method' => 'POST',
+        'path' => '/system/update/check',
+        'handler' => static function () use ($redirect): Response {
+            $controller = new AuthController();
+            $adminBase = $controller->adminBasePath();
+
+            $check = (new CoreUpdater())->check();
+            return $redirect($adminBase . '/system/update', [
+                'msg' => (bool) ($check['ok'] ?? false) ? 'Vérification update terminée.' : ((string) ($check['error'] ?? 'Vérification update en erreur.')),
+                'mt' => (bool) ($check['ok'] ?? false) ? 'success' : 'danger',
+            ]);
+        },
+        'middleware' => [$authRequired, $csrfCheck],
+    ],
+
+    [
+        'method' => 'POST',
+        'path' => '/system/update/dry-run',
+        'handler' => static function () use ($redirect): Response {
+            $controller = new AuthController();
+            $adminBase = $controller->adminBasePath();
+
+            $result = (new CoreUpdater())->dryRun();
+            return $redirect($adminBase . '/system/update', [
+                'msg' => (bool) ($result['ok'] ?? false) ? 'Dry-run update terminé.' : ((string) ($result['error'] ?? 'Dry-run en erreur.')),
+                'mt' => (bool) ($result['ok'] ?? false) ? 'success' : 'danger',
+            ]);
+        },
+        'middleware' => [$authRequired, $csrfCheck],
+    ],
+
+    [
+        'method' => 'POST',
+        'path' => '/system/update/run',
+        'handler' => static function () use ($redirect): Response {
+            $controller = new AuthController();
+            $adminBase = $controller->adminBasePath();
+
+            $result = (new CoreUpdater())->updateNow();
+            return $redirect($adminBase . '/system/update', [
+                'msg' => (bool) ($result['ok'] ?? false) ? 'Update core terminée.' : ((string) ($result['error'] ?? 'Update core en erreur.')),
+                'mt' => (bool) ($result['ok'] ?? false) ? 'success' : 'danger',
+            ]);
+        },
+        'middleware' => [$authRequired, $csrfCheck],
     ],
 
     [
@@ -2061,6 +2168,52 @@ return [
             return $redirect($adminBase . $path, [
                 'msg' => (string) ($result['message'] ?? 'Operation terminee'),
                 'mt' => $mt,
+            ]);
+        },
+        'middleware' => [$authRequired, $csrfCheck],
+    ],
+
+    [
+        'method' => 'POST',
+        'path' => '/modules/market/install',
+        'handler' => static function (Request $request) use ($redirect): Response {
+            $controller = new AuthController();
+            $adminBase = $controller->adminBasePath();
+
+            $scope = strtolower(trim((string) $request->input('scope', '')));
+            $slug = strtolower(trim((string) $request->input('slug', '')));
+            if ($scope === '' || $slug === '') {
+                return $redirect($adminBase . '/modules/market', [
+                    'msg' => 'Module invalide.',
+                    'mt' => 'danger',
+                ]);
+            }
+
+            $catalog = (new CoreMarketEngine())->catalog();
+            $items = is_array($catalog['items'] ?? null) ? $catalog['items'] : [];
+            $target = null;
+            foreach ($items as $item) {
+                if (!is_array($item)) {
+                    continue;
+                }
+                if (strtolower((string) ($item['scope'] ?? '')) === $scope && strtolower((string) ($item['slug'] ?? '')) === $slug) {
+                    $target = $item;
+                    break;
+                }
+            }
+
+            if (!is_array($target)) {
+                return $redirect($adminBase . '/modules/market', [
+                    'msg' => 'Module introuvable dans le catalogue.',
+                    'mt' => 'danger',
+                ]);
+            }
+
+            $result = (new CoreMarketEngine())->install($target);
+
+            return $redirect($adminBase . '/modules/market', [
+                'msg' => (string) ($result['message'] ?? 'Opération terminée.'),
+                'mt' => (bool) ($result['ok'] ?? false) ? 'success' : 'danger',
             ]);
         },
         'middleware' => [$authRequired, $csrfCheck],

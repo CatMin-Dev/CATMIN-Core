@@ -21,6 +21,14 @@ final class CoreModuleCompatibilityChecker
                 $errors[] = 'CATMIN incompatible: requis ' . $catminMin . ', courant ' . $current;
             }
         }
+        $catminMax = trim((string) ($manifest['catmin_max'] ?? ''));
+        if ($catminMax !== '') {
+            require_once CATMIN_CORE . '/versioning/Version.php';
+            $current = \Core\versioning\Version::current();
+            if (@version_compare($current, $catminMax, '>')) {
+                $errors[] = 'CATMIN incompatible: max ' . $catminMax . ', courant ' . $current;
+            }
+        }
 
         if (array_key_exists('core_compatible', $manifest) && (bool) $manifest['core_compatible'] !== true) {
             $errors[] = 'Module non marqué core_compatible';
@@ -32,4 +40,3 @@ final class CoreModuleCompatibilityChecker
         ];
     }
 }
-

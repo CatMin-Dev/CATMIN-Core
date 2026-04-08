@@ -15,6 +15,7 @@ final class CoreModuleValidator
         'core_compatible',
         'php_min',
         'catmin_min',
+        'catmin_max',
         'dependencies',
         'load',
         'routes',
@@ -73,4 +74,3 @@ final class CoreModuleValidator
         ];
     }
 }
-
