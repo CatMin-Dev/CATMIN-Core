@@ -39,3 +39,6 @@ storage/install/*
 storage/config/runtime.json
 db/database.sqlite
 logs/version-history.json
+
+# Local backups
+storage/backups/*.zip

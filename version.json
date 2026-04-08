@@ -1,8 +1,8 @@
 {
-    "version": "0.3.0-dev.15",
+    "version": "0.3.0-dev.16",
     "db_schema": "0.1.0-dev.3",
     "module_manifest": "0.1.0-dev.1",
     "installer_format": "0.1.0-dev.2",
     "backup_format": "0.1.0-dev.1",
-    "updated_at": "2026-04-08T20:30:00Z"
+    "updated_at": "2026-04-08T20:40:00Z"
 }
