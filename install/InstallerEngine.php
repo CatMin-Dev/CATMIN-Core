@@ -146,12 +146,26 @@ final class InstallerEngine
 
             $context->setStepData('execution', $execution['data']);
             $context->setState('step_validated');
+
+            // Prepare recovery codes as soon as execution succeeds so they are
+            // visible immediately on the recovery step screen.
+            $existingRecovery = is_array($context->data('recovery_codes')) ? $context->data('recovery_codes') : [];
+            $existingCodes = is_array($existingRecovery['codes'] ?? null) ? $existingRecovery['codes'] : [];
+            if ($existingCodes === []) {
+                $codes = $this->generateRecoveryCodes();
+                $context->setStepData('recovery_codes', ['codes' => $codes]);
+                $this->storeRecoveryCodes($codes);
+            }
         }
 
         if ($step === 'recovery_codes') {
-            $codes = $this->generateRecoveryCodes();
-            $context->setStepData('recovery_codes', ['codes' => $codes]);
-            $this->storeRecoveryCodes($codes);
+            $existingRecovery = is_array($context->data('recovery_codes')) ? $context->data('recovery_codes') : [];
+            $existingCodes = is_array($existingRecovery['codes'] ?? null) ? $existingRecovery['codes'] : [];
+            if ($existingCodes === []) {
+                $codes = $this->generateRecoveryCodes();
+                $context->setStepData('recovery_codes', ['codes' => $codes]);
+                $this->storeRecoveryCodes($codes);
+            }
         }
 
         if ($step === 'report') {

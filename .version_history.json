@@ -1,5 +1,15 @@
 [
     {
+        "version": "0.3.0-dev.11",
+        "date": "2026-04-08",
+        "scope": "install",
+        "changes": [
+            "recovery codes are now pre-generated right after successful execution step",
+            "recovery step now reuses existing codes and no longer regenerates them if already present"
+        ],
+        "prompt": "hotfix-recovery-codes-generation"
+    },
+    {
         "version": "0.3.0-dev.10",
         "date": "2026-04-08",
         "scope": "install",
