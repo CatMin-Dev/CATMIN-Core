@@ -38,6 +38,11 @@ ob_start();
     </div>
 <?php endif; ?>
 
+<form method="post" action="<?= htmlspecialchars($adminBase . '/modules/integrity/scan', ENT_QUOTES, 'UTF-8') ?>" class="mb-3 d-flex justify-content-end">
+    <input type="hidden" name="_csrf" value="<?= $csrf ?>">
+    <button class="btn btn-sm btn-outline-primary" type="submit"><?= htmlspecialchars(__('modules.action.scan_integrity'), ENT_QUOTES, 'UTF-8') ?></button>
+</form>
+
 <section class="row g-3">
     <div class="col-12 col-md-6 col-xl-3">
         <article class="card cat-module-stat-card h-100">
@@ -128,6 +133,9 @@ ob_start();
                 <th><?= htmlspecialchars(__('common.module'), ENT_QUOTES, 'UTF-8') ?></th>
                 <th><?= htmlspecialchars(__('common.version'), ENT_QUOTES, 'UTF-8') ?></th>
                 <th><?= htmlspecialchars(__('modules.table.dependencies'), ENT_QUOTES, 'UTF-8') ?></th>
+                <th><?= htmlspecialchars(__('modules.table.integrity'), ENT_QUOTES, 'UTF-8') ?></th>
+                <th><?= htmlspecialchars(__('modules.table.signature'), ENT_QUOTES, 'UTF-8') ?></th>
+                <th><?= htmlspecialchars(__('modules.table.trust'), ENT_QUOTES, 'UTF-8') ?></th>
                 <th><?= htmlspecialchars(__('modules.table.state'), ENT_QUOTES, 'UTF-8') ?></th>
                 <th><?= htmlspecialchars(__('modules.table.errors'), ENT_QUOTES, 'UTF-8') ?></th>
                 <th class="text-end"><?= htmlspecialchars($isStatusView ? __('modules.table.diagnostic') : __('modules.table.activation'), ENT_QUOTES, 'UTF-8') ?></th>
@@ -136,7 +144,7 @@ ob_start();
             <tbody>
             <?php if ($rows === []): ?>
                 <tr>
-                    <td colspan="6" class="text-center py-5 text-body-secondary"><?= htmlspecialchars(__('modules.table.empty'), ENT_QUOTES, 'UTF-8') ?></td>
+                    <td colspan="9" class="text-center py-5 text-body-secondary"><?= htmlspecialchars(__('modules.table.empty'), ENT_QUOTES, 'UTF-8') ?></td>
                 </tr>
             <?php else: ?>
                 <?php foreach ($rows as $row): ?>
@@ -148,6 +156,9 @@ ob_start();
                     $enabled = (bool) ($row['enabled'] ?? false);
                     $errors = (array) ($row['errors'] ?? []);
                     $dependencies = (array) ($row['dependencies'] ?? []);
+                    $integrityStatus = strtolower((string) ($row['integrity_status'] ?? 'unknown'));
+                    $signatureStatus = strtolower((string) ($row['signature_status'] ?? 'unknown'));
+                    $trusted = (bool) ($row['trusted'] ?? false);
                     ?>
                     <tr>
                         <td>
@@ -165,6 +176,33 @@ ob_start();
                                     <?php endforeach; ?>
                                 </div>
                             <?php endif; ?>
+                        </td>
+                        <td>
+                            <?php
+                            $integrityBadge = match ($integrityStatus) {
+                                'valid' => 'text-bg-success',
+                                'tampered', 'invalid' => 'text-bg-danger',
+                                'missing_checksums', 'unsupported_schema' => 'text-bg-warning',
+                                default => 'text-bg-secondary',
+                            };
+                            ?>
+                            <span class="badge <?= $integrityBadge ?>"><?= htmlspecialchars($integrityStatus !== '' ? $integrityStatus : '-', ENT_QUOTES, 'UTF-8') ?></span>
+                        </td>
+                        <td>
+                            <?php
+                            $signatureBadge = match ($signatureStatus) {
+                                'signed_valid' => 'text-bg-success',
+                                'unknown_key' => 'text-bg-warning',
+                                'unsigned' => 'text-bg-secondary',
+                                default => 'text-bg-danger',
+                            };
+                            ?>
+                            <span class="badge <?= $signatureBadge ?>"><?= htmlspecialchars($signatureStatus !== '' ? $signatureStatus : '-', ENT_QUOTES, 'UTF-8') ?></span>
+                        </td>
+                        <td>
+                            <span class="badge <?= $trusted ? 'text-bg-success' : 'text-bg-danger' ?>">
+                                <?= htmlspecialchars($trusted ? __('common.trusted') : __('common.not_trusted'), ENT_QUOTES, 'UTF-8') ?>
+                            </span>
                         </td>
                         <td>
                             <?php if ($enabled): ?>

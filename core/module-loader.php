@@ -14,7 +14,9 @@ final class CoreModuleLoader
         'core' => 1,
         'admin' => 2,
         'front' => 3,
+        'integration' => 4,
         'integrations' => 4,
+        'driver' => 5,
         'drivers' => 5,
     ];
 
@@ -47,9 +49,10 @@ final class CoreModuleLoader
                 }
 
                 $validation = $validator->validate($manifest, $moduleDir);
-                $compatibility = $compat->check($manifest);
-                $slug = strtolower(trim((string) ($manifest['slug'] ?? basename($moduleDir))));
-                $enabled = (bool) ($manifest['enabled'] ?? false);
+                $normalized = is_array($validation['normalized'] ?? null) ? $validation['normalized'] : $manifest;
+                $compatibility = $compat->check($normalized);
+                $slug = strtolower(trim((string) ($normalized['slug'] ?? basename($moduleDir))));
+                $enabled = (bool) ($normalized['enabled_by_default'] ?? false);
                 if (isset($stateBySlug[$slug]['status'])) {
                     $enabled = (string) $stateBySlug[$slug]['status'] === 'active';
                 }
@@ -57,7 +60,7 @@ final class CoreModuleLoader
                 $module = [
                     'path' => $moduleDir,
                     'manifest_path' => $manifestPath,
-                    'manifest' => $manifest,
+                    'manifest' => $normalized,
                     'valid' => (bool) ($validation['valid'] ?? false),
                     'compatible' => (bool) ($compatibility['compatible'] ?? false),
                     'enabled' => $enabled,
@@ -81,13 +84,13 @@ final class CoreModuleLoader
                 $registry->add($module);
                 $stateStore->persist(
                     $slug,
-                    (string) ($manifest['name'] ?? $slug),
-                    (string) ($manifest['version'] ?? '0.0.0'),
+                    (string) ($normalized['name'] ?? $slug),
+                    (string) ($normalized['version'] ?? '0.0.0'),
                     $enabled
                 );
                 Core\logs\Logger::info('Module détecté', [
                     'slug' => $slug,
-                    'type' => (string) ($manifest['type'] ?? $type),
+                    'type' => (string) ($normalized['type'] ?? $type),
                     'state' => $module['state'],
                 ]);
             }
@@ -124,8 +127,8 @@ final class CoreModuleLoader
         }
 
         usort($ordered, static function (array $a, array $b): int {
-            $aType = strtolower((string) ($a['manifest']['type'] ?? 'drivers'));
-            $bType = strtolower((string) ($b['manifest']['type'] ?? 'drivers'));
+            $aType = strtolower((string) ($a['manifest']['type'] ?? 'driver'));
+            $bType = strtolower((string) ($b['manifest']['type'] ?? 'driver'));
             $aOrder = self::TYPE_ORDER[$aType] ?? 99;
             $bOrder = self::TYPE_ORDER[$bType] ?? 99;
             if ($aOrder !== $bOrder) {
@@ -191,4 +194,3 @@ final class CoreModuleLoader
         return $loadable;
     }
 }
-

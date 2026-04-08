@@ -6,6 +6,7 @@ require_once CATMIN_CORE . '/market-github.php';
 require_once CATMIN_CORE . '/market-installer.php';
 require_once CATMIN_CORE . '/module-loader.php';
 require_once CATMIN_CORE . '/module-compatibility-checker.php';
+require_once CATMIN_CORE . '/module-integrity-scanner.php';
 
 final class CoreMarketEngine
 {
@@ -21,6 +22,7 @@ final class CoreMarketEngine
         }
 
         $localBySlug = $this->localModulesBySlug();
+        $integrityBySlug = $this->integrityBySlug();
         $items = [];
 
         foreach ((array) ($remote['items'] ?? []) as $item) {
@@ -29,6 +31,7 @@ final class CoreMarketEngine
             }
             $slug = strtolower(trim((string) ($item['slug'] ?? '')));
             $local = $slug !== '' ? ($localBySlug[$slug] ?? null) : null;
+            $integrity = $slug !== '' ? ($integrityBySlug[$slug] ?? null) : null;
             $manifest = is_array($item['manifest'] ?? null) ? $item['manifest'] : [];
             $compat = (new CoreModuleCompatibilityChecker())->check($manifest);
 
@@ -49,6 +52,9 @@ final class CoreMarketEngine
                 'has_update' => is_array($local) ? version_compare((string) ($item['version'] ?? '0.0.0'), (string) ($local['version'] ?? '0.0.0'), '>') : false,
                 'compatible' => (bool) ($compat['compatible'] ?? false),
                 'compat_errors' => (array) ($compat['errors'] ?? []),
+                'integrity_status' => is_array($integrity) ? (string) ($integrity['integrity_status'] ?? 'unknown') : 'n/a',
+                'signature_status' => is_array($integrity) ? (string) ($integrity['signature_status'] ?? 'unknown') : 'n/a',
+                'trusted' => is_array($integrity) ? (bool) ($integrity['trusted'] ?? false) : false,
             ];
         }
 
@@ -94,5 +100,17 @@ final class CoreMarketEngine
         }
         return $rows;
     }
-}
 
+    private function integrityBySlug(): array
+    {
+        $report = (new CoreModuleIntegrityScanner())->scanAll(false);
+        $rows = [];
+        foreach ((array) ($report['modules'] ?? []) as $row) {
+            $slug = strtolower(trim((string) ($row['slug'] ?? '')));
+            if ($slug !== '') {
+                $rows[$slug] = $row;
+            }
+        }
+        return $rows;
+    }
+}

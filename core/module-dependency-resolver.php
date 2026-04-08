@@ -22,18 +22,8 @@ final class CoreModuleDependencyResolver
         }
 
         foreach ($index as $slug => $module) {
-            $deps = $module['manifest']['dependencies'] ?? [];
-            if (!is_array($deps)) {
-                $deps = [];
-            }
-
-            foreach ($deps as $dep) {
-                $depSlug = '';
-                if (is_string($dep)) {
-                    $depSlug = strtolower(trim($dep));
-                } elseif (is_array($dep) && isset($dep['slug'])) {
-                    $depSlug = strtolower(trim((string) $dep['slug']));
-                }
+            $deps = $this->extractRequires((array) ($module['manifest'] ?? []));
+            foreach ($deps as $depSlug) {
                 if ($depSlug === '') {
                     continue;
                 }
@@ -81,5 +71,31 @@ final class CoreModuleDependencyResolver
             'order' => $sorted,
         ];
     }
-}
 
+    private function extractRequires(array $manifest): array
+    {
+        $deps = $manifest['dependencies'] ?? [];
+        if (!is_array($deps)) {
+            return [];
+        }
+
+        $requires = [];
+        if (array_is_list($deps)) {
+            foreach ($deps as $dep) {
+                $slug = strtolower(trim((string) $dep));
+                if ($slug !== '') {
+                    $requires[] = $slug;
+                }
+            }
+            return array_values(array_unique($requires));
+        }
+
+        foreach ((array) ($deps['requires'] ?? []) as $dep) {
+            $slug = strtolower(trim((string) $dep));
+            if ($slug !== '') {
+                $requires[] = $slug;
+            }
+        }
+        return array_values(array_unique($requires));
+    }
+}

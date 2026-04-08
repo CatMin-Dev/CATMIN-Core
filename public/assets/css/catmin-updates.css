@@ -1,0 +1,8 @@
+.cat-updates-warning {
+  border-color: var(--cat-warning, #f4b92a);
+}
+
+.cat-updates-danger {
+  border-color: var(--cat-danger, #b91c1c);
+}
+

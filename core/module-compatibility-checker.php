@@ -25,7 +25,7 @@ final class CoreModuleCompatibilityChecker
         if ($catminMax !== '') {
             require_once CATMIN_CORE . '/versioning/Version.php';
             $current = \Core\versioning\Version::current();
-            if (@version_compare($current, $catminMax, '>')) {
+            if ($this->isHigherThanMax($current, $catminMax)) {
                 $errors[] = 'CATMIN incompatible: max ' . $catminMax . ', courant ' . $current;
             }
         }
@@ -38,5 +38,16 @@ final class CoreModuleCompatibilityChecker
             'compatible' => $errors === [],
             'errors' => $errors,
         ];
+    }
+
+    private function isHigherThanMax(string $current, string $max): bool
+    {
+        $max = trim($max);
+        if (preg_match('/^([0-9]+)\.x$/', $max, $m) === 1) {
+            $major = (int) $m[1];
+            $currentMajor = (int) explode('.', $current)[0];
+            return $currentMajor > $major;
+        }
+        return @version_compare($current, $max, '>');
     }
 }

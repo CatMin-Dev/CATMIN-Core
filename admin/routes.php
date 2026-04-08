@@ -14,6 +14,7 @@ use Core\versioning\Version;
 
 require_once CATMIN_CORE . '/module-loader.php';
 require_once CATMIN_CORE . '/module-activator.php';
+require_once CATMIN_CORE . '/module-integrity-scanner.php';
 require_once CATMIN_CORE . '/settings-engine.php';
 require_once CATMIN_CORE . '/i18n-engine.php';
 require_once CATMIN_CORE . '/notifications-bridge.php';
@@ -23,6 +24,7 @@ require_once CATMIN_CORE . '/apps-validator.php';
 require_once CATMIN_CORE . '/db-upgrade-runner.php';
 require_once CATMIN_CORE . '/updater.php';
 require_once CATMIN_CORE . '/market-engine.php';
+require_once CATMIN_CORE . '/update-center.php';
 
 $security = new SecurityManager(Request::capture(), 'admin');
 $authRequired = $security->adminAuthRequiredMiddleware();
@@ -191,6 +193,14 @@ $resolveGitMeta = static function (): array {
 $scanModules = static function (): array {
     $loader = new CoreModuleLoader();
     $snapshot = $loader->scan();
+    $integrityReport = (new CoreModuleIntegrityScanner())->scanAll(false);
+    $integrityBySlug = [];
+    foreach ((array) ($integrityReport['modules'] ?? []) as $integrityRow) {
+        $integritySlug = strtolower(trim((string) ($integrityRow['slug'] ?? '')));
+        if ($integritySlug !== '') {
+            $integrityBySlug[$integritySlug] = $integrityRow;
+        }
+    }
     $rows = [];
 
     foreach ((array) ($snapshot['modules'] ?? []) as $module) {
@@ -198,9 +208,16 @@ $scanModules = static function (): array {
         $slug = strtolower(trim((string) ($manifest['slug'] ?? '')));
         $scope = strtolower(trim((string) ($manifest['type'] ?? '')));
         $deps = $manifest['dependencies'] ?? [];
-        if (!is_array($deps)) {
-            $deps = [];
+        $requires = [];
+        if (is_array($deps)) {
+            if (array_is_list($deps)) {
+                $requires = array_map(static fn ($dep): string => strtolower(trim((string) $dep)), $deps);
+            } else {
+                $requires = array_map(static fn ($dep): string => strtolower(trim((string) $dep)), (array) ($deps['requires'] ?? []));
+            }
         }
+        $requires = array_values(array_filter($requires, static fn (string $dep): bool => $dep !== ''));
+        $integrity = $integrityBySlug[$slug] ?? null;
 
         $rows[] = [
             'scope' => $scope !== '' ? $scope : 'unknown',
@@ -208,10 +225,14 @@ $scanModules = static function (): array {
             'name' => (string) ($manifest['name'] ?? ucfirst($slug)),
             'version' => (string) ($manifest['version'] ?? '-'),
             'enabled' => (bool) ($module['enabled'] ?? false),
-            'dependencies' => array_values(array_map(static fn ($d): string => is_string($d) ? $d : ((string) ($d['slug'] ?? '')), $deps)),
+            'dependencies' => $requires,
             'errors' => (array) ($module['errors'] ?? []),
             'manifest_path' => (string) ($module['manifest_path'] ?? ''),
             'state' => (string) ($module['state'] ?? 'detected'),
+            'integrity_status' => (string) (($integrity['integrity_status'] ?? 'unknown')),
+            'signature_status' => (string) (($integrity['signature_status'] ?? 'unknown')),
+            'trusted' => (bool) (($integrity['trusted'] ?? false)),
+            'integrity_details' => is_array($integrity) ? (array) ($integrity['state'] ?? []) : [],
         ];
     }
 
@@ -222,6 +243,7 @@ $scanModules = static function (): array {
         'active' => count(array_filter($rows, static fn (array $r): bool => (bool) ($r['enabled'] ?? false))),
         'inactive' => count(array_filter($rows, static fn (array $r): bool => !((bool) ($r['enabled'] ?? false)))),
         'errors' => count(array_filter($rows, static fn (array $r): bool => ((array) ($r['errors'] ?? [])) !== [] || (($r['state'] ?? '') === 'error' || ($r['state'] ?? '') === 'invalid' || ($r['state'] ?? '') === 'incompatible'))),
+        'trust_alerts' => count(array_filter($rows, static fn (array $r): bool => !((bool) ($r['trusted'] ?? false)))),
     ];
 
     return ['rows' => $rows, 'stats' => $stats];
@@ -824,6 +846,7 @@ return [
 
             $healthSnapshot = (new HealthCheckService())->run();
             $monitoringSnapshot = (new MonitoringService())->snapshot();
+            $updatesSnapshot = (new CoreUpdateCenter())->buildSnapshot();
             $securityAlerts = (int) (($monitoringSnapshot['widgets']['security_alerts']['count'] ?? 0));
             $criticalErrors = (int) (($monitoringSnapshot['widgets']['critical_errors']['count'] ?? 0));
 
@@ -885,6 +908,7 @@ return [
                 'events' => $events,
                 'versionInfo' => $versionInfo,
                 'monitoring' => $monitoringSnapshot,
+                'updatesSnapshot' => $updatesSnapshot,
             ], 'admin');
         },
         'middleware' => [$authRequired],
@@ -1529,30 +1553,10 @@ return [
     [
         'method' => 'GET',
         'path' => '/system/update',
-        'handler' => static function () use ($consumeFlash): Response {
+        'handler' => static function (): Response {
             $controller = new AuthController();
             $adminBase = $controller->adminBasePath();
-            $flash = $consumeFlash();
-
-            $updater = new CoreUpdater();
-            $check = $updater->check();
-
-            $reportFile = CATMIN_STORAGE . '/updates/reports/latest-github-update.json';
-            $report = [];
-            if (is_file($reportFile)) {
-                $decoded = json_decode((string) file_get_contents($reportFile), true);
-                if (is_array($decoded)) {
-                    $report = $decoded;
-                }
-            }
-
-            return View::make('system.update', [
-                'adminBase' => $adminBase,
-                'check' => $check,
-                'report' => $report,
-                'message' => (string) ($flash['message'] ?? ''),
-                'messageType' => (string) ($flash['type'] ?? 'success'),
-            ], 'admin');
+            return Response::html('', 302, ['Location' => $adminBase . '/system/updates']);
         },
         'middleware' => [$authRequired],
     ],
@@ -1565,7 +1569,7 @@ return [
             $adminBase = $controller->adminBasePath();
 
             $check = (new CoreUpdater())->check();
-            return $redirect($adminBase . '/system/update', [
+            return $redirect($adminBase . '/system/updates', [
                 'msg' => (bool) ($check['ok'] ?? false) ? 'Vérification update terminée.' : ((string) ($check['error'] ?? 'Vérification update en erreur.')),
                 'mt' => (bool) ($check['ok'] ?? false) ? 'success' : 'danger',
             ]);
@@ -1581,7 +1585,7 @@ return [
             $adminBase = $controller->adminBasePath();
 
             $result = (new CoreUpdater())->dryRun();
-            return $redirect($adminBase . '/system/update', [
+            return $redirect($adminBase . '/system/updates', [
                 'msg' => (bool) ($result['ok'] ?? false) ? 'Dry-run update terminé.' : ((string) ($result['error'] ?? 'Dry-run en erreur.')),
                 'mt' => (bool) ($result['ok'] ?? false) ? 'success' : 'danger',
             ]);
@@ -1597,7 +1601,71 @@ return [
             $adminBase = $controller->adminBasePath();
 
             $result = (new CoreUpdater())->updateNow();
-            return $redirect($adminBase . '/system/update', [
+            return $redirect($adminBase . '/system/updates', [
+                'msg' => (bool) ($result['ok'] ?? false) ? 'Update core terminée.' : ((string) ($result['error'] ?? 'Update core en erreur.')),
+                'mt' => (bool) ($result['ok'] ?? false) ? 'success' : 'danger',
+            ]);
+        },
+        'middleware' => [$authRequired, $csrfCheck],
+    ],
+
+    [
+        'method' => 'GET',
+        'path' => '/system/updates',
+        'handler' => static function () use ($consumeFlash): Response {
+            $controller = new AuthController();
+            $adminBase = $controller->adminBasePath();
+            $flash = $consumeFlash();
+            $snapshot = (new CoreUpdateCenter())->buildSnapshot();
+
+            return View::make('system.updates', [
+                'adminBase' => $adminBase,
+                'snapshot' => $snapshot,
+                'message' => (string) ($flash['message'] ?? ''),
+                'messageType' => (string) ($flash['type'] ?? 'success'),
+            ], 'admin');
+        },
+        'middleware' => [$authRequired],
+    ],
+
+    [
+        'method' => 'POST',
+        'path' => '/system/updates/check',
+        'handler' => static function () use ($redirect): Response {
+            $controller = new AuthController();
+            $adminBase = $controller->adminBasePath();
+            $check = (new CoreUpdater())->check();
+            return $redirect($adminBase . '/system/updates', [
+                'msg' => (bool) ($check['ok'] ?? false) ? 'Vérification update terminée.' : ((string) ($check['error'] ?? 'Vérification update en erreur.')),
+                'mt' => (bool) ($check['ok'] ?? false) ? 'success' : 'danger',
+            ]);
+        },
+        'middleware' => [$authRequired, $csrfCheck],
+    ],
+
+    [
+        'method' => 'POST',
+        'path' => '/system/updates/dry-run',
+        'handler' => static function () use ($redirect): Response {
+            $controller = new AuthController();
+            $adminBase = $controller->adminBasePath();
+            $result = (new CoreUpdater())->dryRun();
+            return $redirect($adminBase . '/system/updates', [
+                'msg' => (bool) ($result['ok'] ?? false) ? 'Dry-run update terminé.' : ((string) ($result['error'] ?? 'Dry-run en erreur.')),
+                'mt' => (bool) ($result['ok'] ?? false) ? 'success' : 'danger',
+            ]);
+        },
+        'middleware' => [$authRequired, $csrfCheck],
+    ],
+
+    [
+        'method' => 'POST',
+        'path' => '/system/updates/run',
+        'handler' => static function () use ($redirect): Response {
+            $controller = new AuthController();
+            $adminBase = $controller->adminBasePath();
+            $result = (new CoreUpdater())->updateNow();
+            return $redirect($adminBase . '/system/updates', [
                 'msg' => (bool) ($result['ok'] ?? false) ? 'Update core terminée.' : ((string) ($result['error'] ?? 'Update core en erreur.')),
                 'mt' => (bool) ($result['ok'] ?? false) ? 'success' : 'danger',
             ]);
@@ -2144,6 +2212,28 @@ return [
             return $redirect($adminBase . '/maintenance', [
                 'msg' => 'Restore simule sur backup: ' . basename($selectedPath),
                 'mt' => 'warning',
+            ]);
+        },
+        'middleware' => [$authRequired, $csrfCheck],
+    ],
+
+    [
+        'method' => 'POST',
+        'path' => '/modules/integrity/scan',
+        'handler' => static function (Request $request) use ($redirect): Response {
+            $controller = new AuthController();
+            $adminBase = $controller->adminBasePath();
+            $persist = (string) $request->input('persist', '1') === '1';
+            $report = (new CoreModuleIntegrityScanner())->scanAll($persist);
+            $summary = (array) ($report['summary'] ?? []);
+            $invalid = (int) (($summary['invalid'] ?? 0) + ($summary['tampered'] ?? 0));
+            $message = 'Scan intégrité terminé.';
+            if ($invalid > 0) {
+                $message .= ' Modules invalides: ' . $invalid;
+            }
+            return $redirect($adminBase . '/modules/status', [
+                'msg' => $message,
+                'mt' => $invalid > 0 ? 'warning' : 'success',
             ]);
         },
         'middleware' => [$authRequired, $csrfCheck],

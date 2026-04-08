@@ -116,13 +116,15 @@ ob_start();
                 <th><?= htmlspecialchars(__('common.module'), ENT_QUOTES, 'UTF-8') ?></th>
                 <th><?= htmlspecialchars(__('common.version'), ENT_QUOTES, 'UTF-8') ?></th>
                 <th><?= htmlspecialchars(__('market.compatibility'), ENT_QUOTES, 'UTF-8') ?></th>
+                <th><?= htmlspecialchars(__('modules.table.integrity'), ENT_QUOTES, 'UTF-8') ?></th>
+                <th><?= htmlspecialchars(__('modules.table.signature'), ENT_QUOTES, 'UTF-8') ?></th>
                 <th><?= htmlspecialchars(__('common.status'), ENT_QUOTES, 'UTF-8') ?></th>
                 <th class="text-end"><?= htmlspecialchars(__('common.actions'), ENT_QUOTES, 'UTF-8') ?></th>
             </tr>
             </thead>
             <tbody>
             <?php if ($items === []): ?>
-                <tr><td colspan="5" class="text-center py-5 text-body-secondary"><?= htmlspecialchars(__('market.empty'), ENT_QUOTES, 'UTF-8') ?></td></tr>
+                <tr><td colspan="7" class="text-center py-5 text-body-secondary"><?= htmlspecialchars(__('market.empty'), ENT_QUOTES, 'UTF-8') ?></td></tr>
             <?php endif; ?>
             <?php foreach ($items as $item): ?>
                 <?php
@@ -131,6 +133,8 @@ ob_start();
                 $installed = (bool) ($item['installed'] ?? false);
                 $hasUpdate = (bool) ($item['has_update'] ?? false);
                 $compatible = (bool) ($item['compatible'] ?? true);
+                $integrityStatus = strtolower((string) ($item['integrity_status'] ?? 'n/a'));
+                $signatureStatus = strtolower((string) ($item['signature_status'] ?? 'n/a'));
                 ?>
                 <tr>
                     <td>
@@ -159,6 +163,28 @@ ob_start();
                             min: <?= htmlspecialchars((string) (($item['catmin_min'] ?? '') !== '' ? $item['catmin_min'] : '-'), ENT_QUOTES, 'UTF-8') ?>
                             · max: <?= htmlspecialchars((string) (($item['catmin_max'] ?? '') !== '' ? $item['catmin_max'] : '-'), ENT_QUOTES, 'UTF-8') ?>
                         </small>
+                    </td>
+                    <td>
+                        <?php
+                        $integrityBadge = match ($integrityStatus) {
+                            'valid' => 'text-bg-success',
+                            'tampered', 'invalid' => 'text-bg-danger',
+                            'missing_checksums', 'unsupported_schema' => 'text-bg-warning',
+                            default => 'text-bg-secondary',
+                        };
+                        ?>
+                        <span class="badge <?= $integrityBadge ?>"><?= htmlspecialchars($integrityStatus, ENT_QUOTES, 'UTF-8') ?></span>
+                    </td>
+                    <td>
+                        <?php
+                        $signatureBadge = match ($signatureStatus) {
+                            'signed_valid' => 'text-bg-success',
+                            'unknown_key' => 'text-bg-warning',
+                            'unsigned', 'n/a' => 'text-bg-secondary',
+                            default => 'text-bg-danger',
+                        };
+                        ?>
+                        <span class="badge <?= $signatureBadge ?>"><?= htmlspecialchars($signatureStatus, ENT_QUOTES, 'UTF-8') ?></span>
                     </td>
                     <td>
                         <?php if (!$installed): ?>
@@ -190,4 +216,3 @@ ob_start();
 <?php
 $content = (string) ob_get_clean();
 require CATMIN_ADMIN . '/views/layouts/admin.php';
-

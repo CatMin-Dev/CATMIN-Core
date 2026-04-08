@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once CATMIN_CORE . '/module-loader.php';
+require_once CATMIN_CORE . '/module-activation-guard.php';
 
 final class CoreModuleActivator
 {
@@ -37,6 +38,11 @@ final class CoreModuleActivator
         }
 
         if ($enabled) {
+            $guard = (new CoreModuleActivationGuard())->assertCanActivate($path, $manifest);
+            if (!(bool) ($guard['ok'] ?? false)) {
+                return ['ok' => false, 'message' => implode(' | ', (array) ($guard['errors'] ?? ['Activation bloquee']))];
+            }
+
             $loader = new CoreModuleLoader();
             $snapshot = $loader->scan();
             foreach ($snapshot['modules'] as $module) {
@@ -44,9 +50,7 @@ final class CoreModuleActivator
                 if ($mSlug !== $slug) {
                     continue;
                 }
-                $deps = $module['manifest']['dependencies'] ?? [];
-                foreach (is_array($deps) ? $deps : [] as $dep) {
-                    $depSlug = is_string($dep) ? strtolower(trim($dep)) : strtolower(trim((string) ($dep['slug'] ?? '')));
+                foreach ($this->extractRequires((array) ($module['manifest'] ?? [])) as $depSlug) {
                     if ($depSlug === '') {
                         continue;
                     }
@@ -66,9 +70,7 @@ final class CoreModuleActivator
             $loader = new CoreModuleLoader();
             $snapshot = $loader->scan();
             foreach ($snapshot['modules'] as $module) {
-                $deps = $module['manifest']['dependencies'] ?? [];
-                foreach (is_array($deps) ? $deps : [] as $dep) {
-                    $depSlug = is_string($dep) ? strtolower(trim($dep)) : strtolower(trim((string) ($dep['slug'] ?? '')));
+                foreach ($this->extractRequires((array) ($module['manifest'] ?? [])) as $depSlug) {
                     if ($depSlug === $slug && ((bool) ($module['enabled'] ?? false))) {
                         $modSlug = (string) ($module['manifest']['slug'] ?? '-');
                         return ['ok' => false, 'message' => 'Désactivation refusée, dépendance active: ' . $modSlug];
@@ -90,5 +92,16 @@ final class CoreModuleActivator
 
         return ['ok' => true, 'message' => $enabled ? 'Module activé' : 'Module désactivé'];
     }
-}
 
+    private function extractRequires(array $manifest): array
+    {
+        $deps = $manifest['dependencies'] ?? [];
+        if (!is_array($deps)) {
+            return [];
+        }
+        if (array_is_list($deps)) {
+            return array_values(array_unique(array_filter(array_map(static fn ($dep): string => strtolower(trim((string) $dep)), $deps), static fn (string $v): bool => $v !== '')));
+        }
+        return array_values(array_unique(array_filter(array_map(static fn ($dep): string => strtolower(trim((string) $dep)), (array) ($deps['requires'] ?? [])), static fn (string $v): bool => $v !== '')));
+    }
+}
