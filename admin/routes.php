@@ -29,6 +29,7 @@ require_once CATMIN_CORE . '/module-repository-registry.php';
 require_once CATMIN_CORE . '/module-uninstaller.php';
 require_once CATMIN_CORE . '/module-snapshot-manager.php';
 require_once CATMIN_CORE . '/module-rollback-runner.php';
+require_once CATMIN_CORE . '/trust-center.php';
 require_once CATMIN_CORE . '/queue-engine.php';
 require_once CATMIN_CORE . '/update-intelligent-notifier.php';
 require_once CATMIN_CORE . '/telemetry-minimal.php';
@@ -1622,6 +1623,74 @@ return [
             ], 'admin');
         },
         'middleware' => [$authRequired],
+    ],
+
+    [
+        'method' => 'GET',
+        'path' => '/system/trust-center',
+        'handler' => static function (): Response {
+            $controller = new AuthController();
+            $adminBase = $controller->adminBasePath();
+            $snapshot = (new CoreTrustCenter())->snapshot();
+
+            return View::make('system.trust-center', [
+                'adminBase' => $adminBase,
+                'snapshot' => $snapshot,
+            ], 'admin');
+        },
+        'middleware' => [$authRequired],
+    ],
+
+    [
+        'method' => 'POST',
+        'path' => '/system/trust-center/local-keys/add',
+        'handler' => static function (Request $request) use ($redirect): Response {
+            $controller = new AuthController();
+            $adminBase = $controller->adminBasePath();
+            $result = (new CoreTrustCenter())->addLocalKey([
+                'key_id' => (string) $request->input('key_id', ''),
+                'publisher' => (string) $request->input('publisher', ''),
+                'public_key' => (string) $request->input('public_key', ''),
+            ]);
+
+            return $redirect($adminBase . '/system/trust-center', [
+                'msg' => (string) ($result['message'] ?? ''),
+                'mt' => (bool) ($result['ok'] ?? false) ? 'success' : 'danger',
+            ]);
+        },
+        'middleware' => [$authRequired, $csrfCheck],
+    ],
+
+    [
+        'method' => 'POST',
+        'path' => '/system/trust-center/local-keys/delete',
+        'handler' => static function (Request $request) use ($redirect): Response {
+            $controller = new AuthController();
+            $adminBase = $controller->adminBasePath();
+            $result = (new CoreTrustCenter())->removeLocalKey((string) $request->input('key_id', ''));
+
+            return $redirect($adminBase . '/system/trust-center', [
+                'msg' => (string) ($result['message'] ?? ''),
+                'mt' => (bool) ($result['ok'] ?? false) ? 'success' : 'danger',
+            ]);
+        },
+        'middleware' => [$authRequired, $csrfCheck],
+    ],
+
+    [
+        'method' => 'POST',
+        'path' => '/system/trust-center/sync',
+        'handler' => static function () use ($redirect): Response {
+            $controller = new AuthController();
+            $adminBase = $controller->adminBasePath();
+            $result = (new CoreTrustCenter())->syncRemote();
+
+            return $redirect($adminBase . '/system/trust-center', [
+                'msg' => (string) ($result['message'] ?? ''),
+                'mt' => (bool) ($result['ok'] ?? false) ? 'success' : 'warning',
+            ]);
+        },
+        'middleware' => [$authRequired, $csrfCheck],
     ],
 
     [

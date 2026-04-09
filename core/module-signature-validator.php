@@ -40,13 +40,30 @@ final class CoreModuleSignatureValidator
             ];
         }
 
-        $publicKey = (new CoreModulePublicKeyring())->get($keyId);
+        $keyring = new CoreModulePublicKeyring();
+        $entry = $keyring->entry($keyId);
+        $publicKey = $keyring->get($keyId);
         if (!is_string($publicKey) || $publicKey === '') {
             return [
                 'status' => 'unknown_key',
                 'valid' => false,
                 'errors' => ['Cle publique inconnue: ' . $keyId],
                 'key_id' => $keyId,
+                'key_scope' => 'unknown',
+                'key_source' => 'unknown',
+            ];
+        }
+
+        $keyScope = strtolower(trim((string) ($entry['scope'] ?? 'community')));
+        $keySource = (string) ($entry['source'] ?? 'embedded');
+        if ($keyScope === 'revoked') {
+            return [
+                'status' => 'revoked_key',
+                'valid' => false,
+                'errors' => ['Clé révoquée: ' . $keyId],
+                'key_id' => $keyId,
+                'key_scope' => $keyScope,
+                'key_source' => $keySource,
             ];
         }
 
@@ -54,12 +71,14 @@ final class CoreModuleSignatureValidator
             $moduleHash = strtolower(trim((string) ($checksums['module_hash'] ?? '')));
             if ($moduleHash !== '' && !hash_equals($moduleHash, $signedHash)) {
                 return [
-                    'status' => 'signature_invalid',
-                    'valid' => false,
-                    'errors' => ['signed_hash != module_hash'],
-                    'key_id' => $keyId,
-                ];
-            }
+                'status' => 'signature_invalid',
+                'valid' => false,
+                'errors' => ['signed_hash != module_hash'],
+                'key_id' => $keyId,
+                'key_scope' => $keyScope,
+                'key_source' => $keySource,
+            ];
+        }
         }
 
         $binarySignature = base64_decode($signature, true);
@@ -69,6 +88,8 @@ final class CoreModuleSignatureValidator
                 'valid' => false,
                 'errors' => ['Signature base64 invalide'],
                 'key_id' => $keyId,
+                'key_scope' => $keyScope,
+                'key_source' => $keySource,
             ];
         }
 
@@ -78,6 +99,8 @@ final class CoreModuleSignatureValidator
                 'valid' => false,
                 'errors' => ['OpenSSL indisponible'],
                 'key_id' => $keyId,
+                'key_scope' => $keyScope,
+                'key_source' => $keySource,
             ];
         }
 
@@ -88,6 +111,8 @@ final class CoreModuleSignatureValidator
                 'valid' => false,
                 'errors' => ['Verification RSA KO'],
                 'key_id' => $keyId,
+                'key_scope' => $keyScope,
+                'key_source' => $keySource,
             ];
         }
 
@@ -96,7 +121,8 @@ final class CoreModuleSignatureValidator
             'valid' => true,
             'errors' => [],
             'key_id' => $keyId,
+            'key_scope' => $keyScope,
+            'key_source' => $keySource,
         ];
     }
 }
-
