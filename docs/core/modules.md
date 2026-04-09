@@ -14,3 +14,8 @@
 - état module stocké en base
 - chargement via engine module core
 - checks de compatibilité à l'upgrade
+
+## Références éditeurs
+- `docs/modules/community-repository-standard-064.md`
+- `docs/release/module-release-pipeline-078-080.md`
+- `docs/modules/community-signing-trust-admission-081.md`

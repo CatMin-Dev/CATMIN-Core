@@ -1,5 +1,16 @@
 [
     {
+        "version": "0.3.0-dev.24",
+        "date": "2026-04-09",
+        "scope": "docs",
+        "changes": [
+            "official editor admission documentation added for community/trusted signing and market onboarding",
+            "publisher journey, validation gates, refusal cases and submission checklist documented",
+            "core modules documentation linked to 064 + 078-080 + 081 references"
+        ],
+        "prompt": "081"
+    },
+    {
         "version": "0.3.0-dev.23",
         "date": "2026-04-09",
         "scope": "release",
