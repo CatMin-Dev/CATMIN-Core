@@ -99,9 +99,7 @@ Artefacts attendus:
 
 ## Dépôts
 
-- Dev privé (core): `https://github.com/CatMin-Dev/core`
 - Release public (core): `https://github.com/CatMin-Dev/CATMIN-Core`
-- Dev privé (modules): `https://github.com/CatMin-Dev/modules`
 - Release public (modules): `https://github.com/CatMin-Dev/CATMIN-Modules`
 
 ---
