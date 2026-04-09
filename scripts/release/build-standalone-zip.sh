@@ -54,6 +54,7 @@ rm -f "${STAGE_DIR}/logs/"*.log || true
 rm -rf "${STAGE_DIR}/storage/install" || true
 rm -rf "${STAGE_DIR}/storage/updates/releases" || true
 rm -rf "${STAGE_DIR}/storage/updates/reports" || true
+rm -rf "${STAGE_DIR}/storage/modules" || true
 rm -f "${STAGE_DIR}/db/database.sqlite" || true
 rm -f "${STAGE_DIR}/database.sqlite" || true
 
@@ -68,6 +69,7 @@ mkdir -p \
   "${STAGE_DIR}/storage/backups" \
   "${STAGE_DIR}/storage/updates/releases" \
   "${STAGE_DIR}/storage/updates/reports" \
+  "${STAGE_DIR}/storage/modules" \
   "${STAGE_DIR}/db" \
   "${STAGE_DIR}/cache" \
   "${STAGE_DIR}/logs" \
@@ -81,6 +83,7 @@ for d in \
   "${STAGE_DIR}/storage/backups" \
   "${STAGE_DIR}/storage/updates/releases" \
   "${STAGE_DIR}/storage/updates/reports" \
+  "${STAGE_DIR}/storage/modules" \
   "${STAGE_DIR}/db" \
   "${STAGE_DIR}/cache" \
   "${STAGE_DIR}/logs" \
