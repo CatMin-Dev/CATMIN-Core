@@ -41,12 +41,43 @@ ob_start();
             <strong><?= htmlspecialchars((string) (($snapshot['last_sync_at'] ?? '') !== '' ? $snapshot['last_sync_at'] : __('trust.summary.never')), ENT_QUOTES, 'UTF-8') ?></strong>
             · <?= htmlspecialchars((string) ($snapshot['last_sync_message'] ?? ''), ENT_QUOTES, 'UTF-8') ?>
         </div>
+        <div class="small text-body-secondary mt-1">
+            <?= htmlspecialchars(__('trust.summary.remote_mode'), ENT_QUOTES, 'UTF-8') ?>:
+            <strong><?= htmlspecialchars((bool) ($snapshot['sync_enabled'] ?? false) ? __('trust.summary.remote_enabled') : __('trust.summary.remote_disabled'), ENT_QUOTES, 'UTF-8') ?></strong>
+        </div>
     </div>
 </section>
 
 <?php require __DIR__ . '/partials/trust-sources.php'; ?>
 <?php require __DIR__ . '/partials/local-keys.php'; ?>
 <?php require __DIR__ . '/partials/keyring-table.php'; ?>
+
+<section class="card mb-3">
+    <div class="card-header bg-transparent border-0 pt-3">
+        <h3 class="h6 mb-0"><?= htmlspecialchars(__('trust.remote_spec.title'), ENT_QUOTES, 'UTF-8') ?></h3>
+    </div>
+    <div class="card-body pt-2">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead><tr><th><?= htmlspecialchars(__('trust.remote_spec.endpoint'), ENT_QUOTES, 'UTF-8') ?></th><th><?= htmlspecialchars(__('trust.remote_spec.purpose'), ENT_QUOTES, 'UTF-8') ?></th></tr></thead>
+                <tbody>
+                <?php foreach ([
+                    ['url' => (string) (($snapshot['remote']['keyring_url'] ?? '') ?: '-'), 'purpose' => __('trust.remote_spec.keyring')],
+                    ['url' => (string) (($snapshot['remote']['registry_url'] ?? '') ?: '-'), 'purpose' => __('trust.remote_spec.registry')],
+                    ['url' => (string) (($snapshot['remote']['revocations_url'] ?? '') ?: '-'), 'purpose' => __('trust.remote_spec.revocations')],
+                    ['url' => (string) (($snapshot['remote']['publishers_url'] ?? '') ?: '-'), 'purpose' => __('trust.remote_spec.publishers')],
+                    ['url' => (string) (($snapshot['remote']['metadata_url'] ?? '') ?: '-'), 'purpose' => __('trust.remote_spec.metadata')],
+                ] as $remoteRow): ?>
+                    <tr>
+                        <td><code><?= htmlspecialchars((string) $remoteRow['url'], ENT_QUOTES, 'UTF-8') ?></code></td>
+                        <td class="text-body-secondary small"><?= htmlspecialchars((string) $remoteRow['purpose'], ENT_QUOTES, 'UTF-8') ?></td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
 
 <section class="card">
     <div class="card-header bg-transparent border-0 pt-3">

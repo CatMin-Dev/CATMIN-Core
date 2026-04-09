@@ -27,6 +27,7 @@ $sources = is_array($sources ?? null) ? $sources : [];
                         'warning' => 'text-bg-warning',
                         'error' => 'text-bg-danger',
                         'disabled' => 'text-bg-secondary',
+                        'never' => 'text-bg-secondary',
                         default => 'text-bg-dark',
                     };
                     ?>

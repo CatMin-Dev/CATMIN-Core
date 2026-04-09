@@ -124,6 +124,8 @@ final class CoreMarketEngine
                     'compat_warnings' => (array) ($compat['warnings'] ?? []),
                     'integrity_status' => is_array($integrity) ? (string) ($integrity['integrity_status'] ?? 'unknown') : 'n/a',
                     'signature_status' => is_array($integrity) ? (string) ($integrity['signature_status'] ?? 'unknown') : 'n/a',
+                    'key_scope' => is_array($integrity) ? (string) ($integrity['key_scope'] ?? 'unknown') : 'unknown',
+                    'key_status' => is_array($integrity) ? (string) ($integrity['key_status'] ?? 'unknown') : 'unknown',
                     'trusted' => is_array($integrity) ? (bool) ($integrity['trusted'] ?? false) : false,
                     'install_allowed' => (bool) ($trustState['install_allowed'] ?? false),
                     'trust_warnings' => (array) ($trustState['warnings'] ?? []),

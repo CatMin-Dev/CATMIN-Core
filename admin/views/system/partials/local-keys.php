@@ -14,6 +14,13 @@ declare(strict_types=1);
     </div>
     <div class="card-body pt-2">
         <p class="text-body-secondary small mb-3"><?= htmlspecialchars(__('trust.local_keys.help'), ENT_QUOTES, 'UTF-8') ?></p>
+        <p class="text-body-secondary small mb-3">
+            <?= htmlspecialchars(__('trust.summary.last_import'), ENT_QUOTES, 'UTF-8') ?>:
+            <strong><?= htmlspecialchars((string) (($snapshot['last_import_at'] ?? '') !== '' ? $snapshot['last_import_at'] : __('trust.summary.never')), ENT_QUOTES, 'UTF-8') ?></strong>
+            <?php if (((string) ($snapshot['last_import_message'] ?? '')) !== ''): ?>
+                · <?= htmlspecialchars((string) ($snapshot['last_import_message'] ?? ''), ENT_QUOTES, 'UTF-8') ?>
+            <?php endif; ?>
+        </p>
 
         <form method="post" action="<?= htmlspecialchars($adminBase . '/system/trust-center/local-keys/add', ENT_QUOTES, 'UTF-8') ?>" class="row g-2">
             <input type="hidden" name="_csrf" value="<?= htmlspecialchars((string) ($_SESSION['csrf_token'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
@@ -31,6 +38,20 @@ declare(strict_types=1);
             </div>
             <div class="col-12">
                 <button type="submit" class="btn btn-primary"><?= htmlspecialchars(__('trust.actions.add_local'), ENT_QUOTES, 'UTF-8') ?></button>
+            </div>
+        </form>
+
+        <hr class="my-4">
+
+        <h4 class="h6 mb-2"><?= htmlspecialchars(__('trust.import.title'), ENT_QUOTES, 'UTF-8') ?></h4>
+        <p class="text-body-secondary small mb-2"><?= htmlspecialchars(__('trust.import.help'), ENT_QUOTES, 'UTF-8') ?></p>
+        <form method="post" action="<?= htmlspecialchars($adminBase . '/system/trust-center/import', ENT_QUOTES, 'UTF-8') ?>" class="row g-2">
+            <input type="hidden" name="_csrf" value="<?= htmlspecialchars((string) ($_SESSION['csrf_token'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+            <div class="col-12">
+                <textarea class="form-control" name="import_json" rows="5" placeholder="{&quot;keys&quot;:[...]}"></textarea>
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-outline-primary"><?= htmlspecialchars(__('trust.actions.import_official'), ENT_QUOTES, 'UTF-8') ?></button>
             </div>
         </form>
     </div>

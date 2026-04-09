@@ -31,14 +31,35 @@ final class CoreModuleTrustScore
         }
 
         $signature = strtolower(trim((string) ($row['signature_status'] ?? 'n/a')));
+        $keyScope = strtolower(trim((string) ($row['key_scope'] ?? 'unknown')));
+        $keyStatus = strtolower(trim((string) ($row['key_status'] ?? 'unknown')));
         if ($signature === 'signed_valid') {
             $score += 18;
             $signals[] = 'signature:ok';
         } elseif (in_array($signature, ['invalid', 'unknown_key'], true)) {
             $score -= 18;
             $signals[] = 'signature:ko';
+        } elseif ($signature === 'revoked_key') {
+            $score -= 40;
+            $signals[] = 'signature:revoked';
         } else {
             $signals[] = 'signature:unsigned';
+        }
+
+        if ($keyScope === 'local_only') {
+            $score -= 10;
+            $signals[] = 'key_scope:local_only';
+        } elseif ($keyScope === 'official') {
+            $score += 6;
+            $signals[] = 'key_scope:official';
+        }
+
+        if ($keyStatus === 'deprecated') {
+            $score -= 6;
+            $signals[] = 'key_status:deprecated';
+        } elseif ($keyStatus === 'revoked') {
+            $score -= 30;
+            $signals[] = 'key_status:revoked';
         }
 
         $channel = strtolower(trim((string) ($row['release_channel'] ?? 'stable')));
@@ -91,20 +112,21 @@ final class CoreModuleTrustScore
             'grade' => $grade,
             'signals' => $signals,
             'badges' => array_values(array_unique($badges)),
-            'explain' => $this->explain($trust, $signature, $integrity, $channel, $lifecycle),
+            'explain' => $this->explain($trust, $signature, $integrity, $channel, $lifecycle, $keyScope, $keyStatus),
         ];
     }
 
-    private function explain(string $trust, string $signature, string $integrity, string $channel, string $lifecycle): string
+    private function explain(string $trust, string $signature, string $integrity, string $channel, string $lifecycle, string $keyScope, string $keyStatus): string
     {
         return sprintf(
-            'Source %s, signature %s, integrity %s, channel %s, lifecycle %s.',
+            'Source %s, signature %s, integrity %s, key_scope %s, key_status %s, channel %s, lifecycle %s.',
             $trust !== '' ? $trust : 'unknown',
             $signature !== '' ? $signature : 'unknown',
             $integrity !== '' ? $integrity : 'unknown',
+            $keyScope !== '' ? $keyScope : 'unknown',
+            $keyStatus !== '' ? $keyStatus : 'unknown',
             $channel !== '' ? $channel : 'unknown',
             $lifecycle !== '' ? $lifecycle : 'unknown'
         );
     }
 }
-

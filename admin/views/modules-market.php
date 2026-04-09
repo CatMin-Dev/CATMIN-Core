@@ -158,6 +158,8 @@ ob_start();
                 $compatible = (bool) ($item['compatible'] ?? true);
                 $integrityStatus = strtolower((string) ($item['integrity_status'] ?? 'n/a'));
                 $signatureStatus = strtolower((string) ($item['signature_status'] ?? 'n/a'));
+                $keyScope = strtolower((string) ($item['key_scope'] ?? 'unknown'));
+                $keyStatus = strtolower((string) ($item['key_status'] ?? 'unknown'));
                 ?>
                 <tr>
                     <td>
@@ -260,11 +262,18 @@ ob_start();
                         $signatureBadge = match ($signatureStatus) {
                             'signed_valid' => 'text-bg-success',
                             'unknown_key' => 'text-bg-warning',
+                            'revoked_key' => 'text-bg-danger',
                             'unsigned', 'n/a' => 'text-bg-secondary',
                             default => 'text-bg-danger',
                         };
                         ?>
                         <span class="badge <?= $signatureBadge ?>"><?= htmlspecialchars($signatureStatus, ENT_QUOTES, 'UTF-8') ?></span>
+                        <?php if ($signatureStatus === 'signed_valid'): ?>
+                            <small class="d-block text-body-secondary mt-1"><?= htmlspecialchars('scope: ' . $keyScope . ' · status: ' . $keyStatus, ENT_QUOTES, 'UTF-8') ?></small>
+                        <?php endif; ?>
+                        <?php if ($keyScope === 'local_only'): ?>
+                            <small class="d-block text-warning-emphasis mt-1"><?= htmlspecialchars(__('trust.keys.local_warning'), ENT_QUOTES, 'UTF-8') ?></small>
+                        <?php endif; ?>
                     </td>
                     <td>
                         <?php $trustScore = is_array($item['trust_score'] ?? null) ? $item['trust_score'] : []; ?>

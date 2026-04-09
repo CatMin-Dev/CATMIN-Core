@@ -21,6 +21,7 @@ final class CoreModuleIntegrityScanner
             'tampered' => 0,
             'unsigned' => 0,
             'unknown_key' => 0,
+            'revoked_key' => 0,
         ];
 
         foreach ((array) ($snapshot['modules'] ?? []) as $module) {
@@ -34,6 +35,8 @@ final class CoreModuleIntegrityScanner
             $state = (new CoreModuleIntegrity())->verify($path, $manifest);
             $integrityStatus = (string) ($state['integrity']['status'] ?? 'invalid');
             $signatureStatus = (string) ($state['signature']['status'] ?? 'unsigned');
+            $keyScope = (string) ($state['signature']['key_scope'] ?? 'unknown');
+            $keyStatus = (string) ($state['signature']['key_status'] ?? 'unknown');
             $trusted = (bool) ($state['trust']['trusted'] ?? false);
 
             if (isset($summary[$integrityStatus])) {
@@ -59,6 +62,8 @@ final class CoreModuleIntegrityScanner
                 'integrity_status' => $integrityStatus,
                 'signature_status' => $signatureStatus,
                 'trusted' => $trusted,
+                'key_scope' => $keyScope,
+                'key_status' => $keyStatus,
                 'state' => $state,
             ];
         }
@@ -75,4 +80,3 @@ final class CoreModuleIntegrityScanner
         return $report;
     }
 }
-

@@ -46,8 +46,13 @@ final class CoreKeyringCache
             'last_sync_at' => null,
             'last_sync_status' => 'disabled',
             'last_sync_message' => 'registry distant non configure',
+            'last_import_at' => null,
+            'last_import_status' => 'never',
+            'last_import_message' => '',
             'remote_keys' => [],
+            'imported_official_keys' => [],
             'local_keys' => [],
+            'revocations' => [],
             'revoked' => [],
         ];
 
@@ -66,6 +71,7 @@ final class CoreKeyringCache
             'updated_at' => null,
             'publishers' => [],
             'keys' => [],
+            'metadata' => [],
         ];
 
         return $this->readJson($this->registryCacheFile, $default);

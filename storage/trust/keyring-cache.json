@@ -1,9 +1,14 @@
 {
-  "updated_at": null,
-  "last_sync_at": null,
-  "last_sync_status": "disabled",
-  "last_sync_message": "registry distant non configure",
-  "remote_keys": [],
-  "local_keys": [],
-  "revoked": []
+    "updated_at": "2026-04-09T11:19:26+00:00",
+    "last_sync_at": null,
+    "last_sync_status": "disabled",
+    "last_sync_message": "registry distant non configure",
+    "last_import_at": null,
+    "last_import_status": "never",
+    "last_import_message": "",
+    "remote_keys": [],
+    "imported_official_keys": [],
+    "local_keys": [],
+    "revocations": [],
+    "revoked": []
 }

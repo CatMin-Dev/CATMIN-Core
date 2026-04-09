@@ -240,6 +240,8 @@ $scanModules = static function (): array {
             'integrity_status' => (string) (($integrity['integrity_status'] ?? 'unknown')),
             'signature_status' => (string) (($integrity['signature_status'] ?? 'unknown')),
             'trusted' => (bool) (($integrity['trusted'] ?? false)),
+            'key_scope' => (string) (($integrity['key_scope'] ?? 'unknown')),
+            'key_status' => (string) (($integrity['key_status'] ?? 'unknown')),
             'integrity_details' => is_array($integrity) ? (array) ($integrity['state'] ?? []) : [],
             'capabilities' => is_array($manifest['capabilities'] ?? null) ? array_values($manifest['capabilities']) : [],
         ];
@@ -1668,6 +1670,41 @@ return [
             $controller = new AuthController();
             $adminBase = $controller->adminBasePath();
             $result = (new CoreTrustCenter())->removeLocalKey((string) $request->input('key_id', ''));
+
+            return $redirect($adminBase . '/system/trust-center', [
+                'msg' => (string) ($result['message'] ?? ''),
+                'mt' => (bool) ($result['ok'] ?? false) ? 'success' : 'danger',
+            ]);
+        },
+        'middleware' => [$authRequired, $csrfCheck],
+    ],
+
+    [
+        'method' => 'POST',
+        'path' => '/system/trust-center/revoke',
+        'handler' => static function (Request $request) use ($redirect): Response {
+            $controller = new AuthController();
+            $adminBase = $controller->adminBasePath();
+            $result = (new CoreTrustCenter())->revokeKey(
+                (string) $request->input('key_id', ''),
+                (string) $request->input('reason', '')
+            );
+
+            return $redirect($adminBase . '/system/trust-center', [
+                'msg' => (string) ($result['message'] ?? ''),
+                'mt' => (bool) ($result['ok'] ?? false) ? 'success' : 'danger',
+            ]);
+        },
+        'middleware' => [$authRequired, $csrfCheck],
+    ],
+
+    [
+        'method' => 'POST',
+        'path' => '/system/trust-center/import',
+        'handler' => static function (Request $request) use ($redirect): Response {
+            $controller = new AuthController();
+            $adminBase = $controller->adminBasePath();
+            $result = (new CoreTrustCenter())->importOfficialKeyringFromJson((string) $request->input('import_json', ''));
 
             return $redirect($adminBase . '/system/trust-center', [
                 'msg' => (string) ($result['message'] ?? ''),

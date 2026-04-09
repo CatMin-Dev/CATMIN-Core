@@ -51,19 +51,22 @@ final class CoreModuleSignatureValidator
                 'key_id' => $keyId,
                 'key_scope' => 'unknown',
                 'key_source' => 'unknown',
+                'key_status' => 'unknown',
             ];
         }
 
         $keyScope = strtolower(trim((string) ($entry['scope'] ?? 'community')));
         $keySource = (string) ($entry['source'] ?? 'embedded');
-        if ($keyScope === 'revoked') {
+        $keyStatus = strtolower(trim((string) ($entry['status'] ?? 'active')));
+        if ($keyScope === 'revoked' || $keyStatus === 'revoked') {
             return [
                 'status' => 'revoked_key',
                 'valid' => false,
                 'errors' => ['Clé révoquée: ' . $keyId],
                 'key_id' => $keyId,
-                'key_scope' => $keyScope,
+                'key_scope' => 'revoked',
                 'key_source' => $keySource,
+                'key_status' => 'revoked',
             ];
         }
 
@@ -71,14 +74,15 @@ final class CoreModuleSignatureValidator
             $moduleHash = strtolower(trim((string) ($checksums['module_hash'] ?? '')));
             if ($moduleHash !== '' && !hash_equals($moduleHash, $signedHash)) {
                 return [
-                'status' => 'signature_invalid',
-                'valid' => false,
-                'errors' => ['signed_hash != module_hash'],
-                'key_id' => $keyId,
-                'key_scope' => $keyScope,
-                'key_source' => $keySource,
-            ];
-        }
+                    'status' => 'signature_invalid',
+                    'valid' => false,
+                    'errors' => ['signed_hash != module_hash'],
+                    'key_id' => $keyId,
+                    'key_scope' => $keyScope,
+                    'key_source' => $keySource,
+                    'key_status' => $keyStatus,
+                ];
+            }
         }
 
         $binarySignature = base64_decode($signature, true);
@@ -90,6 +94,7 @@ final class CoreModuleSignatureValidator
                 'key_id' => $keyId,
                 'key_scope' => $keyScope,
                 'key_source' => $keySource,
+                'key_status' => $keyStatus,
             ];
         }
 
@@ -101,6 +106,7 @@ final class CoreModuleSignatureValidator
                 'key_id' => $keyId,
                 'key_scope' => $keyScope,
                 'key_source' => $keySource,
+                'key_status' => $keyStatus,
             ];
         }
 
@@ -113,6 +119,7 @@ final class CoreModuleSignatureValidator
                 'key_id' => $keyId,
                 'key_scope' => $keyScope,
                 'key_source' => $keySource,
+                'key_status' => $keyStatus,
             ];
         }
 
@@ -123,6 +130,8 @@ final class CoreModuleSignatureValidator
             'key_id' => $keyId,
             'key_scope' => $keyScope,
             'key_source' => $keySource,
+            'key_status' => $keyStatus,
         ];
     }
 }
+

@@ -36,6 +36,7 @@ final class CoreTrustCenter
         $remoteConfig = (array) config('keyring.remote', []);
         $syncEnabled = (bool) ($remoteConfig['enabled'] ?? false) && (bool) config('trust-policy.allow_remote_sync', false);
         $mode = (string) config('trust-policy.mode', 'local_only');
+        $policy = (array) config('trust-policy', []);
 
         $sources = [
             [
@@ -51,6 +52,12 @@ final class CoreTrustCenter
                 'details' => $this->cache->trustDir(),
             ],
             [
+                'name' => 'manual_import',
+                'label' => 'Import manuel officiel',
+                'status' => (string) ($cacheState['last_import_status'] ?? 'never'),
+                'details' => (string) (($cacheState['last_import_message'] ?? '') !== '' ? $cacheState['last_import_message'] : 'Aucun import manuel'),
+            ],
+            [
                 'name' => 'remote_registry',
                 'label' => 'Registry distant',
                 'status' => $syncEnabled ? ((string) ($cacheState['last_sync_status'] ?? 'idle')) : 'disabled',
@@ -62,10 +69,15 @@ final class CoreTrustCenter
 
         return [
             'mode' => $mode,
+            'policy' => $policy,
+            'remote' => $remoteConfig,
             'sync_enabled' => $syncEnabled,
             'last_sync_at' => (string) ($cacheState['last_sync_at'] ?? ''),
             'last_sync_status' => (string) ($cacheState['last_sync_status'] ?? 'disabled'),
             'last_sync_message' => (string) ($cacheState['last_sync_message'] ?? 'registry distant non configure'),
+            'last_import_at' => (string) ($cacheState['last_import_at'] ?? ''),
+            'last_import_status' => (string) ($cacheState['last_import_status'] ?? 'never'),
+            'last_import_message' => (string) ($cacheState['last_import_message'] ?? ''),
             'keys' => $keys,
             'groups' => $groups,
             'stats' => [
@@ -98,5 +110,15 @@ final class CoreTrustCenter
     public function syncRemote(): array
     {
         return $this->manager->syncRemote();
+    }
+
+    public function importOfficialKeyringFromJson(string $rawJson): array
+    {
+        return $this->manager->importOfficialKeyringFromJson($rawJson);
+    }
+
+    public function revokeKey(string $keyId, string $reason = ''): array
+    {
+        return $this->manager->revokeKey($keyId, $reason);
     }
 }
