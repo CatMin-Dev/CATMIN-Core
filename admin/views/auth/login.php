@@ -46,8 +46,21 @@ ob_start();
                     <label class="form-label" for="password">Mot de passe</label>
                     <div class="input-group">
                         <input class="form-control" id="password" name="password" type="password" autocomplete="current-password" required>
-                        <button class="btn btn-outline-secondary" type="button" data-password-toggle="#password" aria-label="Afficher/masquer le mot de passe">
-                            Voir
+                        <button class="btn btn-outline-secondary" type="button" data-password-toggle="#password" aria-label="Afficher le mot de passe" aria-pressed="false" title="Afficher/masquer le mot de passe">
+                            <span data-password-eye aria-hidden="true">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </span>
+                            <span data-password-eye-slash class="d-none" aria-hidden="true">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                    <path d="M3 3l18 18"></path>
+                                </svg>
+                            </span>
+                            <span class="visually-hidden">Afficher/Masquer</span>
                         </button>
                     </div>
                 </div>

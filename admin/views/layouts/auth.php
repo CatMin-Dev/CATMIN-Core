@@ -24,6 +24,6 @@ $authContent = isset($authContent) ? (string) $authContent : '';
     <?= $authContent ?>
 </main>
 <footer class="admin-login-footer">© <?= date('Y') ?> CATMIN. <?= htmlspecialchars(__('footer.rights'), ENT_QUOTES, 'UTF-8') ?></footer>
-<script src="/assets/js/catmin-auth.js?v=1"></script>
+<script src="/assets/js/catmin-auth.js?v=2"></script>
 </body>
 </html>

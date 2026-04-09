@@ -14,6 +14,17 @@
 
         var isPassword = input.getAttribute('type') === 'password';
         input.setAttribute('type', isPassword ? 'text' : 'password');
+        button.setAttribute('aria-pressed', isPassword ? 'true' : 'false');
+        button.setAttribute('aria-label', isPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe');
+
+        var eye = button.querySelector('[data-password-eye]');
+        var eyeSlash = button.querySelector('[data-password-eye-slash]');
+        if (eye && eyeSlash) {
+            eye.classList.toggle('d-none', isPassword);
+            eyeSlash.classList.toggle('d-none', !isPassword);
+            return;
+        }
+
         button.textContent = isPassword ? 'Masquer' : 'Voir';
     }
 
