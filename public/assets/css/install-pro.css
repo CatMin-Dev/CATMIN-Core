@@ -45,6 +45,33 @@ body {
     padding-top: 1rem;
 }
 
+.install-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem .9rem;
+    padding: 0 1rem 1rem;
+    color: var(--palette-stone-600);
+    font-size: .78rem;
+}
+
+.install-footer-links {
+    display: inline-flex;
+    align-items: center;
+    gap: .8rem;
+}
+
+.install-footer-links a {
+    color: var(--palette-rose-600);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.install-footer-links a:hover {
+    color: var(--palette-rose-700);
+}
+
 .install-card {
     border: 1px solid var(--catmin-border);
     border-radius: 1rem;
@@ -71,6 +98,19 @@ body {
     border-radius: 0;
     background: transparent;
     box-shadow: none;
+}
+
+.install-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem 1rem;
+    font-size: .78rem;
+    color: var(--palette-stone-600);
+}
+
+.install-meta code {
+    font-size: .72rem;
+    color: var(--palette-stone-700);
 }
 
 .logo-mark {

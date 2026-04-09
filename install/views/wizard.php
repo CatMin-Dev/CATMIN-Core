@@ -88,6 +88,53 @@ if (!function_exists('install_markdown_to_html')) {
     }
 }
 
+if (!function_exists('install_git_head_meta')) {
+    function install_git_head_meta(string $root): array
+    {
+        $gitDir = rtrim($root, '/') . '/.git';
+        $headFile = $gitDir . '/HEAD';
+        if (!is_file($headFile)) {
+            return ['branch' => '-', 'commit' => '-'];
+        }
+
+        $headRaw = trim((string) file_get_contents($headFile));
+        if ($headRaw === '') {
+            return ['branch' => '-', 'commit' => '-'];
+        }
+
+        $branch = 'detached';
+        $commit = '';
+        if (str_starts_with($headRaw, 'ref: ')) {
+            $ref = trim(substr($headRaw, 5));
+            $branch = basename($ref);
+            $refFile = $gitDir . '/' . $ref;
+            if (is_file($refFile)) {
+                $commit = trim((string) file_get_contents($refFile));
+            } elseif (is_file($gitDir . '/packed-refs')) {
+                $lines = (array) file($gitDir . '/packed-refs', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+                foreach ($lines as $line) {
+                    $line = trim((string) $line);
+                    if ($line === '' || str_starts_with($line, '#') || str_starts_with($line, '^')) {
+                        continue;
+                    }
+                    $parts = preg_split('/\s+/', $line);
+                    if (is_array($parts) && count($parts) >= 2 && $parts[1] === $ref) {
+                        $commit = (string) $parts[0];
+                        break;
+                    }
+                }
+            }
+        } else {
+            $commit = $headRaw;
+        }
+
+        return [
+            'branch' => $branch !== '' ? $branch : '-',
+            'commit' => $commit !== '' ? substr($commit, 0, 12) : '-',
+        ];
+    }
+}
+
 $contextData = is_object($context) && method_exists($context, 'data') ? $context->data($step) : [];
 $contextData = is_array($contextData) ? $contextData : [];
 $installBackup = is_object($context) && method_exists($context, 'meta') ? $context->meta('install_backup', []) : [];
@@ -110,6 +157,25 @@ foreach (($steps ?? []) as $knownStep) {
         $stepTitles[(string) $knownStep] = (string) ($def['title'] ?? $knownStep);
     }
 }
+
+$versionPayload = [];
+if (is_file(CATMIN_ROOT . '/version.json')) {
+    $decoded = json_decode((string) file_get_contents(CATMIN_ROOT . '/version.json'), true);
+    if (is_array($decoded)) {
+        $versionPayload = $decoded;
+    }
+}
+$gitMeta = install_git_head_meta(CATMIN_ROOT);
+$installerVersion = (string) ($versionPayload['version'] ?? 'unknown');
+$installerDbSchema = (string) ($versionPayload['db_schema'] ?? '-');
+$buildMeta = is_array($versionPayload['build'] ?? null) ? $versionPayload['build'] : [];
+$publicCommit = (string) ($buildMeta['public_commit'] ?? '-');
+$embeddedCommit = (string) ($buildMeta['commit'] ?? '-');
+$activeCommit = (string) (($gitMeta['commit'] ?? '-') !== '-' ? $gitMeta['commit'] : ($publicCommit !== '-' ? $publicCommit : $embeddedCommit));
+$activeBranch = (string) ($gitMeta['branch'] ?? '-');
+$commitScope = ($gitMeta['commit'] ?? '-') !== '-' ? 'DEV' : 'PUBLIC';
+$githubPublic = (string) ($versionPayload['links']['github_public'] ?? 'https://github.com/CatMin-Dev/CATMIN-Core');
+$githubDev = (string) ($versionPayload['links']['github_dev'] ?? 'https://github.com/CatMin-Dev/core');
 
 $precheckLive = null;
 $precheckSummary = ['required_failed' => 0, 'failed' => 0, 'passed' => 0, 'total' => 0];
@@ -184,6 +250,10 @@ if ($step === 'precheck') {
             <div class="d-flex align-items-center gap-2">
                 <span class="badge text-bg-dark"><?= htmlspecialchars((string) ($stepTitles[$step] ?? $step), ENT_QUOTES, 'UTF-8') ?></span>
             </div>
+        </div>
+        <div class="install-meta mt-2">
+            <span>Version <?= htmlspecialchars($installerVersion, ENT_QUOTES, 'UTF-8') ?> · DB <?= htmlspecialchars($installerDbSchema, ENT_QUOTES, 'UTF-8') ?></span>
+            <span>Commit <?= htmlspecialchars($commitScope, ENT_QUOTES, 'UTF-8') ?>: <code><?= htmlspecialchars($activeCommit, ENT_QUOTES, 'UTF-8') ?></code><?= $activeBranch !== '-' ? ' · ' . htmlspecialchars($activeBranch, ENT_QUOTES, 'UTF-8') : '' ?></span>
         </div>
     </header>
 
@@ -660,6 +730,13 @@ if ($step === 'precheck') {
             </form>
         </div>
     </main>
+    <footer class="install-footer">
+        <small>© <?= date('Y') ?> CATMIN. Tous droits réservés.</small>
+        <div class="install-footer-links">
+            <a href="<?= htmlspecialchars($githubPublic, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer">GitHub Public</a>
+            <a href="<?= htmlspecialchars($githubDev, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer">GitHub DEV</a>
+        </div>
+    </footer>
     </div>
 </div>
 <form method="post" action="/install/reset" id="install-reset-form" class="d-none">

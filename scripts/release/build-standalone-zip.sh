@@ -45,6 +45,41 @@ for item in "${INCLUDE_ITEMS[@]}"; do
   fi
 done
 
+CURRENT_COMMIT="$(git -C "${ROOT_DIR}" rev-parse --short=12 HEAD 2>/dev/null || true)"
+CURRENT_BRANCH="$(git -C "${ROOT_DIR}" rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
+PUBLIC_COMMIT="${CATMIN_RELEASE_PUBLIC_COMMIT:-${CURRENT_COMMIT}}"
+PUBLIC_REPO="${CATMIN_PUBLIC_REPO_URL:-https://github.com/CatMin-Dev/CATMIN-Core}"
+DEV_REPO="${CATMIN_DEV_REPO_URL:-https://github.com/CatMin-Dev/core}"
+
+if [ -f "${STAGE_DIR}/version.json" ]; then
+  php -r '
+  $file = $argv[1];
+  $buildCommit = (string) $argv[2];
+  $buildBranch = (string) $argv[3];
+  $publicCommit = (string) $argv[4];
+  $publicRepo = (string) $argv[5];
+  $devRepo = (string) $argv[6];
+  $raw = is_file($file) ? (string) file_get_contents($file) : "{}";
+  $json = json_decode($raw, true);
+  if (!is_array($json)) {
+      $json = [];
+  }
+  $json["build"] = [
+      "channel" => "standalone",
+      "commit" => $buildCommit,
+      "branch" => $buildBranch,
+      "public_commit" => $publicCommit,
+      "dev_commit" => $buildCommit,
+      "built_at" => gmdate("c"),
+  ];
+  $links = is_array($json["links"] ?? null) ? $json["links"] : [];
+  $links["github_public"] = $publicRepo;
+  $links["github_dev"] = $devRepo;
+  $json["links"] = $links;
+  file_put_contents($file, json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . PHP_EOL);
+  ' "${STAGE_DIR}/version.json" "${CURRENT_COMMIT}" "${CURRENT_BRANCH}" "${PUBLIC_COMMIT}" "${PUBLIC_REPO}" "${DEV_REPO}"
+fi
+
 # Remove release-excluded content.
 find "${STAGE_DIR}" -type d \( -name '.git' -o -name '.vscode' -o -name 'node_modules' -o -name 'tests' \) -prune -exec rm -rf {} +
 find "${STAGE_DIR}" -type f \( -name '*.log' -o -name '*.map' -o -name '*.tmp' \) -delete
