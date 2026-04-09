@@ -7,6 +7,8 @@ namespace Install;
 require_once CATMIN_CORE . '/backup-exporter.php';
 require_once CATMIN_CORE . '/backup-download-token.php';
 require_once CATMIN_CORE . '/install-backup-cleanup.php';
+require_once CATMIN_CORE . '/settings-schema.php';
+require_once CATMIN_CORE . '/module-repository-repository.php';
 
 use Core\auth\PasswordHasher;
 use Core\config\Config;
@@ -653,6 +655,10 @@ final class InstallerEngine
             $this->upsertCoreSetting($pdo, $settingsTable, (string) $category, (string) $key, (string) $value, (bool) $isPublic);
         }
 
+        // Guarantee DB completeness: every key declared in schema must exist
+        // in core_settings after installer execution.
+        $this->seedMissingSettingsFromSchema($pdo, $settingsTable);
+
         $cronDir = CATMIN_ROOT . '/cron';
         if (!is_dir($cronDir)) {
             @mkdir($cronDir, 0775, true);
@@ -723,6 +729,10 @@ final class InstallerEngine
                 'status' => 'active',
             ]);
         }
+
+        // Ensure module repositories + market policies are physically seeded in DB
+        // during install (not lazily on first settings page usage).
+        $this->bootstrapModuleRepositoryRegistry();
     }
 
     private function upsertCoreSetting(PDO $pdo, string $table, string $category, string $key, string $value, bool $isPublic): void
@@ -755,6 +765,66 @@ final class InstallerEngine
             'setting_value' => $value,
             'is_public' => $isPublic ? 1 : 0,
         ]);
+    }
+
+    private function seedMissingSettingsFromSchema(PDO $pdo, string $settingsTable): void
+    {
+        /** @var array<string,array<string,mixed>> $defaults */
+        $defaults = \CoreSettingsSchema::defaults();
+
+        foreach ($defaults as $fullKey => $meta) {
+            $fullKey = trim((string) $fullKey);
+            if ($fullKey === '' || !str_contains($fullKey, '.')) {
+                continue;
+            }
+
+            [$category, $key] = explode('.', $fullKey, 2);
+            $category = trim((string) $category);
+            $key = trim((string) $key);
+            if ($category === '' || $key === '') {
+                continue;
+            }
+
+            $defaultValue = $meta['default'] ?? '';
+            if (is_bool($defaultValue)) {
+                $settingValue = $defaultValue ? '1' : '0';
+            } elseif (is_array($defaultValue)) {
+                $settingValue = (string) (json_encode($defaultValue, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '[]');
+            } elseif ($defaultValue === null) {
+                $settingValue = '';
+            } else {
+                $settingValue = (string) $defaultValue;
+            }
+
+            $isPublic = !empty($meta['system']) ? 0 : (!empty($meta['protected']) ? 0 : 1);
+            $find = $pdo->prepare('SELECT id FROM ' . $settingsTable . ' WHERE category = :category AND setting_key = :setting_key LIMIT 1');
+            $find->execute([
+                'category' => $category,
+                'setting_key' => $key,
+            ]);
+            $id = $find->fetchColumn();
+            if ($id !== false) {
+                continue;
+            }
+
+            $insert = $pdo->prepare(
+                'INSERT INTO ' . $settingsTable . ' (category, setting_key, setting_value, is_public, updated_at) VALUES (:category, :setting_key, :setting_value, :is_public, CURRENT_TIMESTAMP)'
+            );
+            $insert->execute([
+                'category' => $category,
+                'setting_key' => $key,
+                'setting_value' => $settingValue,
+                'is_public' => (int) $isPublic,
+            ]);
+        }
+    }
+
+    private function bootstrapModuleRepositoryRegistry(): void
+    {
+        $repo = new \CoreModuleRepositoryRepository();
+        $repo->listAll();
+        $policy = $repo->loadPolicy();
+        $repo->savePolicy($policy);
     }
 
     private function clearInstallSessionSnapshots(): void
