@@ -1,5 +1,16 @@
 [
     {
+        "version": "0.3.0-dev.25",
+        "date": "2026-04-09",
+        "scope": "docs",
+        "changes": [
+            "concrete module pipeline example and file mapping added for release packaging and verification",
+            "expected artifact naming and CATMIN-side verification flow documented for editor onboarding",
+            "078-080 release pipeline guide linked to the new 082 concrete example"
+        ],
+        "prompt": "082"
+    },
+    {
         "version": "0.3.0-dev.24",
         "date": "2026-04-09",
         "scope": "docs",

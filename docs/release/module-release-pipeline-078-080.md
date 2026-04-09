@@ -38,6 +38,9 @@ Never package:
 - `scripts/release/generate-module-release-metadata.php`
 - `scripts/release/verify-module-release.php`
 
+## Exemple concret
+- `docs/release/module-pipeline-example-file-map-082.md`
+
 ## Usage
 
 ```bash
