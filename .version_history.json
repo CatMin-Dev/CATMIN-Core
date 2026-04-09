@@ -1,5 +1,16 @@
 [
     {
+        "version": "0.3.0-dev.23",
+        "date": "2026-04-09",
+        "scope": "release",
+        "changes": [
+            "official CATMIN module release pipeline implemented (build, post-build verify, coherent artifact set)",
+            "deterministic checksums generation standard implemented (sha256 file hashes + canonical module_hash)",
+            "official RSA signature workflow implemented (sign module_hash, generate signature.json, verify with provided public key)"
+        ],
+        "prompt": "078-080"
+    },
+    {
         "version": "0.3.0-dev.22",
         "date": "2026-04-09",
         "scope": "security",
