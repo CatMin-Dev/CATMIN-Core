@@ -1,5 +1,15 @@
 [
     {
+        "version": "0.3.0-dev.22",
+        "date": "2026-04-09",
+        "scope": "security",
+        "changes": [
+            "market trust policy switched to strict mode by default",
+            "strict mode now hard-fails when checksums/integrity are not valid (no fallback warning)"
+        ],
+        "prompt": "policy-market-security-strict"
+    },
+    {
         "version": "0.3.0-dev.21",
         "date": "2026-04-09",
         "scope": "core",

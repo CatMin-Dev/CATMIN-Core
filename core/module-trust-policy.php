@@ -25,7 +25,10 @@ final class CoreModuleTrustPolicy
         $errors = [];
 
         if (!in_array($integrityStatus, ['valid'], true)) {
-            if (in_array($integrityStatus, ['tampered', 'invalid'], true)) {
+            if ($mode === 'strict') {
+                $trusted = false;
+                $errors[] = 'Checksums requis: intégrité non valide';
+            } elseif (in_array($integrityStatus, ['tampered', 'invalid'], true)) {
                 $trusted = false;
                 $errors[] = 'Integrite module invalide';
             } else {
@@ -51,4 +54,3 @@ final class CoreModuleTrustPolicy
         ];
     }
 }
-

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 return [
     // permissive|recommended|strict
-    'mode' => 'recommended',
+    'mode' => 'strict',
     'official_publishers' => [
         'catmin dev',
         'catmin-dev',
@@ -15,4 +15,3 @@ return [
         // 'catmin-official-key-001' => '-----BEGIN PUBLIC KEY----- ... -----END PUBLIC KEY-----',
     ],
 ];
-
