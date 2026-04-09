@@ -17,23 +17,35 @@ require_once CATMIN_CORE . '/module-snapshot-manager.php';
 
 final class CoreModuleInstallRunner
 {
-    public function installZip(string $zipPath, bool $activate = true): array
+    public function installZip(string $zipPath, bool $activate = true, array $context = []): array
     {
         $staging = new CoreModuleStagingManager();
         $staging->ensure();
         $logger = new CoreModuleInstallLogger();
         $rollback = new CoreModuleInstallRollback();
+        require_once CATMIN_CORE . '/events-bus.php';
 
         $logger->log('zip_received', 'ok', ['zip' => basename($zipPath)]);
+        catmin_event_emit('module.install.started', [
+            'zip' => basename($zipPath),
+            'activate' => $activate,
+            'context' => $context,
+        ]);
         $zipValidation = (new CoreModuleZipValidator())->validateArchive($zipPath);
         if (!(bool) ($zipValidation['ok'] ?? false)) {
             $logger->log('zip_validate', 'error', ['errors' => $zipValidation['errors'] ?? []]);
+            catmin_event_emit('module.install.failed', [
+                'zip' => basename($zipPath),
+                'errors' => (array) ($zipValidation['errors'] ?? []),
+                'context' => $context,
+            ]);
             return ['ok' => false, 'message' => 'ZIP module invalide', 'errors' => (array) ($zipValidation['errors'] ?? [])];
         }
 
         $runId = gmdate('Ymd-His') . '-' . bin2hex(random_bytes(4));
         $extractDir = $staging->stagingDir() . '/install-' . $runId;
         if (!is_dir($extractDir) && !@mkdir($extractDir, 0775, true) && !is_dir($extractDir)) {
+            catmin_event_emit('module.install.failed', ['zip' => basename($zipPath), 'errors' => ['staging_create_failed'], 'context' => $context]);
             return ['ok' => false, 'message' => 'Creation dossier staging impossible', 'errors' => ['staging_create_failed']];
         }
 
@@ -44,6 +56,7 @@ final class CoreModuleInstallRunner
             }
             $zip->close();
             $rollback->cleanupPath($extractDir);
+            catmin_event_emit('module.install.failed', ['zip' => basename($zipPath), 'errors' => ['zip_extract_failed'], 'context' => $context]);
             return ['ok' => false, 'message' => 'Extraction ZIP impossible', 'errors' => ['zip_extract_failed']];
         }
         $zip->close();
@@ -51,12 +64,14 @@ final class CoreModuleInstallRunner
         $moduleRoot = $this->findManifestRoot($extractDir);
         if ($moduleRoot === null) {
             $rollback->cleanupPath($extractDir);
+            catmin_event_emit('module.install.failed', ['zip' => basename($zipPath), 'errors' => ['manifest_missing'], 'context' => $context]);
             return ['ok' => false, 'message' => 'Manifest introuvable apres extraction', 'errors' => ['manifest_missing']];
         }
 
         $manifestResult = (new CoreModuleZipValidator())->readManifestFromExtracted($moduleRoot);
         if (!(bool) ($manifestResult['ok'] ?? false)) {
             $rollback->cleanupPath($extractDir);
+            catmin_event_emit('module.install.failed', ['zip' => basename($zipPath), 'errors' => (array) ($manifestResult['errors'] ?? []), 'context' => $context]);
             return ['ok' => false, 'message' => 'Manifest module invalide', 'errors' => (array) ($manifestResult['errors'] ?? [])];
         }
         $manifest = (array) ($manifestResult['manifest'] ?? []);
@@ -64,18 +79,21 @@ final class CoreModuleInstallRunner
         $compat = (new CoreModuleCompatibilityChecker())->check($manifest);
         if (!(bool) ($compat['compatible'] ?? false)) {
             $rollback->cleanupPath($extractDir);
+            catmin_event_emit('module.install.failed', ['slug' => (string) ($manifest['slug'] ?? ''), 'errors' => (array) ($compat['errors'] ?? []), 'context' => $context]);
             return ['ok' => false, 'message' => 'Compatibilite module KO', 'errors' => (array) ($compat['errors'] ?? [])];
         }
 
         $collisions = (new CoreModuleCollisionChecker())->check($manifest);
         if (!(bool) ($collisions['ok'] ?? false)) {
             $rollback->cleanupPath($extractDir);
+            catmin_event_emit('module.install.failed', ['slug' => (string) ($manifest['slug'] ?? ''), 'errors' => (array) ($collisions['errors'] ?? []), 'context' => $context]);
             return ['ok' => false, 'message' => 'Collision module detectee', 'errors' => (array) ($collisions['errors'] ?? [])];
         }
 
         $integrity = (new CoreModuleIntegrity())->verify($moduleRoot, $manifest);
         if (!((bool) ($integrity['trust']['trusted'] ?? false))) {
             $rollback->cleanupPath($extractDir);
+            catmin_event_emit('module.install.failed', ['slug' => (string) ($manifest['slug'] ?? ''), 'errors' => (array) ($integrity['trust']['errors'] ?? []), 'context' => $context]);
             return ['ok' => false, 'message' => 'Confiance module insuffisante', 'errors' => (array) ($integrity['trust']['errors'] ?? [])];
         }
 
@@ -88,11 +106,13 @@ final class CoreModuleInstallRunner
         }
         if (!is_dir(dirname($dest)) && !@mkdir(dirname($dest), 0775, true) && !is_dir(dirname($dest))) {
             $rollback->cleanupPath($extractDir);
+            catmin_event_emit('module.install.failed', ['slug' => $slug, 'errors' => ['destination_prepare_failed'], 'context' => $context]);
             return ['ok' => false, 'message' => 'Preparation destination impossible', 'errors' => ['destination_prepare_failed']];
         }
         if (!@rename($moduleRoot, $dest)) {
             if (!$this->copyDir($moduleRoot, $dest)) {
                 $rollback->cleanupPath($extractDir);
+                catmin_event_emit('module.install.failed', ['slug' => $slug, 'errors' => ['move_failed'], 'context' => $context]);
                 return ['ok' => false, 'message' => 'Deplacement final module impossible', 'errors' => ['move_failed']];
             }
         }
@@ -103,17 +123,26 @@ final class CoreModuleInstallRunner
         $stateStore->persist($slug, (string) ($manifest['name'] ?? $slug), (string) ($manifest['version'] ?? '0.0.0'), false);
 
         if ($activate) {
-            $guard = (new CoreModuleActivationGuard())->assertCanActivate($dest, $manifest);
+            $guard = (new CoreModuleActivationGuard())->assertCanActivate($dest, $manifest, (string) ($context['repo_trust'] ?? ''));
             if (!(bool) ($guard['ok'] ?? false)) {
+                catmin_event_emit('module.install.failed', ['slug' => $slug, 'errors' => (array) ($guard['errors'] ?? []), 'context' => $context]);
                 return ['ok' => false, 'message' => 'Installation OK mais activation refusee', 'errors' => (array) ($guard['errors'] ?? [])];
             }
             $activation = (new CoreModuleActivator())->activate($type, $slug);
             if (!(bool) ($activation['ok'] ?? false)) {
+                catmin_event_emit('module.install.failed', ['slug' => $slug, 'errors' => [(string) ($activation['message'] ?? 'activation_failed')], 'context' => $context]);
                 return ['ok' => false, 'message' => 'Installation OK mais activation KO', 'errors' => [(string) ($activation['message'] ?? 'activation_failed')]];
             }
         }
 
         $logger->log('install_complete', 'ok', ['slug' => $slug, 'type' => $type, 'activated' => $activate]);
+        catmin_event_emit('module.installed', [
+            'scope' => $type,
+            'slug' => $slug,
+            'version' => (string) ($manifest['version'] ?? '0.0.0'),
+            'activated' => $activate,
+            'context' => $context,
+        ]);
         return [
             'ok' => true,
             'message' => 'Module installe avec succes',

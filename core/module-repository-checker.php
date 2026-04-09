@@ -15,6 +15,7 @@ final class CoreModuleRepositoryChecker
         return match ($provider) {
             'github' => $this->checkGithub($repository),
             'custom_http_index' => $this->checkCustomIndex($repository),
+            'local_mirror' => $this->checkLocalMirror($repository),
             default => [
                 'ok' => false,
                 'status' => 'invalid',
@@ -23,6 +24,72 @@ final class CoreModuleRepositoryChecker
                 'errors' => ['provider_not_supported'],
             ],
         };
+    }
+
+    private function checkLocalMirror(array $repository): array
+    {
+        $indexPath = trim((string) ($repository['index_url'] ?? ''));
+        $repoPath = trim((string) ($repository['repo_url'] ?? ''));
+
+        $path = '';
+        if ($indexPath !== '') {
+            $path = $indexPath;
+        } elseif ($repoPath !== '') {
+            $path = rtrim($repoPath, '/') . '/catmin-repository.json';
+        }
+        if ($path === '') {
+            return [
+                'ok' => false,
+                'status' => 'invalid',
+                'message' => 'Chemin local index requis.',
+                'module_count' => 0,
+                'errors' => ['local_index_missing'],
+            ];
+        }
+        if (!str_starts_with($path, '/')) {
+            $path = CATMIN_ROOT . '/' . ltrim($path, '/');
+        }
+        $real = realpath($path);
+        if (!is_string($real) || !is_file($real)) {
+            return [
+                'ok' => false,
+                'status' => 'error',
+                'message' => 'Index local introuvable.',
+                'module_count' => 0,
+                'errors' => ['local_index_unreachable'],
+            ];
+        }
+
+        $raw = @file_get_contents($real);
+        $decoded = is_string($raw) ? json_decode($raw, true) : null;
+        if (!is_array($decoded)) {
+            return [
+                'ok' => false,
+                'status' => 'invalid',
+                'message' => 'Index local JSON invalide.',
+                'module_count' => 0,
+                'errors' => ['local_index_json_invalid'],
+            ];
+        }
+
+        $parsed = (new CoreModuleRepositoryIndexStandard())->parse($decoded);
+        if (!(bool) ($parsed['ok'] ?? false)) {
+            return [
+                'ok' => false,
+                'status' => 'invalid',
+                'message' => 'Index local non conforme CATMIN.',
+                'module_count' => 0,
+                'errors' => ['local_standard_index_invalid'],
+            ];
+        }
+        $items = is_array($parsed['items'] ?? null) ? $parsed['items'] : [];
+        return [
+            'ok' => true,
+            'status' => 'ok',
+            'message' => 'Index local miroir valide.',
+            'module_count' => count($items),
+            'errors' => [],
+        ];
     }
 
     private function checkGithub(array $repository): array

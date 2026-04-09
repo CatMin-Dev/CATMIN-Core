@@ -61,10 +61,14 @@ final class CoreModuleRepositoryIndexStandard
         if ($repository['repository_slug'] === '' || preg_match('/^[a-z0-9][a-z0-9\-]{1,118}[a-z0-9]$/', $repository['repository_slug']) !== 1) {
             $errors[] = 'repository_slug invalid';
         }
-        if ($repository['provider'] === '' || !in_array($repository['provider'], ['github', 'custom_http_index'], true)) {
+        if ($repository['provider'] === '' || !in_array($repository['provider'], ['github', 'custom_http_index', 'local_mirror'], true)) {
             $errors[] = 'provider invalid';
         }
-        if ($repository['base_repo_url'] === '' || filter_var($repository['base_repo_url'], FILTER_VALIDATE_URL) === false) {
+        if ($repository['provider'] === 'local_mirror') {
+            if ($repository['base_repo_url'] === '') {
+                $errors[] = 'base_repo_url invalid';
+            }
+        } elseif ($repository['base_repo_url'] === '' || filter_var($repository['base_repo_url'], FILTER_VALIDATE_URL) === false) {
             $errors[] = 'base_repo_url invalid';
         }
 
@@ -180,4 +184,3 @@ final class CoreModuleRepositoryIndexStandard
         return is_string($raw) ? $raw : null;
     }
 }
-

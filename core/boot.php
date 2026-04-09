@@ -144,5 +144,32 @@ final class CoreBoot
         if (!defined('CATMIN_HOOKS_READY')) {
             define('CATMIN_HOOKS_READY', true);
         }
+
+        require_once CATMIN_CORE . '/events-bus.php';
+
+        $loaded = defined('CATMIN_LOADED_MODULES') && is_array(CATMIN_LOADED_MODULES) ? CATMIN_LOADED_MODULES : [];
+        foreach ($loaded as $module) {
+            if (!is_array($module)) {
+                continue;
+            }
+            $hooksFile = rtrim((string) ($module['path'] ?? ''), '/') . '/hooks.php';
+            if ($hooksFile === '' || !is_file($hooksFile)) {
+                continue;
+            }
+            try {
+                require_once $hooksFile;
+            } catch (\Throwable $e) {
+                Core\logs\Logger::warning('Module hooks load failed', [
+                    'module' => (string) ($module['name'] ?? ''),
+                    'path' => $hooksFile,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        catmin_event_emit('core.boot.ready', [
+            'area' => defined('CATMIN_AREA') ? CATMIN_AREA : 'unknown',
+            'modules_loaded' => count($loaded),
+        ]);
     }
 }

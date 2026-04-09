@@ -93,12 +93,13 @@ ob_start();
                 <th><?= htmlspecialchars(__('modules.table.integrity'), ENT_QUOTES, 'UTF-8') ?></th>
                 <th><?= htmlspecialchars(__('modules.table.signature'), ENT_QUOTES, 'UTF-8') ?></th>
                 <th><?= htmlspecialchars(__('modules.table.trust'), ENT_QUOTES, 'UTF-8') ?></th>
+                <th>Severity</th>
                 <th><?= htmlspecialchars(__('common.status'), ENT_QUOTES, 'UTF-8') ?></th>
             </tr>
             </thead>
             <tbody>
             <?php if ($modules === []): ?>
-                <tr><td colspan="8" class="text-center py-4 text-body-secondary"><?= htmlspecialchars(__('updates.modules.empty'), ENT_QUOTES, 'UTF-8') ?></td></tr>
+                <tr><td colspan="9" class="text-center py-4 text-body-secondary"><?= htmlspecialchars(__('updates.modules.empty'), ENT_QUOTES, 'UTF-8') ?></td></tr>
             <?php else: ?>
                 <?php foreach ($modules as $row): ?>
                     <?php
@@ -124,10 +125,35 @@ ob_start();
                         </td>
                         <td><span class="badge text-bg-light border"><?= htmlspecialchars((string) ($row['local_version'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></span></td>
                         <td><span class="badge text-bg-light border"><?= htmlspecialchars((string) ($row['remote_version'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></span></td>
-                        <td><span class="badge <?= (bool) ($row['compatible'] ?? true) ? 'text-bg-success' : 'text-bg-danger' ?>"><?= htmlspecialchars((bool) ($row['compatible'] ?? true) ? __('common.ok') : __('common.incompatible'), ENT_QUOTES, 'UTF-8') ?></span></td>
+                        <?php
+                        $compatState = strtolower((string) ($row['compatibility_state'] ?? 'unknown'));
+                        $compatClass = match ($compatState) {
+                            'compatible' => 'text-bg-success',
+                            'compatible_with_warning' => 'text-bg-warning',
+                            'incompatible' => 'text-bg-danger',
+                            default => 'text-bg-secondary',
+                        };
+                        ?>
+                        <td>
+                            <span class="badge <?= $compatClass ?>"><?= htmlspecialchars($compatState, ENT_QUOTES, 'UTF-8') ?></span>
+                            <?php foreach ((array) ($row['compat_warnings'] ?? []) as $warning): ?>
+                                <small class="d-block text-warning mt-1"><?= htmlspecialchars((string) $warning, ENT_QUOTES, 'UTF-8') ?></small>
+                            <?php endforeach; ?>
+                        </td>
                         <td><span class="badge <?= $integrityBadge ?>"><?= htmlspecialchars($integrityStatus, ENT_QUOTES, 'UTF-8') ?></span></td>
                         <td><span class="badge <?= $signatureBadge ?>"><?= htmlspecialchars($signatureStatus, ENT_QUOTES, 'UTF-8') ?></span></td>
                         <td><span class="badge <?= (bool) ($row['trusted'] ?? false) ? 'text-bg-success' : 'text-bg-danger' ?>"><?= htmlspecialchars((bool) ($row['trusted'] ?? false) ? __('common.trusted') : __('common.not_trusted'), ENT_QUOTES, 'UTF-8') ?></span></td>
+                        <?php
+                        $severity = strtolower((string) ($row['update_severity'] ?? 'info'));
+                        $severityClass = match ($severity) {
+                            'critical' => 'text-bg-danger',
+                            'security' => 'text-bg-danger',
+                            'important' => 'text-bg-warning',
+                            'recommended' => 'text-bg-info',
+                            default => 'text-bg-secondary',
+                        };
+                        ?>
+                        <td><span class="badge <?= $severityClass ?>"><?= htmlspecialchars($severity, ENT_QUOTES, 'UTF-8') ?></span></td>
                         <td>
                             <?php if ((bool) ($row['has_update'] ?? false)): ?>
                                 <span class="badge text-bg-warning"><?= htmlspecialchars(__('market.status.updates'), ENT_QUOTES, 'UTF-8') ?></span>

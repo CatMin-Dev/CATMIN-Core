@@ -6,6 +6,7 @@ require_once CATMIN_CORE . '/market-github.php';
 require_once CATMIN_CORE . '/market-installer.php';
 require_once CATMIN_CORE . '/module-loader.php';
 require_once CATMIN_CORE . '/module-compatibility-checker.php';
+require_once CATMIN_CORE . '/module-capability-policy.php';
 require_once CATMIN_CORE . '/module-integrity-scanner.php';
 require_once CATMIN_CORE . '/module-repository-registry.php';
 require_once CATMIN_CORE . '/module-repository-index-standard.php';
@@ -70,6 +71,7 @@ final class CoreMarketEngine
                 $local = $localBySlug[$slug] ?? null;
                 $integrity = $integrityBySlug[$slug] ?? null;
                 $compat = (new CoreModuleCompatibilityChecker())->check($manifest);
+                $capabilityState = (new CoreModuleCapabilityPolicy())->evaluate($manifest, (string) ($repository['trust_level'] ?? 'community'));
                 $trustState = $trust->evaluate($repository, $manifest, $policy);
                 $repoAllowedChannels = array_values(array_filter(array_map(
                     static fn ($v): string => strtolower(trim((string) $v)),
@@ -79,6 +81,9 @@ final class CoreMarketEngine
                 if ($repoAllowedChannels !== [] && !in_array($channel, $repoAllowedChannels, true)) {
                     $trustState['install_allowed'] = false;
                     $trustState['warnings'][] = 'Canal non autorisé par dépôt: ' . $channel;
+                }
+                if (!(bool) ($capabilityState['ok'] ?? false)) {
+                    $trustState['install_allowed'] = false;
                 }
 
                 if (!(bool) ($trustState['visible'] ?? true)) {
@@ -114,12 +119,18 @@ final class CoreMarketEngine
                     'installed_version' => is_array($local) ? (string) ($local['version'] ?? '0.0.0') : '',
                     'has_update' => is_array($local) ? version_compare((string) ($item['version'] ?? '0.0.0'), (string) ($local['version'] ?? '0.0.0'), '>') : false,
                     'compatible' => (bool) ($compat['compatible'] ?? false),
+                    'compatibility_state' => (string) ($compat['state'] ?? 'unknown'),
                     'compat_errors' => (array) ($compat['errors'] ?? []),
+                    'compat_warnings' => (array) ($compat['warnings'] ?? []),
                     'integrity_status' => is_array($integrity) ? (string) ($integrity['integrity_status'] ?? 'unknown') : 'n/a',
                     'signature_status' => is_array($integrity) ? (string) ($integrity['signature_status'] ?? 'unknown') : 'n/a',
                     'trusted' => is_array($integrity) ? (bool) ($integrity['trusted'] ?? false) : false,
                     'install_allowed' => (bool) ($trustState['install_allowed'] ?? false),
                     'trust_warnings' => (array) ($trustState['warnings'] ?? []),
+                    'capabilities' => (array) ($capabilityState['capabilities'] ?? []),
+                    'capabilities_warnings' => (array) ($capabilityState['warnings'] ?? []),
+                    'capabilities_errors' => (array) ($capabilityState['errors'] ?? []),
+                    'capabilities_risk' => (string) ($capabilityState['risk_level'] ?? 'low'),
                 ];
                 $row['trust_score'] = $scorer->evaluate($row);
 
@@ -164,6 +175,7 @@ final class CoreMarketEngine
                 'installed' => count(array_filter($items, static fn (array $row): bool => (bool) ($row['installed'] ?? false))),
                 'updates' => count(array_filter($items, static fn (array $row): bool => (bool) ($row['has_update'] ?? false))),
                 'incompatible' => count(array_filter($items, static fn (array $row): bool => !((bool) ($row['compatible'] ?? true)))),
+                'capability_risk' => count(array_filter($items, static fn (array $row): bool => in_array((string) ($row['capabilities_risk'] ?? 'low'), ['high', 'critical'], true))),
             ],
         ];
     }
@@ -227,6 +239,48 @@ final class CoreMarketEngine
             }
 
             $items = is_array($decoded['items'] ?? null) ? $decoded['items'] : [];
+            return ['ok' => true, 'error' => '', 'items' => $items];
+        }
+
+        if ($provider === 'local_mirror') {
+            $indexPath = trim((string) ($repository['index_url'] ?? ''));
+            $repoPath = trim((string) ($repository['repo_url'] ?? ''));
+            $resolvedPath = $this->resolveLocalMirrorIndexPath($indexPath, $repoPath);
+            if ($resolvedPath === null || !is_file($resolvedPath)) {
+                return ['ok' => false, 'error' => 'Index local miroir introuvable.', 'items' => []];
+            }
+
+            $raw = @file_get_contents($resolvedPath);
+            $decoded = is_string($raw) ? json_decode($raw, true) : null;
+            if (!is_array($decoded)) {
+                return ['ok' => false, 'error' => 'Index local miroir invalide.', 'items' => []];
+            }
+
+            $standard = (new CoreModuleRepositoryIndexStandard())->parse($decoded);
+            if (!(bool) ($standard['ok'] ?? false)) {
+                return ['ok' => false, 'error' => 'Index local non conforme standard CATMIN.', 'items' => []];
+            }
+
+            $items = is_array($standard['items'] ?? null) ? $standard['items'] : [];
+            foreach ($items as &$item) {
+                if (!is_array($item)) {
+                    continue;
+                }
+                $zip = trim((string) ($item['zip_url'] ?? ''));
+                if ($zip !== '' && filter_var($zip, FILTER_VALIDATE_URL) === false) {
+                    $item['zip_url'] = $this->resolveLocalMirrorAsset($zip, dirname($resolvedPath));
+                }
+                $checksums = trim((string) ($item['checksums_url'] ?? ''));
+                if ($checksums !== '' && filter_var($checksums, FILTER_VALIDATE_URL) === false) {
+                    $item['checksums_url'] = $this->resolveLocalMirrorAsset($checksums, dirname($resolvedPath));
+                }
+                $signature = trim((string) ($item['signature_url'] ?? ''));
+                if ($signature !== '' && filter_var($signature, FILTER_VALIDATE_URL) === false) {
+                    $item['signature_url'] = $this->resolveLocalMirrorAsset($signature, dirname($resolvedPath));
+                }
+            }
+            unset($item);
+
             return ['ok' => true, 'error' => '', 'items' => $items];
         }
 
@@ -324,5 +378,50 @@ final class CoreMarketEngine
 
         $body = @file_get_contents($url);
         return is_string($body) ? $body : null;
+    }
+
+    private function resolveLocalMirrorIndexPath(string $indexPath, string $repoPath): ?string
+    {
+        $candidates = [];
+        if ($indexPath !== '') {
+            $candidates[] = $indexPath;
+        }
+        if ($repoPath !== '') {
+            $candidates[] = rtrim($repoPath, '/') . '/catmin-repository.json';
+            $candidates[] = $repoPath;
+        }
+
+        foreach ($candidates as $candidate) {
+            $candidate = trim($candidate);
+            if ($candidate === '') {
+                continue;
+            }
+            if (filter_var($candidate, FILTER_VALIDATE_URL) !== false) {
+                continue;
+            }
+            $path = $candidate;
+            if (!str_starts_with($path, '/')) {
+                $path = CATMIN_ROOT . '/' . ltrim($path, '/');
+            }
+            $real = realpath($path);
+            if (is_string($real) && is_file($real)) {
+                return $real;
+            }
+        }
+
+        return null;
+    }
+
+    private function resolveLocalMirrorAsset(string $relativePath, string $indexDir): string
+    {
+        $relativePath = ltrim(str_replace('\\', '/', trim($relativePath)), '/');
+        if ($relativePath === '') {
+            return '';
+        }
+        $full = realpath($indexDir . '/' . $relativePath);
+        if (!is_string($full) || !is_file($full)) {
+            return '';
+        }
+        return $full;
     }
 }

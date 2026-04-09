@@ -41,6 +41,7 @@ return [
     'nav.monitoring' => 'Monitoring',
     'nav.health_check' => 'Santé système',
     'nav.core_update' => 'Update core',
+    'nav.queue' => 'Queue',
     'nav.logs' => 'Journaux',
     'nav.cron' => 'Cron',
     'nav.maintenance' => 'Maintenance',

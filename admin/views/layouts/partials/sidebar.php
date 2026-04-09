@@ -34,6 +34,7 @@ $navGroups = [
             ['key' => 'monitoring', 'label' => __('nav.monitoring'), 'href' => $adminBase . '/system/monitoring'],
             ['key' => 'health', 'label' => __('nav.health_check'), 'href' => $adminBase . '/system/health'],
             ['key' => 'core-update', 'label' => __('nav.core_update'), 'href' => $adminBase . '/system/updates'],
+            ['key' => 'queue', 'label' => __('nav.queue'), 'href' => $adminBase . '/system/queue'],
             ['key' => 'logs', 'label' => __('nav.logs'), 'href' => $adminBase . '/logs'],
             ['key' => 'cron', 'label' => __('nav.cron'), 'href' => $adminBase . '/cron'],
             ['key' => 'maintenance', 'label' => __('nav.maintenance'), 'href' => $adminBase . '/maintenance'],

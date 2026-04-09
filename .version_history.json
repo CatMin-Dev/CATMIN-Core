@@ -1,5 +1,20 @@
 [
     {
+        "version": "0.3.0-dev.21",
+        "date": "2026-04-09",
+        "scope": "core",
+        "changes": [
+            "module sandbox capabilities model integrated across manifest, activation guard, market catalog and admin views",
+            "official hooks/events bus added with module hook loading at boot and event emissions across install/uninstall/snapshot/rollback/update flows",
+            "cross-compatibility policy expanded (php max, db support/constraints, compatibility states and warnings)",
+            "local mirror/offline market provider added with local repository index and local asset resolution",
+            "system queue engine introduced (queue tables, service, admin monitoring page and enqueue test action)",
+            "intelligent update notifications by severity wired to notification center and update checks",
+            "minimal telemetry + release metadata pipeline implemented (checksums/signature generation + release docs)"
+        ],
+        "prompt": "071-077"
+    },
+    {
         "version": "0.3.0-dev.12",
         "date": "2026-04-08",
         "scope": "install",

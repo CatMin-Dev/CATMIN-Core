@@ -136,6 +136,7 @@ ob_start();
                 <th><?= htmlspecialchars(__('common.version'), ENT_QUOTES, 'UTF-8') ?></th>
                 <th><?= htmlspecialchars(__('market.repository'), ENT_QUOTES, 'UTF-8') ?></th>
                 <th><?= htmlspecialchars(__('market.channels'), ENT_QUOTES, 'UTF-8') ?></th>
+                <th>Capabilities</th>
                 <th><?= htmlspecialchars(__('market.compatibility'), ENT_QUOTES, 'UTF-8') ?></th>
                 <th><?= htmlspecialchars(__('modules.table.integrity'), ENT_QUOTES, 'UTF-8') ?></th>
                 <th><?= htmlspecialchars(__('modules.table.signature'), ENT_QUOTES, 'UTF-8') ?></th>
@@ -146,7 +147,7 @@ ob_start();
             </thead>
             <tbody>
             <?php if ($items === []): ?>
-                <tr><td colspan="10" class="text-center py-5 text-body-secondary"><?= htmlspecialchars(__('market.empty'), ENT_QUOTES, 'UTF-8') ?></td></tr>
+                <tr><td colspan="11" class="text-center py-5 text-body-secondary"><?= htmlspecialchars(__('market.empty'), ENT_QUOTES, 'UTF-8') ?></td></tr>
             <?php endif; ?>
             <?php foreach ($items as $item): ?>
                 <?php
@@ -190,16 +191,54 @@ ob_start();
                         <?php endif; ?>
                     </td>
                     <td>
-                        <?php if ($compatible): ?>
-                            <span class="badge text-bg-success"><?= htmlspecialchars(__('common.ok'), ENT_QUOTES, 'UTF-8') ?></span>
+                        <?php
+                        $capabilities = is_array($item['capabilities'] ?? null) ? $item['capabilities'] : [];
+                        $risk = strtolower((string) ($item['capabilities_risk'] ?? 'low'));
+                        $riskClass = match ($risk) {
+                            'critical' => 'text-bg-danger',
+                            'high' => 'text-bg-warning',
+                            'medium' => 'text-bg-info',
+                            default => 'text-bg-secondary',
+                        };
+                        ?>
+                        <span class="badge <?= $riskClass ?>"><?= htmlspecialchars('risk:' . $risk, ENT_QUOTES, 'UTF-8') ?></span>
+                        <?php if ($capabilities !== []): ?>
+                            <div class="d-flex flex-wrap gap-1 mt-1">
+                                <?php foreach (array_slice($capabilities, 0, 5) as $cap): ?>
+                                    <span class="badge text-bg-light border"><?= htmlspecialchars((string) $cap, ENT_QUOTES, 'UTF-8') ?></span>
+                                <?php endforeach; ?>
+                                <?php if (count($capabilities) > 5): ?>
+                                    <span class="badge text-bg-secondary">+<?= count($capabilities) - 5 ?></span>
+                                <?php endif; ?>
+                            </div>
                         <?php else: ?>
-                            <span class="badge text-bg-danger"><?= htmlspecialchars(__('market.status.incompatible'), ENT_QUOTES, 'UTF-8') ?></span>
+                            <small class="text-body-secondary d-block mt-1"><?= htmlspecialchars(__('common.none_feminine'), ENT_QUOTES, 'UTF-8') ?></small>
+                        <?php endif; ?>
+                        <?php foreach ((array) ($item['capabilities_warnings'] ?? []) as $capWarn): ?>
+                            <small class="d-block text-warning mt-1"><?= htmlspecialchars((string) $capWarn, ENT_QUOTES, 'UTF-8') ?></small>
+                        <?php endforeach; ?>
+                    </td>
+                    <td>
+                        <?php
+                        $compatState = strtolower((string) ($item['compatibility_state'] ?? 'unknown'));
+                        $compatClass = match ($compatState) {
+                            'compatible' => 'text-bg-success',
+                            'compatible_with_warning' => 'text-bg-warning',
+                            'incompatible' => 'text-bg-danger',
+                            default => 'text-bg-secondary',
+                        };
+                        ?>
+                        <span class="badge <?= $compatClass ?>"><?= htmlspecialchars($compatState, ENT_QUOTES, 'UTF-8') ?></span>
+                        <?php if (!$compatible): ?>
                             <ul class="mb-0 ps-3 small mt-1">
                                 <?php foreach ((array) ($item['compat_errors'] ?? []) as $errorRow): ?>
                                     <li><?= htmlspecialchars((string) $errorRow, ENT_QUOTES, 'UTF-8') ?></li>
                                 <?php endforeach; ?>
                             </ul>
                         <?php endif; ?>
+                        <?php foreach ((array) ($item['compat_warnings'] ?? []) as $warningRow): ?>
+                            <small class="d-block text-warning mt-1"><?= htmlspecialchars((string) $warningRow, ENT_QUOTES, 'UTF-8') ?></small>
+                        <?php endforeach; ?>
                         <small class="d-block text-body-secondary mt-1">
                             min: <?= htmlspecialchars((string) (($item['catmin_min'] ?? '') !== '' ? $item['catmin_min'] : '-'), ENT_QUOTES, 'UTF-8') ?>
                             · max: <?= htmlspecialchars((string) (($item['catmin_max'] ?? '') !== '' ? $item['catmin_max'] : '-'), ENT_QUOTES, 'UTF-8') ?>

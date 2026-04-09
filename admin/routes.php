@@ -29,6 +29,9 @@ require_once CATMIN_CORE . '/module-repository-registry.php';
 require_once CATMIN_CORE . '/module-uninstaller.php';
 require_once CATMIN_CORE . '/module-snapshot-manager.php';
 require_once CATMIN_CORE . '/module-rollback-runner.php';
+require_once CATMIN_CORE . '/queue-engine.php';
+require_once CATMIN_CORE . '/update-intelligent-notifier.php';
+require_once CATMIN_CORE . '/telemetry-minimal.php';
 
 $security = new SecurityManager(Request::capture(), 'admin');
 $authRequired = $security->adminAuthRequiredMiddleware();
@@ -237,6 +240,7 @@ $scanModules = static function (): array {
             'signature_status' => (string) (($integrity['signature_status'] ?? 'unknown')),
             'trusted' => (bool) (($integrity['trusted'] ?? false)),
             'integrity_details' => is_array($integrity) ? (array) ($integrity['state'] ?? []) : [],
+            'capabilities' => is_array($manifest['capabilities'] ?? null) ? array_values($manifest['capabilities']) : [],
         ];
     }
 
@@ -1705,6 +1709,14 @@ return [
             $controller = new AuthController();
             $adminBase = $controller->adminBasePath();
             $check = (new CoreUpdater())->check();
+            if ((bool) ($check['ok'] ?? false)) {
+                $snapshot = (new CoreUpdateCenter())->buildSnapshot();
+                (new CoreUpdateIntelligentNotifier())->notify($snapshot, $adminBase);
+                $telemetry = new CoreTelemetryMinimal();
+                if ($telemetry->isEnabled()) {
+                    $telemetry->store($telemetry->buildSnapshot(['source' => 'updates.check']), 'minimal');
+                }
+            }
             return $redirect($adminBase . '/system/updates', [
                 'msg' => (bool) ($check['ok'] ?? false) ? 'Vérification update terminée.' : ((string) ($check['error'] ?? 'Vérification update en erreur.')),
                 'mt' => (bool) ($check['ok'] ?? false) ? 'success' : 'danger',
@@ -1737,6 +1749,47 @@ return [
             $result = (new CoreUpdater())->updateNow();
             return $redirect($adminBase . '/system/updates', [
                 'msg' => (bool) ($result['ok'] ?? false) ? 'Update core terminée.' : ((string) ($result['error'] ?? 'Update core en erreur.')),
+                'mt' => (bool) ($result['ok'] ?? false) ? 'success' : 'danger',
+            ]);
+        },
+        'middleware' => [$authRequired, $csrfCheck],
+    ],
+
+    [
+        'method' => 'GET',
+        'path' => '/system/queue',
+        'handler' => static function () use ($consumeFlash): Response {
+            $controller = new AuthController();
+            $adminBase = $controller->adminBasePath();
+            $flash = $consumeFlash();
+            $queue = new CoreQueueEngine();
+            $rows = $queue->listRecent('default', 200);
+            $stats = $queue->stats('default');
+
+            return View::make('system.queue', [
+                'adminBase' => $adminBase,
+                'rows' => $rows,
+                'stats' => $stats,
+                'message' => (string) ($flash['message'] ?? ''),
+                'messageType' => (string) ($flash['type'] ?? 'success'),
+            ], 'admin');
+        },
+        'middleware' => [$authRequired],
+    ],
+
+    [
+        'method' => 'POST',
+        'path' => '/system/queue/enqueue-test',
+        'handler' => static function () use ($redirect): Response {
+            $controller = new AuthController();
+            $adminBase = $controller->adminBasePath();
+            $result = (new CoreQueueEngine())->enqueue('core.test.ping', [
+                'at' => gmdate('c'),
+                'from' => 'admin-ui',
+            ], 'default', 0, 2);
+
+            return $redirect($adminBase . '/system/queue', [
+                'msg' => (bool) ($result['ok'] ?? false) ? 'Job de test ajouté à la queue.' : ((string) ($result['message'] ?? 'Échec queue.')),
                 'mt' => (bool) ($result['ok'] ?? false) ? 'success' : 'danger',
             ]);
         },

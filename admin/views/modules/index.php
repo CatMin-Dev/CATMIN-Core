@@ -133,6 +133,7 @@ ob_start();
                 <th><?= htmlspecialchars(__('common.module'), ENT_QUOTES, 'UTF-8') ?></th>
                 <th><?= htmlspecialchars(__('common.version'), ENT_QUOTES, 'UTF-8') ?></th>
                 <th><?= htmlspecialchars(__('modules.table.dependencies'), ENT_QUOTES, 'UTF-8') ?></th>
+                <th>Capabilities</th>
                 <th><?= htmlspecialchars(__('modules.table.integrity'), ENT_QUOTES, 'UTF-8') ?></th>
                 <th><?= htmlspecialchars(__('modules.table.signature'), ENT_QUOTES, 'UTF-8') ?></th>
                 <th><?= htmlspecialchars(__('modules.table.trust'), ENT_QUOTES, 'UTF-8') ?></th>
@@ -144,7 +145,7 @@ ob_start();
             <tbody>
             <?php if ($rows === []): ?>
                 <tr>
-                    <td colspan="9" class="text-center py-5 text-body-secondary"><?= htmlspecialchars(__('modules.table.empty'), ENT_QUOTES, 'UTF-8') ?></td>
+                    <td colspan="10" class="text-center py-5 text-body-secondary"><?= htmlspecialchars(__('modules.table.empty'), ENT_QUOTES, 'UTF-8') ?></td>
                 </tr>
             <?php else: ?>
                 <?php foreach ($rows as $row): ?>
@@ -174,6 +175,21 @@ ob_start();
                                     <?php foreach ($dependencies as $dep): ?>
                                         <span class="badge text-bg-secondary"><?= htmlspecialchars((string) $dep, ENT_QUOTES, 'UTF-8') ?></span>
                                     <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <?php $capabilities = is_array($row['capabilities'] ?? null) ? $row['capabilities'] : []; ?>
+                            <?php if ($capabilities === []): ?>
+                                <small class="text-body-secondary"><?= htmlspecialchars(__('common.none_feminine'), ENT_QUOTES, 'UTF-8') ?></small>
+                            <?php else: ?>
+                                <div class="d-flex flex-wrap gap-1">
+                                    <?php foreach (array_slice($capabilities, 0, 4) as $cap): ?>
+                                        <span class="badge text-bg-light border"><?= htmlspecialchars((string) $cap, ENT_QUOTES, 'UTF-8') ?></span>
+                                    <?php endforeach; ?>
+                                    <?php if (count($capabilities) > 4): ?>
+                                        <span class="badge text-bg-secondary">+<?= count($capabilities) - 4 ?></span>
+                                    <?php endif; ?>
                                 </div>
                             <?php endif; ?>
                         </td>

@@ -28,6 +28,10 @@ final class CoreModuleManifestStandard
             $loadRaw = [];
         }
 
+        $dbSupported = $this->normalizeDbSupported($manifest['db_supported'] ?? []);
+        $dbConstraints = $this->normalizeDbConstraints($manifest['db_constraints'] ?? []);
+        $capabilities = $this->normalizeCapabilities($manifest['capabilities'] ?? []);
+
         $normalized = [
             'module_schema_version' => trim((string) ($manifest['module_schema_version'] ?? '1.0.0')),
             'name' => trim((string) ($manifest['name'] ?? '')),
@@ -59,8 +63,12 @@ final class CoreModuleManifestStandard
             'deprecation_message' => trim((string) ($manifest['deprecation_message'] ?? '')),
             'maintenance_status' => strtolower(trim((string) ($manifest['maintenance_status'] ?? 'maintained'))),
             'php_min' => trim((string) ($manifest['php_min'] ?? '')),
+            'php_max' => trim((string) ($manifest['php_max'] ?? '')),
             'catmin_min' => trim((string) ($manifest['catmin_min'] ?? '')),
             'catmin_max' => trim((string) ($manifest['catmin_max'] ?? '')),
+            'db_supported' => $dbSupported,
+            'db_constraints' => $dbConstraints,
+            'capabilities' => $capabilities,
             'trusted_module' => array_key_exists('trusted_module', $manifest) ? (bool) $manifest['trusted_module'] : ((bool) ($manifest['core_compatible'] ?? false)),
             'requires_reauth_for_admin_actions' => (bool) ($manifest['requires_reauth_for_admin_actions'] ?? false),
             'load' => [
@@ -114,6 +122,10 @@ final class CoreModuleManifestStandard
         if ($phpMin !== '' && preg_match('/^[0-9]+\.[0-9]+(?:\.[0-9]+)?$/', $phpMin) !== 1) {
             $errors[] = 'php_min invalide';
         }
+        $phpMax = (string) ($normalized['php_max'] ?? '');
+        if ($phpMax !== '' && preg_match('/^[0-9]+\.[0-9]+(?:\.[0-9]+)?$/', $phpMax) !== 1) {
+            $errors[] = 'php_max invalide';
+        }
         $catminMin = (string) ($normalized['catmin_min'] ?? '');
         if ($catminMin !== '' && preg_match('/^[0-9]+\.[0-9]+\.[0-9]+(?:[-+][a-zA-Z0-9.-]+)?$/', $catminMin) !== 1) {
             $errors[] = 'catmin_min invalide';
@@ -145,6 +157,36 @@ final class CoreModuleManifestStandard
             }
         }
 
+        $dbSupported = (array) ($normalized['db_supported'] ?? []);
+        foreach ($dbSupported as $dbDriver) {
+            if (!in_array((string) $dbDriver, ['sqlite', 'mysql', 'mariadb', 'pgsql'], true)) {
+                $errors[] = 'db_supported invalide: ' . (string) $dbDriver;
+            }
+        }
+
+        $dbConstraints = (array) ($normalized['db_constraints'] ?? []);
+        foreach ($dbConstraints as $driver => $constraint) {
+            if (!in_array((string) $driver, ['sqlite', 'mysql', 'mariadb', 'pgsql'], true)) {
+                $errors[] = 'db_constraints driver invalide: ' . (string) $driver;
+                continue;
+            }
+            $constraint = trim((string) $constraint);
+            if ($constraint === '') {
+                continue;
+            }
+            if (preg_match('/^(>=|<=|>|<|=)?\s*[0-9]+(?:\.[0-9]+){0,2}$/', $constraint) !== 1) {
+                $errors[] = 'db_constraints invalide pour ' . (string) $driver;
+            }
+        }
+
+        $capabilities = (array) ($normalized['capabilities'] ?? []);
+        foreach ($capabilities as $capability) {
+            $capability = trim((string) $capability);
+            if ($capability === '' || preg_match('/^[a-z0-9]+(?:\.[a-z0-9_]+)+$/', $capability) !== 1) {
+                $errors[] = 'capability invalide: ' . $capability;
+            }
+        }
+
         return ['valid' => $errors === [], 'errors' => $errors];
     }
 
@@ -170,5 +212,59 @@ final class CoreModuleManifestStandard
             return true;
         }
         return preg_match('/^[0-9]+\.x$/', $value) === 1;
+    }
+
+    private function normalizeDbSupported(mixed $value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+
+        $rows = [];
+        foreach ($value as $entry) {
+            $driver = strtolower(trim((string) $entry));
+            if ($driver !== '') {
+                $rows[] = $driver;
+            }
+        }
+
+        return array_values(array_unique($rows));
+    }
+
+    private function normalizeDbConstraints(mixed $value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+
+        $rows = [];
+        foreach ($value as $driver => $constraint) {
+            $driver = strtolower(trim((string) $driver));
+            $constraint = trim((string) $constraint);
+            if ($driver === '' || $constraint === '') {
+                continue;
+            }
+            $rows[$driver] = $constraint;
+        }
+
+        ksort($rows);
+        return $rows;
+    }
+
+    private function normalizeCapabilities(mixed $value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+
+        $rows = [];
+        foreach ($value as $entry) {
+            $capability = strtolower(trim((string) $entry));
+            if ($capability !== '') {
+                $rows[] = $capability;
+            }
+        }
+
+        return array_values(array_unique($rows));
     }
 }

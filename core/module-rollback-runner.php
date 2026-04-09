@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require_once CATMIN_CORE . '/module-snapshot-storage.php';
 require_once CATMIN_CORE . '/module-snapshot-logger.php';
+require_once CATMIN_CORE . '/events-bus.php';
 
 final class CoreModuleRollbackRunner
 {
@@ -17,6 +18,10 @@ final class CoreModuleRollbackRunner
     {
         $slug = strtolower(trim($slug));
         $snapshotId = trim($snapshotId);
+        catmin_event_emit('module.rollback.requested', [
+            'slug' => $slug,
+            'snapshot_id' => $snapshotId,
+        ]);
         if ($slug === '' || $snapshotId === '') {
             return ['ok' => false, 'message' => 'Snapshot invalide'];
         }
@@ -44,6 +49,11 @@ final class CoreModuleRollbackRunner
         }
 
         $this->logger->log('snapshot.rollback', ['slug' => $slug, 'snapshot_id' => $snapshotId, 'scope' => $scope]);
+        catmin_event_emit('module.rollback.completed', [
+            'slug' => $slug,
+            'scope' => $scope,
+            'snapshot_id' => $snapshotId,
+        ]);
         return ['ok' => true, 'message' => 'Rollback effectué depuis snapshot ' . $snapshotId];
     }
 
@@ -92,4 +102,3 @@ final class CoreModuleRollbackRunner
         @rmdir($path);
     }
 }
-

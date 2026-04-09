@@ -67,9 +67,12 @@ final class CoreUpdateCenter
                     'remote_version' => $remoteVersion,
                     'has_update' => $hasUpdate,
                     'compatible' => (bool) ($item['compatible'] ?? $local['compatible'] ?? true),
+                    'compatibility_state' => (string) ($item['compatibility_state'] ?? 'unknown'),
+                    'compat_warnings' => (array) ($item['compat_warnings'] ?? []),
                     'integrity_status' => (string) (($local['integrity']['integrity_status'] ?? 'unknown')),
                     'signature_status' => (string) (($local['integrity']['signature_status'] ?? 'unknown')),
                     'trusted' => (bool) (($local['integrity']['trusted'] ?? false)),
+                    'update_severity' => $this->detectUpdateSeverity($item, $local),
                     'state' => (string) ($local['enabled'] ? 'enabled' : 'disabled'),
                 ];
             }
@@ -88,9 +91,11 @@ final class CoreUpdateCenter
         $modulesWithUpdates = count(array_filter($moduleUpdates, static fn (array $row): bool => (bool) ($row['has_update'] ?? false)));
         $trustAlerts = count(array_filter($moduleUpdates, static fn (array $row): bool => !((bool) ($row['trusted'] ?? false))));
         $coreUpdateAvailable = (bool) ($core['update_available'] ?? false);
+        $coreSeverity = $this->detectCoreSeverity($core);
 
         return [
             'core' => $core,
+            'core_severity' => $coreSeverity,
             'modules' => $moduleUpdates,
             'backup' => $backup,
             'history' => $history,
@@ -103,6 +108,50 @@ final class CoreUpdateCenter
                 'last_update_ok_at' => (string) ($history['last_success_at'] ?? ''),
             ],
         ];
+    }
+
+    private function detectCoreSeverity(array $core): string
+    {
+        $release = is_array($core['release'] ?? null) ? $core['release'] : [];
+        $body = strtolower((string) ($release['body'] ?? ''));
+        if (str_contains($body, 'critical') || str_contains($body, 'cve-')) {
+            return 'critical';
+        }
+        if (str_contains($body, 'security') || str_contains($body, 'sécurité')) {
+            return 'security';
+        }
+        if ((bool) ($core['update_available'] ?? false)) {
+            return 'recommended';
+        }
+        return 'info';
+    }
+
+    private function detectUpdateSeverity(array $item, array $local): string
+    {
+        if (!((bool) ($item['has_update'] ?? false))) {
+            return 'info';
+        }
+        if (!((bool) ($item['compatible'] ?? true))) {
+            return 'important';
+        }
+        $channel = strtolower((string) ($item['release_channel'] ?? 'stable'));
+        if (in_array($channel, ['beta', 'alpha', 'experimental'], true)) {
+            return 'recommended';
+        }
+        $lifecycle = strtolower((string) ($item['lifecycle_status'] ?? 'active'));
+        if (in_array($lifecycle, ['deprecated', 'abandoned'], true)) {
+            return 'important';
+        }
+
+        $from = (string) ($local['local_version'] ?? '0.0.0');
+        $to = (string) ($item['version'] ?? '0.0.0');
+        $fromMajor = (int) explode('.', $from)[0];
+        $toMajor = (int) explode('.', $to)[0];
+        if ($toMajor > $fromMajor) {
+            return 'important';
+        }
+
+        return 'recommended';
     }
 
     private function latestBackup(): array
@@ -157,4 +206,3 @@ final class CoreUpdateCenter
         return ['items' => $items, 'last_success_at' => $lastSuccessAt];
     }
 }
-

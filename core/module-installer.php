@@ -7,9 +7,9 @@ require_once CATMIN_CORE . '/updater-github.php';
 
 final class CoreModuleInstaller
 {
-    public function installFromZip(string $zipPath, bool $activate = true): array
+    public function installFromZip(string $zipPath, bool $activate = true, array $context = []): array
     {
-        return (new CoreModuleInstallRunner())->installZip($zipPath, $activate);
+        return (new CoreModuleInstallRunner())->installZip($zipPath, $activate, $context);
     }
 
     public function installFromMarket(array $catalogItem, bool $activate = true): array
@@ -38,7 +38,17 @@ final class CoreModuleInstaller
         $stamp = gmdate('YmdHis');
         $repoZipPath = $incomingDir . '/market-repo-' . $scope . '-' . $slug . '-' . $stamp . '.zip';
         $moduleZipPath = $incomingDir . '/market-module-' . $scope . '-' . $slug . '-' . $stamp . '.zip';
-        $dl = (new CoreUpdaterGithub())->downloadAsset($zipUrl, $repoZipPath);
+        $dl = null;
+        if (filter_var($zipUrl, FILTER_VALIDATE_URL) === false) {
+            $source = realpath($zipUrl);
+            if (!is_string($source) || !is_file($source)) {
+                return ['ok' => false, 'message' => 'Asset local introuvable', 'errors' => ['local_asset_missing']];
+            }
+            $copied = @copy($source, $repoZipPath);
+            $dl = ['ok' => $copied, 'error' => $copied ? '' : 'Copie asset local impossible', 'path' => $copied ? $repoZipPath : ''];
+        } else {
+            $dl = (new CoreUpdaterGithub())->downloadAsset($zipUrl, $repoZipPath);
+        }
         if (!(bool) ($dl['ok'] ?? false)) {
             return ['ok' => false, 'message' => (string) ($dl['error'] ?? 'Download market KO'), 'errors' => [(string) ($dl['error'] ?? 'download_failed')]];
         }
@@ -92,7 +102,12 @@ final class CoreModuleInstaller
         $pack->close();
         $this->cleanupPath($extractDir);
 
-        return $this->installFromZip($moduleZipPath, $activate);
+        return $this->installFromZip($moduleZipPath, $activate, [
+            'repo_slug' => (string) ($catalogItem['repo_slug'] ?? ''),
+            'repo_name' => (string) ($catalogItem['repo_name'] ?? ''),
+            'repo_trust' => (string) ($catalogItem['repo_trust_level'] ?? 'community'),
+            'source' => 'market',
+        ]);
     }
 
     private function cleanupPath(string $path): void

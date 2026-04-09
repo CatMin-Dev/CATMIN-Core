@@ -18,6 +18,7 @@ if (!defined('CATMIN_AREA')) {
 }
 
 require_once CATMIN_CORE . '/support/helpers.php';
+require_once CATMIN_CORE . '/events-bus.php';
 require_once CATMIN_CORE . '/error-dispatcher.php';
 require_once CATMIN_CORE . '/failsafe/FailsafeManager.php';
 

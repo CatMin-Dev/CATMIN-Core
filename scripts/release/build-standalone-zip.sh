@@ -94,6 +94,15 @@ done
   zip -rq "${ZIP_FILE}" "${PACKAGE_NAME}"
 )
 
+# Generate checksums/signature metadata (signature optional with RELEASE_SIGNING_KEY path).
+if [ -f "${ROOT_DIR}/scripts/release/generate-release-metadata.php" ]; then
+  if [ -n "${RELEASE_SIGNING_KEY:-}" ] && [ -f "${RELEASE_SIGNING_KEY}" ]; then
+    php "${ROOT_DIR}/scripts/release/generate-release-metadata.php" "${ZIP_FILE}" "${RELEASE_SIGNING_KEY}"
+  else
+    php "${ROOT_DIR}/scripts/release/generate-release-metadata.php" "${ZIP_FILE}"
+  fi
+fi
+
 # Build lightweight manifest + report.
 php -r '
 $zipFile = $argv[1];

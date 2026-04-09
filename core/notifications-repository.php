@@ -85,7 +85,7 @@ final class CoreNotificationsRepository
         }
 
         $type = strtolower(trim((string) ($payload['type'] ?? 'info')));
-        if (!in_array($type, ['info', 'success', 'warning', 'danger', 'security', 'system', 'module'], true)) {
+        if (!in_array($type, ['info', 'success', 'warning', 'danger', 'security', 'critical', 'recommended', 'important', 'system', 'module'], true)) {
             $type = 'info';
         }
 
@@ -121,4 +121,3 @@ final class CoreNotificationsRepository
         return (string) config('database.prefixes.core', 'core_') . 'notification_center';
     }
 }
-

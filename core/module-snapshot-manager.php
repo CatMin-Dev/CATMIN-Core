@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once CATMIN_CORE . '/module-loader.php';
 require_once CATMIN_CORE . '/module-snapshot-storage.php';
 require_once CATMIN_CORE . '/module-snapshot-logger.php';
+require_once CATMIN_CORE . '/events-bus.php';
 
 final class CoreModuleSnapshotManager
 {
@@ -76,6 +77,13 @@ final class CoreModuleSnapshotManager
 
         $this->enforceRetention($slug, 6);
         $this->logger->log('snapshot.created', ['scope' => $scope, 'slug' => $slug, 'snapshot_id' => $snapshotId, 'type' => $type]);
+        catmin_event_emit('module.snapshot.created', [
+            'scope' => $scope,
+            'slug' => $slug,
+            'snapshot_id' => $snapshotId,
+            'type' => $type,
+            'reason' => $reason,
+        ]);
 
         return ['ok' => true, 'message' => 'Snapshot créé', 'snapshot' => $snapshot];
     }
@@ -148,4 +156,3 @@ final class CoreModuleSnapshotManager
         @rmdir($path);
     }
 }
-
