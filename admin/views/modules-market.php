@@ -278,10 +278,49 @@ ob_start();
                     <td>
                         <?php $trustScore = is_array($item['trust_score'] ?? null) ? $item['trust_score'] : []; ?>
                         <?php $score = (int) ($trustScore['score'] ?? 0); ?>
-                        <span class="badge <?= $score >= 85 ? 'text-bg-success' : ($score >= 60 ? 'text-bg-warning' : 'text-bg-danger') ?>">
-                            <?= $score ?>/100
+                        <?php $grade = (string) ($trustScore['grade'] ?? 'critical'); ?>
+                        <?php $gradeClass = match ($grade) {
+                            'high' => 'text-bg-success',
+                            'medium' => 'text-bg-info',
+                            'low' => 'text-bg-warning',
+                            default => 'text-bg-danger',
+                        }; ?>
+                        <span class="badge <?= $gradeClass ?>">
+                            <?= $score ?>/100 · <?= htmlspecialchars(strtoupper($grade), ENT_QUOTES, 'UTF-8') ?>
                         </span>
-                        <small class="d-block text-body-secondary mt-1"><?= htmlspecialchars((string) ($trustScore['explain'] ?? ''), ENT_QUOTES, 'UTF-8') ?></small>
+                        <?php
+                        $scoreBadges = is_array($trustScore['badges'] ?? null) ? $trustScore['badges'] : [];
+                        $positiveSignals = is_array($trustScore['positive_signals'] ?? null) ? $trustScore['positive_signals'] : [];
+                        $negativeSignals = is_array($trustScore['negative_signals'] ?? null) ? $trustScore['negative_signals'] : [];
+                        ?>
+                        <?php if ($scoreBadges !== []): ?>
+                            <div class="d-flex flex-wrap gap-1 mt-1">
+                                <?php foreach (array_slice($scoreBadges, 0, 4) as $badge): ?>
+                                    <span class="badge text-bg-light border"><?= htmlspecialchars((string) $badge, ENT_QUOTES, 'UTF-8') ?></span>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
+                        <small class="d-block text-body-secondary mt-1"><?= htmlspecialchars((string) ($trustScore['summary'] ?? ''), ENT_QUOTES, 'UTF-8') ?></small>
+                        <small class="d-block text-body-secondary"><?= htmlspecialchars((string) ($trustScore['explain'] ?? ''), ENT_QUOTES, 'UTF-8') ?></small>
+                        <details class="mt-1">
+                            <summary class="small text-body-secondary"><?= htmlspecialchars(__('market.trust_score.details'), ENT_QUOTES, 'UTF-8') ?></summary>
+                            <?php if ($positiveSignals !== []): ?>
+                                <small class="d-block text-success mt-1 fw-semibold"><?= htmlspecialchars(__('market.trust_score.positive'), ENT_QUOTES, 'UTF-8') ?></small>
+                                <ul class="small mb-1 ps-3">
+                                    <?php foreach (array_slice($positiveSignals, 0, 5) as $sig): ?>
+                                        <li><?= htmlspecialchars((string) $sig, ENT_QUOTES, 'UTF-8') ?></li>
+                                    <?php endforeach; ?>
+                                </ul>
+                            <?php endif; ?>
+                            <?php if ($negativeSignals !== []): ?>
+                                <small class="d-block text-danger fw-semibold"><?= htmlspecialchars(__('market.trust_score.negative'), ENT_QUOTES, 'UTF-8') ?></small>
+                                <ul class="small mb-0 ps-3">
+                                    <?php foreach (array_slice($negativeSignals, 0, 5) as $sig): ?>
+                                        <li><?= htmlspecialchars((string) $sig, ENT_QUOTES, 'UTF-8') ?></li>
+                                    <?php endforeach; ?>
+                                </ul>
+                            <?php endif; ?>
+                        </details>
                     </td>
                     <td>
                         <?php if (!$installed): ?>
