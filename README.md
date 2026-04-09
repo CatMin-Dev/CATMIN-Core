@@ -1,38 +1,109 @@
-# CATMIN Standalone
+# CATMIN Core
 
-![Version](https://img.shields.io/badge/version-0.3.0--dev.7-ec407a)
-![PHP](https://img.shields.io/badge/php-8.3%2B-777777)
-![Package](https://img.shields.io/badge/package-standalone%20zip-3b82f6)
-![Status](https://img.shields.io/badge/status-ready%20for%20install%20test-16a34a)
+[![Version](https://img.shields.io/badge/version-0.3.0--rc.1-e23561)](https://github.com/CatMin-Dev/CATMIN-Core/releases/tag/0.3.0-rc.1)
+![PHP](https://img.shields.io/badge/php-8.3%2B-44403c)
+![DB Schema](https://img.shields.io/badge/db_schema-0.1.0--rc.1-c2234d)
+![Installer](https://img.shields.io/badge/installer-lock%20enforced-16a34a)
+[![Standalone](https://img.shields.io/badge/Standalone-Download%20Release-0ea5e9?logo=github)](https://github.com/CatMin-Dev/CATMIN-Core/releases)
 
-CATMIN est un panel standalone PHP orienté administration, installation guidée et sécurité core.
+CATMIN est un panel PHP standalone orienté administration, sécurité et exploitation terrain:
+- installateur guidé avec lock final
+- core modulaire + market/repository policy
+- gestion admins/roles/permissions
+- monitoring, logs, maintenance, cron, backup
+- support i18n (`fr` / `en`)
+
+## Télécharger la version Standalone
+
+Le package standalone officiel est publié sur les releases GitHub:
+
+**[Télécharger CATMIN Standalone depuis CATMIN-Core Releases](https://github.com/CatMin-Dev/CATMIN-Core/releases)**
 
 ## Pré-requis
+
 - PHP `8.3+`
-- Extensions PHP: `pdo`, `pdo_mysql`, `mbstring`, `json`, `fileinfo`, `openssl`, `curl`, `gd`, `intl`, `session`, `ctype`, `filter`, `hash`, `tokenizer`, `sodium`, `zip`, `phar`, `spl`
-- Apache avec `mod_rewrite` (ou Nginx équivalent)
+- Extensions PHP:
+  - `pdo`, `pdo_mysql` (ou `pdo_sqlite`), `mbstring`, `json`, `fileinfo`
+  - `openssl`, `curl`, `gd`, `intl`, `session`, `ctype`, `filter`
+  - `hash`, `tokenizer`, `sodium`, `zip`, `phar`, `spl`
+- Apache (`mod_rewrite`) ou Nginx équivalent
+- MySQL/MariaDB ou SQLite selon le mode choisi à l'installation
 
-## Installation rapide
-1. Uploader le contenu CATMIN sur votre hébergement PHP.
-2. Pointer le webroot sur `public/` (recommandé), ou laisser la racine avec le routeur fourni.
-3. Ouvrir `/install` et suivre l'assistant.
-4. Valider le lock final de l'installateur.
-5. Se connecter via `/admin`.
+## Installation rapide (production)
 
-## Packaging release
-- Build ZIP:
+1. Déployer les fichiers CATMIN sur l'hébergement.
+2. Pointer le webroot sur `public/` (recommandé).
+3. Ouvrir `/install`.
+4. Suivre les étapes (précheck -> DB -> superadmin -> lock final).
+5. Se connecter au panel via la route admin configurée.
+
+## Architecture (résumé)
+
+| Zone | Rôle |
+| --- | --- |
+| `core/` | moteur applicatif, routing, services, sécurité |
+| `admin/` | interface d'administration |
+| `front/` | front public |
+| `install/` | installateur + verrouillage final |
+| `modules/` | modules installables |
+| `storage/` | données runtime, backups, logs, updates |
+
+## Build release standalone (maintainers)
+
+Génération package:
+
 ```bash
 bash scripts/release/build-standalone-zip.sh
 ```
-- Vérification ZIP:
+
+Vérification intégrité package:
+
 ```bash
 bash scripts/release/verify-standalone-package.sh ../release/catmin-<version>-standalone.zip
 ```
 
+Artefacts attendus:
+- `catmin-<version>-standalone.zip`
+- `catmin-<version>-standalone-manifest.json`
+- `catmin-<version>-standalone-checksums.json`
+- `catmin-<version>-standalone-signature.json`
+- `release-report.json`
+
+## Sécurité / exploitation
+
+- Lock install obligatoire après setup
+- Politique de confiance modules (checksums/signatures/scopes)
+- Route admin configurable
+- Journalisation + monitoring + recovery docs
+
 ## Documentation
+
+### Installation
 - `docs/install/installation.md`
-- `docs/install/neutraliser-installateur.md`
 - `docs/install/permissions.md`
+- `docs/install/neutraliser-installateur.md`
 - `docs/install/hard-reset-superadmin.md`
 - `docs/install/diagnostic-minimum.md`
+
+### Core / release
+- `docs/core/README.md`
+- `docs/core/release.md`
 - `docs/release/standalone-final.md`
+- `docs/release/release-checklist.md`
+- `docs/release/final-release-checklist-v1-047.md`
+
+### Modules / trust
+- `docs/modules/repository-registry-063-066.md`
+- `docs/modules/market-trust-policy-065-069-070.md`
+- `docs/modules/community-signing-trust-admission-081.md`
+
+## Dépôts
+
+- Dev privé (core): `https://github.com/CatMin-Dev/core`
+- Release public (core): `https://github.com/CatMin-Dev/CATMIN-Core`
+- Dev privé (modules): `https://github.com/CatMin-Dev/modules`
+- Release public (modules): `https://github.com/CatMin-Dev/CATMIN-Modules`
+
+---
+
+CATMIN `0.3.0-rc.1` - base RC publique du core standalone.
