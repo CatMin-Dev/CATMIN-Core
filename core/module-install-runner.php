@@ -13,6 +13,7 @@ require_once CATMIN_CORE . '/module-state-store.php';
 require_once CATMIN_CORE . '/module-activation-guard.php';
 require_once CATMIN_CORE . '/module-integrity.php';
 require_once CATMIN_CORE . '/module-activator.php';
+require_once CATMIN_CORE . '/module-snapshot-manager.php';
 
 final class CoreModuleInstallRunner
 {
@@ -81,6 +82,10 @@ final class CoreModuleInstallRunner
         $type = strtolower(trim((string) ($manifest['type'] ?? '')));
         $slug = strtolower(trim((string) ($manifest['slug'] ?? '')));
         $dest = CATMIN_MODULES . '/' . $type . '/' . $slug;
+        $snapshotManager = new CoreModuleSnapshotManager();
+        if (is_dir($dest)) {
+            $snapshotManager->create($type, $slug, 'pre-update', 'installer');
+        }
         if (!is_dir(dirname($dest)) && !@mkdir(dirname($dest), 0775, true) && !is_dir(dirname($dest))) {
             $rollback->cleanupPath($extractDir);
             return ['ok' => false, 'message' => 'Preparation destination impossible', 'errors' => ['destination_prepare_failed']];
@@ -171,4 +176,3 @@ final class CoreModuleInstallRunner
         return true;
     }
 }
-

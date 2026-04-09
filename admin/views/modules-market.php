@@ -135,16 +135,18 @@ ob_start();
                 <th><?= htmlspecialchars(__('common.module'), ENT_QUOTES, 'UTF-8') ?></th>
                 <th><?= htmlspecialchars(__('common.version'), ENT_QUOTES, 'UTF-8') ?></th>
                 <th><?= htmlspecialchars(__('market.repository'), ENT_QUOTES, 'UTF-8') ?></th>
+                <th><?= htmlspecialchars(__('market.channels'), ENT_QUOTES, 'UTF-8') ?></th>
                 <th><?= htmlspecialchars(__('market.compatibility'), ENT_QUOTES, 'UTF-8') ?></th>
                 <th><?= htmlspecialchars(__('modules.table.integrity'), ENT_QUOTES, 'UTF-8') ?></th>
                 <th><?= htmlspecialchars(__('modules.table.signature'), ENT_QUOTES, 'UTF-8') ?></th>
+                <th><?= htmlspecialchars(__('market.trust_score'), ENT_QUOTES, 'UTF-8') ?></th>
                 <th><?= htmlspecialchars(__('common.status'), ENT_QUOTES, 'UTF-8') ?></th>
                 <th class="text-end"><?= htmlspecialchars(__('common.actions'), ENT_QUOTES, 'UTF-8') ?></th>
             </tr>
             </thead>
             <tbody>
             <?php if ($items === []): ?>
-                <tr><td colspan="8" class="text-center py-5 text-body-secondary"><?= htmlspecialchars(__('market.empty'), ENT_QUOTES, 'UTF-8') ?></td></tr>
+                <tr><td colspan="10" class="text-center py-5 text-body-secondary"><?= htmlspecialchars(__('market.empty'), ENT_QUOTES, 'UTF-8') ?></td></tr>
             <?php endif; ?>
             <?php foreach ($items as $item): ?>
                 <?php
@@ -177,6 +179,15 @@ ob_start();
                         <?php foreach ((array) ($item['trust_warnings'] ?? []) as $trustWarning): ?>
                             <small class="d-block text-danger mt-1"><?= htmlspecialchars((string) $trustWarning, ENT_QUOTES, 'UTF-8') ?></small>
                         <?php endforeach; ?>
+                    </td>
+                    <td>
+                        <?php $channel = strtolower((string) ($item['release_channel'] ?? 'stable')); ?>
+                        <?php $lifecycle = strtolower((string) ($item['lifecycle_status'] ?? 'active')); ?>
+                        <span class="badge text-bg-secondary"><?= htmlspecialchars($channel, ENT_QUOTES, 'UTF-8') ?></span>
+                        <span class="badge <?= in_array($lifecycle, ['deprecated', 'abandoned', 'archived'], true) ? 'text-bg-warning' : 'text-bg-success' ?>"><?= htmlspecialchars($lifecycle, ENT_QUOTES, 'UTF-8') ?></span>
+                        <?php if ((string) ($item['replacement_slug'] ?? '') !== ''): ?>
+                            <small class="d-block text-body-secondary mt-1"><?= htmlspecialchars(__('market.replaced_by'), ENT_QUOTES, 'UTF-8') ?>: <?= htmlspecialchars((string) ($item['replacement_slug'] ?? ''), ENT_QUOTES, 'UTF-8') ?></small>
+                        <?php endif; ?>
                     </td>
                     <td>
                         <?php if ($compatible): ?>
@@ -215,6 +226,14 @@ ob_start();
                         };
                         ?>
                         <span class="badge <?= $signatureBadge ?>"><?= htmlspecialchars($signatureStatus, ENT_QUOTES, 'UTF-8') ?></span>
+                    </td>
+                    <td>
+                        <?php $trustScore = is_array($item['trust_score'] ?? null) ? $item['trust_score'] : []; ?>
+                        <?php $score = (int) ($trustScore['score'] ?? 0); ?>
+                        <span class="badge <?= $score >= 85 ? 'text-bg-success' : ($score >= 60 ? 'text-bg-warning' : 'text-bg-danger') ?>">
+                            <?= $score ?>/100
+                        </span>
+                        <small class="d-block text-body-secondary mt-1"><?= htmlspecialchars((string) ($trustScore['explain'] ?? ''), ENT_QUOTES, 'UTF-8') ?></small>
                     </td>
                     <td>
                         <?php if (!$installed): ?>

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once CATMIN_CORE . '/market-github.php';
+require_once CATMIN_CORE . '/module-repository-index-standard.php';
 
 final class CoreModuleRepositoryChecker
 {
@@ -50,6 +51,15 @@ final class CoreModuleRepositoryChecker
         }
 
         $items = is_array($catalog['items'] ?? null) ? $catalog['items'] : [];
+        if ((bool) ($repository['requires_manifest_standard'] ?? true) && !((bool) ($catalog['standard_index'] ?? false))) {
+            return [
+                'ok' => false,
+                'status' => 'invalid',
+                'message' => 'Dépôt non standard: catmin-repository.json requis.',
+                'module_count' => 0,
+                'errors' => ['standard_index_required'],
+            ];
+        }
 
         return [
             'ok' => true,
@@ -92,6 +102,28 @@ final class CoreModuleRepositoryChecker
                 'message' => 'Index JSON invalide.',
                 'module_count' => 0,
                 'errors' => ['index_json_invalid'],
+            ];
+        }
+
+        $parsed = (new CoreModuleRepositoryIndexStandard())->parse($decoded);
+        if ((bool) ($parsed['ok'] ?? false)) {
+            $items = is_array($parsed['items'] ?? null) ? $parsed['items'] : [];
+            return [
+                'ok' => true,
+                'status' => 'ok',
+                'message' => 'Index standard CATMIN valide.',
+                'module_count' => count($items),
+                'errors' => [],
+            ];
+        }
+
+        if ((bool) ($repository['requires_manifest_standard'] ?? true)) {
+            return [
+                'ok' => false,
+                'status' => 'invalid',
+                'message' => 'Index non conforme au standard CATMIN.',
+                'module_count' => 0,
+                'errors' => ['standard_index_invalid'],
             ];
         }
 

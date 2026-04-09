@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+require_once CATMIN_CORE . '/module-repository-index-standard.php';
+
 final class CoreMarketGithub
 {
     private string $repo;
@@ -18,6 +20,11 @@ final class CoreMarketGithub
 
     public function catalog(): array
     {
+        $index = $this->indexCatalog();
+        if ((bool) ($index['ok'] ?? false)) {
+            return $index;
+        }
+
         $types = $this->contents('/modules');
         if (!is_array($types)) {
             return ['ok' => false, 'error' => 'Lecture catalogue modules impossible.', 'items' => []];
@@ -70,7 +77,42 @@ final class CoreMarketGithub
         }
 
         usort($items, static fn (array $a, array $b): int => strcmp((string) ($a['scope'] . '/' . $a['slug']), (string) ($b['scope'] . '/' . $b['slug'])));
-        return ['ok' => true, 'error' => '', 'items' => $items];
+        return ['ok' => true, 'error' => '', 'items' => $items, 'standard_index' => false];
+    }
+
+    private function indexCatalog(): array
+    {
+        $rawUrl = 'https://raw.githubusercontent.com/' . $this->repo . '/' . rawurlencode($this->branch) . '/catmin-repository.json';
+        $raw = $this->requestRaw($rawUrl);
+        if (!is_string($raw) || $raw === '') {
+            return ['ok' => false, 'error' => 'catmin-repository.json introuvable', 'items' => []];
+        }
+
+        $decoded = json_decode($raw, true);
+        if (!is_array($decoded)) {
+            return ['ok' => false, 'error' => 'catmin-repository.json invalide', 'items' => []];
+        }
+
+        $parsed = (new CoreModuleRepositoryIndexStandard())->parse($decoded);
+        if (!(bool) ($parsed['ok'] ?? false)) {
+            return [
+                'ok' => false,
+                'error' => 'Index standard invalide: ' . implode(' | ', (array) ($parsed['errors'] ?? [])),
+                'items' => [],
+            ];
+        }
+
+        $items = [];
+        foreach ((array) ($parsed['items'] ?? []) as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $items[] = $item;
+        }
+
+        usort($items, static fn (array $a, array $b): int => strcmp((string) ($a['scope'] . '/' . $a['slug']), (string) ($b['scope'] . '/' . $b['slug'])));
+
+        return ['ok' => true, 'error' => '', 'items' => $items, 'standard_index' => true];
     }
 
     private function contents(string $path): ?array

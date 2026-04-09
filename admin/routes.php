@@ -26,6 +26,9 @@ require_once CATMIN_CORE . '/updater.php';
 require_once CATMIN_CORE . '/market-engine.php';
 require_once CATMIN_CORE . '/update-center.php';
 require_once CATMIN_CORE . '/module-repository-registry.php';
+require_once CATMIN_CORE . '/module-uninstaller.php';
+require_once CATMIN_CORE . '/module-snapshot-manager.php';
+require_once CATMIN_CORE . '/module-rollback-runner.php';
 
 $security = new SecurityManager(Request::capture(), 'admin');
 $authRequired = $security->adminAuthRequiredMiddleware();
@@ -2325,6 +2328,90 @@ return [
             return $redirect($adminBase . $path, [
                 'msg' => (string) ($result['message'] ?? 'Operation terminee'),
                 'mt' => $mt,
+            ]);
+        },
+        'middleware' => [$authRequired, $csrfCheck],
+    ],
+
+    [
+        'method' => 'POST',
+        'path' => '/modules/snapshot/create',
+        'handler' => static function (Request $request) use ($redirect): Response {
+            $controller = new AuthController();
+            $adminBase = $controller->adminBasePath();
+            $scope = strtolower(trim((string) $request->input('scope', '')));
+            $slug = strtolower(trim((string) $request->input('slug', '')));
+            $type = strtolower(trim((string) $request->input('type', 'emergency')));
+            $result = (new CoreModuleSnapshotManager())->create($scope, $slug, $type, 'manual-admin');
+            return $redirect($adminBase . '/modules', [
+                'msg' => (string) ($result['message'] ?? 'Snapshot terminé.'),
+                'mt' => (bool) ($result['ok'] ?? false) ? 'success' : 'danger',
+            ]);
+        },
+        'middleware' => [$authRequired, $csrfCheck],
+    ],
+
+    [
+        'method' => 'POST',
+        'path' => '/modules/rollback',
+        'handler' => static function (Request $request) use ($redirect): Response {
+            $controller = new AuthController();
+            $adminBase = $controller->adminBasePath();
+            $slug = strtolower(trim((string) $request->input('slug', '')));
+            $snapshotId = trim((string) $request->input('snapshot_id', ''));
+            $result = (new CoreModuleRollbackRunner())->rollback($slug, $snapshotId);
+            return $redirect($adminBase . '/modules', [
+                'msg' => (string) ($result['message'] ?? 'Rollback terminé.'),
+                'mt' => (bool) ($result['ok'] ?? false) ? 'success' : 'danger',
+            ]);
+        },
+        'middleware' => [$authRequired, $csrfCheck],
+    ],
+
+    [
+        'method' => 'GET',
+        'path' => '/modules/uninstall/confirm',
+        'handler' => static function (Request $request): Response {
+            $controller = new AuthController();
+            $adminBase = $controller->adminBasePath();
+            $scope = strtolower(trim((string) $request->input('scope', '')));
+            $slug = strtolower(trim((string) $request->input('slug', '')));
+            $preview = (new CoreModuleUninstaller())->preview($scope, $slug);
+            $snapshots = (new CoreModuleSnapshotManager())->list($slug);
+
+            return View::make('modules.uninstall-confirm', [
+                'adminBase' => $adminBase,
+                'preview' => $preview,
+                'scope' => $scope,
+                'slug' => $slug,
+                'snapshots' => $snapshots,
+            ], 'admin');
+        },
+        'middleware' => [$authRequired],
+    ],
+
+    [
+        'method' => 'POST',
+        'path' => '/modules/uninstall/run',
+        'handler' => static function (Request $request) use ($redirect): Response {
+            $controller = new AuthController();
+            $adminBase = $controller->adminBasePath();
+            $scope = strtolower(trim((string) $request->input('scope', '')));
+            $slug = strtolower(trim((string) $request->input('slug', '')));
+            $policy = strtolower(trim((string) $request->input('data_policy', 'keep_data')));
+            $confirmed = (string) $request->input('confirm', '0') === '1';
+            if (!$confirmed) {
+                return $redirect($adminBase . '/modules/uninstall/confirm', [
+                    'scope' => $scope,
+                    'slug' => $slug,
+                    'msg' => 'Confirmation requise.',
+                    'mt' => 'danger',
+                ]);
+            }
+            $result = (new CoreModuleUninstaller())->uninstall($scope, $slug, $policy);
+            return $redirect($adminBase . '/modules', [
+                'msg' => (string) ($result['message'] ?? 'Désinstallation terminée.'),
+                'mt' => (bool) ($result['ok'] ?? false) ? 'success' : 'danger',
             ]);
         },
         'middleware' => [$authRequired, $csrfCheck],

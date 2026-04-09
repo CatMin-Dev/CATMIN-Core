@@ -41,9 +41,11 @@ ob_start();
             <?php
             $policyOptions = [
                 'allow_official', 'allow_trusted', 'allow_community',
-                'require_checksums_official', 'require_checksums_trusted', 'require_checksums_community',
-                'require_signature_official', 'require_signature_trusted', 'require_signature_community',
+                'require_checksums_official', 'require_checksums_trusted', 'require_checksums_community', 'require_checksums_all',
+                'require_signature_official', 'require_signature_trusted', 'require_signature_community', 'require_signature_all',
                 'hide_unverified_modules', 'show_community_by_default',
+                'allow_channel_stable', 'allow_channel_beta', 'allow_channel_alpha', 'allow_channel_experimental',
+                'allow_install_deprecated', 'allow_install_abandoned', 'hide_archived_modules',
             ];
             foreach ($policyOptions as $key):
                 ?>

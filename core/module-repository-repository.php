@@ -369,11 +369,20 @@ final class CoreModuleRepositoryRepository
             'require_checksums_official' => false,
             'require_checksums_trusted' => false,
             'require_checksums_community' => true,
+            'require_checksums_all' => false,
             'require_signature_official' => false,
             'require_signature_trusted' => false,
             'require_signature_community' => true,
+            'require_signature_all' => false,
             'hide_unverified_modules' => false,
             'show_community_by_default' => false,
+            'allow_channel_stable' => true,
+            'allow_channel_beta' => true,
+            'allow_channel_alpha' => false,
+            'allow_channel_experimental' => false,
+            'allow_install_deprecated' => true,
+            'allow_install_abandoned' => false,
+            'hide_archived_modules' => true,
         ];
     }
 

@@ -39,7 +39,8 @@ final class CoreModuleRepositoryTrust
         }
 
         $requireChecksums = (bool) ($repository['requires_checksums'] ?? false)
-            || (bool) ($policy['require_checksums_' . $level] ?? false);
+            || (bool) ($policy['require_checksums_' . $level] ?? false)
+            || (bool) ($policy['require_checksums_all'] ?? false);
         if ($requireChecksums) {
             $checksums = $manifest['checksums'] ?? null;
             if (!is_array($checksums) || $checksums === []) {
@@ -49,7 +50,8 @@ final class CoreModuleRepositoryTrust
         }
 
         $requireSignature = (bool) ($repository['requires_signature'] ?? false)
-            || (bool) ($policy['require_signature_' . $level] ?? false);
+            || (bool) ($policy['require_signature_' . $level] ?? false)
+            || (bool) ($policy['require_signature_all'] ?? false);
         if ($requireSignature) {
             $hasSignature = isset($manifest['signature']) || isset($manifest['signatures']);
             if (!$hasSignature) {
@@ -58,8 +60,37 @@ final class CoreModuleRepositoryTrust
             }
         }
 
+        $channel = strtolower(trim((string) ($manifest['release_channel'] ?? 'stable')));
+        $allowedChannel = match ($channel) {
+            'stable' => (bool) ($policy['allow_channel_stable'] ?? true),
+            'beta' => (bool) ($policy['allow_channel_beta'] ?? true),
+            'alpha' => (bool) ($policy['allow_channel_alpha'] ?? false),
+            'experimental' => (bool) ($policy['allow_channel_experimental'] ?? false),
+            default => false,
+        };
+        if (!$allowedChannel) {
+            $warnings[] = 'Canal non autorisé par policy: ' . $channel;
+            $installAllowed = false;
+        }
+
+        $lifecycle = strtolower(trim((string) ($manifest['lifecycle_status'] ?? 'active')));
+        if ($lifecycle === 'deprecated' && !((bool) ($policy['allow_install_deprecated'] ?? true))) {
+            $warnings[] = 'Module deprecated bloqué par policy.';
+            $installAllowed = false;
+        }
+        if ($lifecycle === 'abandoned' && !((bool) ($policy['allow_install_abandoned'] ?? false))) {
+            $warnings[] = 'Module abandoned bloqué par policy.';
+            $installAllowed = false;
+        }
+        if ($lifecycle === 'archived' && (bool) ($policy['hide_archived_modules'] ?? true)) {
+            $warnings[] = 'Module archived masqué par policy.';
+        }
+
         $visible = true;
         if ((bool) ($policy['hide_unverified_modules'] ?? false) && !$installAllowed) {
+            $visible = false;
+        }
+        if ($lifecycle === 'archived' && (bool) ($policy['hide_archived_modules'] ?? true)) {
             $visible = false;
         }
 

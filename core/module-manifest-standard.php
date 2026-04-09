@@ -6,6 +6,7 @@ final class CoreModuleManifestStandard
 {
     private const TYPE_ENUM = ['core', 'admin', 'front', 'integration', 'driver'];
     private const CHANNEL_ENUM = ['stable', 'beta', 'alpha', 'experimental'];
+    private const LIFECYCLE_ENUM = ['active', 'deprecated', 'abandoned', 'replaced', 'archived', 'experimental'];
     private const CATEGORY_ENUM = ['content', 'seo', 'media', 'system', 'security', 'marketing', 'commerce', 'integration', 'custom'];
 
     public function normalize(array $manifest): array
@@ -53,6 +54,10 @@ final class CoreModuleManifestStandard
             'show_in_manager' => array_key_exists('show_in_manager', $manifest) ? (bool) $manifest['show_in_manager'] : true,
             'show_in_market' => array_key_exists('show_in_market', $manifest) ? (bool) $manifest['show_in_market'] : true,
             'release_channel' => strtolower(trim((string) ($manifest['release_channel'] ?? 'stable'))),
+            'lifecycle_status' => strtolower(trim((string) ($manifest['lifecycle_status'] ?? 'active'))),
+            'replacement_slug' => strtolower(trim((string) ($manifest['replacement_slug'] ?? ''))),
+            'deprecation_message' => trim((string) ($manifest['deprecation_message'] ?? '')),
+            'maintenance_status' => strtolower(trim((string) ($manifest['maintenance_status'] ?? 'maintained'))),
             'php_min' => trim((string) ($manifest['php_min'] ?? '')),
             'catmin_min' => trim((string) ($manifest['catmin_min'] ?? '')),
             'catmin_max' => trim((string) ($manifest['catmin_max'] ?? '')),
@@ -128,6 +133,10 @@ final class CoreModuleManifestStandard
         if ($channel !== '' && !in_array($channel, self::CHANNEL_ENUM, true)) {
             $errors[] = 'Release channel invalide: ' . $channel;
         }
+        $lifecycle = (string) ($normalized['lifecycle_status'] ?? '');
+        if ($lifecycle !== '' && !in_array($lifecycle, self::LIFECYCLE_ENUM, true)) {
+            $errors[] = 'Lifecycle status invalide: ' . $lifecycle;
+        }
 
         foreach (['homepage', 'support_url', 'docs_url', 'readme_url', 'changelog_url'] as $urlField) {
             $url = trim((string) ($normalized[$urlField] ?? ''));
@@ -163,4 +172,3 @@ final class CoreModuleManifestStandard
         return preg_match('/^[0-9]+\.x$/', $value) === 1;
     }
 }
-

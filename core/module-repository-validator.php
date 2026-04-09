@@ -89,7 +89,7 @@ final class CoreModuleRepositoryValidator
     {
         $parts = preg_split('/[,\s]+/', strtolower($raw)) ?: [];
         $parts = array_values(array_unique(array_filter(array_map('trim', $parts), static fn (string $v): bool => $v !== '')));
-        $allowed = ['stable', 'beta', 'dev', 'alpha'];
+        $allowed = ['stable', 'beta', 'dev', 'alpha', 'experimental'];
 
         return array_values(array_filter($parts, static fn (string $v): bool => in_array($v, $allowed, true)));
     }

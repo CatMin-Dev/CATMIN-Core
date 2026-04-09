@@ -137,7 +137,7 @@ ob_start();
                 <th><?= htmlspecialchars(__('modules.table.signature'), ENT_QUOTES, 'UTF-8') ?></th>
                 <th><?= htmlspecialchars(__('modules.table.trust'), ENT_QUOTES, 'UTF-8') ?></th>
                 <th><?= htmlspecialchars(__('modules.table.state'), ENT_QUOTES, 'UTF-8') ?></th>
-                <th><?= htmlspecialchars(__('modules.table.errors'), ENT_QUOTES, 'UTF-8') ?></th>
+                        <th><?= htmlspecialchars(__('modules.table.errors'), ENT_QUOTES, 'UTF-8') ?></th>
                 <th class="text-end"><?= htmlspecialchars($isStatusView ? __('modules.table.diagnostic') : __('modules.table.activation'), ENT_QUOTES, 'UTF-8') ?></th>
             </tr>
             </thead>
@@ -232,16 +232,25 @@ ob_start();
                                     <span class="badge text-bg-warning"><?= htmlspecialchars(__('common.inactive'), ENT_QUOTES, 'UTF-8') ?></span>
                                 <?php endif; ?>
                             <?php else: ?>
-                                <form method="post" action="<?= htmlspecialchars($adminBase . '/modules/toggle', ENT_QUOTES, 'UTF-8') ?>" class="d-inline">
-                                    <input type="hidden" name="_csrf" value="<?= $csrf ?>">
-                                    <input type="hidden" name="scope" value="<?= htmlspecialchars($scope, ENT_QUOTES, 'UTF-8') ?>">
-                                    <input type="hidden" name="slug" value="<?= htmlspecialchars($slug, ENT_QUOTES, 'UTF-8') ?>">
-                                    <input type="hidden" name="target" value="<?= $enabled ? '0' : '1' ?>">
-                                    <input type="hidden" name="return_to" value="<?= $isStatusView ? 'status' : 'manager' ?>">
-                                    <button class="btn btn-sm <?= $enabled ? 'btn-outline-danger' : 'btn-outline-success' ?>" type="submit">
-                                        <?= htmlspecialchars($enabled ? __('common.disable') : __('common.enable'), ENT_QUOTES, 'UTF-8') ?>
-                                    </button>
-                                </form>
+                                <div class="d-inline-flex flex-wrap justify-content-end gap-1">
+                                    <form method="post" action="<?= htmlspecialchars($adminBase . '/modules/toggle', ENT_QUOTES, 'UTF-8') ?>" class="d-inline">
+                                        <input type="hidden" name="_csrf" value="<?= $csrf ?>">
+                                        <input type="hidden" name="scope" value="<?= htmlspecialchars($scope, ENT_QUOTES, 'UTF-8') ?>">
+                                        <input type="hidden" name="slug" value="<?= htmlspecialchars($slug, ENT_QUOTES, 'UTF-8') ?>">
+                                        <input type="hidden" name="target" value="<?= $enabled ? '0' : '1' ?>">
+                                        <input type="hidden" name="return_to" value="<?= $isStatusView ? 'status' : 'manager' ?>">
+                                        <button class="btn btn-sm <?= $enabled ? 'btn-outline-danger' : 'btn-outline-success' ?>" type="submit">
+                                            <?= htmlspecialchars($enabled ? __('common.disable') : __('common.enable'), ENT_QUOTES, 'UTF-8') ?>
+                                        </button>
+                                    </form>
+                                    <form method="post" action="<?= htmlspecialchars($adminBase . '/modules/snapshot/create', ENT_QUOTES, 'UTF-8') ?>" class="d-inline">
+                                        <input type="hidden" name="_csrf" value="<?= $csrf ?>">
+                                        <input type="hidden" name="scope" value="<?= htmlspecialchars($scope, ENT_QUOTES, 'UTF-8') ?>">
+                                        <input type="hidden" name="slug" value="<?= htmlspecialchars($slug, ENT_QUOTES, 'UTF-8') ?>">
+                                        <button class="btn btn-sm btn-outline-secondary" type="submit">Snapshot</button>
+                                    </form>
+                                    <a class="btn btn-sm btn-outline-danger" href="<?= htmlspecialchars($adminBase . '/modules/uninstall/confirm?scope=' . rawurlencode($scope) . '&slug=' . rawurlencode($slug), ENT_QUOTES, 'UTF-8') ?>">Uninstall</a>
+                                </div>
                             <?php endif; ?>
                         </td>
                     </tr>

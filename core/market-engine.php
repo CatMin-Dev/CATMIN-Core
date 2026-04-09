@@ -8,6 +8,8 @@ require_once CATMIN_CORE . '/module-loader.php';
 require_once CATMIN_CORE . '/module-compatibility-checker.php';
 require_once CATMIN_CORE . '/module-integrity-scanner.php';
 require_once CATMIN_CORE . '/module-repository-registry.php';
+require_once CATMIN_CORE . '/module-repository-index-standard.php';
+require_once CATMIN_CORE . '/module-trust-score.php';
 
 final class CoreMarketEngine
 {
@@ -37,6 +39,7 @@ final class CoreMarketEngine
 
         $indexed = [];
         $errors = [];
+        $scorer = new CoreModuleTrustScore();
 
         foreach ($repositories as $repository) {
             $remote = $this->catalogFromRepository($repository);
@@ -58,10 +61,25 @@ final class CoreMarketEngine
                 }
 
                 $manifest = is_array($item['manifest'] ?? null) ? $item['manifest'] : [];
+                if (!isset($manifest['release_channel']) && isset($item['release_channel'])) {
+                    $manifest['release_channel'] = (string) $item['release_channel'];
+                }
+                if (!isset($manifest['lifecycle_status']) && isset($item['lifecycle_status'])) {
+                    $manifest['lifecycle_status'] = (string) $item['lifecycle_status'];
+                }
                 $local = $localBySlug[$slug] ?? null;
                 $integrity = $integrityBySlug[$slug] ?? null;
                 $compat = (new CoreModuleCompatibilityChecker())->check($manifest);
                 $trustState = $trust->evaluate($repository, $manifest, $policy);
+                $repoAllowedChannels = array_values(array_filter(array_map(
+                    static fn ($v): string => strtolower(trim((string) $v)),
+                    preg_split('/[,\s]+/', (string) ($repository['allowed_release_channels'] ?? 'stable,beta,dev,alpha,experimental')) ?: []
+                ), static fn (string $v): bool => $v !== ''));
+                $channel = strtolower((string) ($manifest['release_channel'] ?? 'stable'));
+                if ($repoAllowedChannels !== [] && !in_array($channel, $repoAllowedChannels, true)) {
+                    $trustState['install_allowed'] = false;
+                    $trustState['warnings'][] = 'Canal non autorisé par dépôt: ' . $channel;
+                }
 
                 if (!(bool) ($trustState['visible'] ?? true)) {
                     continue;
@@ -82,6 +100,14 @@ final class CoreMarketEngine
                     'catmin_max' => (string) ($item['catmin_max'] ?? ''),
                     'zip_url' => (string) ($item['zip_url'] ?? ''),
                     'path_in_zip' => (string) ($item['path_in_zip'] ?? ''),
+                    'release_channel' => strtolower((string) ($manifest['release_channel'] ?? ($item['release_channel'] ?? 'stable'))),
+                    'lifecycle_status' => strtolower((string) ($manifest['lifecycle_status'] ?? ($item['lifecycle_status'] ?? 'active'))),
+                    'replacement_slug' => strtolower((string) ($manifest['replacement_slug'] ?? ($item['replacement_slug'] ?? ''))),
+                    'deprecation_message' => (string) ($manifest['deprecation_message'] ?? ($item['deprecation_message'] ?? '')),
+                    'readme_url' => (string) ($item['readme_url'] ?? ($manifest['readme_url'] ?? '')),
+                    'changelog_url' => (string) ($item['changelog_url'] ?? ($manifest['changelog_url'] ?? '')),
+                    'checksums_url' => (string) ($item['checksums_url'] ?? ''),
+                    'signature_url' => (string) ($item['signature_url'] ?? ''),
                     'manifest' => $manifest,
                     'installed' => is_array($local),
                     'enabled' => (bool) ($local['enabled'] ?? false),
@@ -95,6 +121,7 @@ final class CoreMarketEngine
                     'install_allowed' => (bool) ($trustState['install_allowed'] ?? false),
                     'trust_warnings' => (array) ($trustState['warnings'] ?? []),
                 ];
+                $row['trust_score'] = $scorer->evaluate($row);
 
                 $key = $scope . '/' . $slug;
                 if (!isset($indexed[$key])) {
@@ -118,7 +145,14 @@ final class CoreMarketEngine
         }
 
         $items = array_values($indexed);
-        usort($items, static fn (array $a, array $b): int => strcmp((string) ($a['scope'] . '/' . $a['slug']), (string) ($b['scope'] . '/' . $b['slug'])));
+        usort($items, static function (array $a, array $b) use ($trust): int {
+            $ta = $trust->scoreLevel((string) ($a['repo_trust_level'] ?? 'community'));
+            $tb = $trust->scoreLevel((string) ($b['repo_trust_level'] ?? 'community'));
+            if ($ta !== $tb) {
+                return $tb <=> $ta;
+            }
+            return strcmp((string) (($a['scope'] ?? '') . '/' . ($a['slug'] ?? '')), (string) (($b['scope'] ?? '') . '/' . ($b['slug'] ?? '')));
+        });
 
         return [
             'ok' => $items !== [] || $errors === [],
@@ -151,13 +185,21 @@ final class CoreMarketEngine
     {
         $provider = strtolower(trim((string) ($repository['provider'] ?? 'github')));
         $branch = trim((string) ($repository['branch_or_channel'] ?? 'main'));
+        $requiresStandard = (bool) ($repository['requires_manifest_standard'] ?? true);
 
         if ($provider === 'github') {
             $repo = $this->extractGithubRepo($repository);
             if ($repo === null) {
                 return ['ok' => false, 'error' => 'Repo GitHub invalide', 'items' => []];
             }
-            return (new CoreMarketGithub($repo, $branch))->catalog();
+            $catalog = (new CoreMarketGithub($repo, $branch))->catalog();
+            if (!(bool) ($catalog['ok'] ?? false) && $requiresStandard) {
+                return ['ok' => false, 'error' => 'Dépôt non conforme standard CATMIN (catmin-repository.json requis).', 'items' => []];
+            }
+            if ((bool) ($catalog['ok'] ?? false) && $requiresStandard && !((bool) ($catalog['standard_index'] ?? false))) {
+                return ['ok' => false, 'error' => 'Dépôt non standard: catmin-repository.json requis.', 'items' => []];
+            }
+            return $catalog;
         }
 
         if ($provider === 'custom_http_index') {
@@ -174,6 +216,14 @@ final class CoreMarketEngine
             $decoded = json_decode($raw, true);
             if (!is_array($decoded)) {
                 return ['ok' => false, 'error' => 'Index JSON invalide', 'items' => []];
+            }
+
+            $standard = (new CoreModuleRepositoryIndexStandard())->parse($decoded);
+            if ((bool) ($standard['ok'] ?? false)) {
+                return ['ok' => true, 'error' => '', 'items' => (array) ($standard['items'] ?? [])];
+            }
+            if ($requiresStandard) {
+                return ['ok' => false, 'error' => 'Index non conforme standard CATMIN.', 'items' => []];
             }
 
             $items = is_array($decoded['items'] ?? null) ? $decoded['items'] : [];
