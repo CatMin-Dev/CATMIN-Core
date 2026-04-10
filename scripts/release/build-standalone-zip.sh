@@ -12,6 +12,29 @@ mkdir -p "${BUILD_ROOT}"
 rm -rf "${STAGE_DIR}" "${ZIP_FILE}"
 mkdir -p "${STAGE_DIR}"
 
+# Trust/integrity guard for module payload packaged in standalone.
+# - strict mode: signing key is mandatory
+# - other modes: checksums are still regenerated systematically
+MODULE_TRUST_MODE="$(php -r '$cfg=require $argv[1]; echo (string)($cfg["mode"] ?? "recommended");' "${ROOT_DIR}/config/module-trust.php" 2>/dev/null || echo "recommended")"
+if [ -x "${ROOT_DIR}/scripts/release/sign-all-modules.sh" ] && [ -d "${ROOT_DIR}/modules/admin" ]; then
+  if [ "${MODULE_TRUST_MODE}" = "strict" ]; then
+    if [ -z "${RELEASE_SIGNING_KEY:-}" ] || [ -z "${RELEASE_SIGNING_KEY_ID:-}" ] || [ ! -f "${RELEASE_SIGNING_KEY}" ]; then
+      echo "ERROR: strict trust mode requires RELEASE_SIGNING_KEY + RELEASE_SIGNING_KEY_ID for standalone build." >&2
+      exit 1
+    fi
+    "${ROOT_DIR}/scripts/release/sign-all-modules.sh" "${ROOT_DIR}/modules/admin" "${RELEASE_SIGNING_KEY}" "${RELEASE_SIGNING_KEY_ID}"
+  else
+    if [ -n "${RELEASE_SIGNING_KEY:-}" ] && [ -n "${RELEASE_SIGNING_KEY_ID:-}" ] && [ -f "${RELEASE_SIGNING_KEY}" ]; then
+      "${ROOT_DIR}/scripts/release/sign-all-modules.sh" "${ROOT_DIR}/modules/admin" "${RELEASE_SIGNING_KEY}" "${RELEASE_SIGNING_KEY_ID}"
+    else
+      for m in "${ROOT_DIR}"/modules/admin/*; do
+        [ -d "${m}" ] || continue
+        php "${ROOT_DIR}/scripts/release/generate-module-checksums.php" "${m}" "${m}/checksums.json"
+      done
+    fi
+  fi
+fi
+
 INCLUDE_ITEMS=(
   admin
   config

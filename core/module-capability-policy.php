@@ -24,10 +24,10 @@ final class CoreModuleCapabilityPolicy
             'admin.users.write',
             'backups.run',
         ];
-        $allowed = $this->allowedCapabilities();
         foreach ($capabilities as $capability) {
-            if (!in_array($capability, $allowed, true)) {
-                $errors[] = 'Capacité inconnue: ' . $capability;
+            // Accept modular capabilities like "cache.view", "content.pages.write", etc.
+            if (preg_match('/^[a-z0-9_]+(?:\.[a-z0-9_]+)+$/', $capability) !== 1) {
+                $errors[] = 'Capacité invalide: ' . $capability;
                 continue;
             }
             if (in_array($capability, $criticalCapabilities, true)) {
@@ -76,24 +76,7 @@ final class CoreModuleCapabilityPolicy
     /** @return array<int,string> */
     public function allowedCapabilities(): array
     {
-        return [
-            'content.read',
-            'content.write',
-            'media.read',
-            'media.write',
-            'settings.read.own',
-            'settings.write.own',
-            'notifications.push',
-            'apps.register',
-            'search.register',
-            'i18n.load',
-            'cron.register',
-            'admin.users.read',
-            'admin.users.write',
-            'backups.run',
-            'telemetry.emit',
-            'external.http',
-            'db.schema.migrate',
-        ];
+        // Kept for compatibility/documentation; validation now relies on pattern checks.
+        return [];
     }
 }

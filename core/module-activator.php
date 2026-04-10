@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require_once CATMIN_CORE . '/module-loader.php';
 require_once CATMIN_CORE . '/module-activation-guard.php';
+require_once CATMIN_CORE . '/module-state-store.php';
 
 final class CoreModuleActivator
 {
@@ -79,14 +80,13 @@ final class CoreModuleActivator
             }
         }
 
-        $manifest['enabled'] = $enabled;
-        $encoded = json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-        if (!is_string($encoded)) {
-            return ['ok' => false, 'message' => 'Erreur encodage manifest'];
-        }
-        if (@file_put_contents($manifestPath, $encoded . PHP_EOL) === false) {
-            return ['ok' => false, 'message' => 'Écriture manifest impossible'];
-        }
+        // Persist runtime state only; never mutate manifest.json (checksums integrity).
+        (new CoreModuleStateStore())->persist(
+            $slug,
+            (string) ($manifest['name'] ?? $slug),
+            (string) ($manifest['version'] ?? '0.0.0'),
+            $enabled
+        );
 
         Core\logs\Logger::info($enabled ? 'Module activé' : 'Module désactivé', ['scope' => $scope, 'slug' => $slug]);
 

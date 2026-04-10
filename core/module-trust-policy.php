@@ -54,7 +54,7 @@ final class CoreModuleTrustPolicy
             } elseif ($keyStatus === 'deprecated') {
                 $warnings[] = 'Clé de signature dépréciée';
             }
-        } elseif ($mode === 'strict' || ($mode === 'recommended' && $isOfficial)) {
+        } elseif ($mode === 'strict') {
             $trusted = false;
             $errors[] = 'Signature requise par la policy';
         } else {
