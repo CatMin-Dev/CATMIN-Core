@@ -43,6 +43,8 @@ $ui = (array) ($settings['ui'] ?? []);
 $maintenance = (array) ($settings['maintenance'] ?? []);
 $backup = (array) ($settings['backup'] ?? []);
 $system = (array) ($settings['system'] ?? []);
+$sidebarGroups = isset($sidebarGroups) && is_array($sidebarGroups) ? $sidebarGroups : [];
+$sidebarOrder = isset($sidebarOrder) && is_array($sidebarOrder) ? $sidebarOrder : [];
 $timezones = \DateTimeZone::listIdentifiers();
 
 ob_start();
@@ -175,8 +177,45 @@ ob_start();
                                 </label>
                             </div>
                             <div class="col-12">
-                                <div class="alert alert-light mb-0">
+                                <?php
+                                $orderIndex = [];
+                                foreach ($sidebarOrder as $i => $key) {
+                                    $orderIndex[(string) $key] = $i;
+                                }
+                                usort($sidebarGroups, static function (array $a, array $b) use ($orderIndex): int {
+                                    $aKey = (string) ($a['key'] ?? '');
+                                    $bKey = (string) ($b['key'] ?? '');
+                                    $aHas = array_key_exists($aKey, $orderIndex);
+                                    $bHas = array_key_exists($bKey, $orderIndex);
+                                    if ($aHas && $bHas) {
+                                        return $orderIndex[$aKey] <=> $orderIndex[$bKey];
+                                    }
+                                    if ($aHas) {
+                                        return -1;
+                                    }
+                                    if ($bHas) {
+                                        return 1;
+                                    }
+                                    return ((int) ($a['order'] ?? 99)) <=> ((int) ($b['order'] ?? 99));
+                                });
+                                $sidebarOrderValue = implode(',', array_map(static fn (array $group): string => (string) ($group['key'] ?? ''), $sidebarGroups));
+                                ?>
+                                <input type="hidden" name="sidebar_order" value="<?= htmlspecialchars($sidebarOrderValue, ENT_QUOTES, 'UTF-8') ?>" data-cat-sidebar-order-input>
+                                <div class="alert alert-light mb-2">
                                     <?= htmlspecialchars(__('settings.sidebar.order_placeholder'), ENT_QUOTES, 'UTF-8') ?>
+                                </div>
+                                <div class="list-group cat-sidebar-order" data-cat-sidebar-order>
+                                    <?php foreach ($sidebarGroups as $group): ?>
+                                        <div class="list-group-item d-flex align-items-center gap-2 cat-sidebar-order-item" draggable="true" data-cat-sidebar-item data-key="<?= htmlspecialchars((string) ($group['key'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                                            <span class="cat-sidebar-order-handle">⋮⋮</span>
+                                            <span class="text-body-secondary text-uppercase small"><?= htmlspecialchars((string) ($group['label'] ?? ''), ENT_QUOTES, 'UTF-8') ?></span>
+                                            <?php if (!empty($group['source']) && (string) $group['source'] === 'module'): ?>
+                                                <span class="badge text-bg-light ms-auto">module</span>
+                                            <?php else: ?>
+                                                <span class="badge text-bg-dark ms-auto">core</span>
+                                            <?php endif; ?>
+                                        </div>
+                                    <?php endforeach; ?>
                                 </div>
                             </div>
                         </div>

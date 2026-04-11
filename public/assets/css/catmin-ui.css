@@ -1,3 +1,14 @@
+html {
+    scrollbar-gutter: stable;
+}
+
+:root {
+    min-block-size: 100svh;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    overflow: scroll;
+}
+
 :root,
 :root[data-bs-theme="light"],
 :root[data-bs-theme="corporate"] {
@@ -129,6 +140,21 @@
 .cat-toast--danger .cat-toast-progress,
 .cat-toast--info .cat-toast-progress {
     background: color-mix(in srgb, var(--palette-stone-50) 72%, transparent);
+}
+
+.cat-sidebar-order-item {
+    cursor: grab;
+    user-select: none;
+}
+
+.cat-sidebar-order-item.is-dragging {
+    opacity: 0.6;
+}
+
+.cat-sidebar-order-handle {
+    color: var(--cat-text-muted, #666);
+    font-weight: 700;
+    letter-spacing: -1px;
 }
 
 :root[data-bs-theme="dark"] {

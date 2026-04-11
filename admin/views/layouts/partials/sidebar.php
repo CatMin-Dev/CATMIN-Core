@@ -9,20 +9,6 @@ $navGroups = [
         'children' => [],
     ],
     [
-        'key' => 'content',
-        'label' => __('nav.content'),
-        'icon' => 'file-earmark-text',
-        'order' => 20,
-        'children' => [],
-    ],
-    [
-        'key' => 'media',
-        'label' => __('nav.media'),
-        'icon' => 'images',
-        'order' => 30,
-        'children' => [],
-    ],
-    [
         'key' => 'organization',
         'label' => __('nav.organization'),
         'icon' => 'diagram-3',
@@ -31,13 +17,6 @@ $navGroups = [
             ['key' => 'staff', 'label' => __('nav.staff_admins'), 'href' => $adminBase . '/staff'],
             ['key' => 'roles', 'label' => __('nav.roles_permissions'), 'href' => $adminBase . '/roles'],
         ],
-    ],
-    [
-        'key' => 'marketing',
-        'label' => __('nav.marketing'),
-        'icon' => 'megaphone',
-        'order' => 50,
-        'children' => [],
     ],
     [
         'key' => 'system',
@@ -75,6 +54,12 @@ $navGroups = [
         'href' => $adminBase . '/settings/general',
         'children' => [],
     ],
+];
+
+$groupMeta = [
+    'content' => ['label' => __('nav.content'), 'icon' => 'file-earmark-text', 'order' => 20],
+    'media' => ['label' => __('nav.media'), 'icon' => 'images', 'order' => 30],
+    'marketing' => ['label' => __('nav.marketing'), 'icon' => 'megaphone', 'order' => 50],
 ];
 
 $moduleNavEntries = [];
@@ -156,11 +141,12 @@ if ($moduleNavEntries !== []) {
         unset($group);
 
         if (!$inserted) {
+            $meta = $groupMeta[$groupKey] ?? null;
             $navGroups[] = [
                 'key' => $groupKey,
-                'label' => ucfirst($groupKey),
-                'icon' => $groupKey === 'editorial' ? 'file-earmark-text' : 'chat',
-                'order' => $groupKey === 'editorial' ? 20 : 35,
+                'label' => $meta !== null ? (string) ($meta['label'] ?? ucfirst($groupKey)) : ucfirst($groupKey),
+                'icon' => $meta !== null ? (string) ($meta['icon'] ?? 'chat') : 'chat',
+                'order' => (int) ($meta['order'] ?? 35),
                 'children' => [[
                     'key' => (string) $entry['key'],
                     'label' => (string) $entry['label'],
@@ -171,7 +157,42 @@ if ($moduleNavEntries !== []) {
     }
 }
 
+if (!class_exists('CoreSettingsEngine')) {
+    require_once CATMIN_CORE . '/settings-engine.php';
+}
+$sidebarOrderRaw = '';
+try {
+    $settingsEngine = new CoreSettingsEngine();
+    $sidebarOrderRaw = (string) $settingsEngine->get('ui.sidebar_order', '');
+} catch (Throwable $exception) {
+    $sidebarOrderRaw = '';
+}
+$sidebarOrder = array_values(array_filter(array_map('trim', explode(',', $sidebarOrderRaw)), static fn (string $value): bool => $value !== ''));
+
 usort($navGroups, static fn (array $a, array $b): int => ((int) ($a['order'] ?? 999)) <=> ((int) ($b['order'] ?? 999)));
+
+if ($sidebarOrder !== []) {
+    $orderIndex = [];
+    foreach ($sidebarOrder as $i => $key) {
+        $orderIndex[(string) $key] = $i;
+    }
+    usort($navGroups, static function (array $a, array $b) use ($orderIndex): int {
+        $aKey = (string) ($a['key'] ?? '');
+        $bKey = (string) ($b['key'] ?? '');
+        $aHas = array_key_exists($aKey, $orderIndex);
+        $bHas = array_key_exists($bKey, $orderIndex);
+        if ($aHas && $bHas) {
+            return $orderIndex[$aKey] <=> $orderIndex[$bKey];
+        }
+        if ($aHas) {
+            return -1;
+        }
+        if ($bHas) {
+            return 1;
+        }
+        return ((int) ($a['order'] ?? 999)) <=> ((int) ($b['order'] ?? 999));
+    });
+}
 
 $emptyLabel = __('nav.empty_group');
 foreach ($navGroups as &$group) {

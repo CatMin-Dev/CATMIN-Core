@@ -1,12 +1,6 @@
 (function () {
     'use strict';
 
-    document.querySelectorAll('[data-cat-search-form]').forEach(function (form) {
-        form.addEventListener('submit', function (event) {
-            event.preventDefault();
-        });
-    });
-
     document.querySelectorAll('[data-cat-alert-dismiss]').forEach(function (button) {
         button.addEventListener('click', function () {
             var target = button.closest('.alert');
@@ -72,5 +66,44 @@
         window.setTimeout(function () {
             toastEl.remove();
         }, delay);
+    });
+
+    document.querySelectorAll('[data-cat-sidebar-order]').forEach(function (listEl) {
+        var input = document.querySelector('[data-cat-sidebar-order-input]');
+        var dragging = null;
+
+        var updateOrder = function () {
+            if (!input) {
+                return;
+            }
+            var keys = [];
+            listEl.querySelectorAll('[data-cat-sidebar-item]').forEach(function (item) {
+                keys.push(item.getAttribute('data-key') || '');
+            });
+            input.value = keys.filter(function (v) { return v !== ''; }).join(',');
+        };
+
+        listEl.querySelectorAll('[data-cat-sidebar-item]').forEach(function (item) {
+            item.addEventListener('dragstart', function (event) {
+                dragging = item;
+                item.classList.add('is-dragging');
+                event.dataTransfer.effectAllowed = 'move';
+                event.dataTransfer.setData('text/plain', item.getAttribute('data-key') || '');
+            });
+            item.addEventListener('dragend', function () {
+                item.classList.remove('is-dragging');
+                dragging = null;
+                updateOrder();
+            });
+            item.addEventListener('dragover', function (event) {
+                event.preventDefault();
+                if (!dragging || dragging === item) {
+                    return;
+                }
+                var rect = item.getBoundingClientRect();
+                var next = (event.clientY - rect.top) > rect.height / 2;
+                listEl.insertBefore(dragging, next ? item.nextSibling : item);
+            });
+        });
     });
 }());

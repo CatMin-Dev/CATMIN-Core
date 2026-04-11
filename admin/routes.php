@@ -479,6 +479,7 @@ $coreSettingsDefaults = [
         'compact_sidebar' => true,
         'table_density' => 'comfortable',
         'show_debug' => false,
+        'sidebar_order' => '',
     ],
     'maintenance' => [
         'enabled' => false,
@@ -1384,12 +1385,72 @@ return [
             $settings['interface'] = $settings['ui'];
             $settings['email'] = $settings['mail'];
 
+            $sidebarGroupMeta = [
+                'dashboard' => ['label' => __('nav.dashboard'), 'icon' => 'house-door', 'order' => 10],
+                'organization' => ['label' => __('nav.organization'), 'icon' => 'diagram-3', 'order' => 40],
+                'system' => ['label' => __('nav.system'), 'icon' => 'speedometer2', 'order' => 60],
+                'modules' => ['label' => __('nav.modules'), 'icon' => 'puzzle', 'order' => 70],
+                'settings' => ['label' => __('nav.settings'), 'icon' => 'gear', 'order' => 80],
+                'content' => ['label' => __('nav.content'), 'icon' => 'file-earmark-text', 'order' => 20],
+                'media' => ['label' => __('nav.media'), 'icon' => 'images', 'order' => 30],
+                'marketing' => ['label' => __('nav.marketing'), 'icon' => 'megaphone', 'order' => 50],
+            ];
+
+            $sidebarGroups = [];
+            foreach ($sidebarGroupMeta as $key => $meta) {
+                if (in_array($key, ['content', 'media', 'marketing'], true)) {
+                    continue;
+                }
+                $sidebarGroups[$key] = [
+                    'key' => $key,
+                    'label' => (string) ($meta['label'] ?? ucfirst($key)),
+                    'icon' => (string) ($meta['icon'] ?? 'chat'),
+                    'order' => (int) ($meta['order'] ?? 99),
+                    'source' => 'core',
+                ];
+            }
+
+            $loader = new CoreModuleLoader();
+            $snapshot = $loader->scan();
+            foreach ((array) ($snapshot['modules'] ?? []) as $module) {
+                $manifest = (array) ($module['manifest'] ?? []);
+                $items = $manifest['admin_sidebar'] ?? $manifest['sidebar'] ?? [];
+                if (!is_array($items)) {
+                    continue;
+                }
+                foreach ($items as $item) {
+                    if (!is_array($item)) {
+                        continue;
+                    }
+                    $groupKey = strtolower(trim((string) ($item['group'] ?? 'modules')));
+                    if ($groupKey === '') {
+                        continue;
+                    }
+                    if (isset($sidebarGroups[$groupKey])) {
+                        continue;
+                    }
+                    $meta = $sidebarGroupMeta[$groupKey] ?? null;
+                    $sidebarGroups[$groupKey] = [
+                        'key' => $groupKey,
+                        'label' => $meta !== null ? (string) ($meta['label'] ?? ucfirst($groupKey)) : ucfirst($groupKey),
+                        'icon' => $meta !== null ? (string) ($meta['icon'] ?? 'chat') : 'chat',
+                        'order' => (int) ($meta['order'] ?? 99),
+                        'source' => 'module',
+                    ];
+                }
+            }
+
+            $sidebarOrderRaw = (string) (($settings['ui']['sidebar_order'] ?? '') ?: '');
+            $sidebarOrder = array_values(array_filter(array_map('trim', explode(',', $sidebarOrderRaw)), static fn (string $value): bool => $value !== ''));
+
             return View::make('settings.index', [
                 'adminBase' => $adminBase,
                 'settings' => $settings,
                 'apps' => $appsRepository->listAll(),
                 'repositories' => $registry->listRepositories(),
                 'policy' => $registry->policy(),
+                'sidebarGroups' => array_values($sidebarGroups),
+                'sidebarOrder' => $sidebarOrder,
                 'section' => $section,
                 'message' => (string) ($flash['message'] ?? ''),
                 'messageType' => (string) ($flash['type'] ?? 'success'),
@@ -1459,6 +1520,7 @@ return [
                 'compact_sidebar' => ((string) ($post['compact_sidebar'] ?? '0')) === '1',
                 'table_density' => trim((string) ($post['table_density'] ?? ($data['ui']['table_density'] ?? 'comfortable'))),
                 'show_debug' => ((string) ($post['show_debug'] ?? '0')) === '1',
+                'sidebar_order' => trim((string) ($post['sidebar_order'] ?? ($data['ui']['sidebar_order'] ?? ''))),
             ];
             $data['maintenance'] = [
                 'enabled' => ((string) ($post['maintenance_enabled'] ?? '0')) === '1',
@@ -1664,6 +1726,7 @@ return [
                 'compact_sidebar' => ((string) ($post['compact_sidebar'] ?? '0')) === '1',
                 'table_density' => trim((string) ($post['table_density'] ?? ($data['ui']['table_density'] ?? 'comfortable'))),
                 'show_debug' => ((string) ($post['show_debug'] ?? '0')) === '1',
+                'sidebar_order' => trim((string) ($post['sidebar_order'] ?? ($data['ui']['sidebar_order'] ?? ''))),
             ];
             $data['maintenance'] = [
                 'enabled' => ((string) ($post['maintenance_enabled'] ?? '0')) === '1',
