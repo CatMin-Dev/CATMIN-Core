@@ -1344,10 +1344,10 @@ return [
             $adminBase = $controller->adminBasePath();
             $section = strtolower(trim((string) $request->input('section', 'general')));
             $section = match ($section) {
-                'mail' => 'notifications',
+                'mail' => 'mail',
                 'security' => 'security',
                 'apps', 'module-repositories', 'market' => 'advanced',
-                'appearance', 'sidebar', 'content', 'seo', 'media', 'organization', 'marketing', 'notifications', 'performance', 'advanced' => $section,
+                'appearance', 'sidebar', 'performance', 'advanced' => $section,
                 default => 'general',
             };
             return $redirect($adminBase . '/settings/' . $section, [
@@ -1361,7 +1361,7 @@ return [
     [
         'method' => 'GET',
         'path' => '/settings/{section}',
-        'where' => ['section' => 'general|appearance|sidebar|content|seo|media|organization|marketing|notifications|performance|security|advanced|mail|apps|module-repositories'],
+        'where' => ['section' => 'general|appearance|sidebar|mail|performance|security|advanced|apps|module-repositories'],
         'handler' => static function (Request $request, string $section) use ($consumeFlash, $appsRepository): Response {
             $controller = new AuthController();
             $adminBase = $controller->adminBasePath();
@@ -1370,8 +1370,8 @@ return [
             $section = strtolower(trim($section));
             $registry = new CoreModuleRepositoryRegistry();
 
-            if (in_array($section, ['apps', 'module-repositories', 'mail'], true)) {
-                $redirectTo = $section === 'mail' ? 'notifications' : 'advanced';
+            if (in_array($section, ['apps', 'module-repositories'], true)) {
+                $redirectTo = 'advanced';
                 return Response::html('', 302, ['Location' => $adminBase . '/settings/' . $redirectTo]);
             }
 
@@ -1416,15 +1416,14 @@ return [
             $data['maintenance'] = is_array($data['maintenance'] ?? null) ? $data['maintenance'] : [];
             $post = $request->post();
             $section = strtolower(trim((string) ($post['section'] ?? 'general')));
+            $rawSection = $section;
             $section = match ($section) {
-                'mail' => 'notifications',
-                'notifications' => 'notifications',
+                'mail' => 'mail',
                 'security' => 'security',
                 'appearance' => 'appearance',
                 'sidebar' => 'sidebar',
                 'performance' => 'performance',
                 'advanced', 'apps', 'module-repositories', 'market' => 'advanced',
-                'content', 'seo', 'media', 'organization', 'marketing' => $rawSection,
                 default => 'general',
             };
             $postedTimezone = trim((string) ($post['timezone'] ?? ($data['general']['timezone'] ?? 'UTC')));
@@ -1512,7 +1511,7 @@ return [
     [
         'method' => 'POST',
         'path' => '/settings/{section}',
-        'where' => ['section' => 'general|appearance|sidebar|content|seo|media|organization|marketing|notifications|performance|security|advanced|mail|apps|module-repositories'],
+        'where' => ['section' => 'general|appearance|sidebar|mail|performance|security|advanced|apps|module-repositories'],
         'handler' => static function (Request $request, string $section) use ($upsertCoreSetting, $redirect, $coreSettingsTable, $appendCoreLog, $coreLogsTable, $appsValidator, $appsRepository, $notificationsRepository): Response {
             $controller = new AuthController();
             $adminBase = $controller->adminBasePath();
@@ -1529,14 +1528,12 @@ return [
             $post = $request->post();
             $rawSection = strtolower(trim($section));
             $section = match ($rawSection) {
-                'mail' => 'notifications',
-                'notifications' => 'notifications',
+                'mail' => 'mail',
                 'security' => 'security',
                 'appearance' => 'appearance',
                 'sidebar' => 'sidebar',
                 'performance' => 'performance',
                 'advanced', 'apps', 'module-repositories', 'market' => 'advanced',
-                'content', 'seo', 'media', 'organization', 'marketing' => $section,
                 default => 'general',
             };
 

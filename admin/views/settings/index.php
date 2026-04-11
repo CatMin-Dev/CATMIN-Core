@@ -16,12 +16,7 @@ $sections = [
     'general' => __('settings.section.general'),
     'appearance' => __('settings.section.appearance'),
     'sidebar' => __('settings.section.sidebar'),
-    'content' => __('settings.section.content'),
-    'seo' => __('settings.section.seo'),
-    'media' => __('settings.section.media'),
-    'organization' => __('settings.section.organization'),
-    'marketing' => __('settings.section.marketing'),
-    'notifications' => __('settings.section.notifications'),
+    'mail' => __('settings.section.mail'),
     'performance' => __('settings.section.performance'),
     'security' => __('settings.section.security'),
     'advanced' => __('settings.section.advanced'),
@@ -192,8 +187,8 @@ ob_start();
                     <a class="btn btn-outline-secondary" href="<?= htmlspecialchars($adminBase . '/settings/sidebar', ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars(__('common.reload'), ENT_QUOTES, 'UTF-8') ?></a>
                 </div>
             </form>
-        <?php elseif ($section === 'notifications'): ?>
-            <form method="post" action="<?= htmlspecialchars($adminBase . '/settings/notifications', ENT_QUOTES, 'UTF-8') ?>" class="d-grid gap-3">
+        <?php elseif ($section === 'mail'): ?>
+            <form method="post" action="<?= htmlspecialchars($adminBase . '/settings/mail', ENT_QUOTES, 'UTF-8') ?>" class="d-grid gap-3">
                 <input type="hidden" name="_csrf" value="<?= $csrf ?>">
                 <section class="card">
                     <div class="card-header bg-transparent border-0 pt-3">
@@ -249,7 +244,7 @@ ob_start();
                 </section>
                 <div class="d-flex gap-2">
                     <button class="btn btn-primary" type="submit"><?= htmlspecialchars(__('common.save'), ENT_QUOTES, 'UTF-8') ?></button>
-                    <a class="btn btn-outline-secondary" href="<?= htmlspecialchars($adminBase . '/settings/notifications', ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars(__('common.reload'), ENT_QUOTES, 'UTF-8') ?></a>
+                    <a class="btn btn-outline-secondary" href="<?= htmlspecialchars($adminBase . '/settings/mail', ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars(__('common.reload'), ENT_QUOTES, 'UTF-8') ?></a>
                 </div>
             </form>
         <?php elseif ($section === 'performance'): ?>
