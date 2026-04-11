@@ -157,6 +157,165 @@ html {
     letter-spacing: -1px;
 }
 
+.cat-settings-nav.list-group {
+    border-radius: var(--cat-radius-md);
+    overflow: hidden;
+    box-shadow: var(--cat-shadow-sm);
+    border: 1px solid var(--cat-border-color);
+}
+
+.cat-settings-nav.list-group .list-group-item {
+    border: 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--cat-border-color) 70%, transparent);
+    color: var(--cat-text-main);
+    background: var(--cat-bg-surface);
+    padding: 10px 14px;
+    font-weight: 600;
+}
+
+.cat-settings-nav.list-group .list-group-item:last-child {
+    border-bottom: 0;
+}
+
+.cat-settings-nav.list-group .list-group-item:hover {
+    background: color-mix(in srgb, var(--cat-accent) 10%, var(--cat-bg-surface));
+    color: var(--cat-accent);
+}
+
+.cat-settings-nav.list-group .list-group-item.active {
+    background: var(--cat-accent);
+    color: var(--palette-stone-50);
+}
+
+.form-control.cat-password-weak {
+    border-color: var(--cat-danger) !important;
+    box-shadow: 0 0 0 .2rem color-mix(in srgb, var(--cat-danger) 18%, transparent) !important;
+}
+
+.form-control.cat-password-medium {
+    border-color: var(--cat-warning) !important;
+    box-shadow: 0 0 0 .2rem color-mix(in srgb, var(--cat-warning) 18%, transparent) !important;
+}
+
+.form-control.cat-password-strong {
+    border-color: var(--cat-success) !important;
+    box-shadow: 0 0 0 .2rem color-mix(in srgb, var(--cat-success) 18%, transparent) !important;
+}
+
+.cat-password-policy-help {
+    line-height: 1.35;
+}
+
+.cat-password-group {
+    position: relative;
+    border: 1px solid var(--cat-border-color);
+    border-radius: var(--bs-border-radius);
+    background: var(--bs-body-bg);
+    overflow: hidden;
+}
+
+.cat-password-group .form-control {
+    border: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+}
+
+.cat-password-group .cat-password-eye {
+    border: 0 !important;
+    border-left: 0 !important;
+    border-radius: 0 !important;
+    background: transparent;
+    z-index: 3;
+    color: var(--palette-rose-500) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.cat-password-inline-score {
+    width: 20%;
+    min-width: 4rem;
+    max-width: 6rem;
+    flex: 0 0 20%;
+    text-align: center;
+    font-size: .75rem;
+    font-weight: 700;
+    padding-left: .25rem;
+    padding-right: .25rem;
+    border-left: 0 !important;
+    border-right: 0 !important;
+    background: var(--palette-stone-100);
+    color: var(--palette-stone-700);
+    pointer-events: none;
+}
+
+.cat-password-group > .form-control:first-child {
+    flex: 0 0 70%;
+    min-width: 0;
+}
+
+.cat-password-group .cat-password-eye {
+    flex: 0 0 10%;
+    min-width: 3rem;
+    max-width: 4rem;
+    width: 10%;
+    justify-content: center;
+    align-items: center;
+    display: inline-flex;
+    align-self: stretch;
+}
+
+.cat-password-group .cat-password-eye i {
+    color: var(--palette-rose-500) !important;
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.cat-password-group .cat-password-eye:hover,
+.cat-password-group .cat-password-eye:active,
+.cat-password-group .cat-password-eye:focus-visible {
+    background: color-mix(in srgb, var(--palette-rose-500) 12%, transparent) !important;
+    color: var(--palette-rose-500) !important;
+}
+
+.cat-password-inline-score.is-weak {
+    background: color-mix(in srgb, var(--cat-danger) 16%, #fff);
+    color: color-mix(in srgb, var(--cat-danger) 74%, #000);
+}
+
+.cat-password-inline-score.is-medium {
+    background: color-mix(in srgb, var(--cat-warning) 25%, #fff);
+    color: color-mix(in srgb, var(--cat-warning) 74%, #000);
+}
+
+.cat-password-inline-score.is-strong {
+    background: color-mix(in srgb, var(--cat-success) 20%, #fff);
+    color: color-mix(in srgb, var(--cat-success) 74%, #000);
+}
+
+.cat-password-group:focus-within {
+    border-color: var(--cat-accent);
+    box-shadow: 0 0 0 .2rem color-mix(in srgb, var(--cat-accent) 18%, transparent);
+    z-index: 5;
+}
+
+.cat-password-group .form-control:focus,
+.cat-password-group .cat-password-eye:focus {
+    box-shadow: none !important;
+    outline: 0;
+}
+
+.form-control.cat-password-match {
+    background-color: color-mix(in srgb, var(--cat-success) 12%, #fff) !important;
+}
+
+.form-control.cat-password-mismatch {
+    background-color: color-mix(in srgb, var(--cat-danger) 10%, #fff) !important;
+}
+
+.cat-password-compare-note {
+    min-height: 1.1rem;
+}
+
 :root[data-bs-theme="dark"] {
     --cat-bg-body: var(--palette-stone-900);
     --cat-bg-surface: var(--palette-stone-800);
@@ -779,7 +938,7 @@ html {
     align-items: center;
     justify-content: space-between;
     gap: var(--cat-space-4);
-    margin-bottom: var(--cat-space-6);
+    margin-bottom: var(--cat-space-4);
 }
 
 .cat-page-title {
@@ -850,8 +1009,19 @@ html {
 
 .cat-page-content {
     display: grid;
-    gap: var(--cat-space-6);
+    gap: var(--cat-space-4);
     align-content: start;
+}
+
+.cat-page-content > .mb-3,
+.cat-page-content > .mb-4,
+.cat-page-content > .mb-5,
+.cat-page-content > .mt-1,
+.cat-page-content > .mt-2,
+.cat-page-content > .mt-3,
+.cat-page-content > .mt-4,
+.cat-page-content > .mt-5 {
+    margin: 0 !important;
 }
 
 .cat-footer {
@@ -892,6 +1062,35 @@ html {
     border-color: var(--cat-border-color);
     box-shadow: var(--cat-shadow-sm);
     background: var(--cat-bg-surface);
+}
+
+.cat-staff-manage-bar {
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+    min-height: 52px;
+    padding: 0;
+}
+
+.cat-staff-manage-bar-label {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    padding: 0 1rem;
+    color: var(--cat-text-muted);
+}
+
+.cat-staff-manage-cta {
+    flex: 0 0 auto;
+    border-radius: 0 var(--cat-radius-md) var(--cat-radius-md) 0;
+    margin: 0;
+    border: 0;
+    min-height: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding-inline: 1.25rem;
+    font-weight: 600;
 }
 
 .cat-admin-body .btn-primary {

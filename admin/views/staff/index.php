@@ -13,10 +13,10 @@ $pageActions = [];
 
 ob_start();
 ?>
-<section class="card mb-3">
-    <div class="card-body py-2 d-flex justify-content-between align-items-center">
-        <span class="small text-body-secondary"><?= htmlspecialchars(__('staff.manage_accounts'), ENT_QUOTES, 'UTF-8') ?></span>
-        <a class="btn btn-primary btn-sm" href="<?= htmlspecialchars((string) ($adminBase . '/staff/create'), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars(__('staff.add_account'), ENT_QUOTES, 'UTF-8') ?></a>
+<section class="card">
+    <div class="cat-staff-manage-bar">
+        <span class="small cat-staff-manage-bar-label"><?= htmlspecialchars(__('staff.manage_accounts'), ENT_QUOTES, 'UTF-8') ?></span>
+        <a class="btn btn-primary cat-staff-manage-cta" href="<?= htmlspecialchars((string) ($adminBase . '/staff/create'), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars(__('staff.add_account'), ENT_QUOTES, 'UTF-8') ?></a>
     </div>
 </section>
 
