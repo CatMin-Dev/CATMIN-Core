@@ -51,7 +51,7 @@ ob_start();
 ?>
 <div class="row g-4">
     <div class="col-12 col-lg-3">
-        <div class="list-group">
+        <div class="list-group cat-settings-nav">
             <?php foreach ($sections as $key => $label): ?>
                 <a class="list-group-item list-group-item-action <?= $section === $key ? 'active' : '' ?>" href="<?= htmlspecialchars($adminBase . '/settings/' . $key, ENT_QUOTES, 'UTF-8') ?>">
                     <?= htmlspecialchars((string) $label, ENT_QUOTES, 'UTF-8') ?>
@@ -172,7 +172,7 @@ ob_start();
                             <div class="col-12 col-lg-4">
                                 <label class="form-label d-block"><?= htmlspecialchars(__('settings.interface_maintenance.compact_sidebar'), ENT_QUOTES, 'UTF-8') ?></label>
                                 <label class="form-check form-switch mt-2">
-                                    <input class="form-check-input" type="checkbox" name="compact_sidebar" value="1" <?= ((bool) ($ui['compact_sidebar'] ?? true)) ? 'checked' : '' ?>>
+                                    <input class="form-check-input" type="checkbox" name="compact_sidebar" value="1" data-cat-sidebar-setting="1" <?= ((bool) ($ui['compact_sidebar'] ?? true)) ? 'checked' : '' ?>>
                                     <span class="form-check-label"><?= htmlspecialchars(__('common.active'), ENT_QUOTES, 'UTF-8') ?></span>
                                 </label>
                             </div>
@@ -484,19 +484,68 @@ ob_start();
                             <input type="hidden" name="_csrf" value="<?= $csrf ?>">
                             <input type="hidden" name="action" value="save_policy">
                             <?php
-                            $policyOptions = [
-                                'allow_official', 'allow_trusted', 'allow_community',
-                                'require_checksums_official', 'require_checksums_trusted', 'require_checksums_community', 'require_checksums_all',
-                                'require_signature_official', 'require_signature_trusted', 'require_signature_community', 'require_signature_all',
-                                'hide_unverified_modules', 'show_community_by_default',
-                                'allow_channel_stable', 'allow_channel_beta', 'allow_channel_alpha', 'allow_channel_experimental',
-                                'allow_install_deprecated', 'allow_install_abandoned', 'hide_archived_modules',
+                            $trustColumns = [
+                                'official' => [
+                                    'title' => __('settings.module_repositories.column.official.title'),
+                                    'description' => __('settings.module_repositories.column.official.description'),
+                                    'keys' => ['allow_official', 'require_checksums_official', 'require_signature_official'],
+                                ],
+                                'trusted' => [
+                                    'title' => __('settings.module_repositories.column.trusted.title'),
+                                    'description' => __('settings.module_repositories.column.trusted.description'),
+                                    'keys' => ['allow_trusted', 'require_checksums_trusted', 'require_signature_trusted'],
+                                ],
+                                'community' => [
+                                    'title' => __('settings.module_repositories.column.community.title'),
+                                    'description' => __('settings.module_repositories.column.community.description'),
+                                    'keys' => ['allow_community', 'require_checksums_community', 'require_signature_community'],
+                                ],
                             ];
-                            foreach ($policyOptions as $key):
-                                ?>
+                            ?>
+                            <?php foreach ($trustColumns as $column): ?>
+                                <div class="col-12 col-lg-4">
+                                    <section class="border rounded-3 h-100 p-3">
+                                        <h4 class="h6 mb-1"><?= htmlspecialchars((string) ($column['title'] ?? ''), ENT_QUOTES, 'UTF-8') ?></h4>
+                                        <p class="text-body-secondary small mb-3"><?= htmlspecialchars((string) ($column['description'] ?? ''), ENT_QUOTES, 'UTF-8') ?></p>
+                                        <div class="d-grid gap-2">
+                                            <?php foreach ((array) ($column['keys'] ?? []) as $key): ?>
+                                                <label class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" name="<?= htmlspecialchars((string) $key, ENT_QUOTES, 'UTF-8') ?>" value="1" <?= !empty($policy[$key]) ? 'checked' : '' ?>>
+                                                    <span class="form-check-label"><?= htmlspecialchars(__('settings.module_repositories.policy.' . $key), ENT_QUOTES, 'UTF-8') ?></span>
+                                                </label>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    </section>
+                                </div>
+                            <?php endforeach; ?>
+
+                            <div class="col-12">
+                                <hr class="my-1">
+                            </div>
+
+                            <?php
+                            $globalPolicyOptions = [
+                                'require_checksums_all',
+                                'require_signature_all',
+                                'hide_unverified_modules',
+                                'show_community_by_default',
+                                'allow_channel_stable',
+                                'allow_channel_beta',
+                                'allow_channel_alpha',
+                                'allow_channel_experimental',
+                                'allow_install_deprecated',
+                                'allow_install_abandoned',
+                                'hide_archived_modules',
+                            ];
+                            ?>
+                            <div class="col-12">
+                                <h4 class="h6 mb-2"><?= htmlspecialchars(__('settings.module_repositories.global.title'), ENT_QUOTES, 'UTF-8') ?></h4>
+                                <p class="text-body-secondary small mb-3"><?= htmlspecialchars(__('settings.module_repositories.global.description'), ENT_QUOTES, 'UTF-8') ?></p>
+                            </div>
+                            <?php foreach ($globalPolicyOptions as $key): ?>
                                 <div class="col-12 col-lg-4">
                                     <label class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" name="<?= htmlspecialchars($key, ENT_QUOTES, 'UTF-8') ?>" value="1" <?= !empty($policy[$key]) ? 'checked' : '' ?>>
+                                        <input class="form-check-input" type="checkbox" name="<?= htmlspecialchars((string) $key, ENT_QUOTES, 'UTF-8') ?>" value="1" <?= !empty($policy[$key]) ? 'checked' : '' ?>>
                                         <span class="form-check-label"><?= htmlspecialchars(__('settings.module_repositories.policy.' . $key), ENT_QUOTES, 'UTF-8') ?></span>
                                     </label>
                                 </div>

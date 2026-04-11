@@ -4,6 +4,7 @@
     var body = document.body;
     var toggle = document.querySelector('[data-cat-sidebar-toggle]');
     var overlay = document.getElementById('catGlobalOverlay');
+    var settingsToggle = document.querySelector('[data-cat-sidebar-setting]');
     var compactKey = 'catmin.admin.sidebar.compact';
     var groups = Array.prototype.slice.call(document.querySelectorAll('[data-cat-nav-group]'));
 
@@ -25,6 +26,9 @@
     function setCompact(compact) {
         body.classList.toggle('cat-sidebar-compact', compact);
         body.classList.toggle('cat-sidebar-expanded', !compact);
+        if (settingsToggle) {
+            settingsToggle.checked = compact;
+        }
     }
 
     function closeMobileSidebar() {
@@ -121,6 +125,21 @@
 
     if (overlay) {
         overlay.addEventListener('click', closeMobileSidebar);
+    }
+
+    if (settingsToggle) {
+        settingsToggle.addEventListener('change', function () {
+            if (isMobile()) {
+                return;
+            }
+            var compact = !!settingsToggle.checked;
+            setCompact(compact);
+            try {
+                localStorage.setItem(compactKey, compact ? '1' : '0');
+            } catch (e) {
+                /* ignore */
+            }
+        });
     }
 
     window.addEventListener('resize', function () {

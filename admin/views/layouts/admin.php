@@ -46,8 +46,8 @@ if ($locale !== 'fr') {
 <html lang="<?= htmlspecialchars($locale, ENT_QUOTES, 'UTF-8') ?>" data-bs-theme="corporate">
 <?php require __DIR__ . '/partials/head.php'; ?>
 <body
-    class="cat-admin-body <?= !empty($layoutState['sidebar_compact']) ? 'cat-sidebar-compact' : 'cat-sidebar-expanded' ?>"
-    data-cat-sidebar-server="<?= !empty($layoutState['sidebar_compact']) ? '1' : '0' ?>"
+    class="cat-admin-body <?= !empty($layoutState['compact_sidebar']) ? 'cat-sidebar-compact' : 'cat-sidebar-expanded' ?>"
+    data-cat-sidebar-server="<?= !empty($layoutState['compact_sidebar']) ? '1' : '0' ?>"
 >
 <div class="cat-admin-shell">
     <?php require __DIR__ . '/partials/sidebar.php'; ?>

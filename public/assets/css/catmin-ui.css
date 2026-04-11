@@ -158,13 +158,19 @@ html {
 }
 
 .cat-settings-nav.list-group {
+    position: relative;
+    isolation: isolate;
     border-radius: var(--cat-radius-md);
-    overflow: hidden;
+    overflow: clip;
     box-shadow: var(--cat-shadow-sm);
     border: 1px solid var(--cat-border-color);
+    --bs-list-group-active-bg: var(--cat-accent);
+    --bs-list-group-active-color: var(--palette-stone-50);
+    --bs-list-group-active-border-color: transparent;
 }
 
 .cat-settings-nav.list-group .list-group-item {
+    position: relative;
     border: 0;
     border-bottom: 1px solid color-mix(in srgb, var(--cat-border-color) 70%, transparent);
     color: var(--cat-text-main);
@@ -202,6 +208,11 @@ html {
 
 .cat-settings-nav.list-group .list-group-item + .list-group-item.active {
     margin-top: 0 !important;
+    border-top-width: 0;
+}
+
+.cat-settings-nav.list-group .list-group-item:has(+ .list-group-item.active) {
+    border-bottom-color: transparent;
 }
 
 .form-control.cat-password-weak {
