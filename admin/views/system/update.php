@@ -80,7 +80,7 @@ ob_start();
                 <input type="hidden" name="_csrf" value="<?= $csrf ?>">
                 <button type="submit" class="btn btn-outline-primary" <?= !$asset ? 'disabled' : '' ?>><?= htmlspecialchars(__('update.action.dry_run'), ENT_QUOTES, 'UTF-8') ?></button>
             </form>
-            <form method="post" action="<?= htmlspecialchars($adminBase . '/system/update/run', ENT_QUOTES, 'UTF-8') ?>" onsubmit="return confirm('<?= htmlspecialchars(__('update.confirm_run'), ENT_QUOTES, 'UTF-8') ?>');">
+            <form method="post" action="<?= htmlspecialchars($adminBase . '/system/update/run', ENT_QUOTES, 'UTF-8') ?>" data-cat-confirm="<?= htmlspecialchars(__('update.confirm_run'), ENT_QUOTES, 'UTF-8') ?>">
                 <input type="hidden" name="_csrf" value="<?= $csrf ?>">
                 <button type="submit" class="btn btn-primary" <?= !((bool) ($check['update_available'] ?? false)) ? 'disabled' : '' ?>><?= htmlspecialchars(__('update.action.run'), ENT_QUOTES, 'UTF-8') ?></button>
             </form>
@@ -135,4 +135,3 @@ ob_start();
 <?php
 $content = (string) ob_get_clean();
 require CATMIN_ADMIN . '/views/layouts/admin.php';
-

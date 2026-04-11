@@ -107,15 +107,15 @@ ob_start();
                             <td class="text-end">
                                 <a class="btn btn-sm btn-outline-primary" href="<?= htmlspecialchars($adminBase . '/maintenance/backup/download?backup=' . rawurlencode((string) ($backup['name'] ?? '')), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars(__('common.download'), ENT_QUOTES, 'UTF-8') ?></a>
                                 <a class="btn btn-sm btn-outline-secondary" href="<?= htmlspecialchars($adminBase . '/maintenance/backup/read?backup=' . rawurlencode((string) ($backup['name'] ?? '')), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars(__('common.read'), ENT_QUOTES, 'UTF-8') ?></a>
-                                <form method="post" action="<?= htmlspecialchars($adminBase . '/maintenance/restore', ENT_QUOTES, 'UTF-8') ?>" class="d-inline">
+                                <form method="post" action="<?= htmlspecialchars($adminBase . '/maintenance/restore', ENT_QUOTES, 'UTF-8') ?>" class="d-inline" data-cat-confirm="<?= htmlspecialchars(__('maintenance.confirm_restore'), ENT_QUOTES, 'UTF-8') ?>">
                                     <input type="hidden" name="_csrf" value="<?= $csrf ?>">
                                     <input type="hidden" name="backup" value="<?= htmlspecialchars((string) ($backup['name'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
-                                    <button class="btn btn-sm btn-outline-warning" type="submit" onclick="return confirm('<?= htmlspecialchars(__('maintenance.confirm_restore'), ENT_QUOTES, 'UTF-8') ?>');"><?= htmlspecialchars(__('maintenance.restore'), ENT_QUOTES, 'UTF-8') ?></button>
+                                    <button class="btn btn-sm btn-outline-warning" type="submit"><?= htmlspecialchars(__('maintenance.restore'), ENT_QUOTES, 'UTF-8') ?></button>
                                 </form>
-                                <form method="post" action="<?= htmlspecialchars($adminBase . '/maintenance/backup/delete', ENT_QUOTES, 'UTF-8') ?>" class="d-inline">
+                                <form method="post" action="<?= htmlspecialchars($adminBase . '/maintenance/backup/delete', ENT_QUOTES, 'UTF-8') ?>" class="d-inline" data-cat-confirm="<?= htmlspecialchars(__('maintenance.confirm_delete_backup'), ENT_QUOTES, 'UTF-8') ?>">
                                     <input type="hidden" name="_csrf" value="<?= $csrf ?>">
                                     <input type="hidden" name="backup" value="<?= htmlspecialchars((string) ($backup['name'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
-                                    <button class="btn btn-sm btn-outline-danger" type="submit" onclick="return confirm('<?= htmlspecialchars(__('maintenance.confirm_delete_backup'), ENT_QUOTES, 'UTF-8') ?>');"><?= htmlspecialchars(__('common.delete'), ENT_QUOTES, 'UTF-8') ?></button>
+                                    <button class="btn btn-sm btn-outline-danger" type="submit"><?= htmlspecialchars(__('common.delete'), ENT_QUOTES, 'UTF-8') ?></button>
                                 </form>
                             </td>
                         </tr>

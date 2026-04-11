@@ -458,7 +458,7 @@ ob_start();
                                                             <input type="hidden" name="app_id" value="<?= $appId ?>">
                                                             <button class="btn btn-outline-secondary btn-sm" type="submit"><?= htmlspecialchars(__('settings.apps.toggle'), ENT_QUOTES, 'UTF-8') ?></button>
                                                         </form>
-                                                        <form method="post" action="<?= htmlspecialchars($adminBase . '/settings/apps', ENT_QUOTES, 'UTF-8') ?>" onsubmit="return confirm('<?= htmlspecialchars(__('settings.apps.confirm_delete'), ENT_QUOTES, 'UTF-8') ?>')">
+                                                        <form method="post" action="<?= htmlspecialchars($adminBase . '/settings/apps', ENT_QUOTES, 'UTF-8') ?>" data-cat-confirm="<?= htmlspecialchars(__('settings.apps.confirm_delete'), ENT_QUOTES, 'UTF-8') ?>">
                                                             <input type="hidden" name="_csrf" value="<?= $csrf ?>">
                                                             <input type="hidden" name="action" value="delete">
                                                             <input type="hidden" name="app_id" value="<?= $appId ?>">

@@ -2,4 +2,5 @@
 <script src="/assets/js/catmin-sidebar.js?v=7"></script>
 <script src="/assets/js/catmin-topbar.js?v=2"></script>
 <script src="/assets/js/catmin-theme.js?v=1"></script>
+<script src="/assets/js/catmin-confirm.js?v=1"></script>
 <script src="/assets/js/catmin-components.js?v=8"></script>

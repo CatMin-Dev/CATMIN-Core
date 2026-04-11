@@ -41,9 +41,9 @@ $csrfToken = htmlspecialchars((new CsrfManager())->token(), ENT_QUOTES, 'UTF-8')
                             <a href="<?= htmlspecialchars((string) ($adminBase ?? '/admin') . '/roles/' . (int) ($row['id'] ?? 0), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-sm btn-outline-secondary"><?= htmlspecialchars(__('common.view'), ENT_QUOTES, 'UTF-8') ?></a>
                             <a href="<?= htmlspecialchars((string) ($adminBase ?? '/admin') . '/roles/' . (int) ($row['id'] ?? 0) . '/edit', ENT_QUOTES, 'UTF-8') ?>" class="btn btn-sm btn-outline-primary"><?= htmlspecialchars(__('common.edit'), ENT_QUOTES, 'UTF-8') ?></a>
                             <?php if (!$critical): ?>
-                                <form method="post" action="<?= htmlspecialchars((string) ($adminBase ?? '/admin') . '/roles/' . (int) ($row['id'] ?? 0) . '/delete', ENT_QUOTES, 'UTF-8') ?>" class="d-inline">
+                                <form method="post" action="<?= htmlspecialchars((string) ($adminBase ?? '/admin') . '/roles/' . (int) ($row['id'] ?? 0) . '/delete', ENT_QUOTES, 'UTF-8') ?>" class="d-inline" data-cat-confirm="<?= htmlspecialchars(__('roles.delete_confirm'), ENT_QUOTES, 'UTF-8') ?>">
                                     <input type="hidden" name="_csrf" value="<?= $csrfToken ?>">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('<?= htmlspecialchars(__('roles.delete_confirm'), ENT_QUOTES, 'UTF-8') ?>');"><?= htmlspecialchars(__('common.delete'), ENT_QUOTES, 'UTF-8') ?></button>
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"><?= htmlspecialchars(__('common.delete'), ENT_QUOTES, 'UTF-8') ?></button>
                                 </form>
                             <?php endif; ?>
                         </td>

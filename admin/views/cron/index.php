@@ -183,10 +183,10 @@ ob_start();
                                         <input type="hidden" name="active" value="<?= $isActive ? '0' : '1' ?>">
                                         <button class="btn btn-sm btn-outline-secondary" type="submit"><?= htmlspecialchars($isActive ? __('common.disable') : __('common.enable'), ENT_QUOTES, 'UTF-8') ?></button>
                                     </form>
-                                    <form method="post" action="<?= htmlspecialchars($adminBase . '/cron/delete', ENT_QUOTES, 'UTF-8') ?>" class="d-inline">
+                                    <form method="post" action="<?= htmlspecialchars($adminBase . '/cron/delete', ENT_QUOTES, 'UTF-8') ?>" class="d-inline" data-cat-confirm="<?= htmlspecialchars(__('cron.confirm_delete'), ENT_QUOTES, 'UTF-8') ?>">
                                         <input type="hidden" name="_csrf" value="<?= $csrf ?>">
                                         <input type="hidden" name="id" value="<?= (int) ($task['id'] ?? 0) ?>">
-                                        <button class="btn btn-sm btn-outline-danger" type="submit" onclick="return confirm('<?= htmlspecialchars(__('cron.confirm_delete'), ENT_QUOTES, 'UTF-8') ?>');"><?= htmlspecialchars(__('common.delete'), ENT_QUOTES, 'UTF-8') ?></button>
+                                        <button class="btn btn-sm btn-outline-danger" type="submit"><?= htmlspecialchars(__('common.delete'), ENT_QUOTES, 'UTF-8') ?></button>
                                     </form>
                                 </div>
                             </td>

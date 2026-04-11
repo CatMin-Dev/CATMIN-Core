@@ -53,7 +53,7 @@ ob_start();
                 <input type="hidden" name="_csrf" value="<?= $csrf ?>">
                 <button class="btn btn-sm btn-outline-primary" type="submit" <?= $coreAsset ? '' : 'disabled' ?>><?= htmlspecialchars(__('updates.action.dry_run'), ENT_QUOTES, 'UTF-8') ?></button>
             </form>
-            <form method="post" action="<?= htmlspecialchars($adminBase . '/system/updates/run', ENT_QUOTES, 'UTF-8') ?>" onsubmit="return confirm('<?= htmlspecialchars(__('updates.confirm.run'), ENT_QUOTES, 'UTF-8') ?>');">
+            <form method="post" action="<?= htmlspecialchars($adminBase . '/system/updates/run', ENT_QUOTES, 'UTF-8') ?>" data-cat-confirm="<?= htmlspecialchars(__('updates.confirm.run'), ENT_QUOTES, 'UTF-8') ?>">
                 <input type="hidden" name="_csrf" value="<?= $csrf ?>">
                 <button class="btn btn-sm btn-primary" type="submit" <?= $coreUpdateAvailable ? '' : 'disabled' ?>><?= htmlspecialchars(__('updates.action.run'), ENT_QUOTES, 'UTF-8') ?></button>
             </form>
