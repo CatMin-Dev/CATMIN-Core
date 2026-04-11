@@ -27,10 +27,7 @@ $navGroups = [
         'label' => __('nav.organization'),
         'icon' => 'diagram-3',
         'order' => 40,
-        'children' => [
-            ['key' => 'staff', 'label' => __('nav.staff_admins'), 'href' => $adminBase . '/staff'],
-            ['key' => 'roles', 'label' => __('nav.roles_permissions'), 'href' => $adminBase . '/roles'],
-        ],
+        'children' => [],
     ],
     [
         'key' => 'marketing',
@@ -44,35 +41,20 @@ $navGroups = [
         'label' => __('nav.system'),
         'icon' => 'speedometer2',
         'order' => 60,
-        'children' => [
-            ['key' => 'monitoring', 'label' => __('nav.monitoring'), 'href' => $adminBase . '/system/monitoring'],
-            ['key' => 'health', 'label' => __('nav.health_check'), 'href' => $adminBase . '/system/health'],
-            ['key' => 'core-update', 'label' => __('nav.core_update'), 'href' => $adminBase . '/system/updates'],
-            ['key' => 'queue', 'label' => __('nav.queue'), 'href' => $adminBase . '/system/queue'],
-            ['key' => 'logs', 'label' => __('nav.logs'), 'href' => $adminBase . '/logs'],
-            ['key' => 'notifications', 'label' => __('nav.notifications'), 'href' => $adminBase . '/notifications'],
-            ['key' => 'cron', 'label' => __('nav.cron'), 'href' => $adminBase . '/cron'],
-            ['key' => 'maintenance', 'label' => __('nav.maintenance'), 'href' => $adminBase . '/maintenance'],
-        ],
+        'children' => [],
     ],
     [
         'key' => 'modules',
         'label' => __('nav.modules'),
         'icon' => 'puzzle',
         'order' => 70,
-        'children' => [
-            ['key' => 'module-manager', 'label' => __('nav.module_manager'), 'href' => $adminBase . '/modules'],
-            ['key' => 'module-status', 'label' => __('nav.module_status'), 'href' => $adminBase . '/modules/status'],
-            ['key' => 'module-market', 'label' => __('nav.module_market'), 'href' => $adminBase . '/modules/market'],
-            ['key' => 'trust-center', 'label' => __('nav.trust_center'), 'href' => $adminBase . '/system/trust-center'],
-        ],
+        'children' => [],
     ],
     [
         'key' => 'settings',
         'label' => __('nav.settings'),
         'icon' => 'gear',
         'order' => 80,
-        'href' => $adminBase . '/settings/general',
         'children' => [],
     ],
 ];
@@ -172,22 +154,6 @@ if ($moduleNavEntries !== []) {
 }
 
 usort($navGroups, static fn (array $a, array $b): int => ((int) ($a['order'] ?? 999)) <=> ((int) ($b['order'] ?? 999)));
-
-$emptyLabel = __('nav.empty_group');
-foreach ($navGroups as &$group) {
-    $children = is_array($group['children'] ?? null) ? $group['children'] : [];
-    if (!empty($group['href'])) {
-        continue;
-    }
-    if ($children === []) {
-        $group['children'][] = [
-            'key' => $group['key'] . '-empty',
-            'label' => $emptyLabel,
-            'href' => '#',
-        ];
-    }
-}
-unset($group);
 
 $sidebarIconSvg = static function (string $name): string {
     return match ($name) {
