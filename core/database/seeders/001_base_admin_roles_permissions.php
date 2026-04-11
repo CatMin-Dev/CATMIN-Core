@@ -32,8 +32,16 @@ return static function (\PDO $pdo, array $prefixes): void {
         ['name' => 'Access Dashboard', 'slug' => 'admin.dashboard.access', 'description' => 'Access CATMIN admin dashboard'],
         ['name' => 'Manage Users', 'slug' => 'admin.users.manage', 'description' => 'Create/update/delete admin users'],
         ['name' => 'Manage Roles', 'slug' => 'admin.roles.manage', 'description' => 'Manage admin roles and permissions'],
-        ['name' => 'Manage Settings', 'slug' => 'core.settings.manage', 'description' => 'Manage core settings'],
+        ['name' => 'View System', 'slug' => 'core.system.view', 'description' => 'Access system monitoring and health'],
+        ['name' => 'Manage System', 'slug' => 'core.system.manage', 'description' => 'Manage system updates, queues, and maintenance'],
         ['name' => 'View Logs', 'slug' => 'core.logs.view', 'description' => 'Read security and system logs'],
+        ['name' => 'View Notifications', 'slug' => 'core.notifications.view', 'description' => 'Read notifications feed'],
+        ['name' => 'Manage Cron', 'slug' => 'core.cron.manage', 'description' => 'Manage cron tasks'],
+        ['name' => 'Manage Maintenance', 'slug' => 'core.maintenance.manage', 'description' => 'Manage maintenance mode'],
+        ['name' => 'Manage Modules', 'slug' => 'core.modules.manage', 'description' => 'Install and manage modules'],
+        ['name' => 'View Modules', 'slug' => 'core.modules.view', 'description' => 'View modules status and snapshots'],
+        ['name' => 'Manage Trust Center', 'slug' => 'core.trust.manage', 'description' => 'Manage trust center and signatures'],
+        ['name' => 'Manage Settings', 'slug' => 'core.settings.manage', 'description' => 'Manage core settings'],
     ];
 
     $insertPermission = $pdo->prepare('INSERT INTO ' . $permissionsTable . ' (name, slug, description, created_at) VALUES (:name, :slug, :description, CURRENT_TIMESTAMP)');

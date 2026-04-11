@@ -14,8 +14,8 @@ $navGroups = [
         'icon' => 'diagram-3',
         'order' => 40,
         'children' => [
-            ['key' => 'staff', 'label' => __('nav.staff_admins'), 'href' => $adminBase . '/staff'],
-            ['key' => 'roles', 'label' => __('nav.roles_permissions'), 'href' => $adminBase . '/roles'],
+            ['key' => 'staff', 'label' => __('nav.staff_admins'), 'href' => $adminBase . '/staff', 'permissions' => ['admin.users.manage']],
+            ['key' => 'roles', 'label' => __('nav.roles_permissions'), 'href' => $adminBase . '/roles', 'permissions' => ['admin.roles.manage']],
         ],
     ],
     [
@@ -24,14 +24,14 @@ $navGroups = [
         'icon' => 'speedometer2',
         'order' => 60,
         'children' => [
-            ['key' => 'monitoring', 'label' => __('nav.monitoring'), 'href' => $adminBase . '/system/monitoring'],
-            ['key' => 'health', 'label' => __('nav.health_check'), 'href' => $adminBase . '/system/health'],
-            ['key' => 'core-update', 'label' => __('nav.core_update'), 'href' => $adminBase . '/system/updates'],
-            ['key' => 'queue', 'label' => __('nav.queue'), 'href' => $adminBase . '/system/queue'],
-            ['key' => 'logs', 'label' => __('nav.logs'), 'href' => $adminBase . '/logs'],
-            ['key' => 'notifications', 'label' => __('nav.notifications'), 'href' => $adminBase . '/notifications'],
-            ['key' => 'cron', 'label' => __('nav.cron'), 'href' => $adminBase . '/cron'],
-            ['key' => 'maintenance', 'label' => __('nav.maintenance'), 'href' => $adminBase . '/maintenance'],
+            ['key' => 'monitoring', 'label' => __('nav.monitoring'), 'href' => $adminBase . '/system/monitoring', 'permissions' => ['core.system.view']],
+            ['key' => 'health', 'label' => __('nav.health_check'), 'href' => $adminBase . '/system/health', 'permissions' => ['core.system.view']],
+            ['key' => 'core-update', 'label' => __('nav.core_update'), 'href' => $adminBase . '/system/updates', 'permissions' => ['core.system.manage']],
+            ['key' => 'queue', 'label' => __('nav.queue'), 'href' => $adminBase . '/system/queue', 'permissions' => ['core.system.manage']],
+            ['key' => 'logs', 'label' => __('nav.logs'), 'href' => $adminBase . '/logs', 'permissions' => ['core.logs.view']],
+            ['key' => 'notifications', 'label' => __('nav.notifications'), 'href' => $adminBase . '/notifications', 'permissions' => ['core.notifications.view']],
+            ['key' => 'cron', 'label' => __('nav.cron'), 'href' => $adminBase . '/cron', 'permissions' => ['core.cron.manage']],
+            ['key' => 'maintenance', 'label' => __('nav.maintenance'), 'href' => $adminBase . '/maintenance', 'permissions' => ['core.maintenance.manage']],
         ],
     ],
     [
@@ -40,10 +40,10 @@ $navGroups = [
         'icon' => 'puzzle',
         'order' => 70,
         'children' => [
-            ['key' => 'module-manager', 'label' => __('nav.module_manager'), 'href' => $adminBase . '/modules'],
-            ['key' => 'module-status', 'label' => __('nav.module_status'), 'href' => $adminBase . '/modules/status'],
-            ['key' => 'module-market', 'label' => __('nav.module_market'), 'href' => $adminBase . '/modules/market'],
-            ['key' => 'trust-center', 'label' => __('nav.trust_center'), 'href' => $adminBase . '/system/trust-center'],
+            ['key' => 'module-manager', 'label' => __('nav.module_manager'), 'href' => $adminBase . '/modules', 'permissions' => ['core.modules.manage']],
+            ['key' => 'module-status', 'label' => __('nav.module_status'), 'href' => $adminBase . '/modules/status', 'permissions' => ['core.modules.view']],
+            ['key' => 'module-market', 'label' => __('nav.module_market'), 'href' => $adminBase . '/modules/market', 'permissions' => ['core.modules.manage']],
+            ['key' => 'trust-center', 'label' => __('nav.trust_center'), 'href' => $adminBase . '/system/trust-center', 'permissions' => ['core.trust.manage']],
         ],
     ],
     [
@@ -51,6 +51,7 @@ $navGroups = [
         'label' => __('nav.settings'),
         'icon' => 'gear',
         'order' => 80,
+        'permissions' => ['core.settings.manage'],
         'href' => $adminBase . '/settings/general',
         'children' => [],
     ],
@@ -61,6 +62,68 @@ $groupMeta = [
     'media' => ['label' => __('nav.media'), 'icon' => 'images', 'order' => 30],
     'marketing' => ['label' => __('nav.marketing'), 'icon' => 'megaphone', 'order' => 50],
 ];
+
+if (!class_exists('CoreSettingsEngine')) {
+    require_once CATMIN_CORE . '/settings-engine.php';
+}
+if (!class_exists('Core\\database\\ConnectionManager')) {
+    require_once CATMIN_CORE . '/database/ConnectionManager.php';
+}
+if (!class_exists('Admin\\controllers\\AuthController')) {
+    require_once CATMIN_ADMIN . '/controllers/AuthController.php';
+}
+
+$resolveUser = static function () use ($user): ?array {
+    if (is_array($user) && $user !== []) {
+        return $user;
+    }
+    try {
+        $controller = new Admin\controllers\AuthController();
+        return $controller->currentUser();
+    } catch (Throwable $exception) {
+        return null;
+    }
+};
+
+$currentUser = $resolveUser();
+$isSuperAdmin = is_array($currentUser) && (string) ($currentUser['role_slug'] ?? '') === 'super-admin';
+$rolePermissions = [];
+
+if (!$isSuperAdmin && is_array($currentUser) && !empty($currentUser['role_id'])) {
+    try {
+        $pdo = (new Core\database\ConnectionManager())->connection();
+        $adminPrefix = (string) config('database.prefixes.admin', 'admin_');
+        $permissionsTable = $adminPrefix . 'permissions';
+        $rolePermissionsTable = $adminPrefix . 'role_permissions';
+        $stmt = $pdo->prepare(
+            'SELECT p.slug FROM ' . $permissionsTable . ' p '
+            . 'INNER JOIN ' . $rolePermissionsTable . ' rp ON rp.permission_id = p.id '
+            . 'WHERE rp.role_id = :role_id'
+        );
+        $stmt->execute(['role_id' => (int) $currentUser['role_id']]);
+        $rolePermissions = $stmt->fetchAll(PDO::FETCH_COLUMN) ?: [];
+    } catch (Throwable $exception) {
+        $rolePermissions = [];
+    }
+}
+
+$hasAnyPermission = static function (array $required) use ($isSuperAdmin, $rolePermissions): bool {
+    if ($required === []) {
+        return true;
+    }
+    if ($isSuperAdmin) {
+        return true;
+    }
+    if ($rolePermissions === []) {
+        return false;
+    }
+    foreach ($required as $perm) {
+        if (in_array($perm, $rolePermissions, true)) {
+            return true;
+        }
+    }
+    return false;
+};
 
 $moduleNavEntries = [];
 $adminModulesDir = defined('CATMIN_MODULES') ? CATMIN_MODULES . '/admin' : null;
@@ -106,12 +169,19 @@ if (is_string($adminModulesDir) && is_dir($adminModulesDir)) {
             } elseif ($href[0] !== '/') {
                 $href = rtrim($adminBase, '/') . '/' . ltrim($href, '/');
             }
+            $permissions = [];
+            if (isset($item['permission'])) {
+                $permissions = [trim((string) $item['permission'])];
+            } elseif (isset($item['permissions']) && is_array($item['permissions'])) {
+                $permissions = array_values(array_filter(array_map('trim', $item['permissions']), static fn (string $value): bool => $value !== ''));
+            }
 
             $moduleNavEntries[] = [
                 'group' => $group !== '' ? $group : 'modules',
                 'key' => strtolower(trim((string) ($item['key'] ?? ($slug . '-' . md5($label))))),
                 'label' => $label,
                 'href' => $href,
+                'permissions' => $permissions,
                 'order' => (int) ($item['order'] ?? 100),
             ];
         }
@@ -122,6 +192,9 @@ if ($moduleNavEntries !== []) {
     usort($moduleNavEntries, static fn (array $a, array $b): int => ($a['order'] <=> $b['order']) ?: strcmp((string) $a['label'], (string) $b['label']));
 
     foreach ($moduleNavEntries as $entry) {
+        if (!$hasAnyPermission((array) ($entry['permissions'] ?? []))) {
+            continue;
+        }
         $groupKey = (string) ($entry['group'] ?? 'modules');
         $inserted = false;
 
@@ -147,6 +220,7 @@ if ($moduleNavEntries !== []) {
                 'label' => $meta !== null ? (string) ($meta['label'] ?? ucfirst($groupKey)) : ucfirst($groupKey),
                 'icon' => $meta !== null ? (string) ($meta['icon'] ?? 'chat') : 'chat',
                 'order' => (int) ($meta['order'] ?? 35),
+                'permissions' => [],
                 'children' => [[
                     'key' => (string) $entry['key'],
                     'label' => (string) $entry['label'],
@@ -168,6 +242,27 @@ try {
     $sidebarOrderRaw = '';
 }
 $sidebarOrder = array_values(array_filter(array_map('trim', explode(',', $sidebarOrderRaw)), static fn (string $value): bool => $value !== ''));
+
+$filteredGroups = [];
+foreach ($navGroups as $group) {
+    $required = is_array($group['permissions'] ?? null) ? $group['permissions'] : [];
+    $children = is_array($group['children'] ?? null) ? $group['children'] : [];
+    if ($children !== []) {
+        $children = array_values(array_filter($children, static function (array $child) use ($hasAnyPermission): bool {
+            $requiredPerms = is_array($child['permissions'] ?? null) ? $child['permissions'] : [];
+            return $hasAnyPermission($requiredPerms);
+        }));
+        $group['children'] = $children;
+    }
+    if ($children === [] && empty($group['href']) && !$hasAnyPermission($required)) {
+        continue;
+    }
+    if ($children === [] && !empty($group['href']) && !$hasAnyPermission($required)) {
+        continue;
+    }
+    $filteredGroups[] = $group;
+}
+$navGroups = $filteredGroups;
 
 usort($navGroups, static fn (array $a, array $b): int => ((int) ($a['order'] ?? 999)) <=> ((int) ($b['order'] ?? 999)));
 
