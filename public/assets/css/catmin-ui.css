@@ -171,13 +171,14 @@ html {
     background: var(--cat-bg-surface);
     padding: 10px 14px;
     font-weight: 600;
+    margin-top: 0 !important;
 }
 
 .cat-settings-nav.list-group .list-group-item:last-child {
     border-bottom: 0;
 }
 
-.cat-settings-nav.list-group .list-group-item:hover {
+.cat-settings-nav.list-group .list-group-item:not(.active):hover {
     background: color-mix(in srgb, var(--cat-accent) 10%, var(--cat-bg-surface));
     color: var(--cat-accent);
 }
@@ -185,6 +186,22 @@ html {
 .cat-settings-nav.list-group .list-group-item.active {
     background: var(--cat-accent);
     color: var(--palette-stone-50);
+    position: relative;
+    z-index: 1;
+}
+
+.cat-settings-nav.list-group .list-group-item.active:hover {
+    background: var(--cat-accent);
+    color: var(--palette-stone-50);
+}
+
+.cat-settings-nav.list-group .list-group-item:last-child.active {
+    border-bottom-left-radius: var(--cat-radius-md);
+    border-bottom-right-radius: var(--cat-radius-md);
+}
+
+.cat-settings-nav.list-group .list-group-item + .list-group-item.active {
+    margin-top: 0 !important;
 }
 
 .form-control.cat-password-weak {

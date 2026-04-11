@@ -129,8 +129,11 @@
         }
     });
 
+    var serverCompact = body.getAttribute('data-cat-sidebar-server') === '1';
+    setCompact(serverCompact);
+
     try {
-        setCompact(localStorage.getItem(compactKey) === '1');
+        localStorage.setItem(compactKey, serverCompact ? '1' : '0');
     } catch (e) {
         /* ignore */
     }
