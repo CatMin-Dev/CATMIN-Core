@@ -14,7 +14,7 @@ $authContent = isset($authContent) ? (string) $authContent : '';
     <link rel="icon" type="image/png" href="/favicon.png">
     <link rel="stylesheet" href="/assets/vendor/bootstrap/5.3.8/css/bootstrap.min.css">
     <link rel="stylesheet" href="/odin-color.css?v=14">
-    <link rel="stylesheet" href="/assets/css/catmin-ui.css?v=12">
+    <link rel="stylesheet" href="/assets/css/catmin-ui.css?v=13">
     <link rel="stylesheet" href="/assets/css/admin-login.css?v=2">
     <link rel="stylesheet" href="/assets/css/catmin-auth.css?v=1">
     <script src="/assets/js/odin-color.js?v=2"></script>

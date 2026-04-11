@@ -1091,6 +1091,7 @@ html {
     justify-content: center;
     padding-inline: 1.25rem;
     font-weight: 600;
+    font-size: 0.9375em;
 }
 
 .cat-admin-body .btn-primary {
@@ -1100,6 +1101,10 @@ html {
     --bs-btn-hover-border-color: var(--cat-accent-hover);
     --bs-btn-active-bg: var(--cat-accent-hover);
     --bs-btn-active-border-color: var(--cat-accent-hover);
+}
+
+.cat-admin-body .btn {
+    font-size: 0.9375em;
 }
 
 .cat-admin-body .form-control,
@@ -1131,6 +1136,13 @@ html {
 .cat-admin-body .card .table th,
 .cat-admin-body .card .table td {
     padding: 0.58rem 0.5rem;
+}
+
+.cat-staff-table th:nth-child(6),
+.cat-staff-table th:nth-child(7),
+.cat-staff-table td:nth-child(6),
+.cat-staff-table td:nth-child(7) {
+    font-size: 0.9375em;
 }
 
 .cat-sidebar-compact .cat-admin-shell {
