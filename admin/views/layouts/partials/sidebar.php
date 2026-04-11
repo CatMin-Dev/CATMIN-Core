@@ -9,24 +9,69 @@ $navGroups = [
         'children' => [],
     ],
     [
-        'key' => 'modules',
-        'label' => __('nav.modules'),
-        'icon' => 'puzzle',
+        'key' => 'content',
+        'label' => __('nav.content'),
+        'icon' => 'file-earmark-text',
         'order' => 20,
+        'children' => [],
+    ],
+    [
+        'key' => 'media',
+        'label' => __('nav.media'),
+        'icon' => 'images',
+        'order' => 30,
+        'children' => [],
+    ],
+    [
+        'key' => 'organization',
+        'label' => __('nav.organization'),
+        'icon' => 'diagram-3',
+        'order' => 40,
+        'children' => [
+            ['key' => 'staff', 'label' => __('nav.staff_admins'), 'href' => $adminBase . '/staff'],
+            ['key' => 'roles', 'label' => __('nav.roles_permissions'), 'href' => $adminBase . '/roles'],
+        ],
+    ],
+    [
+        'key' => 'marketing',
+        'label' => __('nav.marketing'),
+        'icon' => 'megaphone',
+        'order' => 50,
         'children' => [],
     ],
     [
         'key' => 'system',
         'label' => __('nav.system'),
         'icon' => 'speedometer2',
-        'order' => 30,
-        'children' => [],
+        'order' => 60,
+        'children' => [
+            ['key' => 'monitoring', 'label' => __('nav.monitoring'), 'href' => $adminBase . '/system/monitoring'],
+            ['key' => 'health', 'label' => __('nav.health_check'), 'href' => $adminBase . '/system/health'],
+            ['key' => 'core-update', 'label' => __('nav.core_update'), 'href' => $adminBase . '/system/updates'],
+            ['key' => 'queue', 'label' => __('nav.queue'), 'href' => $adminBase . '/system/queue'],
+            ['key' => 'logs', 'label' => __('nav.logs'), 'href' => $adminBase . '/logs'],
+            ['key' => 'notifications', 'label' => __('nav.notifications'), 'href' => $adminBase . '/notifications'],
+            ['key' => 'cron', 'label' => __('nav.cron'), 'href' => $adminBase . '/cron'],
+            ['key' => 'maintenance', 'label' => __('nav.maintenance'), 'href' => $adminBase . '/maintenance'],
+        ],
+    ],
+    [
+        'key' => 'modules',
+        'label' => __('nav.modules'),
+        'icon' => 'puzzle',
+        'order' => 70,
+        'children' => [
+            ['key' => 'module-manager', 'label' => __('nav.module_manager'), 'href' => $adminBase . '/modules'],
+            ['key' => 'module-status', 'label' => __('nav.module_status'), 'href' => $adminBase . '/modules/status'],
+            ['key' => 'module-market', 'label' => __('nav.module_market'), 'href' => $adminBase . '/modules/market'],
+            ['key' => 'trust-center', 'label' => __('nav.trust_center'), 'href' => $adminBase . '/system/trust-center'],
+        ],
     ],
     [
         'key' => 'settings',
         'label' => __('nav.settings'),
         'icon' => 'gear',
-        'order' => 40,
+        'order' => 80,
         'href' => $adminBase . '/settings/general',
         'children' => [],
     ],
@@ -66,7 +111,7 @@ if (is_string($adminModulesDir) && is_dir($adminModulesDir)) {
             }
 
             $group = strtolower(trim((string) ($item['group'] ?? 'modules')));
-            $allowedGroups = ['system', 'modules', 'settings'];
+            $allowedGroups = ['content', 'media', 'organization', 'marketing', 'system', 'modules', 'settings'];
             if (!in_array($group, $allowedGroups, true)) {
                 $group = 'modules';
             }
