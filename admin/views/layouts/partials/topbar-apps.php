@@ -27,7 +27,7 @@ $apps = is_array($topbar['apps'] ?? null) ? $topbar['apps'] : [];
             <?php endif; ?>
         </div>
         <div class="cat-topbar-dropdown-foot">
-            <a class="small text-decoration-none" href="<?= htmlspecialchars($adminBase . '/settings/apps', ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars(__('topbar.apps_manage'), ENT_QUOTES, 'UTF-8') ?></a>
+            <a class="small text-decoration-none" href="<?= htmlspecialchars($adminBase . '/settings/advanced', ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars(__('topbar.apps_manage'), ENT_QUOTES, 'UTF-8') ?></a>
         </div>
     </div>
 </div>

@@ -10,26 +10,22 @@ $navGroups = [
     ],
     [
         'key' => 'content',
-        'label' => __('nav.content') !== 'nav.content' ? __('nav.content') : 'Contenu',
+        'label' => __('nav.content'),
         'icon' => 'file-earmark-text',
         'order' => 20,
         'children' => [],
     ],
     [
-        'key' => 'modules',
-        'label' => __('nav.modules'),
-        'icon' => 'chat-left-text',
+        'key' => 'media',
+        'label' => __('nav.media'),
+        'icon' => 'images',
         'order' => 30,
-        'children' => [
-            ['key' => 'module-manager', 'label' => __('nav.module_manager'), 'href' => $adminBase . '/modules'],
-            ['key' => 'module-status', 'label' => __('nav.module_status'), 'href' => $adminBase . '/modules/status'],
-            ['key' => 'module-market', 'label' => __('nav.module_market'), 'href' => $adminBase . '/modules/market'],
-        ],
+        'children' => [],
     ],
     [
-        'key' => 'administration',
-        'label' => __('nav.administration'),
-        'icon' => 'calendar3',
+        'key' => 'organization',
+        'label' => __('nav.organization'),
+        'icon' => 'diagram-3',
         'order' => 40,
         'children' => [
             ['key' => 'staff', 'label' => __('nav.staff_admins'), 'href' => $adminBase . '/staff'],
@@ -37,17 +33,11 @@ $navGroups = [
         ],
     ],
     [
-        'key' => 'settings',
-        'label' => __('nav.settings'),
-        'icon' => 'gear',
+        'key' => 'marketing',
+        'label' => __('nav.marketing'),
+        'icon' => 'megaphone',
         'order' => 50,
-        'children' => [
-            ['key' => 'general', 'label' => __('nav.general'), 'href' => $adminBase . '/settings/general'],
-            ['key' => 'mail', 'label' => __('nav.mail'), 'href' => $adminBase . '/settings/mail'],
-            ['key' => 'security', 'label' => __('nav.security'), 'href' => $adminBase . '/settings/security'],
-            ['key' => 'apps', 'label' => __('nav.apps'), 'href' => $adminBase . '/settings/apps'],
-            ['key' => 'module-repositories', 'label' => __('nav.module_repositories'), 'href' => $adminBase . '/settings/module-repositories'],
-        ],
+        'children' => [],
     ],
     [
         'key' => 'system',
@@ -57,13 +47,33 @@ $navGroups = [
         'children' => [
             ['key' => 'monitoring', 'label' => __('nav.monitoring'), 'href' => $adminBase . '/system/monitoring'],
             ['key' => 'health', 'label' => __('nav.health_check'), 'href' => $adminBase . '/system/health'],
-            ['key' => 'trust-center', 'label' => __('nav.trust_center'), 'href' => $adminBase . '/system/trust-center'],
             ['key' => 'core-update', 'label' => __('nav.core_update'), 'href' => $adminBase . '/system/updates'],
             ['key' => 'queue', 'label' => __('nav.queue'), 'href' => $adminBase . '/system/queue'],
             ['key' => 'logs', 'label' => __('nav.logs'), 'href' => $adminBase . '/logs'],
+            ['key' => 'notifications', 'label' => __('nav.notifications'), 'href' => $adminBase . '/notifications'],
             ['key' => 'cron', 'label' => __('nav.cron'), 'href' => $adminBase . '/cron'],
             ['key' => 'maintenance', 'label' => __('nav.maintenance'), 'href' => $adminBase . '/maintenance'],
         ],
+    ],
+    [
+        'key' => 'modules',
+        'label' => __('nav.modules'),
+        'icon' => 'puzzle',
+        'order' => 70,
+        'children' => [
+            ['key' => 'module-manager', 'label' => __('nav.module_manager'), 'href' => $adminBase . '/modules'],
+            ['key' => 'module-status', 'label' => __('nav.module_status'), 'href' => $adminBase . '/modules/status'],
+            ['key' => 'module-market', 'label' => __('nav.module_market'), 'href' => $adminBase . '/modules/market'],
+            ['key' => 'trust-center', 'label' => __('nav.trust_center'), 'href' => $adminBase . '/system/trust-center'],
+        ],
+    ],
+    [
+        'key' => 'settings',
+        'label' => __('nav.settings'),
+        'icon' => 'gear',
+        'order' => 80,
+        'href' => $adminBase . '/settings/general',
+        'children' => [],
     ],
 ];
 
@@ -101,6 +111,10 @@ if (is_string($adminModulesDir) && is_dir($adminModulesDir)) {
             }
 
             $group = strtolower(trim((string) ($item['group'] ?? 'modules')));
+            $allowedGroups = ['content', 'media', 'organization', 'marketing', 'system', 'modules', 'settings'];
+            if (!in_array($group, $allowedGroups, true)) {
+                $group = 'modules';
+            }
             $href = trim((string) ($item['href'] ?? ''));
             if ($href === '') {
                 $href = '#';
@@ -145,8 +159,8 @@ if ($moduleNavEntries !== []) {
             $navGroups[] = [
                 'key' => $groupKey,
                 'label' => ucfirst($groupKey),
-                'icon' => $groupKey === 'content' ? 'file-earmark-text' : 'chat',
-                'order' => $groupKey === 'content' ? 20 : 35,
+                'icon' => $groupKey === 'editorial' ? 'file-earmark-text' : 'chat',
+                'order' => $groupKey === 'editorial' ? 20 : 35,
                 'children' => [[
                     'key' => (string) $entry['key'],
                     'label' => (string) $entry['label'],
@@ -159,12 +173,32 @@ if ($moduleNavEntries !== []) {
 
 usort($navGroups, static fn (array $a, array $b): int => ((int) ($a['order'] ?? 999)) <=> ((int) ($b['order'] ?? 999)));
 
+$emptyLabel = __('nav.empty_group');
+foreach ($navGroups as &$group) {
+    $children = is_array($group['children'] ?? null) ? $group['children'] : [];
+    if (!empty($group['href'])) {
+        continue;
+    }
+    if ($children === []) {
+        $group['children'][] = [
+            'key' => $group['key'] . '-empty',
+            'label' => $emptyLabel,
+            'href' => '#',
+        ];
+    }
+}
+unset($group);
+
 $sidebarIconSvg = static function (string $name): string {
     return match ($name) {
         'house-door', 'home' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>',
         'calendar3', 'calendar' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/></svg>',
         'chat-left-text', 'chat' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 3 21V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H7Z"/></svg>',
         'file-earmark-text' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h9l3 3v15H6z"/><path d="M9 10h6M9 14h6M9 18h4"/></svg>',
+        'images' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 15 4-4 4 4 5-6 5 6"/></svg>',
+        'diagram-3' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="6" height="6" rx="1"/><rect x="15" y="3" width="6" height="6" rx="1"/><rect x="9" y="15" width="6" height="6" rx="1"/><path d="M6 9v3a3 3 0 0 0 3 3h3"/><path d="M18 9v3a3 3 0 0 1-3 3h-3"/></svg>',
+        'megaphone' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11v2a2 2 0 0 0 2 2h1l2 4h3l-1.5-4H14l6-4V7l-6-4H8L5 5H3a2 2 0 0 0-2 2v2"/><path d="M14 5v14"/></svg>',
+        'puzzle' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 3h4a2 2 0 0 1 2 2v1h1a2 2 0 1 0 0-4h2a2 2 0 0 1 2 2v4h-1a2 2 0 1 0 4 0v2a2 2 0 0 1-2 2h-4v-1a2 2 0 1 0 0 4v1a2 2 0 0 1-2 2h-4v-1a2 2 0 1 0-4 0H5a2 2 0 0 1-2-2v-4h1a2 2 0 1 0 0-4H3V5a2 2 0 0 1 2-2h2z"/></svg>',
         'speedometer2', 'chart' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 14a8 8 0 1 1 16 0"/><path d="m12 14 4-4"/><path d="M6 18h12"/></svg>',
         'gear', 'cog' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 0 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.2a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 0 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.2a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 0 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h.1a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.2a1.7 1.7 0 0 0 1 1.5h.1a1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 0 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v.1a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.2a1.7 1.7 0 0 0-1.5 1z"/></svg>',
         default => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/></svg>',

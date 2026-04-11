@@ -244,8 +244,43 @@ $scanModules = static function (): array {
             'key_status' => (string) (($integrity['key_status'] ?? 'unknown')),
             'integrity_details' => is_array($integrity) ? (array) ($integrity['state'] ?? []) : [],
             'capabilities' => is_array($manifest['capabilities'] ?? null) ? array_values($manifest['capabilities']) : [],
+            'dependency_details' => [],
+            'dependency_blocking' => false,
+            'missing_dependencies' => [],
         ];
     }
+
+    $indexBySlug = [];
+    foreach ($rows as $entry) {
+        $indexBySlug[(string) ($entry['slug'] ?? '')] = $entry;
+    }
+    foreach ($rows as &$entry) {
+        $details = [];
+        $missing = [];
+        foreach ((array) ($entry['dependencies'] ?? []) as $depSlug) {
+            $depSlug = strtolower(trim((string) $depSlug));
+            if ($depSlug === '') {
+                continue;
+            }
+            if (!isset($indexBySlug[$depSlug])) {
+                $details[] = ['slug' => $depSlug, 'status' => 'missing'];
+                $missing[] = $depSlug;
+                continue;
+            }
+            $depModule = $indexBySlug[$depSlug];
+            $depEnabled = (bool) ($depModule['enabled'] ?? false);
+            if ($depEnabled) {
+                $details[] = ['slug' => $depSlug, 'status' => 'ok'];
+            } else {
+                $details[] = ['slug' => $depSlug, 'status' => 'inactive'];
+                $missing[] = $depSlug;
+            }
+        }
+        $entry['dependency_details'] = $details;
+        $entry['missing_dependencies'] = $missing;
+        $entry['dependency_blocking'] = $missing !== [];
+    }
+    unset($entry);
 
     usort($rows, static fn (array $a, array $b): int => strcmp((string) ($a['scope'] . '/' . $a['slug']), (string) ($b['scope'] . '/' . $b['slug'])));
 
@@ -255,6 +290,7 @@ $scanModules = static function (): array {
         'inactive' => count(array_filter($rows, static fn (array $r): bool => !((bool) ($r['enabled'] ?? false)))),
         'errors' => count(array_filter($rows, static fn (array $r): bool => ((array) ($r['errors'] ?? [])) !== [] || (($r['state'] ?? '') === 'error' || ($r['state'] ?? '') === 'invalid' || ($r['state'] ?? '') === 'incompatible'))),
         'trust_alerts' => count(array_filter($rows, static fn (array $r): bool => !((bool) ($r['trusted'] ?? false)))),
+        'dependency_alerts' => count(array_filter($rows, static fn (array $r): bool => (bool) ($r['dependency_blocking'] ?? false))),
     ];
 
     return ['rows' => $rows, 'stats' => $stats];
@@ -263,6 +299,156 @@ $scanModules = static function (): array {
 $toggleModuleState = static function (string $scope, string $slug, bool $enabled): array {
     $activator = new CoreModuleActivator();
     return $enabled ? $activator->activate($scope, $slug) : $activator->deactivate($scope, $slug);
+};
+
+$resolveModuleDependencies = static function (string $scope, string $slug, bool $activateTarget = true): array {
+    $scope = strtolower(trim($scope));
+    $slug = strtolower(trim($slug));
+    if ($scope === '' || $slug === '') {
+        return ['ok' => false, 'message' => 'Paramètres module invalides.'];
+    }
+
+    $extractRequires = static function (array $manifest): array {
+        $deps = $manifest['dependencies'] ?? [];
+        if (!is_array($deps)) {
+            return [];
+        }
+        if (array_is_list($deps)) {
+            return array_values(array_unique(array_filter(array_map(static fn ($dep): string => strtolower(trim((string) $dep)), $deps), static fn (string $v): bool => $v !== '')));
+        }
+        return array_values(array_unique(array_filter(array_map(static fn ($dep): string => strtolower(trim((string) $dep)), (array) ($deps['requires'] ?? [])), static fn (string $v): bool => $v !== '')));
+    };
+
+    $findBySlug = static function (array $snapshot, string $targetSlug): ?array {
+        foreach ((array) ($snapshot['modules'] ?? []) as $module) {
+            $mSlug = strtolower(trim((string) ($module['manifest']['slug'] ?? '')));
+            if ($mSlug === $targetSlug) {
+                return $module;
+            }
+        }
+        return null;
+    };
+
+    $findByScopeSlug = static function (array $snapshot, string $targetScope, string $targetSlug): ?array {
+        foreach ((array) ($snapshot['modules'] ?? []) as $module) {
+            $mSlug = strtolower(trim((string) ($module['manifest']['slug'] ?? '')));
+            $mScope = strtolower(trim((string) ($module['manifest']['type'] ?? '')));
+            if ($mSlug === $targetSlug && $mScope === $targetScope) {
+                return $module;
+            }
+        }
+        return null;
+    };
+
+    $activator = new CoreModuleActivator();
+    $market = new CoreMarketEngine();
+    $processed = [];
+    $messages = [];
+    $errors = [];
+
+    $ensureDependency = function (string $depSlug) use (&$ensureDependency, &$processed, &$messages, &$errors, $findBySlug, $extractRequires, $activator, $market): bool {
+        if (isset($processed[$depSlug])) {
+            return true;
+        }
+
+        $snapshot = (new CoreModuleLoader())->scan();
+        $depModule = $findBySlug($snapshot, $depSlug);
+
+        if (!is_array($depModule)) {
+            $catalog = $market->catalog();
+            $items = is_array($catalog['items'] ?? null) ? $catalog['items'] : [];
+            $candidate = null;
+            $bestScore = -INF;
+            foreach ($items as $item) {
+                if (!is_array($item)) {
+                    continue;
+                }
+                if (strtolower(trim((string) ($item['slug'] ?? ''))) !== $depSlug) {
+                    continue;
+                }
+                if ((bool) ($item['compatible'] ?? true) !== true) {
+                    continue;
+                }
+                $score = (float) ($item['trust_score'] ?? 0);
+                if ($score > $bestScore) {
+                    $bestScore = $score;
+                    $candidate = $item;
+                }
+            }
+            if (!is_array($candidate)) {
+                $errors[] = 'Dépendance introuvable dans le catalogue: ' . $depSlug;
+                return false;
+            }
+            $install = $market->install($candidate);
+            if (!(bool) ($install['ok'] ?? false)) {
+                $errors[] = 'Échec installation dépendance ' . $depSlug . ': ' . (string) ($install['message'] ?? 'Erreur inconnue');
+                return false;
+            }
+            $messages[] = 'Dépendance installée: ' . $depSlug;
+            $snapshot = (new CoreModuleLoader())->scan();
+            $depModule = $findBySlug($snapshot, $depSlug);
+            if (!is_array($depModule)) {
+                $errors[] = 'Dépendance installée mais introuvable après scan: ' . $depSlug;
+                return false;
+            }
+        }
+
+        $depManifest = (array) ($depModule['manifest'] ?? []);
+        foreach ($extractRequires($depManifest) as $subDep) {
+            if ($subDep === $depSlug) {
+                continue;
+            }
+            if (!$ensureDependency($subDep)) {
+                return false;
+            }
+        }
+
+        if (!((bool) ($depModule['enabled'] ?? false))) {
+            $depScope = strtolower(trim((string) ($depManifest['type'] ?? 'admin')));
+            $activate = $activator->activate($depScope, $depSlug);
+            if (!(bool) ($activate['ok'] ?? false)) {
+                $errors[] = 'Échec activation dépendance ' . $depSlug . ': ' . (string) ($activate['message'] ?? 'Erreur inconnue');
+                return false;
+            }
+            $messages[] = 'Dépendance activée: ' . $depSlug;
+        }
+
+        $processed[$depSlug] = true;
+        return true;
+    };
+
+    $snapshot = (new CoreModuleLoader())->scan();
+    $targetModule = $findByScopeSlug($snapshot, $scope, $slug);
+    if (!is_array($targetModule)) {
+        return ['ok' => false, 'message' => 'Module cible introuvable.'];
+    }
+
+    $targetManifest = (array) ($targetModule['manifest'] ?? []);
+    $required = $extractRequires($targetManifest);
+    foreach ($required as $depSlug) {
+        if (!$ensureDependency($depSlug)) {
+            return ['ok' => false, 'message' => implode(' | ', array_values(array_unique($errors))), 'errors' => array_values(array_unique($errors))];
+        }
+    }
+
+    if ($activateTarget && !((bool) ($targetModule['enabled'] ?? false))) {
+        $activateTargetRes = $activator->activate($scope, $slug);
+        if (!(bool) ($activateTargetRes['ok'] ?? false)) {
+            $errors[] = 'Échec activation module cible: ' . (string) ($activateTargetRes['message'] ?? 'Erreur inconnue');
+            return ['ok' => false, 'message' => implode(' | ', array_values(array_unique($errors))), 'errors' => array_values(array_unique($errors))];
+        }
+        $messages[] = 'Module activé: ' . $slug;
+    }
+
+    if ($messages === []) {
+        $messages[] = 'Aucune action requise, dépendances déjà satisfaites.';
+    }
+
+    return [
+        'ok' => true,
+        'message' => implode(' | ', $messages),
+        'messages' => $messages,
+    ];
 };
 
 $coreSettingsDefaults = [
@@ -1158,10 +1344,10 @@ return [
             $adminBase = $controller->adminBasePath();
             $section = strtolower(trim((string) $request->input('section', 'general')));
             $section = match ($section) {
-                'mail' => 'mail',
+                'mail' => 'notifications',
                 'security' => 'security',
-                'apps' => 'apps',
-                'module-repositories', 'market' => 'module-repositories',
+                'apps', 'module-repositories', 'market' => 'advanced',
+                'appearance', 'sidebar', 'content', 'seo', 'media', 'organization', 'marketing', 'notifications', 'performance', 'advanced' => $section,
                 default => 'general',
             };
             return $redirect($adminBase . '/settings/' . $section, [
@@ -1175,7 +1361,7 @@ return [
     [
         'method' => 'GET',
         'path' => '/settings/{section}',
-        'where' => ['section' => 'general|mail|security|apps|module-repositories'],
+        'where' => ['section' => 'general|appearance|sidebar|content|seo|media|organization|marketing|notifications|performance|security|advanced|mail|apps|module-repositories'],
         'handler' => static function (Request $request, string $section) use ($consumeFlash, $appsRepository): Response {
             $controller = new AuthController();
             $adminBase = $controller->adminBasePath();
@@ -1184,64 +1370,30 @@ return [
             $section = strtolower(trim($section));
             $registry = new CoreModuleRepositoryRegistry();
 
-            if ($section === 'apps') {
-                return View::make('settings.apps', [
-                    'adminBase' => $adminBase,
-                    'apps' => $appsRepository->listAll(),
-                    'message' => (string) ($flash['message'] ?? ''),
-                    'messageType' => (string) ($flash['type'] ?? 'success'),
-                    'activeSettingsNav' => 'apps',
-                ], 'admin');
-            }
-
-            if ($section === 'module-repositories') {
-                $repositories = $registry->listRepositories();
-                $policy = $registry->policy();
-
-                return View::make('settings.module-repositories', [
-                    'adminBase' => $adminBase,
-                    'repositories' => $repositories,
-                    'policy' => $policy,
-                    'message' => (string) ($flash['message'] ?? ''),
-                    'messageType' => (string) ($flash['type'] ?? 'success'),
-                    'activeSettingsNav' => 'module-repositories',
-                ], 'admin');
+            if (in_array($section, ['apps', 'module-repositories', 'mail'], true)) {
+                $redirectTo = $section === 'mail' ? 'notifications' : 'advanced';
+                return Response::html('', 302, ['Location' => $adminBase . '/settings/' . $redirectTo]);
             }
 
             $settings = $engine->all();
-            if (!isset($settings['general']) || !is_array($settings['general'])) {
-                $settings['general'] = [];
+            foreach (['general', 'security', 'mail', 'ui', 'maintenance', 'backup', 'system'] as $key) {
+                if (!isset($settings[$key]) || !is_array($settings[$key])) {
+                    $settings[$key] = [];
+                }
             }
-            if (!isset($settings['security']) || !is_array($settings['security'])) {
-                $settings['security'] = [];
-            }
-            if (!isset($settings['mail']) || !is_array($settings['mail'])) {
-                $settings['mail'] = [];
-            }
-            if (!isset($settings['ui']) || !is_array($settings['ui'])) {
-                $settings['ui'] = [];
-            }
-            if (!isset($settings['maintenance']) || !is_array($settings['maintenance'])) {
-                $settings['maintenance'] = [];
-            }
-            // Compat avec vue existante (attend "interface")
             $settings['interface'] = $settings['ui'];
             $settings['email'] = $settings['mail'];
-
-            $activeNav = match ($section) {
-                'security' => 'security',
-                'mail' => 'mail',
-                default => 'general',
-            };
-            $section = $activeNav;
 
             return View::make('settings.index', [
                 'adminBase' => $adminBase,
                 'settings' => $settings,
+                'apps' => $appsRepository->listAll(),
+                'repositories' => $registry->listRepositories(),
+                'policy' => $registry->policy(),
                 'section' => $section,
                 'message' => (string) ($flash['message'] ?? ''),
                 'messageType' => (string) ($flash['type'] ?? 'success'),
-                'activeSettingsNav' => $activeNav,
+                'activeSettingsNav' => 'settings',
             ], 'admin');
         },
         'middleware' => [$authRequired],
@@ -1265,10 +1417,14 @@ return [
             $post = $request->post();
             $section = strtolower(trim((string) ($post['section'] ?? 'general')));
             $section = match ($section) {
-                'mail' => 'mail',
+                'mail' => 'notifications',
+                'notifications' => 'notifications',
                 'security' => 'security',
-                'apps' => 'apps',
-                'module-repositories', 'market' => 'module-repositories',
+                'appearance' => 'appearance',
+                'sidebar' => 'sidebar',
+                'performance' => 'performance',
+                'advanced', 'apps', 'module-repositories', 'market' => 'advanced',
+                'content', 'seo', 'media', 'organization', 'marketing' => $rawSection,
                 default => 'general',
             };
             $postedTimezone = trim((string) ($post['timezone'] ?? ($data['general']['timezone'] ?? 'UTC')));
@@ -1310,9 +1466,21 @@ return [
                 'message' => trim((string) ($post['maintenance_message'] ?? ($data['maintenance']['message'] ?? 'Maintenance en cours'))),
                 'allow_admin' => ((string) ($post['maintenance_allow_admin'] ?? '0')) === '1',
             ];
+            $backupSource = is_array($data['backup'] ?? null) ? $data['backup'] : [];
+            $data['backup'] = [
+                'local_enabled' => array_key_exists('backup_local_enabled', $post)
+                    ? ((string) ($post['backup_local_enabled'] ?? '0')) === '1'
+                    : ((bool) ($backupSource['local_enabled'] ?? true)),
+            ];
+            $systemSource = is_array($data['system'] ?? null) ? $data['system'] : [];
+            $data['system'] = [
+                'cron_enabled' => array_key_exists('cron_enabled', $post)
+                    ? ((string) ($post['cron_enabled'] ?? '0')) === '1'
+                    : ((bool) ($systemSource['cron_enabled'] ?? true)),
+            ];
 
             $ok = true;
-            $persistableGroups = ['general', 'security', 'mail', 'ui', 'maintenance'];
+            $persistableGroups = ['general', 'security', 'mail', 'ui', 'maintenance', 'backup', 'system'];
             foreach ($persistableGroups as $group) {
                 $values = $data[$group] ?? null;
                 if (!is_array($values)) {
@@ -1344,7 +1512,7 @@ return [
     [
         'method' => 'POST',
         'path' => '/settings/{section}',
-        'where' => ['section' => 'general|mail|security|apps|module-repositories'],
+        'where' => ['section' => 'general|appearance|sidebar|content|seo|media|organization|marketing|notifications|performance|security|advanced|mail|apps|module-repositories'],
         'handler' => static function (Request $request, string $section) use ($upsertCoreSetting, $redirect, $coreSettingsTable, $appendCoreLog, $coreLogsTable, $appsValidator, $appsRepository, $notificationsRepository): Response {
             $controller = new AuthController();
             $adminBase = $controller->adminBasePath();
@@ -1359,16 +1527,20 @@ return [
             $data['ui'] = is_array($data['ui'] ?? null) ? $data['ui'] : [];
             $data['maintenance'] = is_array($data['maintenance'] ?? null) ? $data['maintenance'] : [];
             $post = $request->post();
-            $section = strtolower(trim($section));
-            $section = match ($section) {
-                'mail' => 'mail',
+            $rawSection = strtolower(trim($section));
+            $section = match ($rawSection) {
+                'mail' => 'notifications',
+                'notifications' => 'notifications',
                 'security' => 'security',
-                'apps' => 'apps',
-                'module-repositories', 'market' => 'module-repositories',
+                'appearance' => 'appearance',
+                'sidebar' => 'sidebar',
+                'performance' => 'performance',
+                'advanced', 'apps', 'module-repositories', 'market' => 'advanced',
+                'content', 'seo', 'media', 'organization', 'marketing' => $section,
                 default => 'general',
             };
 
-            if ($section === 'apps') {
+            if ($rawSection === 'apps') {
                 try {
                     (new \CoreDbUpgradeRunner())->run();
                 } catch (\Throwable $exception) {
@@ -1380,11 +1552,11 @@ return [
                 $validation = $appsValidator->validate($post);
 
                 if (in_array($action, ['create', 'update'], true) && !($validation['ok'] ?? false)) {
-                    return $redirect($adminBase . '/settings/apps', [
-                        'msg' => implode(' ', (array) ($validation['errors'] ?? ['Validation app invalide.'])),
-                        'mt' => 'danger',
-                    ]);
-                }
+                return $redirect($adminBase . '/settings/advanced', [
+                    'msg' => implode(' ', (array) ($validation['errors'] ?? ['Validation app invalide.'])),
+                    'mt' => 'danger',
+                ]);
+            }
 
                 $ok = false;
                 if ($action === 'create') {
@@ -1395,7 +1567,7 @@ return [
                             'message' => 'App ajoutee dans le launcher topbar.',
                             'type' => 'success',
                             'source' => 'settings.apps',
-                            'action_url' => $adminBase . '/settings/apps',
+                            'action_url' => $adminBase . '/settings/advanced',
                         ]);
                     }
                 } elseif ($action === 'update') {
@@ -1411,13 +1583,13 @@ return [
                 }
 
                 $errorMessage = trim($appsRepository->lastError());
-                return $redirect($adminBase . '/settings/apps', [
+                return $redirect($adminBase . '/settings/advanced', [
                     'msg' => $ok ? 'Apps enregistrees.' : ($errorMessage !== '' ? ('Echec operation apps. ' . $errorMessage) : 'Echec operation apps.'),
                     'mt' => $ok ? 'success' : 'danger',
                 ]);
             }
 
-            if ($section === 'module-repositories') {
+            if ($rawSection === 'module-repositories') {
                 $action = strtolower(trim((string) ($post['action'] ?? 'create')));
                 $id = (int) ($post['repository_id'] ?? 0);
 
@@ -1457,7 +1629,7 @@ return [
                     $result = $registry->savePolicy($post);
                 }
 
-                return $redirect($adminBase . '/settings/module-repositories', [
+                return $redirect($adminBase . '/settings/advanced', [
                     'msg' => (string) ($result['message'] ?? 'Opération terminée.'),
                     'mt' => (bool) ($result['ok'] ?? false) ? 'success' : 'danger',
                 ]);
@@ -1501,9 +1673,21 @@ return [
                 'message' => trim((string) ($post['maintenance_message'] ?? ($data['maintenance']['message'] ?? 'Maintenance en cours'))),
                 'allow_admin' => ((string) ($post['maintenance_allow_admin'] ?? '0')) === '1',
             ];
+            $backupSource = is_array($data['backup'] ?? null) ? $data['backup'] : [];
+            $data['backup'] = [
+                'local_enabled' => array_key_exists('backup_local_enabled', $post)
+                    ? ((string) ($post['backup_local_enabled'] ?? '0')) === '1'
+                    : ((bool) ($backupSource['local_enabled'] ?? true)),
+            ];
+            $systemSource = is_array($data['system'] ?? null) ? $data['system'] : [];
+            $data['system'] = [
+                'cron_enabled' => array_key_exists('cron_enabled', $post)
+                    ? ((string) ($post['cron_enabled'] ?? '0')) === '1'
+                    : ((bool) ($systemSource['cron_enabled'] ?? true)),
+            ];
 
             $ok = true;
-            $persistableGroups = ['general', 'security', 'mail', 'ui', 'maintenance'];
+            $persistableGroups = ['general', 'security', 'mail', 'ui', 'maintenance', 'backup', 'system'];
             foreach ($persistableGroups as $group) {
                 $values = $data[$group] ?? null;
                 if (!is_array($values)) {
@@ -2487,6 +2671,29 @@ return [
             return $redirect($adminBase . $path, [
                 'msg' => (string) ($result['message'] ?? 'Operation terminee'),
                 'mt' => $mt,
+            ]);
+        },
+        'middleware' => [$authRequired, $csrfCheck],
+    ],
+
+    [
+        'method' => 'POST',
+        'path' => '/modules/dependencies/resolve',
+        'handler' => static function (Request $request) use ($resolveModuleDependencies, $redirect): Response {
+            $controller = new AuthController();
+            $adminBase = $controller->adminBasePath();
+
+            $scope = strtolower(trim((string) $request->input('scope', '')));
+            $slug = strtolower(trim((string) $request->input('slug', '')));
+            $activateTarget = (string) $request->input('activate_target', '1') === '1';
+            $returnTo = strtolower(trim((string) $request->input('return_to', 'manager')));
+
+            $result = $resolveModuleDependencies($scope, $slug, $activateTarget);
+            $path = $returnTo === 'status' ? '/modules/status' : '/modules';
+
+            return $redirect($adminBase . $path, [
+                'msg' => (string) ($result['message'] ?? 'Résolution dépendances terminée.'),
+                'mt' => (bool) ($result['ok'] ?? false) ? 'success' : 'danger',
             ]);
         },
         'middleware' => [$authRequired, $csrfCheck],
