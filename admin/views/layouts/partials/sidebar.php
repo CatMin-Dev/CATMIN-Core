@@ -127,6 +127,23 @@ $hasAnyPermission = static function (array $required) use ($isSuperAdmin, $roleP
 
 $moduleNavEntries = [];
 $adminModulesDir = defined('CATMIN_MODULES') ? CATMIN_MODULES . '/admin' : null;
+$moduleStateBySlug = [];
+
+try {
+    $pdo = (new Core\database\ConnectionManager())->connection();
+    $corePrefix = (string) config('database.prefixes.core', 'core_');
+    $modulesTable = $corePrefix . 'modules';
+    $stmt = $pdo->query('SELECT slug, status FROM ' . $modulesTable);
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $row) {
+        $slug = strtolower(trim((string) ($row['slug'] ?? '')));
+        if ($slug === '') {
+            continue;
+        }
+        $moduleStateBySlug[$slug] = strtolower(trim((string) ($row['status'] ?? 'inactive')));
+    }
+} catch (Throwable $exception) {
+    $moduleStateBySlug = [];
+}
 
 if (is_string($adminModulesDir) && is_dir($adminModulesDir)) {
     foreach (glob($adminModulesDir . '/*', GLOB_ONLYDIR) ?: [] as $moduleDir) {
@@ -138,7 +155,12 @@ if (is_string($adminModulesDir) && is_dir($adminModulesDir)) {
         $raw = file_get_contents($manifestFile);
         $manifest = is_string($raw) ? (json_decode($raw, true) ?: []) : [];
 
-        if (($manifest['enabled'] ?? true) !== true) {
+        $slug = strtolower(trim((string) ($manifest['slug'] ?? basename($moduleDir))));
+        $manifestEnabled = (bool) ($manifest['enabled'] ?? true);
+        $dbState = $moduleStateBySlug[$slug] ?? null;
+        $isEnabled = $dbState === null ? $manifestEnabled : ($dbState === 'active');
+
+        if (!$isEnabled) {
             continue;
         }
 
@@ -147,7 +169,6 @@ if (is_string($adminModulesDir) && is_dir($adminModulesDir)) {
             continue;
         }
 
-        $slug = strtolower(trim((string) ($manifest['slug'] ?? basename($moduleDir))));
         foreach ($items as $item) {
             if (!is_array($item)) {
                 continue;
