@@ -29,28 +29,41 @@ final class CoreUpdaterRunner
         $this->ensureDirs();
         $local = $this->localVersion();
         $github = new CoreUpdaterGithub();
-        $latest = $github->latestRelease();
+        $latestRelease = $github->latestRelease();
+        $latestTag = $github->latestTag();
 
-        if (!($latest['ok'] ?? false)) {
+        if (!($latestRelease['ok'] ?? false) && !($latestTag['ok'] ?? false)) {
             return [
                 'ok' => false,
                 'local_version' => $local,
                 'update_available' => false,
-                'error' => (string) ($latest['error'] ?? 'Erreur update inconnue.'),
+                'error' => (string) ($latestRelease['error'] ?? $latestTag['error'] ?? 'Erreur update inconnue.'),
             ];
         }
 
-        $release = is_array($latest['release'] ?? null) ? $latest['release'] : [];
-        $tag = $this->normalizeTag((string) ($release['tag'] ?? ''));
+        $release = is_array($latestRelease['release'] ?? null) ? $latestRelease['release'] : [];
+        $releaseTag = $this->normalizeTag((string) ($release['tag'] ?? ''));
+        $tagFallback = $this->normalizeTag((string) ($latestTag['tag'] ?? ''));
+        $tag = $releaseTag;
+        if ($tag === '' || ($tagFallback !== '' && version_compare($tagFallback, $tag, '>'))) {
+            $tag = $tagFallback;
+        }
+
         $asset = $github->findStandaloneAsset($release);
 
         $updateAvailable = $tag !== '' && version_compare($tag, $local, '>');
+        $updateRunnable = $releaseTag !== ''
+            && version_compare($releaseTag, $local, '>')
+            && is_array($asset)
+            && trim((string) ($asset['url'] ?? '')) !== '';
 
         return [
             'ok' => true,
             'local_version' => $local,
             'remote_version' => $tag,
+            'remote_release_version' => $releaseTag,
             'update_available' => $updateAvailable,
+            'update_runnable' => $updateRunnable,
             'release' => $release,
             'asset' => $asset,
             'error' => '',

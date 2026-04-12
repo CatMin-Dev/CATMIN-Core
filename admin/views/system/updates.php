@@ -24,6 +24,7 @@ $history = (array) ($snapshot['history']['items'] ?? []);
 
 $csrf = htmlspecialchars((new CsrfManager())->token(), ENT_QUOTES, 'UTF-8');
 $coreUpdateAvailable = (bool) ($summary['core_update_available'] ?? false);
+$coreUpdateRunnable = (bool) ($core['update_runnable'] ?? false);
 $modulesWithUpdates = (int) ($summary['modules_with_updates'] ?? 0);
 $trustAlerts = (int) ($summary['trust_alerts'] ?? 0);
 
@@ -55,7 +56,7 @@ ob_start();
             </form>
             <form method="post" action="<?= htmlspecialchars($adminBase . '/system/updates/run', ENT_QUOTES, 'UTF-8') ?>" data-cat-confirm="<?= htmlspecialchars(__('updates.confirm.run'), ENT_QUOTES, 'UTF-8') ?>">
                 <input type="hidden" name="_csrf" value="<?= $csrf ?>">
-                <button class="btn btn-sm btn-primary" type="submit" <?= $coreUpdateAvailable ? '' : 'disabled' ?>><?= htmlspecialchars(__('updates.action.run'), ENT_QUOTES, 'UTF-8') ?></button>
+                <button class="btn btn-sm btn-primary" type="submit" <?= ($coreUpdateAvailable && $coreUpdateRunnable) ? '' : 'disabled' ?>><?= htmlspecialchars(__('updates.action.run'), ENT_QUOTES, 'UTF-8') ?></button>
             </form>
         </div>
     </div>

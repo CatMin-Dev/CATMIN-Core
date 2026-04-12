@@ -34,6 +34,40 @@ final class CoreUpdaterGithub
         ];
     }
 
+    public function latestTag(): array
+    {
+        $payload = $this->requestJson($this->apiBase . '/tags?per_page=100');
+        if (!is_array($payload)) {
+            return ['ok' => false, 'error' => 'Impossible de lire les tags distants.', 'tag' => ''];
+        }
+
+        $bestTag = '';
+        foreach ($payload as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $tag = trim((string) ($row['name'] ?? ''));
+            if ($tag === '') {
+                continue;
+            }
+
+            $normalized = $this->normalizeTag($tag);
+            if ($normalized === '') {
+                continue;
+            }
+
+            if ($bestTag === '' || version_compare($normalized, $bestTag, '>')) {
+                $bestTag = $normalized;
+            }
+        }
+
+        if ($bestTag === '') {
+            return ['ok' => false, 'error' => 'Aucun tag distant exploitable.', 'tag' => ''];
+        }
+
+        return ['ok' => true, 'error' => '', 'tag' => $bestTag];
+    }
+
     public function findStandaloneAsset(array $release): ?array
     {
         $assets = is_array($release['assets'] ?? null) ? $release['assets'] : [];
@@ -89,6 +123,18 @@ final class CoreUpdaterGithub
         }
         $decoded = json_decode($raw, true);
         return is_array($decoded) ? $decoded : null;
+    }
+
+    private function normalizeTag(string $tag): string
+    {
+        $tag = trim($tag);
+        if ($tag === '') {
+            return '';
+        }
+        if (str_starts_with(strtolower($tag), 'v')) {
+            $tag = substr($tag, 1);
+        }
+        return trim($tag);
     }
 
     private function requestRaw(string $url): ?string
