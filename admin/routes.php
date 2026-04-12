@@ -1390,7 +1390,7 @@ return [
                 'organization' => ['label' => __('nav.organization'), 'icon' => 'diagram-3', 'order' => 40],
                 'system' => ['label' => __('nav.system'), 'icon' => 'speedometer2', 'order' => 60],
                 'modules' => ['label' => __('nav.modules'), 'icon' => 'puzzle', 'order' => 70],
-                'features' => ['label' => 'Fonctionnalitès', 'icon' => 'sparkles', 'order' => 75],
+                'features' => ['label' => 'Fonctionnalites', 'icon' => 'sparkles', 'order' => 75],
                 'settings' => ['label' => __('nav.settings'), 'icon' => 'gear', 'order' => 80],
                 'content' => ['label' => __('nav.content'), 'icon' => 'file-earmark-text', 'order' => 20],
                 'media' => ['label' => __('nav.media'), 'icon' => 'images', 'order' => 30],
@@ -1425,13 +1425,24 @@ return [
 
             $moduleEntrySeen = [];
             foreach ((array) ($snapshot['modules'] ?? []) as $module) {
-                // Show entries from all installed valid modules (not just active)
-                // so the user can pre-configure order before activation.
-                if (!((bool) ($module['valid'] ?? false))) {
+                // Show entries from all discovered modules so the user can
+                // configure navigation even before (re)activation/validation.
+                if (!is_array($module)) {
                     continue;
                 }
-                $manifest = (array) ($module['manifest'] ?? []);
-                $items = $manifest['admin_sidebar'] ?? $manifest['sidebar'] ?? [];
+                $manifestPath = (string) ($module['manifest_path'] ?? '');
+                $manifest = [];
+                if ($manifestPath !== '' && is_file($manifestPath)) {
+                    $rawManifest = file_get_contents($manifestPath);
+                    $decodedManifest = is_string($rawManifest) ? json_decode($rawManifest, true) : null;
+                    if (is_array($decodedManifest)) {
+                        $manifest = $decodedManifest;
+                    }
+                }
+                if ($manifest === []) {
+                    $manifest = (array) ($module['manifest'] ?? []);
+                }
+                $items = $manifest['admin_sidebar'] ?? $manifest['sidebar'] ?? $manifest['sidebar_entries'] ?? [];
                 if (!is_array($items)) {
                     continue;
                 }
@@ -1478,8 +1489,19 @@ return [
                 if (!((bool) ($module['enabled'] ?? false))) {
                     continue;
                 }
-                $manifest = (array) ($module['manifest'] ?? []);
-                $items = $manifest['admin_sidebar'] ?? $manifest['sidebar'] ?? [];
+                $manifestPath = (string) ($module['manifest_path'] ?? '');
+                $manifest = [];
+                if ($manifestPath !== '' && is_file($manifestPath)) {
+                    $rawManifest = file_get_contents($manifestPath);
+                    $decodedManifest = is_string($rawManifest) ? json_decode($rawManifest, true) : null;
+                    if (is_array($decodedManifest)) {
+                        $manifest = $decodedManifest;
+                    }
+                }
+                if ($manifest === []) {
+                    $manifest = (array) ($module['manifest'] ?? []);
+                }
+                $items = $manifest['admin_sidebar'] ?? $manifest['sidebar'] ?? $manifest['sidebar_entries'] ?? [];
                 if (!is_array($items)) {
                     continue;
                 }
@@ -1710,7 +1732,7 @@ return [
                 try {
                     (new \CoreDbUpgradeRunner())->run();
                 } catch (\Throwable $exception) {
-                    \Core\logs\Logger::warning('Apps settings auto-upgrade failed', ['error' => $exception->getMessage()]);
+                    \Core\logs\Logger::error('Apps settings auto-upgrade failed', ['error' => $exception->getMessage()]);
                 }
 
                 $action = strtolower(trim((string) ($post['action'] ?? 'create')));

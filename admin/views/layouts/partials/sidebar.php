@@ -47,6 +47,13 @@ $navGroups = [
         ],
     ],
     [
+        'key' => 'features',
+        'label' => 'Fonctionnalites',
+        'icon' => 'sparkles',
+        'order' => 75,
+        'children' => [],
+    ],
+    [
         'key' => 'settings',
         'label' => __('nav.settings'),
         'icon' => 'gear',
@@ -61,6 +68,7 @@ $groupMeta = [
     'content' => ['label' => __('nav.content'), 'icon' => 'file-earmark-text', 'order' => 20],
     'media' => ['label' => __('nav.media'), 'icon' => 'images', 'order' => 30],
     'marketing' => ['label' => __('nav.marketing'), 'icon' => 'megaphone', 'order' => 50],
+    'features' => ['label' => 'Fonctionnalites', 'icon' => 'sparkles', 'order' => 75],
 ];
 
 if (!class_exists('CoreSettingsEngine')) {
@@ -164,7 +172,7 @@ if (is_string($adminModulesDir) && is_dir($adminModulesDir)) {
             continue;
         }
 
-        $items = $manifest['admin_sidebar'] ?? $manifest['sidebar'] ?? [];
+        $items = $manifest['admin_sidebar'] ?? $manifest['sidebar'] ?? $manifest['sidebar_entries'] ?? [];
         if (!is_array($items)) {
             continue;
         }
@@ -180,11 +188,11 @@ if (is_string($adminModulesDir) && is_dir($adminModulesDir)) {
             }
 
             $group = strtolower(trim((string) ($item['group'] ?? 'modules')));
-            $allowedGroups = ['content', 'media', 'organization', 'marketing', 'system', 'modules', 'settings'];
+            $allowedGroups = ['content', 'media', 'organization', 'marketing', 'system', 'modules', 'features', 'settings'];
             if (!in_array($group, $allowedGroups, true)) {
                 $group = 'modules';
             }
-            $href = trim((string) ($item['href'] ?? ''));
+            $href = trim((string) ($item['href'] ?? ($item['route'] ?? '')));
             if ($href === '') {
                 $href = '#';
             } elseif ($href[0] !== '/') {
@@ -375,6 +383,7 @@ $sidebarIconSvg = static function (string $name): string {
         'diagram-3' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="6" height="6" rx="1"/><rect x="15" y="3" width="6" height="6" rx="1"/><rect x="9" y="15" width="6" height="6" rx="1"/><path d="M6 9v3a3 3 0 0 0 3 3h3"/><path d="M18 9v3a3 3 0 0 1-3 3h-3"/></svg>',
         'megaphone' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11v2a2 2 0 0 0 2 2h1l2 4h3l-1.5-4H14l6-4V7l-6-4H8L5 5H3a2 2 0 0 0-2 2v2"/><path d="M14 5v14"/></svg>',
         'puzzle' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 3h4a2 2 0 0 1 2 2v1h1a2 2 0 1 0 0-4h2a2 2 0 0 1 2 2v4h-1a2 2 0 1 0 4 0v2a2 2 0 0 1-2 2h-4v-1a2 2 0 1 0 0 4v1a2 2 0 0 1-2 2h-4v-1a2 2 0 1 0-4 0H5a2 2 0 0 1-2-2v-4h1a2 2 0 1 0 0-4H3V5a2 2 0 0 1 2-2h2z"/></svg>',
+        'sparkles' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.7 4.3L18 9l-4.3 1.7L12 15l-1.7-4.3L6 9l4.3-1.7L12 3z"/><path d="M5 16l.8 2L8 19l-2.2.8L5 22l-.8-2.2L2 19l2.2-1 .8-2z"/><path d="M19 14l.8 2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-1 .8-2z"/></svg>',
         'speedometer2', 'chart' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 14a8 8 0 1 1 16 0"/><path d="m12 14 4-4"/><path d="M6 18h12"/></svg>',
         'gear', 'cog' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 0 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.2a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 0 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.2a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 0 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h.1a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.2a1.7 1.7 0 0 0 1 1.5h.1a1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 0 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v.1a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.2a1.7 1.7 0 0 0-1.5 1z"/></svg>',
         default => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/></svg>',

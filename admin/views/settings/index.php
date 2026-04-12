@@ -9,7 +9,7 @@ $apps = isset($apps) && is_array($apps) ? $apps : [];
 $repositories = isset($repositories) && is_array($repositories) ? $repositories : [];
 $policy = isset($policy) && is_array($policy) ? $policy : [];
 $section = strtolower(trim((string) ($section ?? 'general')));
-$message = trim((string) ($message ?? ''));
+$message = '';
 $messageType = trim((string) ($messageType ?? 'success'));
 
 $sections = [
@@ -64,13 +64,6 @@ ob_start();
     </div>
 
     <div class="col-12 col-lg-9">
-        <?php
-        // Hide flash messages after auto-save replaces them
-        if (isset($messageType) && $messageType && (string) $message && strpos((string) $message, 'Paramètre') !== false) {
-            // Mark as autosaved; don't display flash for settings pages
-            $message = '';
-        }
-        ?>
         <?php if ($message !== ''): ?>
             <div class="alert alert-<?= htmlspecialchars($messageType, ENT_QUOTES, 'UTF-8') ?>">
                 <?= htmlspecialchars($message, ENT_QUOTES, 'UTF-8') ?>
@@ -233,7 +226,7 @@ ob_start();
                                                 <label class="small text-body-secondary mb-0">ID</label>
                                                 <input
                                                     class="form-control form-control-sm"
-                                                    style="width: 44px; padding: 2px 4px; height: 28px; font-size: 0.8rem; line-height: 1;"
+                                                    style="width: 40px; padding: 1px 3px; height: 24px; font-size: 0.75rem; line-height: 1;"
                                                     type="text"
                                                     inputmode="numeric"
                                                     pattern="[0-9]*"
