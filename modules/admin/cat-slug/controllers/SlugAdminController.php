@@ -61,7 +61,7 @@ final class SlugAdminController
         $manualSlug = trim((string) $request->input('manual_slug', ''));
 
         $result = $this->service->generateAndReserve($entityType, $entityId, $sourceText, $scopeKey, $manualSlug === '' ? null : $manualSlug);
-        return $this->redirect('/slug-bridge', [
+        return $this->redirect('/modules/slug-bridge', [
             'msg' => (string) ($result['message'] ?? 'Execution terminee'),
             'mt' => ($result['ok'] ?? false) ? 'success' : 'danger',
             'suggested' => (string) ($result['slug'] ?? ''),
@@ -78,7 +78,7 @@ final class SlugAdminController
         $scopeKey = trim((string) $request->input('scope_key', 'global'));
         $result = $this->service->validateInScope($slug, $scopeKey, null);
 
-        return $this->redirect('/slug-bridge', [
+        return $this->redirect('/modules/slug-bridge', [
             'msg' => ($result['available'] ?? false)
                 ? (string) ($this->tr['slug_available'] ?? 'Slug disponible')
                 : ((string) ($this->tr['slug_unavailable'] ?? 'Slug indisponible') . ': ' . (string) ($result['reason'] ?? '')),

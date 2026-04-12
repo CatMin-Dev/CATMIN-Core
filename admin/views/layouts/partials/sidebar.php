@@ -61,7 +61,7 @@ $groupMeta = [
     'content' => ['label' => __('nav.content'), 'icon' => 'file-earmark-text', 'order' => 20],
     'media' => ['label' => __('nav.media'), 'icon' => 'images', 'order' => 30],
     'marketing' => ['label' => __('nav.marketing'), 'icon' => 'megaphone', 'order' => 50],
-    'features' => ['label' => 'Fonctionnalites', 'icon' => 'sparkles', 'order' => 75],
+    'features' => ['label' => 'Fonctionnalités', 'icon' => 'sparkles', 'order' => 75],
 ];
 
 if (!class_exists('CoreSettingsEngine')) {
@@ -126,6 +126,32 @@ $hasAnyPermission = static function (array $required) use ($isSuperAdmin, $roleP
     return false;
 };
 
+$sidebarLocale = function_exists('catmin_locale')
+    ? strtolower((string) catmin_locale())
+    : strtolower((string) config('app.locale', 'fr'));
+if (!in_array($sidebarLocale, ['fr', 'en'], true)) {
+    $sidebarLocale = 'fr';
+}
+
+$resolveSidebarLabel = static function (array $item, string $fallback, string $locale): string {
+    $labelI18n = $item['label_i18n'] ?? null;
+    if (is_array($labelI18n)) {
+        $localized = trim((string) ($labelI18n[$locale] ?? ''));
+        if ($localized !== '') {
+            return $localized;
+        }
+    }
+
+    $localizedKey = 'label_' . $locale;
+    $localized = trim((string) ($item[$localizedKey] ?? ''));
+    if ($localized !== '') {
+        return $localized;
+    }
+
+    $label = trim((string) ($item['label'] ?? ''));
+    return $label !== '' ? $label : $fallback;
+};
+
 $moduleNavEntries = [];
 $adminModulesDir = defined('CATMIN_MODULES') ? CATMIN_MODULES . '/admin' : null;
 $moduleStateBySlug = [];
@@ -175,7 +201,7 @@ if (is_string($adminModulesDir) && is_dir($adminModulesDir)) {
                 continue;
             }
 
-            $label = trim((string) ($item['label'] ?? ''));
+            $label = $resolveSidebarLabel($item, '', $sidebarLocale);
             if ($label === '') {
                 continue;
             }

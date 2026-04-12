@@ -18,19 +18,19 @@ $controller = new SlugAdminController();
 return [
     [
         'method' => 'GET',
-        'path' => '/slug-bridge',
+        'path' => '/modules/slug-bridge',
         'handler' => static fn (Request $request) => $controller->index($request),
         'middleware' => ['auth.admin'],
     ],
     [
         'method' => 'POST',
-        'path' => '/slug-bridge/generate',
+        'path' => '/modules/slug-bridge/generate',
         'handler' => static fn (Request $request) => $controller->generate($request),
         'middleware' => ['auth.admin', 'csrf.verify'],
     ],
     [
         'method' => 'POST',
-        'path' => '/slug-bridge/validate',
+        'path' => '/modules/slug-bridge/validate',
         'handler' => static fn (Request $request) => $controller->validate($request),
         'middleware' => ['auth.admin', 'csrf.verify'],
     ],

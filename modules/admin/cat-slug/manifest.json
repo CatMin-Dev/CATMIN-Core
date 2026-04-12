@@ -4,7 +4,7 @@
   "display_name": "CAT Slug Bridge",
   "slug": "cat-slug",
   "type": "admin",
-  "version": "1.0.0-dev.3",
+  "version": "1.0.0-dev.4",
   "description": "Bridge centralise de generation, normalisation et reservation des slugs.",
   "summary": "Slug service unique reutilisable par PAGE, BLOG, DIRECTORY et futurs modules.",
   "author": "CATMIN",
@@ -51,17 +51,26 @@
       "group": "features",
       "key": "cat-slug.registry",
       "label": "Registre des slugs",
-      "href": "slug-bridge",
-      "order": 220
+      "label_i18n": {
+        "fr": "Registre des slugs",
+        "en": "Slug Registry"
+      },
+      "href": "modules/slug-bridge",
+      "order": 220,
+      "permissions": ["slug.read"]
     }
   ],
   "sidebar_entries": [
     {
-      "group": "modules",
+      "group": "features",
       "key": "cat-slug.registry",
       "label": "Registre des slugs",
+      "label_i18n": {
+        "fr": "Registre des slugs",
+        "en": "Slug Registry"
+      },
       "icon": "link-45deg",
-      "route": "/slug-bridge",
+      "route": "/modules/slug-bridge",
       "order": 220,
       "visibility": "default",
       "permissions": ["slug.read"]

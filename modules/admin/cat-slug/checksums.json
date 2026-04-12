@@ -2,27 +2,27 @@
     "schema_version": "1.0.0",
     "algorithm": "sha256",
     "module_slug": "cat-slug",
-    "module_version": "1.0.0-dev.3",
-    "generated_at": "2026-04-12T21:40:55+00:00",
+    "module_version": "1.0.0-dev.4",
+    "generated_at": "2026-04-12T21:48:00+00:00",
     "files": {
         "CHANGELOG.md": "7b7a6f4f2a5e6e6ccf746705e355b7b9705ffc7222f8a88325fc340adc2d06ff",
         "README.md": "5aeca657b69e0570ac98e484ad05824c8063de11cfac56164986f168b3db6715",
-        "bridge.contract.json": "6e545cbe48e79aaf6cf0f0b1b6abc7b74b89d377a38d7103a12ecad8f620e83a",
-        "controllers/SlugAdminController.php": "5c414861919d01d301dbe786d6985969d9d4c1fc9e1d840b9b14436d794f0690",
+        "bridge.contract.json": "f954799369824221cad6433a0a922cc561ff6d88676f3e577760d932e0c291a0",
+        "controllers/SlugAdminController.php": "663a484fd8079229cc3dded8c591381f690d2b993ce44e301358061a4cf0c307",
         "hooks.php": "2bbeb3cddcc6c8d37eeef29466b7b410437d9deeb43938a990e602c61ec5c555",
         "lang/en/module.php": "ded312ac87b9cf3fd065e2a49fb8fa2dbc15e1ed56318c519c514937e0f6a094",
         "lang/fr/module.php": "8775e262ee4844b787787759410832020a8f6ad75915e11e39e48fa1a23d14fe",
-        "manifest.json": "8de85a9c6474a93eaf2853668a9e415ce78c8fe6837ff548a88afca889ba0775",
+        "manifest.json": "a6e7868e0e272bc1548889d610322de97ebe1e78092004abcd4f8cc54699d6d3",
         "migrations/001_create_mod_cat_slug_registry.php": "2726d8fa237f9899cf84890246030f005dc74a5cd87e18d56e7aaf63eaf580fb",
         "permissions.php": "1059603d3a6fdf8ff4015839e17c791b084425b0eb51316ccc875a5fd0cebcbe",
         "repositories/SlugRegistryRepository.php": "791b53061e6662aefc009021176b17740df81fc1198dd465a7683ccb176eeb6a",
-        "routes.php": "76fffe5e223424bfd81f5fdd2cfb9f66dcf792d5370ec38a06b54d0ac5e62da3",
+        "routes.php": "431f49bd5aea0543d383edac5494479c78e9da25d6e8d485f0fd9d791f196cb9",
         "services/SlugCollisionService.php": "39395dc92f50541062a972b65f113a802d46693d0f373ba44dbdc53269ec3a4a",
         "services/SlugGeneratorService.php": "427faf7335e77838153fe7da64397d2dcdc169a448fb5a53526d73bf18e6dc12",
         "services/SlugNormalizerService.php": "36bb20da65e59d1d70092bd387acbb46c7eecaae37802dc500126e3ed943e3db",
         "services/SlugRegistryService.php": "a5f70ff8ba827322dc1c8ec370e7ddbed6c3a9050d8ba10f07eb59846d820b54",
         "services/SlugValidationService.php": "bfa3fd9de6ca40bf13ce5882a8fca3fc62d15d75de7fc30eb2d3331d4ac6f092",
-        "views/index.php": "054ba94612609b43f021aeb30e99bee76c6bf60a8c02a7ff7b79ba54828a6caf"
+        "views/index.php": "6aa948825db028f80d2bf666418c3848ba06e3553210b96c347cebfded8384a6"
     },
-    "module_hash": "0af84c53a18bd6c931bbe2165631efba35e21cf27da1f6298989849e82928b09"
+    "module_hash": "cf964021729b39f394c7e422cd33a95455720594ad556e49c298a7b5406233cb"
 }

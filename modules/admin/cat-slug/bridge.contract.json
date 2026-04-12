@@ -67,19 +67,19 @@
   "routes": [
     {
       "method": "GET",
-      "path": "/slug-bridge",
+      "path": "/modules/slug-bridge",
       "permission": "slug.read",
       "description": "Page admin registry des slugs"
     },
     {
       "method": "POST",
-      "path": "/slug-bridge/generate",
+      "path": "/modules/slug-bridge/generate",
       "permission": "slug.write",
       "description": "Generer et reserver un slug"
     },
     {
       "method": "POST",
-      "path": "/slug-bridge/validate",
+      "path": "/modules/slug-bridge/validate",
       "permission": "slug.read",
       "description": "Valider un slug dans un scope"
     }

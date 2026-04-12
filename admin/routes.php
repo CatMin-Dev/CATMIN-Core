@@ -1185,7 +1185,7 @@ return [
             $stats = (array) ($scan['stats'] ?? []);
 
             $search = strtolower(trim((string) $request->input('q', '')));
-            $status = strtolower(trim((string) $request->input('status', 'issues')));
+            $status = strtolower(trim((string) $request->input('status', 'all')));
             $scope = strtolower(trim((string) $request->input('scope', 'all')));
 
             $scopes = array_values(array_unique(array_map(static fn (array $r): string => (string) ($r['scope'] ?? ''), $rows)));
@@ -1390,7 +1390,7 @@ return [
                 'organization' => ['label' => __('nav.organization'), 'icon' => 'diagram-3', 'order' => 40],
                 'system' => ['label' => __('nav.system'), 'icon' => 'speedometer2', 'order' => 60],
                 'modules' => ['label' => __('nav.modules'), 'icon' => 'puzzle', 'order' => 70],
-                'features' => ['label' => 'Fonctionnalites', 'icon' => 'sparkles', 'order' => 75],
+                'features' => ['label' => 'Fonctionnalités', 'icon' => 'sparkles', 'order' => 75],
                 'settings' => ['label' => __('nav.settings'), 'icon' => 'gear', 'order' => 80],
                 'content' => ['label' => __('nav.content'), 'icon' => 'file-earmark-text', 'order' => 20],
                 'media' => ['label' => __('nav.media'), 'icon' => 'images', 'order' => 30],
@@ -1402,6 +1402,31 @@ return [
             $sidebarItemOrderRaw = (string) (($settings['ui']['sidebar_item_order'] ?? '') ?: '');
             $sidebarItemOrder = array_values(array_filter(array_map('trim', explode(',', $sidebarItemOrderRaw)), static fn (string $value): bool => $value !== ''));
             $sidebarOrderIds = (array) (($settings['ui']['sidebar_order_ids'] ?? []) ?: []);
+            $sidebarLocale = function_exists('catmin_locale')
+                ? strtolower((string) catmin_locale())
+                : strtolower((string) config('app.locale', 'fr'));
+            if (!in_array($sidebarLocale, ['fr', 'en'], true)) {
+                $sidebarLocale = 'fr';
+            }
+
+            $resolveSidebarLabel = static function (array $item, string $fallback, string $locale): string {
+                $labelI18n = $item['label_i18n'] ?? null;
+                if (is_array($labelI18n)) {
+                    $localized = trim((string) ($labelI18n[$locale] ?? ''));
+                    if ($localized !== '') {
+                        return $localized;
+                    }
+                }
+
+                $localizedKey = 'label_' . $locale;
+                $localized = trim((string) ($item[$localizedKey] ?? ''));
+                if ($localized !== '') {
+                    return $localized;
+                }
+
+                $label = trim((string) ($item['label'] ?? ''));
+                return $label !== '' ? $label : $fallback;
+            };
 
             $loader = new CoreModuleLoader();
             $snapshot = $loader->scan();
@@ -1464,7 +1489,7 @@ return [
                     $sidebarEntries[] = [
                         'key' => $compound,
                         'group' => $groupKey,
-                        'label' => (string) ($item['label'] ?? $entryKey),
+                        'label' => $resolveSidebarLabel($item, $entryKey, $sidebarLocale),
                         'source' => 'module',
                         'active' => $isActive,
                         'order' => (int) ($item['order'] ?? 100),

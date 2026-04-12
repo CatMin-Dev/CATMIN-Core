@@ -14,7 +14,7 @@ $csrf = htmlspecialchars((new CsrfManager())->token(), ENT_QUOTES, 'UTF-8');
 
 $pageTitle = (string) ($tr['title'] ?? 'Slug Registry');
 $pageDescription = (string) ($tr['description'] ?? 'Central slug registry');
-$activeNav = 'slug-bridge';
+$activeNav = 'cat-slug.registry';
 $breadcrumbs = [
     ['label' => __('common.admin'), 'href' => $adminBase . '/'],
     ['label' => __('nav.modules')],
@@ -29,7 +29,7 @@ ob_start();
 
 <section class="card mb-3"><div class="card-body">
     <h2 class="h5 mb-2"><?= htmlspecialchars((string) ($tr['generate_title'] ?? 'Generate and reserve a slug'), ENT_QUOTES, 'UTF-8') ?></h2>
-    <form method="post" action="<?= htmlspecialchars($adminBase . '/slug-bridge/generate', ENT_QUOTES, 'UTF-8') ?>" class="row g-2">
+    <form method="post" action="<?= htmlspecialchars($adminBase . '/modules/slug-bridge/generate', ENT_QUOTES, 'UTF-8') ?>" class="row g-2">
         <input type="hidden" name="_csrf" value="<?= $csrf ?>">
         <div class="col-12 col-md-3"><label class="form-label"><?= htmlspecialchars((string) ($tr['entity_type'] ?? 'Entity type'), ENT_QUOTES, 'UTF-8') ?></label><input class="form-control" name="entity_type" placeholder="page" required></div>
         <div class="col-12 col-md-2"><label class="form-label"><?= htmlspecialchars((string) ($tr['entity_id'] ?? 'Entity ID'), ENT_QUOTES, 'UTF-8') ?></label><input class="form-control" type="number" min="1" name="entity_id" required></div>
@@ -43,7 +43,7 @@ ob_start();
 
 <section class="card mb-3"><div class="card-body">
     <h2 class="h6 mb-2"><?= htmlspecialchars((string) ($tr['validate_title'] ?? 'Validate a slug'), ENT_QUOTES, 'UTF-8') ?></h2>
-    <form method="post" action="<?= htmlspecialchars($adminBase . '/slug-bridge/validate', ENT_QUOTES, 'UTF-8') ?>" class="row g-2 align-items-end">
+    <form method="post" action="<?= htmlspecialchars($adminBase . '/modules/slug-bridge/validate', ENT_QUOTES, 'UTF-8') ?>" class="row g-2 align-items-end">
         <input type="hidden" name="_csrf" value="<?= $csrf ?>">
         <div class="col-12 col-md-5"><label class="form-label">Slug</label><input class="form-control" name="slug" placeholder="mon-slug" required></div>
         <div class="col-12 col-md-4"><label class="form-label"><?= htmlspecialchars((string) ($tr['scope'] ?? 'Scope'), ENT_QUOTES, 'UTF-8') ?></label><input class="form-control" name="scope_key" value="global"></div>
