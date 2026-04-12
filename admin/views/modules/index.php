@@ -133,7 +133,7 @@ ob_start();
                 <th><?= htmlspecialchars(__('common.module'), ENT_QUOTES, 'UTF-8') ?></th>
                 <th><?= htmlspecialchars(__('common.version'), ENT_QUOTES, 'UTF-8') ?></th>
                 <th><?= htmlspecialchars(__('modules.table.dependencies'), ENT_QUOTES, 'UTF-8') ?></th>
-                <th>Capabilities</th>
+                <th><?= htmlspecialchars(__('modules.table.capabilities'), ENT_QUOTES, 'UTF-8') ?></th>
                 <th><?= htmlspecialchars(__('modules.table.integrity'), ENT_QUOTES, 'UTF-8') ?></th>
                 <th><?= htmlspecialchars(__('modules.table.signature'), ENT_QUOTES, 'UTF-8') ?></th>
                 <th><?= htmlspecialchars(__('modules.table.trust'), ENT_QUOTES, 'UTF-8') ?></th>
@@ -157,25 +157,50 @@ ob_start();
                     $enabled = (bool) ($row['enabled'] ?? false);
                     $errors = (array) ($row['errors'] ?? []);
                     $dependencies = (array) ($row['dependencies'] ?? []);
+                    $dependencyDetails = is_array($row['dependency_details'] ?? null) ? $row['dependency_details'] : [];
+                    $dependencyBlocking = (bool) ($row['dependency_blocking'] ?? false);
+                    $missingDependencies = is_array($row['missing_dependencies'] ?? null) ? $row['missing_dependencies'] : [];
                     $integrityStatus = strtolower((string) ($row['integrity_status'] ?? 'unknown'));
                     $signatureStatus = strtolower((string) ($row['signature_status'] ?? 'unknown'));
                     $trusted = (bool) ($row['trusted'] ?? false);
                     $keyScope = strtolower((string) ($row['key_scope'] ?? 'unknown'));
                     $keyStatus = strtolower((string) ($row['key_status'] ?? 'unknown'));
+                    $dbVersion = isset($row['db_version']) ? (string) $row['db_version'] : null;
+                    $needsUpdate = (bool) ($row['needs_update'] ?? false);
                     ?>
                     <tr>
                         <td>
                             <p class="mb-0 fw-semibold"><?= htmlspecialchars($name, ENT_QUOTES, 'UTF-8') ?></p>
                             <small class="text-body-secondary"><?= htmlspecialchars($scope . '/' . $slug, ENT_QUOTES, 'UTF-8') ?></small>
                         </td>
-                        <td><span class="badge text-bg-light border"><?= htmlspecialchars($version, ENT_QUOTES, 'UTF-8') ?></span></td>
+                        <td>
+                            <span class="badge text-bg-light border"><?= htmlspecialchars($version, ENT_QUOTES, 'UTF-8') ?></span>
+                            <?php if ($needsUpdate && $dbVersion !== null): ?>
+                                <div class="small text-warning-emphasis mt-1">DB: <?= htmlspecialchars($dbVersion, ENT_QUOTES, 'UTF-8') ?></div>
+                            <?php endif; ?>
+                        </td>
                         <td>
                             <?php if ($dependencies === []): ?>
                                 <small class="text-body-secondary"><?= htmlspecialchars(__('common.none_feminine'), ENT_QUOTES, 'UTF-8') ?></small>
                             <?php else: ?>
                                 <div class="d-flex flex-wrap gap-1">
-                                    <?php foreach ($dependencies as $dep): ?>
-                                        <span class="badge text-bg-secondary"><?= htmlspecialchars((string) $dep, ENT_QUOTES, 'UTF-8') ?></span>
+                                    <?php foreach ($dependencyDetails as $depState): ?>
+                                        <?php
+                                        $depSlug = (string) ($depState['slug'] ?? '');
+                                        $depStatus = strtolower((string) ($depState['status'] ?? 'unknown'));
+                                        $depBadgeClass = match ($depStatus) {
+                                            'ok' => 'text-bg-success',
+                                            'inactive', 'missing' => 'text-bg-danger',
+                                            default => 'text-bg-secondary',
+                                        };
+                                        $depStatusLabel = match ($depStatus) {
+                                            'ok' => __('modules.dependencies.status.ok'),
+                                            'inactive' => __('modules.dependencies.status.inactive'),
+                                            'missing' => __('modules.dependencies.status.missing'),
+                                            default => __('modules.dependencies.status.unknown'),
+                                        };
+                                        ?>
+                                        <span class="badge <?= $depBadgeClass ?>"><?= htmlspecialchars($depSlug . ' · ' . $depStatusLabel, ENT_QUOTES, 'UTF-8') ?></span>
                                     <?php endforeach; ?>
                                 </div>
                             <?php endif; ?>
@@ -203,8 +228,16 @@ ob_start();
                                 'missing_checksums', 'unsupported_schema' => 'text-bg-warning',
                                 default => 'text-bg-secondary',
                             };
+                            $integrityLabel = match ($integrityStatus) {
+                                'valid' => __('modules.integrity.valid'),
+                                'tampered' => __('modules.integrity.tampered'),
+                                'invalid' => __('modules.integrity.invalid'),
+                                'missing_checksums' => __('modules.integrity.missing_checksums'),
+                                'unsupported_schema' => __('modules.integrity.unsupported_schema'),
+                                default => __('modules.integrity.unknown'),
+                            };
                             ?>
-                            <span class="badge <?= $integrityBadge ?>"><?= htmlspecialchars($integrityStatus !== '' ? $integrityStatus : '-', ENT_QUOTES, 'UTF-8') ?></span>
+                            <span class="badge <?= $integrityBadge ?>"><?= htmlspecialchars($integrityLabel, ENT_QUOTES, 'UTF-8') ?></span>
                         </td>
                         <td>
                             <?php
@@ -215,10 +248,34 @@ ob_start();
                                 'unsigned' => 'text-bg-secondary',
                                 default => 'text-bg-danger',
                             };
+                            $signatureLabel = match ($signatureStatus) {
+                                'signed_valid' => __('modules.signature.signed_valid'),
+                                'unsigned' => __('modules.signature.unsigned'),
+                                'unknown_key' => __('modules.signature.unknown_key'),
+                                'revoked_key' => __('modules.signature.revoked_key'),
+                                default => __('modules.signature.invalid'),
+                            };
                             ?>
-                            <span class="badge <?= $signatureBadge ?>"><?= htmlspecialchars($signatureStatus !== '' ? $signatureStatus : '-', ENT_QUOTES, 'UTF-8') ?></span>
+                            <span class="badge <?= $signatureBadge ?>"><?= htmlspecialchars($signatureLabel, ENT_QUOTES, 'UTF-8') ?></span>
                             <?php if ($signatureStatus === 'signed_valid'): ?>
-                                <div class="small text-body-secondary mt-1"><?= htmlspecialchars('scope: ' . $keyScope . ' · status: ' . $keyStatus, ENT_QUOTES, 'UTF-8') ?></div>
+                                <?php
+                                $scopeLabel = match ($keyScope) {
+                                    'official' => __('modules.signature.scope.official'),
+                                    'trusted' => __('modules.signature.scope.trusted'),
+                                    'local_only' => __('modules.signature.scope.local_only'),
+                                    default => __('modules.signature.scope.unknown'),
+                                };
+                                $keyStatusLabel = match ($keyStatus) {
+                                    'active' => __('modules.signature.key_status.active'),
+                                    'deprecated' => __('modules.signature.key_status.deprecated'),
+                                    'revoked' => __('modules.signature.key_status.revoked'),
+                                    default => __('modules.signature.key_status.unknown'),
+                                };
+                                ?>
+                                <div class="d-flex flex-wrap gap-1 mt-1">
+                                    <span class="badge text-bg-light border"><?= htmlspecialchars(__('modules.signature.scope_prefix') . ' ' . $scopeLabel, ENT_QUOTES, 'UTF-8') ?></span>
+                                    <span class="badge text-bg-light border"><?= htmlspecialchars(__('modules.signature.status_prefix') . ' ' . $keyStatusLabel, ENT_QUOTES, 'UTF-8') ?></span>
+                                </div>
                             <?php endif; ?>
                         </td>
                         <td>
@@ -258,6 +315,29 @@ ob_start();
                                 <?php endif; ?>
                             <?php else: ?>
                                 <div class="d-inline-flex flex-wrap justify-content-end gap-1">
+                                    <?php if ($needsUpdate): ?>
+                                        <form method="post" action="<?= htmlspecialchars($adminBase . '/modules/update', ENT_QUOTES, 'UTF-8') ?>" class="d-inline">
+                                            <input type="hidden" name="_csrf" value="<?= $csrf ?>">
+                                            <input type="hidden" name="scope" value="<?= htmlspecialchars($scope, ENT_QUOTES, 'UTF-8') ?>">
+                                            <input type="hidden" name="slug" value="<?= htmlspecialchars($slug, ENT_QUOTES, 'UTF-8') ?>">
+                                            <input type="hidden" name="return_to" value="<?= $isStatusView ? 'status' : 'manager' ?>">
+                                            <button class="btn btn-sm btn-warning" type="submit">
+                                                ↑ Mettre à jour
+                                            </button>
+                                        </form>
+                                    <?php endif; ?>
+                                    <?php if ($dependencyBlocking): ?>
+                                        <form method="post" action="<?= htmlspecialchars($adminBase . '/modules/dependencies/resolve', ENT_QUOTES, 'UTF-8') ?>" class="d-inline">
+                                            <input type="hidden" name="_csrf" value="<?= $csrf ?>">
+                                            <input type="hidden" name="scope" value="<?= htmlspecialchars($scope, ENT_QUOTES, 'UTF-8') ?>">
+                                            <input type="hidden" name="slug" value="<?= htmlspecialchars($slug, ENT_QUOTES, 'UTF-8') ?>">
+                                            <input type="hidden" name="activate_target" value="1">
+                                            <input type="hidden" name="return_to" value="<?= $isStatusView ? 'status' : 'manager' ?>">
+                                            <button class="btn btn-sm btn-danger" type="submit">
+                                                <?= htmlspecialchars(__('modules.action.install_enable_dependencies'), ENT_QUOTES, 'UTF-8') ?>
+                                            </button>
+                                        </form>
+                                    <?php endif; ?>
                                     <form method="post" action="<?= htmlspecialchars($adminBase . '/modules/toggle', ENT_QUOTES, 'UTF-8') ?>" class="d-inline">
                                         <input type="hidden" name="_csrf" value="<?= $csrf ?>">
                                         <input type="hidden" name="scope" value="<?= htmlspecialchars($scope, ENT_QUOTES, 'UTF-8') ?>">
@@ -279,6 +359,22 @@ ob_start();
                             <?php endif; ?>
                         </td>
                     </tr>
+                    <?php if ($dependencyBlocking && $enabled): ?>
+                        <?php $missingCount = count($missingDependencies); ?>
+                        <tr>
+                            <td colspan="10" class="bg-danger-subtle border-top-0">
+                                <div class="d-flex flex-wrap align-items-center gap-2 py-2">
+                                    <span class="badge text-bg-danger"><?= htmlspecialchars(__('modules.dependencies.overlay.badge'), ENT_QUOTES, 'UTF-8') ?></span>
+                                    <span class="fw-semibold">
+                                        <?= htmlspecialchars($missingCount > 1 ? __('modules.dependencies.overlay.message_many') : __('modules.dependencies.overlay.message_one'), ENT_QUOTES, 'UTF-8') ?>
+                                    </span>
+                                    <span class="text-body-secondary">
+                                        <?= htmlspecialchars(implode(', ', $missingDependencies), ENT_QUOTES, 'UTF-8') ?>
+                                    </span>
+                                </div>
+                            </td>
+                        </tr>
+                    <?php endif; ?>
                 <?php endforeach; ?>
             <?php endif; ?>
             </tbody>

@@ -15,6 +15,8 @@ use Core\versioning\Version;
 require_once CATMIN_CORE . '/module-loader.php';
 require_once CATMIN_CORE . '/module-activator.php';
 require_once CATMIN_CORE . '/module-integrity-scanner.php';
+require_once CATMIN_CORE . '/module-state-store.php';
+require_once CATMIN_CORE . '/module-updater.php';
 require_once CATMIN_CORE . '/settings-engine.php';
 require_once CATMIN_CORE . '/i18n-engine.php';
 require_once CATMIN_CORE . '/notifications-bridge.php';
@@ -203,6 +205,7 @@ $scanModules = static function (): array {
     $snapshot = $loader->scan();
     $integrityReport = (new CoreModuleIntegrityScanner())->scanAll(false);
     $integrityBySlug = [];
+    $dbStateBySlug = (new CoreModuleStateStore())->stateBySlug();
     foreach ((array) ($integrityReport['modules'] ?? []) as $integrityRow) {
         $integritySlug = strtolower(trim((string) ($integrityRow['slug'] ?? '')));
         if ($integritySlug !== '') {
@@ -232,6 +235,8 @@ $scanModules = static function (): array {
             'slug' => $slug !== '' ? $slug : 'unknown',
             'name' => (string) ($manifest['name'] ?? ucfirst($slug)),
             'version' => (string) ($manifest['version'] ?? '-'),
+            'db_version' => isset($dbStateBySlug[$slug]) ? (string) ($dbStateBySlug[$slug]['version'] ?? '') : null,
+            'needs_update' => isset($dbStateBySlug[$slug]) && ((string) ($dbStateBySlug[$slug]['version'] ?? '')) !== (string) ($manifest['version'] ?? ''),
             'enabled' => (bool) ($module['enabled'] ?? false),
             'dependencies' => $requires,
             'errors' => (array) ($module['errors'] ?? []),
@@ -1424,7 +1429,9 @@ return [
 
             $moduleEntrySeen = [];
             foreach ((array) ($snapshot['modules'] ?? []) as $module) {
-                if (!((bool) ($module['enabled'] ?? false))) {
+                // Show entries from all installed valid modules (not just active)
+                // so the user can pre-configure order before activation.
+                if (!((bool) ($module['valid'] ?? false))) {
                     continue;
                 }
                 $manifest = (array) ($module['manifest'] ?? []);
@@ -1432,6 +1439,7 @@ return [
                 if (!is_array($items)) {
                     continue;
                 }
+                $isActive = (bool) ($module['enabled'] ?? false);
                 foreach ($items as $item) {
                     if (!is_array($item)) {
                         continue;
@@ -1451,6 +1459,7 @@ return [
                         'group' => $groupKey,
                         'label' => (string) ($item['label'] ?? $entryKey),
                         'source' => 'module',
+                        'active' => $isActive,
                         'order' => (int) ($item['order'] ?? 100),
                     ];
                 }
@@ -2860,6 +2869,48 @@ return [
             return $redirect($adminBase . $path, [
                 'msg' => (string) ($result['message'] ?? 'Operation terminee'),
                 'mt' => $mt,
+            ]);
+        },
+        'middleware' => [$authRequired, $csrfCheck],
+    ],
+
+    [
+        'method' => 'POST',
+        'path' => '/modules/update',
+        'handler' => static function (Request $request) use ($redirect): Response {
+            $controller = new AuthController();
+            $adminBase = $controller->adminBasePath();
+
+            $scope = strtolower(trim((string) $request->input('scope', '')));
+            $slug = strtolower(trim((string) $request->input('slug', '')));
+            $returnTo = strtolower(trim((string) $request->input('return_to', 'manager')));
+
+            $result = (new CoreModuleUpdater())->update($scope, $slug);
+            $mt = (bool) ($result['ok'] ?? false) ? 'success' : 'danger';
+            $path = $returnTo === 'status' ? '/modules/status' : '/modules';
+
+            // Build a structured flash detail string embedded in the message.
+            $detail = '';
+            if ((bool) ($result['ok'] ?? false)) {
+                $from = (string) ($result['db_version_before'] ?? '?');
+                $to   = (string) ($result['manifest_version'] ?? '?');
+                $migrations = (array) ($result['migrations'] ?? []);
+                $detail .= ' (' . $from . ' → ' . $to . ')';
+                if ($migrations !== []) {
+                    $detail .= ' | migrations: ' . implode(', ', $migrations);
+                } else {
+                    $detail .= ' | aucune migration';
+                }
+            } else {
+                $errors = (array) ($result['errors'] ?? []);
+                if ($errors !== []) {
+                    $detail .= ' — ' . implode(' | ', $errors);
+                }
+            }
+
+            return $redirect($adminBase . $path, [
+                'msg' => (string) ($result['message'] ?? 'Mise à jour terminée') . $detail,
+                'mt'  => $mt,
             ]);
         },
         'middleware' => [$authRequired, $csrfCheck],
