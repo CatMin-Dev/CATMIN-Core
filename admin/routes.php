@@ -1396,8 +1396,13 @@ return [
                 'marketing' => ['label' => __('nav.marketing'), 'icon' => 'megaphone', 'order' => 50],
             ];
 
+            $sidebarOrderRaw = (string) (($settings['ui']['sidebar_order'] ?? '') ?: '');
+            $sidebarOrder = array_values(array_filter(array_map('trim', explode(',', $sidebarOrderRaw)), static fn (string $value): bool => $value !== ''));
+
+            $coreSidebarGroups = ['dashboard', 'organization', 'system', 'modules', 'settings'];
             $sidebarGroups = [];
-            foreach ($sidebarGroupMeta as $key => $meta) {
+            foreach ($coreSidebarGroups as $key) {
+                $meta = $sidebarGroupMeta[$key] ?? [];
                 $sidebarGroups[$key] = [
                     'key' => $key,
                     'label' => (string) ($meta['label'] ?? ucfirst($key)),
@@ -1410,6 +1415,9 @@ return [
             $loader = new CoreModuleLoader();
             $snapshot = $loader->scan();
             foreach ((array) ($snapshot['modules'] ?? []) as $module) {
+                if (!((bool) ($module['enabled'] ?? false))) {
+                    continue;
+                }
                 $manifest = (array) ($module['manifest'] ?? []);
                 $items = $manifest['admin_sidebar'] ?? $manifest['sidebar'] ?? [];
                 if (!is_array($items)) {
@@ -1437,8 +1445,20 @@ return [
                 }
             }
 
-            $sidebarOrderRaw = (string) (($settings['ui']['sidebar_order'] ?? '') ?: '');
-            $sidebarOrder = array_values(array_filter(array_map('trim', explode(',', $sidebarOrderRaw)), static fn (string $value): bool => $value !== ''));
+            // Preserve groups already saved in order settings, even if module is currently disabled.
+            foreach ($sidebarOrder as $groupKey) {
+                if ($groupKey === '' || isset($sidebarGroups[$groupKey])) {
+                    continue;
+                }
+                $meta = $sidebarGroupMeta[$groupKey] ?? null;
+                $sidebarGroups[$groupKey] = [
+                    'key' => $groupKey,
+                    'label' => $meta !== null ? (string) ($meta['label'] ?? ucfirst($groupKey)) : ucfirst($groupKey),
+                    'icon' => $meta !== null ? (string) ($meta['icon'] ?? 'chat') : 'chat',
+                    'order' => (int) ($meta['order'] ?? 99),
+                    'source' => 'module',
+                ];
+            }
 
             return View::make('settings.index', [
                 'adminBase' => $adminBase,
