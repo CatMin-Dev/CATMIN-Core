@@ -47,13 +47,6 @@ $navGroups = [
         ],
     ],
     [
-        'key' => 'features',
-        'label' => 'Fonctionnalites',
-        'icon' => 'sparkles',
-        'order' => 75,
-        'children' => [],
-    ],
-    [
         'key' => 'settings',
         'label' => __('nav.settings'),
         'icon' => 'gear',
@@ -188,8 +181,7 @@ if (is_string($adminModulesDir) && is_dir($adminModulesDir)) {
             }
 
             $group = strtolower(trim((string) ($item['group'] ?? 'modules')));
-            $allowedGroups = ['content', 'media', 'organization', 'marketing', 'system', 'modules', 'features', 'settings'];
-            if (!in_array($group, $allowedGroups, true)) {
+            if ($group === '') {
                 $group = 'modules';
             }
             $href = trim((string) ($item['href'] ?? ($item['route'] ?? '')));

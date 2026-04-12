@@ -9,7 +9,7 @@ $apps = isset($apps) && is_array($apps) ? $apps : [];
 $repositories = isset($repositories) && is_array($repositories) ? $repositories : [];
 $policy = isset($policy) && is_array($policy) ? $policy : [];
 $section = strtolower(trim((string) ($section ?? 'general')));
-$message = '';
+$message = trim((string) ($message ?? ''));
 $messageType = trim((string) ($messageType ?? 'success'));
 
 $sections = [
@@ -51,6 +51,7 @@ $sidebarItemOrder = isset($sidebarItemOrder) && is_array($sidebarItemOrder) ? $s
 $timezones = \DateTimeZone::listIdentifiers();
 
 ob_start();
+$inlineMessage = '';
 ?>
 <div class="row g-4">
     <div class="col-12 col-lg-3">
@@ -64,9 +65,9 @@ ob_start();
     </div>
 
     <div class="col-12 col-lg-9">
-        <?php if ($message !== ''): ?>
+        <?php if ($inlineMessage !== ''): ?>
             <div class="alert alert-<?= htmlspecialchars($messageType, ENT_QUOTES, 'UTF-8') ?>">
-                <?= htmlspecialchars($message, ENT_QUOTES, 'UTF-8') ?>
+                <?= htmlspecialchars($inlineMessage, ENT_QUOTES, 'UTF-8') ?>
             </div>
         <?php endif; ?>
 

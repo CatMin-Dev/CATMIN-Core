@@ -1472,7 +1472,7 @@ return [
                 }
             }
 
-            $coreSidebarGroups = ['dashboard', 'organization', 'system', 'modules', 'features', 'settings'];
+            $coreSidebarGroups = ['dashboard', 'organization', 'system', 'modules', 'settings'];
             $sidebarGroups = [];
             foreach ($coreSidebarGroups as $key) {
                 $meta = $sidebarGroupMeta[$key] ?? [];
