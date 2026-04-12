@@ -64,6 +64,13 @@ ob_start();
     </div>
 
     <div class="col-12 col-lg-9">
+        <?php
+        // Hide flash messages after auto-save replaces them
+        if (isset($messageType) && $messageType && (string) $message && strpos((string) $message, 'Paramètre') !== false) {
+            // Mark as autosaved; don't display flash for settings pages
+            $message = '';
+        }
+        ?>
         <?php if ($message !== ''): ?>
             <div class="alert alert-<?= htmlspecialchars($messageType, ENT_QUOTES, 'UTF-8') ?>">
                 <?= htmlspecialchars($message, ENT_QUOTES, 'UTF-8') ?>
@@ -225,8 +232,8 @@ ob_start();
                                             <span class="ms-auto d-flex align-items-center gap-2">
                                                 <label class="small text-body-secondary mb-0">ID</label>
                                                 <input
-                                                    class="form-control form-control-sm text-center"
-                                                    style="width: 44px; padding-inline: 2px;"
+                                                    class="form-control form-control-sm"
+                                                    style="width: 44px; padding: 2px 4px; height: 28px; font-size: 0.8rem; line-height: 1;"
                                                     type="text"
                                                     inputmode="numeric"
                                                     pattern="[0-9]*"
