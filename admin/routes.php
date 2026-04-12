@@ -1398,9 +1398,6 @@ return [
 
             $sidebarGroups = [];
             foreach ($sidebarGroupMeta as $key => $meta) {
-                if (in_array($key, ['content', 'media', 'marketing'], true)) {
-                    continue;
-                }
                 $sidebarGroups[$key] = [
                     'key' => $key,
                     'label' => (string) ($meta['label'] ?? ucfirst($key)),
