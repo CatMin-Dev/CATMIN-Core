@@ -1,5 +1,17 @@
 [
     {
+        "version": "0.4.0-rc.4",
+        "date": "2026-04-12",
+        "scope": "release",
+        "changes": [
+            "core lock validated and documented for RC.4",
+            "database baseline cleaned to native tables only (admin_*, core_*, front_users)",
+            "installer baseline verified on isolated database (native schema + seed complete)",
+            "version alignment fixed between version.json and database schema config"
+        ],
+        "prompt": "core-lock-native-db-reset"
+    },
+    {
         "version": "0.3.0-dev.25",
         "date": "2026-04-09",
         "scope": "docs",
