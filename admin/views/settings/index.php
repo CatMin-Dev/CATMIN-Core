@@ -45,6 +45,9 @@ $backup = (array) ($settings['backup'] ?? []);
 $system = (array) ($settings['system'] ?? []);
 $sidebarGroups = isset($sidebarGroups) && is_array($sidebarGroups) ? $sidebarGroups : [];
 $sidebarOrder = isset($sidebarOrder) && is_array($sidebarOrder) ? $sidebarOrder : [];
+$sidebarOrderIds = isset($sidebarOrderIds) && is_array($sidebarOrderIds) ? $sidebarOrderIds : [];
+$sidebarEntries = isset($sidebarEntries) && is_array($sidebarEntries) ? $sidebarEntries : [];
+$sidebarItemOrder = isset($sidebarItemOrder) && is_array($sidebarItemOrder) ? $sidebarItemOrder : [];
 $timezones = \DateTimeZone::listIdentifiers();
 
 ob_start();
@@ -204,19 +207,124 @@ ob_start();
                                 <div class="alert alert-light mb-2">
                                     <?= htmlspecialchars(__('settings.sidebar.order_placeholder'), ENT_QUOTES, 'UTF-8') ?>
                                 </div>
-                                <div class="list-group cat-sidebar-order" data-cat-sidebar-order>
+                                <div class="list-group cat-sidebar-order">
                                     <?php foreach ($sidebarGroups as $group): ?>
-                                        <div class="list-group-item d-flex align-items-center gap-2 cat-sidebar-order-item" draggable="true" data-cat-sidebar-item data-key="<?= htmlspecialchars((string) ($group['key'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
-                                            <span class="cat-sidebar-order-handle">⋮⋮</span>
+                                        <?php
+                                        $groupKey = (string) ($group['key'] ?? '');
+                                        $defaultId = ($groupKey === 'dashboard') ? 1 : max(2, (int) (($group['order'] ?? 99) * 10));
+                                        $positionId = (int) ($sidebarOrderIds[$groupKey] ?? $defaultId);
+                                        if ($groupKey === 'dashboard') {
+                                            $positionId = 1;
+                                        }
+                                        ?>
+                                        <div class="list-group-item d-flex align-items-center gap-2 cat-sidebar-order-item" data-key="<?= htmlspecialchars($groupKey, ENT_QUOTES, 'UTF-8') ?>">
                                             <span class="text-body-secondary text-uppercase small"><?= htmlspecialchars((string) ($group['label'] ?? ''), ENT_QUOTES, 'UTF-8') ?></span>
+                                            <span class="ms-auto d-flex align-items-center gap-2">
+                                                <label class="small text-body-secondary mb-0">ID</label>
+                                                <input
+                                                    class="form-control form-control-sm"
+                                                    style="width: 110px;"
+                                                    type="number"
+                                                    min="1"
+                                                    step="1"
+                                                    name="sidebar_order_ids[<?= htmlspecialchars($groupKey, ENT_QUOTES, 'UTF-8') ?>]"
+                                                    value="<?= $positionId ?>"
+                                                    <?= $groupKey === 'dashboard' ? 'readonly' : '' ?>
+                                                >
+                                            </span>
                                             <?php if (!empty($group['source']) && (string) $group['source'] === 'module'): ?>
-                                                <span class="badge text-bg-light ms-auto">module</span>
+                                                <span class="badge text-bg-light">module</span>
                                             <?php else: ?>
-                                                <span class="badge text-bg-dark ms-auto">core</span>
+                                                <span class="badge text-bg-dark"><?= $groupKey === 'dashboard' ? 'core+locked' : 'core' ?></span>
                                             <?php endif; ?>
                                         </div>
                                     <?php endforeach; ?>
                                 </div>
+
+                                <?php
+                                $entryOrderIndex = [];
+                                foreach ($sidebarItemOrder as $i => $entryKey) {
+                                    $entryOrderIndex[(string) $entryKey] = $i;
+                                }
+                                usort($sidebarEntries, static function (array $a, array $b) use ($entryOrderIndex): int {
+                                    $aKey = (string) ($a['key'] ?? '');
+                                    $bKey = (string) ($b['key'] ?? '');
+                                    $aHas = array_key_exists($aKey, $entryOrderIndex);
+                                    $bHas = array_key_exists($bKey, $entryOrderIndex);
+                                    if ($aHas && $bHas) {
+                                        return $entryOrderIndex[$aKey] <=> $entryOrderIndex[$bKey];
+                                    }
+                                    if ($aHas) {
+                                        return -1;
+                                    }
+                                    if ($bHas) {
+                                        return 1;
+                                    }
+                                    return (((int) ($a['order'] ?? 99)) <=> ((int) ($b['order'] ?? 99))) ?: strcmp((string) ($a['label'] ?? ''), (string) ($b['label'] ?? ''));
+                                });
+                                $sidebarItemOrderValue = implode(',', array_map(static fn (array $entry): string => (string) ($entry['key'] ?? ''), $sidebarEntries));
+                                ?>
+                                <input type="hidden" name="sidebar_item_order" value="<?= htmlspecialchars($sidebarItemOrderValue, ENT_QUOTES, 'UTF-8') ?>" data-cat-sidebar-item-order-input>
+                                <div class="alert alert-light mt-3 mb-2">
+                                    Réorganisation des sous-menus (entrées):
+                                </div>
+                                <?php
+                                $entriesByGroup = [];
+                                foreach ($sidebarEntries as $entry) {
+                                    $gk = (string) ($entry['group'] ?? 'modules');
+                                    if (!isset($entriesByGroup[$gk])) {
+                                        $entriesByGroup[$gk] = [];
+                                    }
+                                    $entriesByGroup[$gk][] = $entry;
+                                }
+                                foreach ($entriesByGroup as $gk => &$entries) {
+                                    usort($entries, static function (array $a, array $b) use ($entryOrderIndex): int {
+                                        $aKey = (string) ($a['key'] ?? '');
+                                        $bKey = (string) ($b['key'] ?? '');
+                                        $aHas = array_key_exists($aKey, $entryOrderIndex);
+                                        $bHas = array_key_exists($bKey, $entryOrderIndex);
+                                        if ($aHas && $bHas) {
+                                            return $entryOrderIndex[$aKey] <=> $entryOrderIndex[$bKey];
+                                        }
+                                        if ($aHas) {
+                                            return -1;
+                                        }
+                                        if ($bHas) {
+                                            return 1;
+                                        }
+                                        return (((int) ($a['order'] ?? 99)) <=> ((int) ($b['order'] ?? 99))) ?: strcmp((string) ($a['label'] ?? ''), (string) ($b['label'] ?? ''));
+                                    });
+                                }
+                                unset($entries);
+                                ?>
+                                <?php foreach ($sidebarGroups as $group): ?>
+                                    <?php
+                                    $groupKey = (string) ($group['key'] ?? '');
+                                    $groupEntries = $entriesByGroup[$groupKey] ?? [];
+                                    if ($groupEntries === []) {
+                                        continue;
+                                    }
+                                    ?>
+                                    <div class="card mt-2">
+                                        <div class="card-header py-2">
+                                            <span class="text-uppercase small text-body-secondary"><?= htmlspecialchars((string) ($group['label'] ?? $groupKey), ENT_QUOTES, 'UTF-8') ?></span>
+                                        </div>
+                                        <div class="list-group list-group-flush" data-cat-sidebar-item-order-group="<?= htmlspecialchars($groupKey, ENT_QUOTES, 'UTF-8') ?>">
+                                            <?php foreach ($groupEntries as $entry): ?>
+                                                <div class="list-group-item d-flex align-items-center gap-2 cat-sidebar-order-item" draggable="true" data-cat-sidebar-entry-item data-key="<?= htmlspecialchars((string) ($entry['key'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                                                    <span class="cat-sidebar-order-handle">⋮⋮</span>
+                                                    <span class="text-body-secondary">&nbsp;&nbsp;└</span>
+                                                    <span class="text-body-secondary"><?= htmlspecialchars((string) ($entry['label'] ?? ''), ENT_QUOTES, 'UTF-8') ?></span>
+                                                    <?php if (!empty($entry['source']) && (string) $entry['source'] === 'module'): ?>
+                                                        <span class="badge text-bg-light ms-auto">module</span>
+                                                    <?php else: ?>
+                                                        <span class="badge text-bg-dark ms-auto">core</span>
+                                                    <?php endif; ?>
+                                                </div>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
                             </div>
                         </div>
                     </div>

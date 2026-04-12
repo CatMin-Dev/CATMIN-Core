@@ -17,6 +17,8 @@ final class CoreSettingsSchema
             'ui.compact_sidebar' => ['group' => 'ui', 'type' => 'bool', 'default' => true, 'autoload' => true, 'protected' => false, 'system' => false],
             'ui.show_debug' => ['group' => 'ui', 'type' => 'bool', 'default' => false, 'autoload' => true, 'protected' => false, 'system' => false],
             'ui.sidebar_order' => ['group' => 'ui', 'type' => 'string', 'default' => '', 'autoload' => true, 'protected' => false, 'system' => false],
+            'ui.sidebar_item_order' => ['group' => 'ui', 'type' => 'string', 'default' => '', 'autoload' => true, 'protected' => false, 'system' => false],
+            'ui.sidebar_order_ids' => ['group' => 'ui', 'type' => 'json', 'default' => [], 'autoload' => true, 'protected' => false, 'system' => false],
 
             'mail.enabled' => ['group' => 'mail', 'type' => 'bool', 'default' => false, 'autoload' => false, 'protected' => false, 'system' => false],
             'mail.driver' => ['group' => 'mail', 'type' => 'enum', 'enum' => ['smtp', 'sendmail', 'mailgun'], 'default' => 'smtp', 'autoload' => false, 'protected' => false, 'system' => false],

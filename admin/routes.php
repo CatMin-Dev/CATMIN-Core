@@ -1398,6 +1398,63 @@ return [
 
             $sidebarOrderRaw = (string) (($settings['ui']['sidebar_order'] ?? '') ?: '');
             $sidebarOrder = array_values(array_filter(array_map('trim', explode(',', $sidebarOrderRaw)), static fn (string $value): bool => $value !== ''));
+            $sidebarItemOrderRaw = (string) (($settings['ui']['sidebar_item_order'] ?? '') ?: '');
+            $sidebarItemOrder = array_values(array_filter(array_map('trim', explode(',', $sidebarItemOrderRaw)), static fn (string $value): bool => $value !== ''));
+            $sidebarOrderIds = (array) (($settings['ui']['sidebar_order_ids'] ?? []) ?: []);
+
+            $loader = new CoreModuleLoader();
+            $snapshot = $loader->scan();
+
+            $sidebarEntries = [
+                ['key' => 'organization.staff', 'group' => 'organization', 'label' => __('nav.staff_admins'), 'source' => 'core', 'order' => 10],
+                ['key' => 'organization.roles', 'group' => 'organization', 'label' => __('nav.roles_permissions'), 'source' => 'core', 'order' => 20],
+                ['key' => 'system.monitoring', 'group' => 'system', 'label' => __('nav.monitoring'), 'source' => 'core', 'order' => 10],
+                ['key' => 'system.health', 'group' => 'system', 'label' => __('nav.health_check'), 'source' => 'core', 'order' => 20],
+                ['key' => 'system.core-update', 'group' => 'system', 'label' => __('nav.core_update'), 'source' => 'core', 'order' => 30],
+                ['key' => 'system.queue', 'group' => 'system', 'label' => __('nav.queue'), 'source' => 'core', 'order' => 40],
+                ['key' => 'system.logs', 'group' => 'system', 'label' => __('nav.logs'), 'source' => 'core', 'order' => 50],
+                ['key' => 'system.notifications', 'group' => 'system', 'label' => __('nav.notifications'), 'source' => 'core', 'order' => 60],
+                ['key' => 'system.cron', 'group' => 'system', 'label' => __('nav.cron'), 'source' => 'core', 'order' => 70],
+                ['key' => 'system.maintenance', 'group' => 'system', 'label' => __('nav.maintenance'), 'source' => 'core', 'order' => 80],
+                ['key' => 'modules.module-manager', 'group' => 'modules', 'label' => __('nav.module_manager'), 'source' => 'core', 'order' => 10],
+                ['key' => 'modules.module-status', 'group' => 'modules', 'label' => __('nav.module_status'), 'source' => 'core', 'order' => 20],
+                ['key' => 'modules.module-market', 'group' => 'modules', 'label' => __('nav.module_market'), 'source' => 'core', 'order' => 30],
+                ['key' => 'modules.trust-center', 'group' => 'modules', 'label' => __('nav.trust_center'), 'source' => 'core', 'order' => 40],
+            ];
+
+            $moduleEntrySeen = [];
+            foreach ((array) ($snapshot['modules'] ?? []) as $module) {
+                if (!((bool) ($module['enabled'] ?? false))) {
+                    continue;
+                }
+                $manifest = (array) ($module['manifest'] ?? []);
+                $items = $manifest['admin_sidebar'] ?? $manifest['sidebar'] ?? [];
+                if (!is_array($items)) {
+                    continue;
+                }
+                foreach ($items as $item) {
+                    if (!is_array($item)) {
+                        continue;
+                    }
+                    $groupKey = strtolower(trim((string) ($item['group'] ?? 'modules')));
+                    $entryKey = strtolower(trim((string) ($item['key'] ?? '')));
+                    if ($groupKey === '' || $entryKey === '') {
+                        continue;
+                    }
+                    $compound = $groupKey . '.' . $entryKey;
+                    if (isset($moduleEntrySeen[$compound])) {
+                        continue;
+                    }
+                    $moduleEntrySeen[$compound] = true;
+                    $sidebarEntries[] = [
+                        'key' => $compound,
+                        'group' => $groupKey,
+                        'label' => (string) ($item['label'] ?? $entryKey),
+                        'source' => 'module',
+                        'order' => (int) ($item['order'] ?? 100),
+                    ];
+                }
+            }
 
             $coreSidebarGroups = ['dashboard', 'organization', 'system', 'modules', 'settings'];
             $sidebarGroups = [];
@@ -1412,8 +1469,6 @@ return [
                 ];
             }
 
-            $loader = new CoreModuleLoader();
-            $snapshot = $loader->scan();
             foreach ((array) ($snapshot['modules'] ?? []) as $module) {
                 if (!((bool) ($module['enabled'] ?? false))) {
                     continue;
@@ -1468,6 +1523,9 @@ return [
                 'policy' => $registry->policy(),
                 'sidebarGroups' => array_values($sidebarGroups),
                 'sidebarOrder' => $sidebarOrder,
+                'sidebarOrderIds' => $sidebarOrderIds,
+                'sidebarEntries' => array_values($sidebarEntries),
+                'sidebarItemOrder' => $sidebarItemOrder,
                 'section' => $section,
                 'message' => (string) ($flash['message'] ?? ''),
                 'messageType' => (string) ($flash['type'] ?? 'success'),
@@ -1532,12 +1590,39 @@ return [
                 'encryption' => trim((string) ($post['email_encryption'] ?? ($mailSource['encryption'] ?? 'tls'))),
                 'username' => trim((string) ($post['email_username'] ?? ($mailSource['username'] ?? ''))),
             ];
+            $postedSidebarOrderIds = is_array($post['sidebar_order_ids'] ?? null) ? (array) $post['sidebar_order_ids'] : [];
+            $normalizedSidebarOrderIds = [];
+            foreach ($postedSidebarOrderIds as $groupKey => $id) {
+                $groupKey = strtolower(trim((string) $groupKey));
+                if ($groupKey === '') {
+                    continue;
+                }
+                $numeric = max(1, (int) $id);
+                if ($groupKey === 'dashboard') {
+                    $numeric = 1;
+                } elseif ($numeric <= 1) {
+                    $numeric = 2;
+                }
+                $normalizedSidebarOrderIds[$groupKey] = $numeric;
+            }
+
+            if (!isset($normalizedSidebarOrderIds['dashboard'])) {
+                $normalizedSidebarOrderIds['dashboard'] = 1;
+            }
+
+            $sortableSidebarOrderIds = $normalizedSidebarOrderIds;
+            uasort($sortableSidebarOrderIds, static fn (int $a, int $b): int => $a <=> $b);
+            $computedSidebarOrder = implode(',', array_keys($sortableSidebarOrderIds));
             $data['ui'] = [
                 'theme_default' => trim((string) ($post['theme_default'] ?? ($data['ui']['theme_default'] ?? 'corporate'))),
                 'compact_sidebar' => ((string) ($post['compact_sidebar'] ?? '0')) === '1',
                 'table_density' => trim((string) ($post['table_density'] ?? ($data['ui']['table_density'] ?? 'comfortable'))),
                 'show_debug' => ((string) ($post['show_debug'] ?? '0')) === '1',
-                'sidebar_order' => trim((string) ($post['sidebar_order'] ?? ($data['ui']['sidebar_order'] ?? ''))),
+                'sidebar_order' => $computedSidebarOrder !== ''
+                    ? $computedSidebarOrder
+                    : trim((string) ($post['sidebar_order'] ?? ($data['ui']['sidebar_order'] ?? ''))),
+                'sidebar_item_order' => trim((string) ($post['sidebar_item_order'] ?? ($data['ui']['sidebar_item_order'] ?? ''))),
+                'sidebar_order_ids' => $normalizedSidebarOrderIds,
             ];
             $data['maintenance'] = [
                 'enabled' => ((string) ($post['maintenance_enabled'] ?? '0')) === '1',
@@ -1738,12 +1823,39 @@ return [
                 'encryption' => trim((string) ($post['email_encryption'] ?? ($mailSource['encryption'] ?? 'tls'))),
                 'username' => trim((string) ($post['email_username'] ?? ($mailSource['username'] ?? ''))),
             ];
+            $postedSidebarOrderIds = is_array($post['sidebar_order_ids'] ?? null) ? (array) $post['sidebar_order_ids'] : [];
+            $normalizedSidebarOrderIds = [];
+            foreach ($postedSidebarOrderIds as $groupKey => $id) {
+                $groupKey = strtolower(trim((string) $groupKey));
+                if ($groupKey === '') {
+                    continue;
+                }
+                $numeric = max(1, (int) $id);
+                if ($groupKey === 'dashboard') {
+                    $numeric = 1;
+                } elseif ($numeric <= 1) {
+                    $numeric = 2;
+                }
+                $normalizedSidebarOrderIds[$groupKey] = $numeric;
+            }
+
+            if (!isset($normalizedSidebarOrderIds['dashboard'])) {
+                $normalizedSidebarOrderIds['dashboard'] = 1;
+            }
+
+            $sortableSidebarOrderIds = $normalizedSidebarOrderIds;
+            uasort($sortableSidebarOrderIds, static fn (int $a, int $b): int => $a <=> $b);
+            $computedSidebarOrder = implode(',', array_keys($sortableSidebarOrderIds));
             $data['ui'] = [
                 'theme_default' => trim((string) ($post['theme_default'] ?? ($data['ui']['theme_default'] ?? 'corporate'))),
                 'compact_sidebar' => ((string) ($post['compact_sidebar'] ?? '0')) === '1',
                 'table_density' => trim((string) ($post['table_density'] ?? ($data['ui']['table_density'] ?? 'comfortable'))),
                 'show_debug' => ((string) ($post['show_debug'] ?? '0')) === '1',
-                'sidebar_order' => trim((string) ($post['sidebar_order'] ?? ($data['ui']['sidebar_order'] ?? ''))),
+                'sidebar_order' => $computedSidebarOrder !== ''
+                    ? $computedSidebarOrder
+                    : trim((string) ($post['sidebar_order'] ?? ($data['ui']['sidebar_order'] ?? ''))),
+                'sidebar_item_order' => trim((string) ($post['sidebar_item_order'] ?? ($data['ui']['sidebar_item_order'] ?? ''))),
+                'sidebar_order_ids' => $normalizedSidebarOrderIds,
             ];
             $data['maintenance'] = [
                 'enabled' => ((string) ($post['maintenance_enabled'] ?? '0')) === '1',

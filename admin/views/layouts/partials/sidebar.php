@@ -256,13 +256,52 @@ if (!class_exists('CoreSettingsEngine')) {
     require_once CATMIN_CORE . '/settings-engine.php';
 }
 $sidebarOrderRaw = '';
+$sidebarItemOrderRaw = '';
 try {
     $settingsEngine = new CoreSettingsEngine();
     $sidebarOrderRaw = (string) $settingsEngine->get('ui.sidebar_order', '');
+    $sidebarItemOrderRaw = (string) $settingsEngine->get('ui.sidebar_item_order', '');
 } catch (Throwable $exception) {
     $sidebarOrderRaw = '';
+    $sidebarItemOrderRaw = '';
 }
 $sidebarOrder = array_values(array_filter(array_map('trim', explode(',', $sidebarOrderRaw)), static fn (string $value): bool => $value !== ''));
+$sidebarItemOrder = array_values(array_filter(array_map('trim', explode(',', $sidebarItemOrderRaw)), static fn (string $value): bool => $value !== ''));
+
+if ($sidebarItemOrder !== []) {
+    $itemOrderIndex = [];
+    foreach ($sidebarItemOrder as $i => $itemKey) {
+        $itemOrderIndex[(string) $itemKey] = $i;
+    }
+
+    foreach ($navGroups as &$group) {
+        $groupKey = (string) ($group['key'] ?? '');
+        $children = is_array($group['children'] ?? null) ? $group['children'] : [];
+        if ($children === []) {
+            continue;
+        }
+
+        usort($children, static function (array $a, array $b) use ($itemOrderIndex, $groupKey): int {
+            $aKey = $groupKey . '.' . (string) ($a['key'] ?? '');
+            $bKey = $groupKey . '.' . (string) ($b['key'] ?? '');
+            $aHas = array_key_exists($aKey, $itemOrderIndex);
+            $bHas = array_key_exists($bKey, $itemOrderIndex);
+            if ($aHas && $bHas) {
+                return $itemOrderIndex[$aKey] <=> $itemOrderIndex[$bKey];
+            }
+            if ($aHas) {
+                return -1;
+            }
+            if ($bHas) {
+                return 1;
+            }
+            return strcmp((string) ($a['label'] ?? ''), (string) ($b['label'] ?? ''));
+        });
+
+        $group['children'] = $children;
+    }
+    unset($group);
+}
 
 $filteredGroups = [];
 foreach ($navGroups as $group) {
