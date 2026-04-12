@@ -10,10 +10,56 @@ use PDO;
 final class SlugRegistryRepository
 {
     private PDO $pdo;
+    private bool $schemaEnsured = false;
 
     public function __construct()
     {
         $this->pdo = (new ConnectionManager())->connection();
+        $this->ensureSchema();
+    }
+
+    private function ensureSchema(): void
+    {
+        if ($this->schemaEnsured) {
+            return;
+        }
+
+        $driver = (string) $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+
+        if ($driver === 'sqlite') {
+            $this->pdo->exec(
+                'CREATE TABLE IF NOT EXISTS mod_cat_slug_registry ('
+                . 'id INTEGER PRIMARY KEY AUTOINCREMENT,'
+                . 'entity_type VARCHAR(80) NOT NULL,'
+                . 'entity_id INTEGER NOT NULL,'
+                . 'slug VARCHAR(191) NOT NULL,'
+                . 'scope_key VARCHAR(120) NOT NULL DEFAULT "global",'
+                . 'is_primary INTEGER NOT NULL DEFAULT 1,'
+                . 'created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,'
+                . 'updated_at DATETIME NULL)'
+            );
+            $this->pdo->exec('CREATE UNIQUE INDEX IF NOT EXISTS ux_mod_cat_slug_scope_slug ON mod_cat_slug_registry(scope_key, slug)');
+            $this->pdo->exec('CREATE UNIQUE INDEX IF NOT EXISTS ux_mod_cat_slug_entity_primary ON mod_cat_slug_registry(entity_type, entity_id, is_primary)');
+            $this->pdo->exec('CREATE INDEX IF NOT EXISTS ix_mod_cat_slug_entity ON mod_cat_slug_registry(entity_type, entity_id)');
+        } else {
+            $this->pdo->exec(
+                'CREATE TABLE IF NOT EXISTS mod_cat_slug_registry ('
+                . 'id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,'
+                . 'entity_type VARCHAR(80) NOT NULL,'
+                . 'entity_id BIGINT UNSIGNED NOT NULL,'
+                . 'slug VARCHAR(191) NOT NULL,'
+                . 'scope_key VARCHAR(120) NOT NULL DEFAULT "global",'
+                . 'is_primary TINYINT(1) NOT NULL DEFAULT 1,'
+                . 'created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,'
+                . 'updated_at DATETIME NULL,'
+                . 'UNIQUE KEY ux_mod_cat_slug_scope_slug (scope_key, slug),'
+                . 'UNIQUE KEY ux_mod_cat_slug_entity_primary (entity_type, entity_id, is_primary),'
+                . 'KEY ix_mod_cat_slug_entity (entity_type, entity_id)'
+                . ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
+            );
+        }
+
+        $this->schemaEnsured = true;
     }
 
     public function exists(string $slug, string $scopeKey, ?array $excludeEntity = null): bool

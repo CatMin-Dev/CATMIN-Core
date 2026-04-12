@@ -157,6 +157,19 @@ html {
     letter-spacing: -1px;
 }
 
+.cat-sidebar-order-handle--grab {
+    cursor: grab;
+}
+
+.cat-sidebar-id-input {
+    width: 40px;
+    padding: 1px 3px;
+    height: 24px;
+    font-size: 0.75rem;
+    line-height: 1;
+    text-align: center;
+}
+
 .cat-settings-nav.list-group {
     display: flex;
     flex-direction: column;

@@ -61,7 +61,7 @@ $groupMeta = [
     'content' => ['label' => __('nav.content'), 'icon' => 'file-earmark-text', 'order' => 20],
     'media' => ['label' => __('nav.media'), 'icon' => 'images', 'order' => 30],
     'marketing' => ['label' => __('nav.marketing'), 'icon' => 'megaphone', 'order' => 50],
-    'features' => ['label' => 'Fonctionnalités', 'icon' => 'sparkles', 'order' => 75],
+    'features' => ['label' => __('nav.features'), 'icon' => 'sparkles', 'order' => 75],
 ];
 
 if (!class_exists('CoreSettingsEngine')) {

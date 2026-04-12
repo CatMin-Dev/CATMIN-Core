@@ -38,6 +38,7 @@ return [
     'nav.staff_admins' => 'Staff / Admins',
     'nav.roles_permissions' => 'Roles & permissions',
     'nav.modules' => 'Modules',
+    'nav.features' => 'Features',
     'nav.module_manager' => 'Manager',
     'nav.module_status' => 'Activation status',
     'nav.module_market' => 'Modules market',

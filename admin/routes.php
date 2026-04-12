@@ -1390,7 +1390,7 @@ return [
                 'organization' => ['label' => __('nav.organization'), 'icon' => 'diagram-3', 'order' => 40],
                 'system' => ['label' => __('nav.system'), 'icon' => 'speedometer2', 'order' => 60],
                 'modules' => ['label' => __('nav.modules'), 'icon' => 'puzzle', 'order' => 70],
-                'features' => ['label' => 'Fonctionnalités', 'icon' => 'sparkles', 'order' => 75],
+                'features' => ['label' => __('nav.features'), 'icon' => 'sparkles', 'order' => 75],
                 'settings' => ['label' => __('nav.settings'), 'icon' => 'gear', 'order' => 80],
                 'content' => ['label' => __('nav.content'), 'icon' => 'file-earmark-text', 'order' => 20],
                 'media' => ['label' => __('nav.media'), 'icon' => 'images', 'order' => 30],

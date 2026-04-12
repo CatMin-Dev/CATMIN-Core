@@ -220,14 +220,13 @@ $inlineMessage = '';
                                         ?>
                                         <div class="list-group-item d-flex align-items-center gap-2 cat-sidebar-order-item" <?= $groupKey !== 'dashboard' ? 'draggable="true" data-cat-sidebar-item' : '' ?> data-key="<?= htmlspecialchars($groupKey, ENT_QUOTES, 'UTF-8') ?>">
                                             <?php if ($groupKey !== 'dashboard'): ?>
-                                                <span class="cat-sidebar-order-handle text-body-tertiary me-1" style="cursor:grab;">⋮⋮</span>
+                                                <span class="cat-sidebar-order-handle cat-sidebar-order-handle--grab text-body-tertiary me-1">⋮⋮</span>
                                             <?php endif; ?>
                                             <span class="text-body-secondary text-uppercase small"><?= htmlspecialchars((string) ($group['label'] ?? ''), ENT_QUOTES, 'UTF-8') ?></span>
                                             <span class="ms-auto d-flex align-items-center gap-2">
                                                 <label class="small text-body-secondary mb-0">ID</label>
                                                 <input
-                                                    class="form-control form-control-sm"
-                                                    style="width: 40px; padding: 1px 3px; height: 24px; font-size: 0.75rem; line-height: 1;"
+                                                    class="form-control form-control-sm cat-sidebar-id-input"
                                                     type="text"
                                                     inputmode="numeric"
                                                     pattern="[0-9]*"
@@ -238,9 +237,9 @@ $inlineMessage = '';
                                                 >
                                             </span>
                                             <?php if (!empty($group['source']) && (string) $group['source'] === 'module'): ?>
-                                                <span class="badge text-bg-light">module</span>
+                                                <span class="badge text-bg-info">module</span>
                                             <?php else: ?>
-                                                <span class="badge text-bg-dark"><?= $groupKey === 'dashboard' ? 'core+locked' : 'core' ?></span>
+                                                <span class="badge text-bg-secondary"><?= $groupKey === 'dashboard' ? 'core+locked' : 'core' ?></span>
                                             <?php endif; ?>
                                         </div>
                                     <?php endforeach; ?>
@@ -325,10 +324,10 @@ $inlineMessage = '';
                                                             <?php if (!($entry['active'] ?? true)): ?>
                                                                 <span class="badge text-bg-warning">inactif</span>
                                                             <?php endif; ?>
-                                                            <span class="badge text-bg-light">module</span>
+                                                            <span class="badge text-bg-info">module</span>
                                                         </span>
                                                     <?php else: ?>
-                                                        <span class="badge text-bg-dark ms-auto">core</span>
+                                                        <span class="badge text-bg-secondary ms-auto">core</span>
                                                     <?php endif; ?>
                                                 </div>
                                             <?php endforeach; ?>
