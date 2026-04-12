@@ -135,7 +135,29 @@ final class CoreBoot
     private static function loadModules(): void
     {
         if (!defined('CATMIN_LOADED_MODULES')) {
-            define('CATMIN_LOADED_MODULES', CoreLoader::loadModules());
+            require_once CATMIN_CORE . '/module-loader.php';
+
+            $snapshot = (new CoreModuleLoader())->scan();
+            $loaded = [];
+            foreach ((array) ($snapshot['modules'] ?? []) as $module) {
+                if (!is_array($module)) {
+                    continue;
+                }
+                if (!((bool) ($module['valid'] ?? false)) || !((bool) ($module['compatible'] ?? false)) || !((bool) ($module['enabled'] ?? false))) {
+                    continue;
+                }
+
+                $manifest = is_array($module['manifest'] ?? null) ? $module['manifest'] : [];
+                $loaded[] = [
+                    'name' => (string) ($manifest['name'] ?? basename((string) ($module['path'] ?? 'module'))),
+                    'slug' => strtolower(trim((string) ($manifest['slug'] ?? ''))),
+                    'type' => (string) ($manifest['type'] ?? 'module'),
+                    'path' => (string) ($module['path'] ?? ''),
+                    'enabled' => true,
+                ];
+            }
+
+            define('CATMIN_LOADED_MODULES', $loaded);
         }
     }
 

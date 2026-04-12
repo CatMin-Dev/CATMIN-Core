@@ -37,6 +37,7 @@ Never package:
 - `scripts/release/generate-module-signature.php`
 - `scripts/release/generate-module-release-metadata.php`
 - `scripts/release/verify-module-release.php`
+- `scripts/release/sync-official-modules-index.php`
 
 ## Exemple concret
 - `docs/release/module-pipeline-example-file-map-082.md`
@@ -59,6 +60,21 @@ With RSA signing:
 MODULE_SIGNING_KEY=/abs/keys/module-private.pem \
 MODULE_SIGNING_KEY_ID=catmin-official-key-001 \
 bash scripts/release/build-module-release.sh /abs/path/to/module
+```
+
+Strict RELEASE mode (signature mandatory):
+
+```bash
+CATMIN_RELEASE_TARGET=release \
+MODULE_SIGNING_KEY=/abs/keys/module-private.pem \
+MODULE_SIGNING_KEY_ID=catmin-official-key-001 \
+bash scripts/release/build-module-release.sh /abs/path/to/module
+```
+
+Update `catmin/modules` trust/module index after release build:
+
+```bash
+php scripts/release/sync-official-modules-index.php
 ```
 
 ## Checksums standard (079)

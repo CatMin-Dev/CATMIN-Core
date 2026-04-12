@@ -27,13 +27,23 @@ if (!is_array($m)) { exit(2); }
 $slug = strtolower(trim((string)($m["slug"] ?? "")));
 $version = trim((string)($m["version"] ?? ""));
 if ($slug === "" || $version === "") { exit(3); }
-echo $slug . "|" . $version;
+$channel = strtolower(trim((string)($m["release_channel"] ?? "stable")));
+if ($channel === "") { $channel = "stable"; }
+echo $slug . "|" . $version . "|" . $channel;
 ' "${SOURCE_DIR}/manifest.json")" || {
-  echo "Invalid manifest.json (missing slug/version)" >&2
+  echo "Invalid manifest.json (missing slug/version/release_channel)" >&2
   exit 1
 }
 MODULE_SLUG="${MODULE_JSON%%|*}"
-MODULE_VERSION="${MODULE_JSON##*|}"
+MODULE_REST="${MODULE_JSON#*|}"
+MODULE_VERSION="${MODULE_REST%%|*}"
+MODULE_CHANNEL="${MODULE_REST##*|}"
+
+RELEASE_TARGET="${CATMIN_RELEASE_TARGET:-dev}"
+REQUIRE_SIGNATURE="0"
+if [ "${RELEASE_TARGET}" = "release" ] || [ "${MODULE_CHANNEL}" = "stable" ]; then
+  REQUIRE_SIGNATURE="1"
+fi
 
 RELEASE_DIR="${RELEASE_ROOT}/${MODULE_SLUG}-${MODULE_VERSION}"
 STAGE_ROOT="${RELEASE_DIR}/_stage"
@@ -102,6 +112,11 @@ fi
 
 php "${ROOT_DIR}/scripts/release/generate-module-checksums.php" "${FINAL_MODULE_DIR}" "${FINAL_MODULE_DIR}/checksums.json"
 
+if [ "${REQUIRE_SIGNATURE}" = "1" ] && [ -z "${MODULE_SIGNING_KEY:-}" ]; then
+  echo "Signing is mandatory for RELEASE/stable builds (set MODULE_SIGNING_KEY and MODULE_SIGNING_KEY_ID)." >&2
+  exit 1
+fi
+
 if [ -n "${MODULE_SIGNING_KEY:-}" ]; then
   if [ ! -f "${MODULE_SIGNING_KEY}" ]; then
     echo "MODULE_SIGNING_KEY file not found: ${MODULE_SIGNING_KEY}" >&2
@@ -134,6 +149,13 @@ fi
 php "${ROOT_DIR}/scripts/release/generate-module-release-metadata.php" "${RELEASE_DIR}"
 
 VERIFY_ARGS=("${ROOT_DIR}/scripts/release/verify-module-release.php" "${MODULE_ZIP}")
+if [ "${REQUIRE_SIGNATURE}" = "1" ]; then
+  if [ ! -f "${RELEASE_DIR}/signature.json" ]; then
+    echo "Signature required but signature.json is missing" >&2
+    exit 1
+  fi
+fi
+
 if [ -f "${RELEASE_DIR}/signature.json" ]; then
   VERIFY_PUBLIC_KEY=""
   if [ -n "${MODULE_SIGNING_PUBLIC_KEY:-}" ] && [ -f "${MODULE_SIGNING_PUBLIC_KEY}" ]; then
@@ -161,6 +183,8 @@ file_put_contents($argv[2], $pub);
   if [ -n "${VERIFY_PUBLIC_KEY}" ]; then
     VERIFY_ARGS+=("--public-key=${VERIFY_PUBLIC_KEY}")
   fi
+elif [ "${REQUIRE_SIGNATURE}" = "1" ]; then
+  VERIFY_ARGS+=("--require-signature")
 fi
 php "${VERIFY_ARGS[@]}"
 
