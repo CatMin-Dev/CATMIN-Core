@@ -2,7 +2,13 @@
 
 declare(strict_types=1);
 
-use Core\versioning\Version;
+$version = '';
+if (is_file(CATMIN_CORE . '/versioning/Version.php')) {
+    require_once CATMIN_CORE . '/versioning/Version.php';
+    if (class_exists('Core\\versioning\\Version')) {
+        $version = (string) \Core\versioning\Version::current();
+    }
+}
 ?><!doctype html>
 <html lang="fr">
 <head>
@@ -17,6 +23,6 @@ use Core\versioning\Version;
 <body class="container py-5">
     <h1 class="mb-3">CATMIN Front</h1>
     <p class="mb-1">Interface publique minimale (V1 noindex).</p>
-    <small>Version: <?= htmlspecialchars(Version::current(), ENT_QUOTES, 'UTF-8') ?></small>
+    <small>Version: <?= htmlspecialchars($version !== '' ? $version : 'unknown', ENT_QUOTES, 'UTF-8') ?></small>
 </body>
 </html>

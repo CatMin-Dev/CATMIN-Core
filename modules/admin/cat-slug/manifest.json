@@ -1,0 +1,71 @@
+{
+  "module_schema_version": "1.0.0",
+  "name": "CAT Slug",
+  "display_name": "CAT Slug Bridge",
+  "slug": "cat-slug",
+  "type": "admin",
+  "version": "1.0.0-dev.3",
+  "description": "Bridge centralise de generation, normalisation et reservation des slugs.",
+  "summary": "Slug service unique reutilisable par PAGE, BLOG, DIRECTORY et futurs modules.",
+  "author": "CATMIN",
+  "homepage": "https://github.com/CatMin-Dev/modules",
+  "support_url": "https://github.com/CatMin-Dev/modules/issues",
+  "docs_url": "https://github.com/CatMin-Dev/core",
+  "readme_url": "https://github.com/CatMin-Dev/modules",
+  "changelog_url": "https://github.com/CatMin-Dev/modules",
+  "keywords": ["slug", "bridge", "url", "routing"],
+  "category": "content",
+  "icon": "bi bi-link-45deg",
+  "enabled": true,
+  "enabled_by_default": false,
+  "installable": true,
+  "autoload": true,
+  "show_in_manager": true,
+  "show_in_market": true,
+  "release_channel": "beta",
+  "lifecycle_status": "active",
+  "maintenance_status": "maintained",
+  "php_min": "8.3",
+  "catmin_min": "0.4.0-rc.5",
+  "catmin_max": "0.x",
+  "db_supported": ["sqlite", "mysql", "mariadb"],
+  "capabilities": ["slug.read", "slug.write", "slug.delete", "slug.reorder"],
+  "trusted_module": true,
+  "load": {
+    "routes": true,
+    "views": true,
+    "assets": false,
+    "migrations": true,
+    "hooks": true,
+    "translations": true,
+    "permissions": true,
+    "settings": false
+  },
+  "dependencies": {
+    "requires": [],
+    "conflicts": [],
+    "replaces": []
+  },
+  "admin_sidebar": [
+    {
+      "group": "modules",
+      "key": "cat-slug.registry",
+      "label": "Registre des slugs",
+      "href": "slug-bridge",
+      "order": 220
+    }
+  ],
+  "sidebar_entries": [
+    {
+      "group": "modules",
+      "key": "cat-slug.registry",
+      "label": "Registre des slugs",
+      "icon": "link-45deg",
+      "route": "/slug-bridge",
+      "order": 220,
+      "visibility": "default",
+      "permissions": ["slug.read"]
+    }
+  ],
+  "tags": ["cat-slug", "bridge", "foundation"]
+}

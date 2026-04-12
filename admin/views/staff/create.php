@@ -24,7 +24,7 @@ ob_start();
     <div class="col-12 col-xl-4">
         <div class="card h-100"><div class="card-body">
             <h3 class="h6"><?= htmlspecialchars(__('staff.security_rules.title'), ENT_QUOTES, 'UTF-8') ?></h3>
-            <ul class="small text-body-secondary mb-0">
+            <ul class="small text-body-secondary mb-0" data-cat-password-rules-panel>
                 <li><?= htmlspecialchars(__('staff.security_rules.password'), ENT_QUOTES, 'UTF-8') ?></li>
                 <li><?= htmlspecialchars(__('staff.security_rules.role'), ENT_QUOTES, 'UTF-8') ?></li>
                 <li><?= htmlspecialchars(__('staff.security_rules.superadmin'), ENT_QUOTES, 'UTF-8') ?></li>

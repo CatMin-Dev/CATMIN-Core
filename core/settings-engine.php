@@ -200,6 +200,25 @@ final class CoreSettingsEngine
         }
 
         $defaults = $this->registry->defaultsFlat();
+        if ($this->repository->available()) {
+            $rows = $this->repository->fetchAll();
+            $data = $defaults;
+            foreach ($rows as $fullKey => $row) {
+                $schema = $this->registry->schemaFor($fullKey);
+                if ($schema === null) {
+                    continue;
+                }
+
+                $typed = $this->fromStorage($schema, (string) ($row['raw'] ?? ''));
+                $data[$fullKey] = $typed;
+            }
+
+            $this->data = $data;
+            $this->loaded = true;
+            $this->cache->save($this->data);
+            return;
+        }
+
         $cacheData = $this->cache->load();
         if (is_array($cacheData) && $cacheData !== []) {
             $legacyMap = [
@@ -221,32 +240,12 @@ final class CoreSettingsEngine
 
             $this->data = array_merge($defaults, $normalized);
             $this->loaded = true;
-            $this->cache->save($this->data);
             return;
         }
 
-        if (!$this->repository->available()) {
-            $this->data = $defaults;
-            $this->loaded = true;
-            Core\logs\Logger::error('Settings fallback defaults (DB indisponible)');
-            return;
-        }
-
-        $rows = $this->repository->fetchAll();
-        $data = $defaults;
-        foreach ($rows as $fullKey => $row) {
-            $schema = $this->registry->schemaFor($fullKey);
-            if ($schema === null) {
-                continue;
-            }
-
-            $typed = $this->fromStorage($schema, (string) ($row['raw'] ?? ''));
-            $data[$fullKey] = $typed;
-        }
-
-        $this->data = $data;
+        $this->data = $defaults;
         $this->loaded = true;
-        $this->cache->save($this->data);
+        Core\logs\Logger::error('Settings fallback defaults (DB indisponible)');
     }
 
     private function grouped(array $flat): array

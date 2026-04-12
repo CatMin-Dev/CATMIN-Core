@@ -158,10 +158,14 @@ html {
 }
 
 .cat-settings-nav.list-group {
+    display: flex;
+    flex-direction: column;
+    padding-left: 0;
+    margin-bottom: 0;
     position: relative;
     isolation: isolate;
     border-radius: var(--cat-radius-md);
-    overflow: clip;
+    overflow: hidden !important;
     box-shadow: var(--cat-shadow-sm);
     border: 1px solid var(--cat-border-color);
     --bs-list-group-active-bg: var(--cat-accent);
@@ -180,10 +184,6 @@ html {
     margin-top: 0 !important;
 }
 
-.cat-settings-nav.list-group .list-group-item:last-child {
-    border-bottom: 0;
-}
-
 .cat-settings-nav.list-group .list-group-item:not(.active):hover {
     background: color-mix(in srgb, var(--cat-accent) 10%, var(--cat-bg-surface));
     color: var(--cat-accent);
@@ -192,18 +192,11 @@ html {
 .cat-settings-nav.list-group .list-group-item.active {
     background: var(--cat-accent);
     color: var(--palette-stone-50);
-    position: relative;
-    z-index: 1;
 }
 
 .cat-settings-nav.list-group .list-group-item.active:hover {
     background: var(--cat-accent);
     color: var(--palette-stone-50);
-}
-
-.cat-settings-nav.list-group .list-group-item:last-child.active {
-    border-bottom-left-radius: var(--cat-radius-md);
-    border-bottom-right-radius: var(--cat-radius-md);
 }
 
 .cat-settings-nav.list-group .list-group-item + .list-group-item.active {

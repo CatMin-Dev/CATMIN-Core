@@ -71,7 +71,7 @@ ob_start();
         <?php endif; ?>
 
         <?php if ($section === 'general'): ?>
-            <form method="post" action="<?= htmlspecialchars($adminBase . '/settings/general', ENT_QUOTES, 'UTF-8') ?>" class="d-grid gap-3">
+            <form method="post" action="<?= htmlspecialchars($adminBase . '/settings/general', ENT_QUOTES, 'UTF-8') ?>" class="d-grid gap-3" data-cat-autosave>
                 <input type="hidden" name="_csrf" value="<?= $csrf ?>">
 
                 <section class="card">
@@ -117,7 +117,7 @@ ob_start();
                 </div>
             </form>
         <?php elseif ($section === 'appearance'): ?>
-            <form method="post" action="<?= htmlspecialchars($adminBase . '/settings/appearance', ENT_QUOTES, 'UTF-8') ?>" class="d-grid gap-3">
+            <form method="post" action="<?= htmlspecialchars($adminBase . '/settings/appearance', ENT_QUOTES, 'UTF-8') ?>" class="d-grid gap-3" data-cat-autosave>
                 <input type="hidden" name="_csrf" value="<?= $csrf ?>">
                 <section class="card">
                     <div class="card-header bg-transparent border-0 pt-3">
@@ -164,7 +164,7 @@ ob_start();
                 </div>
             </form>
         <?php elseif ($section === 'sidebar'): ?>
-            <form method="post" action="<?= htmlspecialchars($adminBase . '/settings/sidebar', ENT_QUOTES, 'UTF-8') ?>" class="d-grid gap-3">
+            <form method="post" action="<?= htmlspecialchars($adminBase . '/settings/sidebar', ENT_QUOTES, 'UTF-8') ?>" class="d-grid gap-3" data-cat-autosave>
                 <input type="hidden" name="_csrf" value="<?= $csrf ?>">
                 <section class="card">
                     <div class="card-header bg-transparent border-0 pt-3">
@@ -207,7 +207,7 @@ ob_start();
                                 <div class="alert alert-light mb-2">
                                     <?= htmlspecialchars(__('settings.sidebar.order_placeholder'), ENT_QUOTES, 'UTF-8') ?>
                                 </div>
-                                <div class="list-group cat-sidebar-order">
+                                <div class="list-group cat-sidebar-order" data-cat-sidebar-order>
                                     <?php foreach ($sidebarGroups as $group): ?>
                                         <?php
                                         $groupKey = (string) ($group['key'] ?? '');
@@ -225,13 +225,14 @@ ob_start();
                                             <span class="ms-auto d-flex align-items-center gap-2">
                                                 <label class="small text-body-secondary mb-0">ID</label>
                                                 <input
-                                                    class="form-control form-control-sm"
-                                                    style="width: 65px;"
+                                                    class="form-control form-control-sm text-center"
+                                                    style="width: 44px; padding-inline: 2px;"
                                                     type="text"
                                                     inputmode="numeric"
                                                     pattern="[0-9]*"
                                                     name="sidebar_order_ids[<?= htmlspecialchars($groupKey, ENT_QUOTES, 'UTF-8') ?>]"
                                                     value="<?= $positionId ?>"
+                                                    data-cat-sidebar-id-input
                                                     <?= $groupKey === 'dashboard' ? 'disabled' : '' ?>
                                                 >
                                             </span>
@@ -343,7 +344,7 @@ ob_start();
                 </div>
             </form>
         <?php elseif ($section === 'mail'): ?>
-            <form method="post" action="<?= htmlspecialchars($adminBase . '/settings/mail', ENT_QUOTES, 'UTF-8') ?>" class="d-grid gap-3">
+            <form method="post" action="<?= htmlspecialchars($adminBase . '/settings/mail', ENT_QUOTES, 'UTF-8') ?>" class="d-grid gap-3" data-cat-autosave>
                 <input type="hidden" name="_csrf" value="<?= $csrf ?>">
                 <section class="card">
                     <div class="card-header bg-transparent border-0 pt-3">
@@ -403,7 +404,7 @@ ob_start();
                 </div>
             </form>
         <?php elseif ($section === 'performance'): ?>
-            <form method="post" action="<?= htmlspecialchars($adminBase . '/settings/performance', ENT_QUOTES, 'UTF-8') ?>" class="d-grid gap-3">
+            <form method="post" action="<?= htmlspecialchars($adminBase . '/settings/performance', ENT_QUOTES, 'UTF-8') ?>" class="d-grid gap-3" data-cat-autosave>
                 <input type="hidden" name="_csrf" value="<?= $csrf ?>">
                 <section class="card">
                     <div class="card-header bg-transparent border-0 pt-3">
@@ -452,7 +453,7 @@ ob_start();
                 </div>
             </form>
         <?php elseif ($section === 'security'): ?>
-            <form method="post" action="<?= htmlspecialchars($adminBase . '/settings/security', ENT_QUOTES, 'UTF-8') ?>" class="d-grid gap-3">
+            <form method="post" action="<?= htmlspecialchars($adminBase . '/settings/security', ENT_QUOTES, 'UTF-8') ?>" class="d-grid gap-3" data-cat-autosave>
                 <input type="hidden" name="_csrf" value="<?= $csrf ?>">
                 <section class="card">
                     <div class="card-header bg-transparent border-0 pt-3">

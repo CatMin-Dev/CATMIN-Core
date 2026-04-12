@@ -7,7 +7,7 @@ final class CoreModuleManifestStandard
     private const TYPE_ENUM = ['core', 'admin', 'front', 'integration', 'driver'];
     private const CHANNEL_ENUM = ['stable', 'beta', 'alpha', 'experimental'];
     private const LIFECYCLE_ENUM = ['active', 'deprecated', 'abandoned', 'replaced', 'archived', 'experimental'];
-    private const CATEGORY_ENUM = ['content', 'seo', 'media', 'system', 'security', 'marketing', 'commerce', 'integration', 'custom'];
+    private const CATEGORY_ENUM = ['content', 'seo', 'media', 'system', 'security', 'settings', 'marketing', 'commerce', 'integration', 'custom'];
 
     public function normalize(array $manifest): array
     {

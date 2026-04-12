@@ -15,12 +15,12 @@ $isCritical = ((int) ($role['is_system'] ?? 0) === 1) || ((string) ($role['slug'
         <div class="row g-3">
             <div class="col-12 col-lg-6">
                 <label class="form-label"><?= htmlspecialchars(__('common.name'), ENT_QUOTES, 'UTF-8') ?></label>
-                <input type="text" name="name" class="form-control <?= isset($errors['name']) ? 'is-invalid' : '' ?>" value="<?= htmlspecialchars((string) ($values['name'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" <?= $isCritical ? 'readonly' : '' ?> required>
+                <input type="text" id="role-name" name="name" class="form-control <?= isset($errors['name']) ? 'is-invalid' : '' ?>" value="<?= htmlspecialchars((string) ($values['name'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" <?= $isCritical ? 'readonly' : '' ?> required>
                 <?php if (isset($errors['name'])): ?><div class="invalid-feedback"><?= htmlspecialchars((string) $errors['name'], ENT_QUOTES, 'UTF-8') ?></div><?php endif; ?>
             </div>
             <div class="col-12 col-lg-6">
                 <label class="form-label"><?= htmlspecialchars(__('common.slug'), ENT_QUOTES, 'UTF-8') ?></label>
-                <input type="text" name="slug" class="form-control <?= isset($errors['slug']) ? 'is-invalid' : '' ?>" value="<?= htmlspecialchars((string) ($values['slug'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" <?= $isCritical ? 'readonly' : '' ?> required>
+                <input type="text" id="role-slug" name="slug" data-cat-slug-target="#role-name" class="form-control <?= isset($errors['slug']) ? 'is-invalid' : '' ?>" value="<?= htmlspecialchars((string) ($values['slug'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" <?= $isCritical ? 'readonly' : '' ?> required>
                 <?php if (isset($errors['slug'])): ?><div class="invalid-feedback"><?= htmlspecialchars((string) $errors['slug'], ENT_QUOTES, 'UTF-8') ?></div><?php endif; ?>
             </div>
             <div class="col-12">

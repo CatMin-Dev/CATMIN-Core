@@ -1,6 +1,42 @@
 (function () {
     'use strict';
 
+    function slugify(value) {
+        var text = (value || '').toString().trim().toLowerCase();
+        if (typeof text.normalize === 'function') {
+            text = text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        }
+        return text.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').replace(/-{2,}/g, '-');
+    }
+
+    function initRoleSlug() {
+        var source = document.getElementById('role-name');
+        var target = document.getElementById('role-slug');
+        if (!source || !target || target.readOnly || target.disabled) {
+            return;
+        }
+
+        var syncing = true;
+        var sync = function () {
+            if (!syncing) {
+                return;
+            }
+            target.value = slugify(source.value);
+        };
+
+        source.addEventListener('input', sync);
+        source.addEventListener('change', sync);
+        target.addEventListener('input', function () {
+            var sourceSlug = slugify(source.value);
+            var targetSlug = slugify(target.value);
+            syncing = targetSlug === '' || targetSlug === sourceSlug;
+        });
+
+        if ((target.value || '').trim() === '') {
+            sync();
+        }
+    }
+
     function syncAll(master, cells) {
         var total = cells.length;
         var checked = cells.filter(function (cell) { return cell.checked; }).length;
@@ -63,8 +99,12 @@
     }
 
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initMatrix);
+        document.addEventListener('DOMContentLoaded', function () {
+            initMatrix();
+            initRoleSlug();
+        });
     } else {
         initMatrix();
+        initRoleSlug();
     }
 }());

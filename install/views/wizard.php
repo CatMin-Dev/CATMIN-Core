@@ -600,7 +600,7 @@ if ($step === 'precheck') {
                 <?php elseif ($step === 'superadmin'): ?>
                     <div class="col-md-4"><label class="form-label">Username</label><input class="form-control" name="username" value="<?= htmlspecialchars((string) ($contextData['username'] ?? 'superadmin'), ENT_QUOTES, 'UTF-8') ?>"></div>
                     <div class="col-md-4"><label class="form-label">Email</label><input class="form-control" type="email" name="email" value="<?= htmlspecialchars((string) ($contextData['email'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"></div>
-                    <div class="col-md-4"><label class="form-label">Password</label><input class="form-control" type="password" name="password" required></div>
+                    <div class="col-md-4"><label class="form-label">Password</label><input class="form-control" type="password" name="password" minlength="12" autocomplete="new-password" required></div>
                 <?php elseif ($step === 'security'): ?>
                     <?php
                     $adminPathMode = (string) ($contextData['admin_path_mode'] ?? 'manual');
@@ -796,6 +796,7 @@ if ($step === 'precheck') {
     </div>
 <?php endif; ?>
 <script src="/assets/vendor/bootstrap/5.3.8/js/bootstrap.bundle.min.js"></script>
+<script src="/assets/js/catmin-components.js?v=8"></script>
 <script src="/assets/js/install-wizard.js?v=6"></script>
 </body>
 </html>

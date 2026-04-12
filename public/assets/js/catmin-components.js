@@ -462,18 +462,32 @@
     });
 
     document.querySelectorAll('[data-cat-sidebar-order]').forEach(function (listEl) {
-        var input = document.querySelector('[data-cat-sidebar-order-input]');
+        var orderInput = document.querySelector('[data-cat-sidebar-order-input]');
         var dragging = null;
 
         var updateOrder = function () {
-            if (!input) {
-                return;
-            }
+            if (!orderInput) { return; }
             var keys = [];
             listEl.querySelectorAll('[data-cat-sidebar-item]').forEach(function (item) {
                 keys.push(item.getAttribute('data-key') || '');
             });
-            input.value = keys.filter(function (v) { return v !== ''; }).join(',');
+            orderInput.value = keys.filter(function (v) { return v !== ''; }).join(',');
+        };
+
+        // After drag, reassign IDs by collecting current values, sorting them,
+        // and redistributing them in DOM order so the visual order matches numeric order.
+        var reassignIds = function () {
+            var items = listEl.querySelectorAll('[data-cat-sidebar-item]');
+            var ids = [];
+            items.forEach(function (item) {
+                var inp = item.querySelector('[data-cat-sidebar-id-input]');
+                if (inp) { ids.push(parseInt(inp.value, 10) || 100); }
+            });
+            ids.sort(function (a, b) { return a - b; });
+            items.forEach(function (item, i) {
+                var inp = item.querySelector('[data-cat-sidebar-id-input]');
+                if (inp) { inp.value = ids[i] !== undefined ? ids[i] : (i + 1) * 100; }
+            });
         };
 
         listEl.querySelectorAll('[data-cat-sidebar-item]').forEach(function (item) {
@@ -486,13 +500,12 @@
             item.addEventListener('dragend', function () {
                 item.classList.remove('is-dragging');
                 dragging = null;
+                reassignIds();
                 updateOrder();
             });
             item.addEventListener('dragover', function (event) {
                 event.preventDefault();
-                if (!dragging || dragging === item) {
-                    return;
-                }
+                if (!dragging || dragging === item) { return; }
                 var rect = item.getBoundingClientRect();
                 var next = (event.clientY - rect.top) > rect.height / 2;
                 listEl.insertBefore(dragging, next ? item.nextSibling : item);
@@ -544,6 +557,56 @@
         });
 
         updateGlobalOrder();
+    }());
+
+    // Auto-save: debounced fetch submit for forms with data-cat-autosave
+    (function initSettingsAutoSave() {
+        document.querySelectorAll('form[data-cat-autosave]').forEach(function (form) {
+            var timer = null;
+            var indicator = document.createElement('span');
+            indicator.className = 'text-success small ms-3 align-self-center';
+            indicator.style.cssText = 'opacity:0;transition:opacity 0.4s;';
+            indicator.textContent = '\u2713 Sauvegard\u00e9';
+            var btnRow = form.querySelector('.d-flex.gap-2');
+            if (btnRow) { btnRow.appendChild(indicator); }
+
+            var doSave = function () {
+                // Ensure drag-generated hidden inputs reflect current state
+                var orderInput = form.querySelector('[data-cat-sidebar-order-input]');
+                var itemOrderInput = form.querySelector('[data-cat-sidebar-item-order-input]');
+                var data = new FormData(form);
+                // disabled inputs (e.g. dashboard) are excluded from FormData — add them back
+                form.querySelectorAll('[disabled][name]').forEach(function (el) {
+                    data.set(el.name, el.value);
+                });
+                fetch(form.action, {
+                    method: 'POST',
+                    body: data,
+                    redirect: 'follow',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                }).then(function (response) {
+                    if (response.status < 400) {
+                        indicator.style.opacity = '1';
+                        setTimeout(function () { indicator.style.opacity = '0'; }, 2000);
+                    }
+                }).catch(function () {});
+            };
+
+            var schedule = function () {
+                clearTimeout(timer);
+                timer = setTimeout(doSave, 1200);
+            };
+
+            form.addEventListener('change', schedule);
+            // Only trigger input for text/number fields to avoid spamming on every keystroke
+            form.addEventListener('input', function (e) {
+                var tag = (e.target.tagName || '').toLowerCase();
+                var type = (e.target.type || '').toLowerCase();
+                if (tag === 'input' && (type === 'text' || type === 'number' || type === 'email' || type === 'url' || type === '')) {
+                    schedule();
+                }
+            });
+        });
     }());
 
     initAutoSlug();

@@ -165,20 +165,13 @@ ob_start();
                     $trusted = (bool) ($row['trusted'] ?? false);
                     $keyScope = strtolower((string) ($row['key_scope'] ?? 'unknown'));
                     $keyStatus = strtolower((string) ($row['key_status'] ?? 'unknown'));
-                    $dbVersion = isset($row['db_version']) ? (string) $row['db_version'] : null;
-                    $needsUpdate = (bool) ($row['needs_update'] ?? false);
                     ?>
                     <tr>
                         <td>
                             <p class="mb-0 fw-semibold"><?= htmlspecialchars($name, ENT_QUOTES, 'UTF-8') ?></p>
                             <small class="text-body-secondary"><?= htmlspecialchars($scope . '/' . $slug, ENT_QUOTES, 'UTF-8') ?></small>
                         </td>
-                        <td>
-                            <span class="badge text-bg-light border"><?= htmlspecialchars($version, ENT_QUOTES, 'UTF-8') ?></span>
-                            <?php if ($needsUpdate && $dbVersion !== null): ?>
-                                <div class="small text-warning-emphasis mt-1">DB: <?= htmlspecialchars($dbVersion, ENT_QUOTES, 'UTF-8') ?></div>
-                            <?php endif; ?>
-                        </td>
+                        <td><span class="badge text-bg-light border"><?= htmlspecialchars($version, ENT_QUOTES, 'UTF-8') ?></span></td>
                         <td>
                             <?php if ($dependencies === []): ?>
                                 <small class="text-body-secondary"><?= htmlspecialchars(__('common.none_feminine'), ENT_QUOTES, 'UTF-8') ?></small>
@@ -315,17 +308,6 @@ ob_start();
                                 <?php endif; ?>
                             <?php else: ?>
                                 <div class="d-inline-flex flex-wrap justify-content-end gap-1">
-                                    <?php if ($needsUpdate): ?>
-                                        <form method="post" action="<?= htmlspecialchars($adminBase . '/modules/update', ENT_QUOTES, 'UTF-8') ?>" class="d-inline">
-                                            <input type="hidden" name="_csrf" value="<?= $csrf ?>">
-                                            <input type="hidden" name="scope" value="<?= htmlspecialchars($scope, ENT_QUOTES, 'UTF-8') ?>">
-                                            <input type="hidden" name="slug" value="<?= htmlspecialchars($slug, ENT_QUOTES, 'UTF-8') ?>">
-                                            <input type="hidden" name="return_to" value="<?= $isStatusView ? 'status' : 'manager' ?>">
-                                            <button class="btn btn-sm btn-warning" type="submit">
-                                                ↑ Mettre à jour
-                                            </button>
-                                        </form>
-                                    <?php endif; ?>
                                     <?php if ($dependencyBlocking): ?>
                                         <form method="post" action="<?= htmlspecialchars($adminBase . '/modules/dependencies/resolve', ENT_QUOTES, 'UTF-8') ?>" class="d-inline">
                                             <input type="hidden" name="_csrf" value="<?= $csrf ?>">
