@@ -12,7 +12,8 @@ final class SeoMetaService
         private readonly SeoMetaRepository $repository,
         private readonly SeoScoreService $scoreService,
         private readonly SeoAuditService $auditService,
-        private readonly SeoPreviewService $previewService
+        private readonly SeoPreviewService $previewService,
+        private readonly SeoKeywordSuggestService $keywordSuggestService
     ) {
     }
 
@@ -26,6 +27,11 @@ final class SeoMetaService
         }
 
         $normalized = $this->normalize($payload);
+        $locale = strtolower(trim((string) ($payload['locale'] ?? config('app.locale', 'fr'))));
+        $keywords = $this->keywordSuggestService->suggest($payload, $locale);
+        if (($normalized['focus_keyword'] ?? '') === '' && ($keywords['focus_keyword'] ?? '') !== '') {
+            $normalized['focus_keyword'] = (string) ($keywords['focus_keyword'] ?? '');
+        }
         $audit = $this->auditService->audit($normalized);
 
         $normalized['seo_score'] = (int) ($audit['score'] ?? 0);
@@ -38,6 +44,7 @@ final class SeoMetaService
             'message' => 'SEO metadata saved',
             'score' => (int) $normalized['seo_score'],
             'flags' => $audit['flags'] ?? [],
+            'keywords' => $keywords,
         ];
     }
 

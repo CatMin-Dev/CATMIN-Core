@@ -14,6 +14,7 @@ require_once CATMIN_CORE . '/module-activation-guard.php';
 require_once CATMIN_CORE . '/module-integrity.php';
 require_once CATMIN_CORE . '/module-activator.php';
 require_once CATMIN_CORE . '/module-snapshot-manager.php';
+require_once CATMIN_CORE . '/module-loader.php';
 
 final class CoreModuleInstallRunner
 {
@@ -99,6 +100,13 @@ final class CoreModuleInstallRunner
 
         $type = strtolower(trim((string) ($manifest['type'] ?? '')));
         $slug = strtolower(trim((string) ($manifest['slug'] ?? '')));
+
+        if ($slug === 'cat-seo-meta' && !$this->isModuleActive('cat-slug')) {
+            $rollback->cleanupPath($extractDir);
+            catmin_event_emit('module.install.failed', ['slug' => $slug, 'errors' => ['dependency_required_active:cat-slug'], 'context' => $context]);
+            return ['ok' => false, 'message' => 'CAT SEO Meta requiert CAT Slug actif avant installation', 'errors' => ['dependency_required_active:cat-slug']];
+        }
+
         $dest = CATMIN_MODULES . '/' . $type . '/' . $slug;
         $snapshotManager = new CoreModuleSnapshotManager();
         if (is_dir($dest)) {
@@ -203,5 +211,23 @@ final class CoreModuleInstallRunner
             }
         }
         return true;
+    }
+
+    private function isModuleActive(string $slug): bool
+    {
+        $slug = strtolower(trim($slug));
+        if ($slug === '') {
+            return false;
+        }
+
+        $snapshot = (new CoreModuleLoader())->scan();
+        foreach ((array) ($snapshot['modules'] ?? []) as $module) {
+            $mSlug = strtolower(trim((string) ($module['manifest']['slug'] ?? '')));
+            if ($mSlug === $slug) {
+                return (bool) ($module['enabled'] ?? false);
+            }
+        }
+
+        return false;
     }
 }

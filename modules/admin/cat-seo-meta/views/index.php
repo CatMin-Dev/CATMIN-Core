@@ -43,7 +43,7 @@ ob_start();
 
 <section class="card mb-3"><div class="card-body">
     <h2 class="h5 mb-3"><?= htmlspecialchars((string) ($tr['editor'] ?? 'SEO editor'), ENT_QUOTES, 'UTF-8') ?></h2>
-    <form method="post" action="<?= htmlspecialchars($adminBase . '/modules/seo-meta/save', ENT_QUOTES, 'UTF-8') ?>" class="row g-2">
+    <form method="post" action="<?= htmlspecialchars($adminBase . '/modules/seo-meta/save', ENT_QUOTES, 'UTF-8') ?>" class="row g-2" id="seo-editor-form">
         <input type="hidden" name="_csrf" value="<?= $csrf ?>">
         <div class="col-12 col-md-3"><label class="form-label"><?= htmlspecialchars((string) ($tr['entity_type'] ?? 'Entity type'), ENT_QUOTES, 'UTF-8') ?></label><input class="form-control" name="entity_type" value="<?= htmlspecialchars((string) ($record['entity_type'] ?? 'page'), ENT_QUOTES, 'UTF-8') ?>" required></div>
         <div class="col-12 col-md-2"><label class="form-label"><?= htmlspecialchars((string) ($tr['entity_id'] ?? 'Entity ID'), ENT_QUOTES, 'UTF-8') ?></label><input class="form-control" type="number" min="1" name="entity_id" value="<?= (int) ($record['entity_id'] ?? 0) ?>" required></div>
@@ -60,10 +60,36 @@ ob_start();
         </div>
         <div class="col-12 d-flex gap-2 justify-content-end">
             <button class="btn btn-outline-primary" formaction="<?= htmlspecialchars($adminBase . '/modules/seo-meta/audit', ENT_QUOTES, 'UTF-8') ?>" type="submit"><?= htmlspecialchars((string) ($tr['audit'] ?? 'Quick audit'), ENT_QUOTES, 'UTF-8') ?></button>
-            <button class="btn btn-primary" type="submit"><?= htmlspecialchars((string) ($tr['save'] ?? 'Save'), ENT_QUOTES, 'UTF-8') ?></button>
+            <button class="btn btn-primary" type="button" id="seo-open-validation"><?= htmlspecialchars((string) ($tr['save'] ?? 'Save'), ENT_QUOTES, 'UTF-8') ?></button>
         </div>
     </form>
 </div></section>
+
+<div class="modal fade" id="seoValidationModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Validation SEO avant sauvegarde</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="small text-body-secondary mb-2">Revois les suggestions puis confirme la sauvegarde.</p>
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span class="small text-body-secondary">Score live</span>
+          <span class="badge text-bg-secondary" id="seo-live-score">0/100</span>
+        </div>
+        <div class="progress mb-3" role="progressbar" aria-label="Live SEO score" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+          <div class="progress-bar" id="seo-live-bar" style="width:0%"></div>
+        </div>
+        <ul class="list-group" id="seo-live-checks"></ul>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Modifier</button>
+        <button type="button" class="btn btn-primary" id="seo-confirm-save">Confirmer sauvegarde</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <section class="row g-3">
   <div class="col-12 col-lg-6"><div class="card h-100"><div class="card-body">
@@ -111,4 +137,75 @@ ob_start();
 </section>
 <?php
 $content = (string) ob_get_clean();
+
+ob_start();
+?>
+<script>
+(() => {
+  const form = document.getElementById('seo-editor-form');
+  const openBtn = document.getElementById('seo-open-validation');
+  const saveBtn = document.getElementById('seo-confirm-save');
+  const scoreBadge = document.getElementById('seo-live-score');
+  const scoreBar = document.getElementById('seo-live-bar');
+  const checks = document.getElementById('seo-live-checks');
+  const modalEl = document.getElementById('seoValidationModal');
+
+  if (!form || !openBtn || !saveBtn || !scoreBadge || !scoreBar || !checks || !modalEl || !window.bootstrap) {
+    return;
+  }
+
+  const modal = new bootstrap.Modal(modalEl);
+
+  const read = (name) => {
+    const field = form.querySelector('[name="' + name + '"]');
+    return field ? String(field.value || '').trim() : '';
+  };
+
+  const compute = () => {
+    let score = 0;
+    const lines = [];
+    const title = read('seo_title');
+    const meta = read('meta_description');
+    const focus = read('focus_keyword');
+    const ogTitle = read('og_title');
+    const ogDesc = read('og_description');
+    const canonical = read('canonical_url');
+    const ogImage = parseInt(read('og_image_media_id') || '0', 10);
+
+    if (title) { score += 20; lines.push(['ok', 'SEO title present']); }
+    else { lines.push(['warn', 'SEO title missing']); }
+    if (title.length >= 35 && title.length <= 65) { score += 10; lines.push(['ok', 'Title length optimal']); }
+    else if (title) { lines.push(['warn', 'Title length should be 35-65 chars']); }
+
+    if (meta) { score += 20; lines.push(['ok', 'Meta description present']); }
+    else { lines.push(['warn', 'Meta description missing']); }
+    if (meta.length >= 120 && meta.length <= 170) { score += 10; lines.push(['ok', 'Meta length optimal']); }
+    else if (meta) { lines.push(['warn', 'Meta length should be 120-170 chars']); }
+
+    if (focus) { score += 10; lines.push(['ok', 'Focus keyword set']); }
+    else { lines.push(['warn', 'Focus keyword missing']); }
+    if (ogTitle) { score += 8; lines.push(['ok', 'OG title present']); }
+    if (ogDesc) { score += 7; lines.push(['ok', 'OG description present']); }
+    if (ogImage > 0) { score += 10; lines.push(['ok', 'OG image present']); }
+    else { lines.push(['warn', 'OG image missing']); }
+    if (canonical) { score += 5; lines.push(['ok', 'Canonical URL set']); }
+
+    score = Math.max(0, Math.min(100, score));
+    scoreBadge.textContent = score + '/100';
+    scoreBar.style.width = score + '%';
+    checks.innerHTML = lines.map(([tone, text]) => '<li class="list-group-item d-flex justify-content-between align-items-center"><span>' + text + '</span><span class="badge text-bg-' + (tone === 'ok' ? 'success' : 'warning') + '">' + tone.toUpperCase() + '</span></li>').join('');
+  };
+
+  openBtn.addEventListener('click', () => {
+    compute();
+    modal.show();
+  });
+
+  saveBtn.addEventListener('click', () => {
+    form.submit();
+  });
+})();
+</script>
+<?php
+$scripts = (string) ob_get_clean();
 require CATMIN_ADMIN . '/views/layouts/admin.php';

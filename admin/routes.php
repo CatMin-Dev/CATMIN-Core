@@ -3063,10 +3063,97 @@ return [
                 ]);
             }
 
-            $result = (new CoreMarketEngine())->install($target);
+            $marketEngine = new CoreMarketEngine();
+            $catalogItems = is_array($catalog['items'] ?? null) ? $catalog['items'] : [];
+
+            $isActive = static function (string $depSlug): bool {
+                $snapshot = (new CoreModuleLoader())->scan();
+                foreach ((array) ($snapshot['modules'] ?? []) as $module) {
+                    $mSlug = strtolower(trim((string) ($module['manifest']['slug'] ?? '')));
+                    if ($mSlug === $depSlug) {
+                        return (bool) ($module['enabled'] ?? false);
+                    }
+                }
+                return false;
+            };
+
+            $findCatalogItem = static function (string $depSlug) use ($catalogItems, $target): ?array {
+                $repoSlug = strtolower(trim((string) ($target['repo_slug'] ?? '')));
+                $scope = strtolower(trim((string) ($target['scope'] ?? 'admin')));
+                foreach ($catalogItems as $item) {
+                    if (!is_array($item)) {
+                        continue;
+                    }
+                    if (strtolower(trim((string) ($item['slug'] ?? ''))) === $depSlug
+                        && strtolower(trim((string) ($item['scope'] ?? ''))) === $scope
+                        && strtolower(trim((string) ($item['repo_slug'] ?? ''))) === $repoSlug) {
+                        return $item;
+                    }
+                }
+                foreach ($catalogItems as $item) {
+                    if (is_array($item) && strtolower(trim((string) ($item['slug'] ?? ''))) === $depSlug) {
+                        return $item;
+                    }
+                }
+                return null;
+            };
+
+            $installedNow = [];
+            $visiting = [];
+            $installWithDeps = static function (array $item) use (&$installWithDeps, &$installedNow, &$visiting, $findCatalogItem, $isActive, $marketEngine): array {
+                $slug = strtolower(trim((string) ($item['slug'] ?? '')));
+                if ($slug === '') {
+                    return ['ok' => false, 'message' => 'Slug module invalide'];
+                }
+
+                if (($visiting[$slug] ?? false) === true) {
+                    return ['ok' => false, 'message' => 'Cycle de dependances detecte: ' . $slug];
+                }
+
+                if ($isActive($slug)) {
+                    return ['ok' => true, 'message' => 'Module deja actif: ' . $slug];
+                }
+
+                $visiting[$slug] = true;
+                $requires = (array) (($item['manifest']['dependencies']['requires'] ?? []));
+                foreach ($requires as $dep) {
+                    $depSlug = strtolower(trim((string) $dep));
+                    if ($depSlug === '' || $isActive($depSlug)) {
+                        continue;
+                    }
+
+                    $depItem = $findCatalogItem($depSlug);
+                    if (!is_array($depItem)) {
+                        unset($visiting[$slug]);
+                        return ['ok' => false, 'message' => 'Dependance introuvable dans le market: ' . $depSlug];
+                    }
+
+                    $depInstall = $installWithDeps($depItem);
+                    if (!(bool) ($depInstall['ok'] ?? false)) {
+                        unset($visiting[$slug]);
+                        return $depInstall;
+                    }
+                }
+
+                $result = $marketEngine->install($item);
+                unset($visiting[$slug]);
+                if (!(bool) ($result['ok'] ?? false)) {
+                    return $result;
+                }
+
+                $installedNow[] = $slug;
+                return $result;
+            };
+
+            $result = $installWithDeps($target);
+
+            $msg = (string) ($result['message'] ?? 'Opération terminée.');
+            if ((bool) ($result['ok'] ?? false) && $installedNow !== []) {
+                $msg .= ' | Queue install: ' . implode(' => ', array_values(array_unique($installedNow)));
+            }
 
             return $redirect($adminBase . '/modules/market', [
-                'msg' => (string) ($result['message'] ?? 'Opération terminée.'),
+                'msg' => $msg,
                 'mt' => (bool) ($result['ok'] ?? false) ? 'success' : 'danger',
             ]);
         },

@@ -10,6 +10,7 @@ require_once __DIR__ . '/repositories/SeoMetaRepository.php';
 require_once __DIR__ . '/services/SeoScoreService.php';
 require_once __DIR__ . '/services/SeoAuditService.php';
 require_once __DIR__ . '/services/SeoPreviewService.php';
+require_once __DIR__ . '/services/SeoKeywordSuggestService.php';
 require_once __DIR__ . '/services/SeoMetaService.php';
 require_once __DIR__ . '/services/SeoIntegrationService.php';
 

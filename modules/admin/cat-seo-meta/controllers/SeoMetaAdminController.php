@@ -10,6 +10,7 @@ use Core\http\Request;
 use Core\http\Response;
 use Modules\CatSeoMeta\repositories\SeoMetaRepository;
 use Modules\CatSeoMeta\services\SeoAuditService;
+use Modules\CatSeoMeta\services\SeoKeywordSuggestService;
 use Modules\CatSeoMeta\services\SeoMetaService;
 use Modules\CatSeoMeta\services\SeoPreviewService;
 use Modules\CatSeoMeta\services\SeoScoreService;
@@ -27,7 +28,8 @@ final class SeoMetaAdminController
         $score = new SeoScoreService();
         $audit = new SeoAuditService($score);
         $preview = new SeoPreviewService();
-        $this->service = new SeoMetaService($repo, $score, $audit, $preview);
+        $keywords = new SeoKeywordSuggestService();
+        $this->service = new SeoMetaService($repo, $score, $audit, $preview, $keywords);
         $this->tr = $this->loadTranslations();
     }
 

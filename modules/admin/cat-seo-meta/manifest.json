@@ -42,7 +42,7 @@
     "settings": false
   },
   "dependencies": {
-    "requires": [],
+    "requires": ["cat-slug"],
     "conflicts": [],
     "replaces": []
   },
