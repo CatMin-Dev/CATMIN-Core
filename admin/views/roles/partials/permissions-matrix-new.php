@@ -15,6 +15,20 @@ declare(strict_types=1);
 $permissionMatrix = isset($permissionMatrix) && is_array($permissionMatrix) ? $permissionMatrix : [];
 $selectedPermissions = isset($selectedPermissions) && is_array($selectedPermissions) ? array_map('intval', $selectedPermissions) : [];
 
+$resolveModuleLabel = static function (string $moduleName): string {
+    $key = 'roles.matrix.group_' . $moduleName;
+    $translated = __($key);
+    if ($translated !== $key) {
+        return $translated;
+    }
+
+    return match ($moduleName) {
+        'admin' => 'Admin',
+        'core' => 'Core',
+        default => ucfirst(str_replace(['-', '_', '.'], ' ', $moduleName)),
+    };
+};
+
 // Sort modules - core first, then alphabetical
 $sortedMatrix = $permissionMatrix;
 usort($sortedMatrix, static function (array $a, array $b): int {
@@ -57,7 +71,9 @@ usort($sortedMatrix, static function (array $a, array $b): int {
             <div class="border-bottom" style="overflow-x: auto;">
                 <ul class="nav nav-tabs flex-nowrap m-0 px-3" role="tablist" style="white-space: nowrap;">
                     <?php foreach ($sortedMatrix as $idx => $group): ?>
-                        <?php $moduleId = preg_replace('/[^a-z0-9-]/i', '-', (string) ($group['module'] ?? 'core')); ?>
+                        <?php $moduleName = (string) ($group['module'] ?? 'core'); ?>
+                        <?php $moduleId = preg_replace('/[^a-z0-9-]/i', '-', $moduleName); ?>
+                        <?php $moduleLabel = $resolveModuleLabel($moduleName); ?>
                         <li class="nav-item" role="presentation">
                             <button
                                 class="nav-link <?= $idx === 0 ? 'active' : '' ?>"
@@ -70,7 +86,7 @@ usort($sortedMatrix, static function (array $a, array $b): int {
                                 aria-selected="<?= $idx === 0 ? 'true' : 'false' ?>"
                             >
                                 <small class="fw-semibold">
-                                    <span class="permission-module-label"><?= htmlspecialchars((string) ($group['module'] ?? 'core'), ENT_QUOTES, 'UTF-8') ?></span>
+                                    <span class="permission-module-label"><?= htmlspecialchars($moduleLabel, ENT_QUOTES, 'UTF-8') ?></span>
                                     <span class="badge bg-light text-dark ms-2 permission-module-count"><?= count($group['permissions'] ?? []) ?></span>
                                 </small>
                             </button>
@@ -85,11 +101,12 @@ usort($sortedMatrix, static function (array $a, array $b): int {
                     <?php 
                         $moduleName = (string) ($group['module'] ?? 'core');
                         $moduleId = preg_replace('/[^a-z0-9-]/i', '-', $moduleName);
+                        $moduleLabel = $resolveModuleLabel($moduleName);
                         $permissions = (array) ($group['permissions'] ?? []);
                         $moduleDescriptionKey = 'roles.matrix.module_description_' . $moduleName;
                         $moduleDescription = __($moduleDescriptionKey);
                         if ($moduleDescription === $moduleDescriptionKey) {
-                            $moduleDescription = $moduleName;
+                            $moduleDescription = $moduleLabel;
                         }
                     ?>
                     <div 
@@ -104,7 +121,7 @@ usort($sortedMatrix, static function (array $a, array $b): int {
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
                                         <h5 class="mb-1 fw-bold">
-                                            <?= htmlspecialchars($moduleName, ENT_QUOTES, 'UTF-8') ?>
+                                            <?= htmlspecialchars($moduleLabel, ENT_QUOTES, 'UTF-8') ?>
                                             <span class="badge bg-light text-dark"><?= count($permissions) ?> <?= __('roles.matrix.permissions') ?></span>
                                         </h5>
                                         <p class="small text-body-secondary mb-0">

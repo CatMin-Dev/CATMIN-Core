@@ -27,7 +27,6 @@ ob_start();
         <a class="btn btn-outline-secondary" href="<?= htmlspecialchars((string) ($adminBase . '/roles/' . (int) ($role['id'] ?? 0)), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars(__('common.cancel'), ENT_QUOTES, 'UTF-8') ?></a>
     </div>
 </form>
-<script src="/assets/js/catmin-roles.js?v=3"></script>
 <?php
 $content = (string) ob_get_clean();
 require CATMIN_ADMIN . '/views/layouts/admin.php';

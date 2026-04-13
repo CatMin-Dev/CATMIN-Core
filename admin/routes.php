@@ -127,7 +127,12 @@ $buildPermissionsMatrix = static function (array $permissions): array {
         $slug = (string) ($permission['slug'] ?? '');
         $parts = array_values(array_filter(explode('.', $slug), static fn (string $v): bool => $v !== ''));
         $action = $parts !== [] ? (string) array_pop($parts) : 'manage';
-        $module = $parts !== [] ? implode('.', $parts) : 'core';
+        if ($parts === []) {
+            $module = 'core';
+        } else {
+            $root = (string) ($parts[0] ?? 'core');
+            $module = in_array($root, ['admin', 'core'], true) ? $root : implode('.', $parts);
+        }
 
         if (!isset($matrix[$module])) {
             $matrix[$module] = [
@@ -145,7 +150,20 @@ $buildPermissionsMatrix = static function (array $permissions): array {
         ];
     }
 
-    ksort($matrix);
+    foreach ($matrix as &$group) {
+        usort($group['permissions'], static function (array $a, array $b): int {
+            return strcmp((string) ($a['slug'] ?? ''), (string) ($b['slug'] ?? ''));
+        });
+    }
+    unset($group);
+
+    uksort($matrix, static function (string $a, string $b): int {
+        $order = ['admin' => 0, 'core' => 1];
+        $aRank = $order[$a] ?? 99;
+        $bRank = $order[$b] ?? 99;
+        return $aRank === $bRank ? strcmp($a, $b) : ($aRank <=> $bRank);
+    });
+
     return array_values($matrix);
 };
 

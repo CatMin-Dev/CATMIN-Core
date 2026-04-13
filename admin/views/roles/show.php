@@ -59,7 +59,6 @@ ob_start();
         <?php endif; ?>
     </div>
 </section>
-<script src="/assets/js/catmin-roles.js?v=3"></script>
 <?php
 $content = (string) ob_get_clean();
 require CATMIN_ADMIN . '/views/layouts/admin.php';
