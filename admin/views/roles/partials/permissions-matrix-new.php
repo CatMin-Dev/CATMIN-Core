@@ -86,6 +86,11 @@ usort($sortedMatrix, static function (array $a, array $b): int {
                         $moduleName = (string) ($group['module'] ?? 'core');
                         $moduleId = preg_replace('/[^a-z0-9-]/i', '-', $moduleName);
                         $permissions = (array) ($group['permissions'] ?? []);
+                        $moduleDescriptionKey = 'roles.matrix.module_description_' . $moduleName;
+                        $moduleDescription = __($moduleDescriptionKey);
+                        if ($moduleDescription === $moduleDescriptionKey) {
+                            $moduleDescription = $moduleName;
+                        }
                     ?>
                     <div 
                         class="tab-pane fade <?= $idx === 0 ? 'show active' : '' ?>" 
@@ -103,7 +108,7 @@ usort($sortedMatrix, static function (array $a, array $b): int {
                                             <span class="badge bg-light text-dark"><?= count($permissions) ?> <?= __('roles.matrix.permissions') ?></span>
                                         </h5>
                                         <p class="small text-body-secondary mb-0">
-                                            <?= htmlspecialchars(__('roles.matrix.module_description_' . $moduleName, $moduleName), ENT_QUOTES, 'UTF-8') ?>
+                                            <?= htmlspecialchars($moduleDescription, ENT_QUOTES, 'UTF-8') ?>
                                         </p>
                                     </div>
                                     <label class="form-check form-switch">
