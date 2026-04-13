@@ -13,7 +13,8 @@ final class CoreModuleMandatoryDependencies
 
         return match ($slug) {
             'cat-seo-meta' => ['cat-slug'],
-            'cat-page', 'cat-blog', 'cat-directory' => ['cat-slug', 'cat-seo-meta'],
+            'cat-tags' => ['cat-seo-meta'],
+            'cat-page', 'cat-blog', 'cat-directory' => ['cat-slug', 'cat-seo-meta', 'cat-tags'],
             default => [],
         };
     }
