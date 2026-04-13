@@ -9,10 +9,8 @@ use Core\database\ConnectionManager;
 use Core\http\Request;
 use Core\http\Response;
 use Modules\CatAuthors\repositories\AuthorRepository;
-use Modules\CatAuthors\services\AuthorDisplayService;
 use Modules\CatAuthors\services\AuthorLinkService;
 use Modules\CatAuthors\services\AuthorProfileService;
-use Modules\CatAuthors\services\AuthorRoleRegistryService;
 use Modules\CatAuthors\services\AuthorSelectorService;
 use Modules\CatAuthors\services\AuthorValidationService;
 
@@ -23,8 +21,6 @@ final class AuthorAdminController
     private AuthorProfileService $profileService;
     private AuthorLinkService $linkService;
     private AuthorSelectorService $selectorService;
-    private AuthorRoleRegistryService $roleRegistry;
-    private AuthorDisplayService $displayService;
     private array $tr;
 
     public function __construct()
@@ -34,14 +30,8 @@ final class AuthorAdminController
         $this->profileService = new AuthorProfileService($repo, $validator);
         $this->linkService = new AuthorLinkService($repo);
         $this->selectorService = new AuthorSelectorService($repo);
-        $this->roleRegistry = new AuthorRoleRegistryService($repo);
-        $this->displayService = new AuthorDisplayService();
         $this->tr = $this->loadTranslations();
     }
-
-    // -------------------------------------------------------------------------
-    // Main page (profiles + roles tabs)
-    // -------------------------------------------------------------------------
 
     public function index(Request $request): Response
     {
@@ -49,23 +39,13 @@ final class AuthorAdminController
             return $guard;
         }
 
-        $tab = trim((string) $request->input('tab', 'profiles'));
-        $dashboard = $this->profileService->dashboard();
-        $rolesWithFlag = $this->roleRegistry->allRolesWithFlag();
-
         return $this->render('index', [
-            'tab'          => in_array($tab, ['profiles', 'roles'], true) ? $tab : 'profiles',
-            'dashboard'    => $dashboard,
-            'rolesWithFlag'=> $rolesWithFlag,
-            'message'      => trim((string) $request->input('msg', '')),
-            'messageType'  => trim((string) $request->input('mt', 'info')),
-            'tr'           => $this->tr,
+            'dashboard'   => $this->profileService->dashboard(),
+            'message'     => trim((string) $request->input('msg', '')),
+            'messageType' => trim((string) $request->input('mt', 'info')),
+            'tr'          => $this->tr,
         ]);
     }
-
-    // -------------------------------------------------------------------------
-    // Profile CRUD
-    // -------------------------------------------------------------------------
 
     public function createProfile(Request $request): Response
     {
@@ -73,9 +53,8 @@ final class AuthorAdminController
             return $guard;
         }
 
-        [$status, $result] = $this->profileService->create($request->all());
+        [$status, $result] = $this->profileService->create($request->post());
         return $this->redirect('/modules/author-bridge', [
-            'tab' => 'profiles',
             'msg' => $status === 'ok' ? (string) ($this->tr['msg_profile_created'] ?? 'Profile created successfully.') : (string) $result,
             'mt'  => $status === 'ok' ? 'success' : 'danger',
         ]);
@@ -88,9 +67,8 @@ final class AuthorAdminController
         }
 
         $id = (int) $request->input('id', 0);
-        [$status, $result] = $this->profileService->update($id, $request->all());
+        [$status, $result] = $this->profileService->update($id, $request->post());
         return $this->redirect('/modules/author-bridge', [
-            'tab' => 'profiles',
             'msg' => $status === 'ok' ? (string) ($this->tr['msg_profile_updated'] ?? 'Profile updated.') : (string) $result,
             'mt'  => $status === 'ok' ? 'success' : 'danger',
         ]);
@@ -107,15 +85,10 @@ final class AuthorAdminController
             $this->profileService->delete($id);
         }
         return $this->redirect('/modules/author-bridge', [
-            'tab' => 'profiles',
             'msg' => (string) ($this->tr['msg_profile_deleted'] ?? 'Profile deleted.'),
             'mt'  => 'success',
         ]);
     }
-
-    // -------------------------------------------------------------------------
-    // Sync entity author
-    // -------------------------------------------------------------------------
 
     public function syncEntity(Request $request): Response
     {
@@ -133,37 +106,6 @@ final class AuthorAdminController
 
         return Response::json(['ok' => true]);
     }
-
-    // -------------------------------------------------------------------------
-    // Role registry
-    // -------------------------------------------------------------------------
-
-    public function saveRoleRegistry(Request $request): Response
-    {
-        if (($guard = $this->guard(['authors.configure', 'author.configure', 'core.modules.manage'])) !== null) {
-            return $guard;
-        }
-
-        $roleIds = $request->input('role_ids', []);
-        if (!is_array($roleIds)) {
-            $roleIds = [];
-        }
-        $notes = $request->input('role_notes', []);
-        if (!is_array($notes)) {
-            $notes = [];
-        }
-        $this->roleRegistry->saveRegistry($roleIds, $notes);
-
-        return $this->redirect('/modules/author-bridge', [
-            'tab' => 'roles',
-            'msg' => (string) ($this->tr['msg_roles_registry_updated'] ?? 'Author roles registry updated.'),
-            'mt'  => 'success',
-        ]);
-    }
-
-    // -------------------------------------------------------------------------
-    // Embedded panel (GET — returns HTML fragment for module editors)
-    // -------------------------------------------------------------------------
 
     public function panel(Request $request): Response
     {
@@ -185,10 +127,6 @@ final class AuthorAdminController
             'tr'         => $this->tr,
         ]);
     }
-
-    // -------------------------------------------------------------------------
-    // Helpers
-    // -------------------------------------------------------------------------
 
     private function loadTranslations(): array
     {
@@ -220,6 +158,7 @@ final class AuthorAdminController
 
     private function render(string $template, array $data): Response
     {
+        $data['adminBase'] = $data['adminBase'] ?? $this->adminBase();
         extract($data, EXTR_SKIP);
         $viewPath = CATMIN_MODULES . '/admin/cat-authors/views/' . $template . '.php';
         ob_start();

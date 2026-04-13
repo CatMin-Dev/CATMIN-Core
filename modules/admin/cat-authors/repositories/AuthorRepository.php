@@ -13,7 +13,6 @@ final class AuthorRepository
 
     private const TABLE_PROFILES = 'mod_cat_author_profiles';
     private const TABLE_LINKS    = 'mod_cat_author_links';
-    private const TABLE_ROLES    = 'mod_cat_author_roles';
 
     public function __construct()
     {
@@ -26,9 +25,10 @@ final class AuthorRepository
 
     public function allProfiles(): array
     {
-        $sql = 'SELECT p.*, u.username, u.email
+        $sql = 'SELECT p.*, u.username, u.email, r.name AS role_name, r.slug AS role_slug
                 FROM ' . self::TABLE_PROFILES . ' p
-                LEFT JOIN admin_users u ON u.id = p.user_id
+            INNER JOIN admin_users u ON u.id = p.user_id
+            LEFT JOIN admin_roles r ON r.id = u.role_id
                 ORDER BY p.display_name ASC';
         return $this->pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
@@ -36,9 +36,10 @@ final class AuthorRepository
     public function findProfile(int $id): ?array
     {
         $stmt = $this->pdo->prepare(
-            'SELECT p.*, u.username, u.email
+              'SELECT p.*, u.username, u.email, r.name AS role_name, r.slug AS role_slug
              FROM ' . self::TABLE_PROFILES . ' p
-             LEFT JOIN admin_users u ON u.id = p.user_id
+               INNER JOIN admin_users u ON u.id = p.user_id
+               LEFT JOIN admin_roles r ON r.id = u.role_id
              WHERE p.id = :id LIMIT 1'
         );
         $stmt->execute(['id' => $id]);
@@ -79,16 +80,17 @@ final class AuthorRepository
     {
         $stmt = $this->pdo->prepare(
             'INSERT INTO ' . self::TABLE_PROFILES .
-            ' (user_id, display_name, slug, bio, avatar_media_id, website_url, socials_json, visibility, created_at)
-             VALUES (:user_id, :display_name, :slug, :bio, :avatar_media_id, :website_url, :socials_json, :visibility, CURRENT_TIMESTAMP)'
+            ' (user_id, first_name, last_name, display_name, slug, bio, avatar_media_id, socials_json, visibility, created_at)
+             VALUES (:user_id, :first_name, :last_name, :display_name, :slug, :bio, :avatar_media_id, :socials_json, :visibility, CURRENT_TIMESTAMP)'
         );
         $stmt->execute([
             'user_id'        => $data['user_id'] ?? null,
+            'first_name'     => $data['first_name'],
+            'last_name'      => $data['last_name'],
             'display_name'   => $data['display_name'],
             'slug'           => $data['slug'],
             'bio'            => $data['bio'] ?? null,
             'avatar_media_id'=> $data['avatar_media_id'] ?? null,
-            'website_url'    => $data['website_url'] ?? null,
             'socials_json'   => $data['socials_json'] ?? null,
             'visibility'     => $data['visibility'] ?? 'public',
         ]);
@@ -99,19 +101,21 @@ final class AuthorRepository
     {
         $stmt = $this->pdo->prepare(
             'UPDATE ' . self::TABLE_PROFILES . '
-             SET user_id = :user_id, display_name = :display_name, slug = :slug,
-                 bio = :bio, avatar_media_id = :avatar_media_id, website_url = :website_url,
+             SET user_id = :user_id, first_name = :first_name, last_name = :last_name,
+                 display_name = :display_name, slug = :slug,
+                 bio = :bio, avatar_media_id = :avatar_media_id,
                  socials_json = :socials_json, visibility = :visibility, updated_at = CURRENT_TIMESTAMP
              WHERE id = :id'
         );
         $stmt->execute([
             'id'             => $id,
             'user_id'        => $data['user_id'] ?? null,
+            'first_name'     => $data['first_name'],
+            'last_name'      => $data['last_name'],
             'display_name'   => $data['display_name'],
             'slug'           => $data['slug'],
             'bio'            => $data['bio'] ?? null,
             'avatar_media_id'=> $data['avatar_media_id'] ?? null,
-            'website_url'    => $data['website_url'] ?? null,
             'socials_json'   => $data['socials_json'] ?? null,
             'visibility'     => $data['visibility'] ?? 'public',
         ]);
@@ -119,6 +123,8 @@ final class AuthorRepository
 
     public function deleteProfile(int $id): void
     {
+        $this->pdo->prepare('DELETE FROM ' . self::TABLE_LINKS . ' WHERE author_profile_id = :id')
+            ->execute(['id' => $id]);
         $this->pdo->prepare('DELETE FROM ' . self::TABLE_PROFILES . ' WHERE id = :id')
             ->execute(['id' => $id]);
     }
@@ -160,71 +166,34 @@ final class AuthorRepository
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Roles registry
-    // -------------------------------------------------------------------------
-
-    /** Returns all admin_roles with a boolean flag 'is_author_role' */
-    public function allRolesWithFlag(): array
-    {
-        $sql = 'SELECT r.id, r.name, r.slug, r.is_system,
-                       CASE WHEN ar.role_id IS NOT NULL THEN 1 ELSE 0 END AS is_author_role,
-                       ar.note
-                FROM admin_roles r
-                LEFT JOIN ' . self::TABLE_ROLES . ' ar ON ar.role_id = r.id
-                ORDER BY r.name ASC';
-        return $this->pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC) ?: [];
-    }
-
-    public function registeredRoleIds(): array
-    {
-        $rows = $this->pdo->query(
-            'SELECT role_id FROM ' . self::TABLE_ROLES
-        )->fetchAll(PDO::FETCH_COLUMN) ?: [];
-        return array_map('intval', $rows);
-    }
-
-    public function registerRole(int $roleId, ?string $note): void
-    {
-        $stmt = $this->pdo->prepare(
-            'INSERT OR REPLACE INTO ' . self::TABLE_ROLES .
-            ' (role_id, note, created_at) VALUES (:rid, :note, CURRENT_TIMESTAMP)'
-        );
-        $stmt->execute(['rid' => $roleId, 'note' => $note]);
-    }
-
-    public function unregisterRole(int $roleId): void
-    {
-        $this->pdo->prepare('DELETE FROM ' . self::TABLE_ROLES . ' WHERE role_id = :rid')
-            ->execute(['rid' => $roleId]);
-    }
-
-    public function syncRegisteredRoles(array $roleIds, array $notes): void
-    {
-        $this->pdo->exec('DELETE FROM ' . self::TABLE_ROLES);
-        $stmt = $this->pdo->prepare(
-            'INSERT INTO ' . self::TABLE_ROLES .
-            ' (role_id, note, created_at) VALUES (:rid, :note, CURRENT_TIMESTAMP)'
-        );
-        foreach ($roleIds as $rid) {
-            $rid = (int) $rid;
-            if ($rid <= 0) {
-                continue;
-            }
-            $stmt->execute(['rid' => $rid, 'note' => $notes[$rid] ?? null]);
-        }
-    }
-
-    /** Returns all admin_users with a flag indicating they have an author profile */
     public function allAdminUsersWithProfileFlag(): array
     {
         $sql = 'SELECT u.id, u.username, u.email, r.name AS role_name, r.slug AS role_slug,
                        CASE WHEN p.id IS NOT NULL THEN 1 ELSE 0 END AS has_profile,
-                       p.id AS profile_id, p.display_name AS profile_display_name
+                       p.id AS profile_id, p.display_name AS profile_display_name,
+                       p.first_name, p.last_name
                 FROM admin_users u
                 LEFT JOIN admin_roles r ON r.id = u.role_id
                 LEFT JOIN ' . self::TABLE_PROFILES . ' p ON p.user_id = u.id
                 ORDER BY u.username ASC';
         return $this->pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    public function availableAdminUsers(): array
+    {
+        $sql = 'SELECT u.id, u.username, u.email, r.name AS role_name, r.slug AS role_slug
+                FROM admin_users u
+                LEFT JOIN admin_roles r ON r.id = u.role_id
+                LEFT JOIN ' . self::TABLE_PROFILES . ' p ON p.user_id = u.id
+                WHERE p.id IS NULL
+                ORDER BY u.username ASC';
+        return $this->pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    public function adminUserExists(int $userId): bool
+    {
+        $stmt = $this->pdo->prepare('SELECT id FROM admin_users WHERE id = :id LIMIT 1');
+        $stmt->execute(['id' => $userId]);
+        return $stmt->fetchColumn() !== false;
     }
 }

@@ -1,12 +1,13 @@
 # CAT Authors Bridge
 
-Bridge transversal de profils auteurs pour CATMIN.
+Extension editoriale 1:1 des comptes admin pour CATMIN.
 
 ## Périmètre
 
-- Profils auteurs éditoriaux liés aux comptes admin existants
+- Comptes auteurs editoriaux relies aux comptes admin existants
 - Liaison auteur → entités (articles, pages, contenus)
-- Registre manuel des rôles admin "auteur-capables" (aucune automation)
+- Metadonnees editoriales dediees : nom, prenom, nom d affichage, slug, bio, visibilite
+- Reseaux sociaux dynamiques avec ajout et suppression
 - Sélecteur auteur embarquable dans modules maîtres
 - Widgets auteur (badge, card, bio, identité inline)
 
@@ -15,19 +16,10 @@ Bridge transversal de profils auteurs pour CATMIN.
 - **Forte** : `cat-seo-meta`
 - **Optionnelle** : `cat-tags`, `cat-categories`
 
-## Rôles autorisés
-
-Le module permet de **signaler manuellement** quels rôles admin sont des rôles auteurs.
-Aucune création automatique de rôle. Aucune affectation automatique de permissions.
-Il s'agit uniquement d'un registre de référence : l'administrateur coche les rôles
-appropriés, et les modules consommateurs peuvent interroger ce registre pour
-filtrer els utilisateurs éligibles.
-
 ## Tables SQL
 
-- `mod_cat_author_profiles` — profils auteurs
+- `mod_cat_author_profiles` — extension auteur 1:1 des comptes admin
 - `mod_cat_author_links` — liaisons entité → auteur
-- `mod_cat_author_roles` — registre rôles signalés auteurs
 
 ## Section admin
 

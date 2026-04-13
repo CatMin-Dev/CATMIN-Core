@@ -3,7 +3,7 @@
     "algorithm": "sha256",
     "module_slug": "cat-seo-meta",
     "module_version": "1.0.0-dev.3",
-    "generated_at": "2026-04-13T12:27:56+00:00",
+    "generated_at": "2026-04-13T13:16:08+00:00",
     "files": {
         "CHANGELOG.md": "30424282e5ea590073fa7cd12fe3942b208e73f2bae60d12e24c0df7ac0379a9",
         "README.md": "d14bd8fb0718cb730a18699be4da3faacfc7ba6d87a7047e1ed4eb637289c115",

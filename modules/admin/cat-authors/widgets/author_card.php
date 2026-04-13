@@ -17,11 +17,36 @@ if ($profile === null) {
 
 $name    = htmlspecialchars((string) ($profile['display_name'] ?? ''), ENT_QUOTES, 'UTF-8');
 $bio     = htmlspecialchars((string) ($profile['bio'] ?? ''), ENT_QUOTES, 'UTF-8');
-$website = filter_var((string) ($profile['website_url'] ?? ''), FILTER_VALIDATE_URL) ?: '';
 $slug    = htmlspecialchars((string) ($profile['slug'] ?? ''), ENT_QUOTES, 'UTF-8');
 
 $socialsRaw = $profile['socials_json'] ?? null;
-$socials    = is_string($socialsRaw) && $socialsRaw !== '' ? (json_decode($socialsRaw, true) ?: []) : [];
+$socialsDecoded = is_string($socialsRaw) && $socialsRaw !== '' ? (json_decode($socialsRaw, true) ?: []) : (is_array($socialsRaw) ? $socialsRaw : []);
+$socials = [];
+if (is_array($socialsDecoded)) {
+  $isAssoc = array_keys($socialsDecoded) !== range(0, count($socialsDecoded) - 1);
+  if ($isAssoc) {
+    foreach ($socialsDecoded as $network => $url) {
+      $network = strtolower(trim((string) $network));
+      $url = trim((string) $url);
+      if ($network === '' || $url === '') {
+        continue;
+      }
+      $socials[] = ['network' => $network, 'url' => $url];
+    }
+  } else {
+    foreach ($socialsDecoded as $item) {
+      if (!is_array($item)) {
+        continue;
+      }
+      $network = strtolower(trim((string) ($item['network'] ?? '')));
+      $url = trim((string) ($item['url'] ?? ''));
+      if ($network === '' || $url === '') {
+        continue;
+      }
+      $socials[] = ['network' => $network, 'url' => $url];
+    }
+  }
+}
 
 $socialIcons = [
     'twitter'   => 'twitter-x',
@@ -29,6 +54,12 @@ $socialIcons = [
     'github'    => 'github',
     'instagram' => 'instagram',
     'mastodon'  => 'mastodon',
+  'facebook'  => 'facebook',
+  'youtube'   => 'youtube',
+  'tiktok'    => 'music-note-beamed',
+  'telegram'  => 'send',
+  'threads'   => 'at',
+  'bluesky'   => 'cloud',
 ];
 
 ?>
@@ -49,19 +80,13 @@ $socialIcons = [
     <?php if ($bio !== ''): ?>
       <p class="small mb-2"><?= $bio ?></p>
     <?php endif; ?>
-    <?php if ($website !== '' || $socials !== []): ?>
+    <?php if ($socials !== []): ?>
       <div class="d-flex flex-wrap gap-2">
-        <?php if ($website !== ''): ?>
-          <a href="<?= htmlspecialchars($website, ENT_QUOTES, 'UTF-8') ?>" class="btn btn-sm btn-outline-secondary" target="_blank" rel="noopener noreferrer">
-            <i class="bi bi-globe me-1"></i>Site
+        <?php foreach ($socials as $social): ?>
+          <?php $icon = $socialIcons[$social['network']] ?? 'link-45deg'; ?>
+          <a href="<?= htmlspecialchars((string) $social['url'], ENT_QUOTES, 'UTF-8') ?>" class="btn btn-sm btn-outline-secondary" target="_blank" rel="noopener noreferrer">
+            <i class="bi bi-<?= htmlspecialchars($icon, ENT_QUOTES, 'UTF-8') ?>"></i>
           </a>
-        <?php endif; ?>
-        <?php foreach ($socialIcons as $key => $icon): ?>
-          <?php if (!empty($socials[$key])): ?>
-            <a href="<?= htmlspecialchars((string) $socials[$key], ENT_QUOTES, 'UTF-8') ?>" class="btn btn-sm btn-outline-secondary" target="_blank" rel="noopener noreferrer">
-              <i class="bi bi-<?= $icon ?>"></i>
-            </a>
-          <?php endif; ?>
         <?php endforeach; ?>
       </div>
     <?php endif; ?>

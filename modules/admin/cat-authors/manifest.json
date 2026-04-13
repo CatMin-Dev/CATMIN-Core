@@ -4,16 +4,16 @@
   "display_name": "CAT Authors Bridge",
   "slug": "cat-authors",
   "type": "admin",
-  "version": "1.0.0-dev.2",
-  "description": "Bridge transversal de profils auteurs editoriaux lies aux comptes admin.",
-  "summary": "Gestion des profils auteurs, liaison utilisateurs admin, selection auteur dans modules maitres, registre des roles autorises.",
+  "version": "1.0.0-dev.3",
+  "description": "Extension editoriale 1:1 des comptes admin pour gerer les auteurs CATMIN.",
+  "summary": "Activation de comptes admin comme auteurs, metadonnees editoriales, et selection auteur dans les modules maitres.",
   "author": "CATMIN",
   "homepage": "https://github.com/CatMin-Dev/modules",
   "support_url": "https://github.com/CatMin-Dev/modules/issues",
   "docs_url": "https://github.com/CatMin-Dev/core",
   "readme_url": "https://github.com/CatMin-Dev/modules",
   "changelog_url": "https://github.com/CatMin-Dev/modules",
-  "keywords": ["authors", "editorial", "profiles", "bridge", "organisation"],
+  "keywords": ["authors", "editorial", "accounts", "bridge", "organisation"],
   "category": "organisation",
   "icon": "bi bi-person-badge",
   "enabled": true,
@@ -59,9 +59,8 @@
     }
   ],
   "settings": {
-    "author.enable_profiles": true,
-    "author.allow_manual_fallback": false,
-    "author.require_profile_for_blog": false,
+    "author.enable_accounts": true,
+    "author.require_author_for_blog": false,
     "author.default_visibility": "public",
     "author.enable_front_widgets_later": false
   }

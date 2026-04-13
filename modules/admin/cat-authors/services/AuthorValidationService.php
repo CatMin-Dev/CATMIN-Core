@@ -10,7 +10,6 @@ final class AuthorValidationService
 {
     public function __construct(private readonly AuthorRepository $repo) {}
 
-    /** Generate a URL-safe slug from a display name */
     public function slugify(string $text): string
     {
         $text = mb_strtolower(trim($text), 'UTF-8');
@@ -27,7 +26,6 @@ final class AuthorValidationService
         return trim($text, '-');
     }
 
-    /** Build a unique slug, appending numeric suffix if needed */
     public function uniqueSlug(string $base, int $excludeId = 0): string
     {
         $slug = $this->slugify($base);
@@ -43,10 +41,35 @@ final class AuthorValidationService
         return $candidate;
     }
 
-    /** Validate a profile creation/update payload, returns array of error strings */
     public function validate(array $data, int $excludeId = 0): array
     {
         $errors = [];
+
+        $userId = (int) ($data['user_id'] ?? 0);
+        if ($userId <= 0) {
+            $errors[] = $this->message('Le compte admin est requis.', 'The admin account is required.');
+        } elseif (!$this->repo->adminUserExists($userId)) {
+            $errors[] = $this->message('Le compte admin selectionne est introuvable.', 'The selected admin account could not be found.');
+        } else {
+            $existingProfile = $this->repo->findProfileByUserId($userId);
+            if ($existingProfile !== null && (int) ($existingProfile['id'] ?? 0) !== $excludeId) {
+                $errors[] = $this->message('Ce compte admin possede deja une fiche auteur.', 'This admin account already has an author record.');
+            }
+        }
+
+        $firstName = trim((string) ($data['first_name'] ?? ''));
+        if ($firstName === '') {
+            $errors[] = $this->message('Le prenom est requis.', 'First name is required.');
+        } elseif (mb_strlen($firstName, 'UTF-8') > 120) {
+            $errors[] = $this->message('Le prenom ne doit pas depasser 120 caracteres.', 'First name must not exceed 120 characters.');
+        }
+
+        $lastName = trim((string) ($data['last_name'] ?? ''));
+        if ($lastName === '') {
+            $errors[] = $this->message('Le nom est requis.', 'Last name is required.');
+        } elseif (mb_strlen($lastName, 'UTF-8') > 120) {
+            $errors[] = $this->message('Le nom ne doit pas depasser 120 caracteres.', 'Last name must not exceed 120 characters.');
+        }
 
         $displayName = trim((string) ($data['display_name'] ?? ''));
         if ($displayName === '') {
@@ -69,9 +92,29 @@ final class AuthorValidationService
             $errors[] = $this->message('Visibilité invalide (public, private, unlisted).', 'Invalid visibility (public, private, unlisted).');
         }
 
-        $websiteUrl = trim((string) ($data['website_url'] ?? ''));
-        if ($websiteUrl !== '' && !filter_var($websiteUrl, FILTER_VALIDATE_URL)) {
-            $errors[] = $this->message('L\'URL du site web est invalide.', 'Website URL is invalid.');
+        $socialsRaw = $data['socials_json'] ?? null;
+        if (is_string($socialsRaw) && $socialsRaw !== '') {
+            $socials = json_decode($socialsRaw, true);
+            if (!is_array($socials)) {
+                $errors[] = $this->message('Le format des reseaux sociaux est invalide.', 'The social network format is invalid.');
+            } else {
+                foreach ($socials as $social) {
+                    if (!is_array($social)) {
+                        $errors[] = $this->message('Le format des reseaux sociaux est invalide.', 'The social network format is invalid.');
+                        break;
+                    }
+                    $network = strtolower(trim((string) ($social['network'] ?? '')));
+                    $url = trim((string) ($social['url'] ?? ''));
+                    if ($network === '' || $url === '') {
+                        $errors[] = $this->message('Chaque reseau social doit avoir un type et une URL.', 'Each social network entry must have a type and a URL.');
+                        break;
+                    }
+                    if (!filter_var($url, FILTER_VALIDATE_URL)) {
+                        $errors[] = $this->message('Chaque lien social doit etre une URL valide.', 'Each social link must be a valid URL.');
+                        break;
+                    }
+                }
+            }
         }
 
         return $errors;

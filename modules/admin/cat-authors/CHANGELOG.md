@@ -1,5 +1,15 @@
 # CHANGELOG — cat-authors
 
+## [1.0.0-dev.3] - 2026-04-13
+
+### Changed
+- Refonte du module pour faire de l auteur une extension 1:1 d un compte admin existant
+- Suppression de l UI a onglets et du registre manuel des roles auteurs
+- Ajout des champs prenom et nom dans la fiche auteur
+- Suppression du site web au profit d une gestion dynamique des reseaux sociaux avec icones
+- Simplification de l administration: activation d un compte auteur, edition, retrait
+- Mise a jour des widgets pour consommer le nouveau format de reseaux sociaux
+
 ## [1.0.0-dev.1] - 2026-04-13
 
 ### Added

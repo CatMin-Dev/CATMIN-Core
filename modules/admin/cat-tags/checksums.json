@@ -3,7 +3,7 @@
     "algorithm": "sha256",
     "module_slug": "cat-tags",
     "module_version": "1.0.0-dev.2",
-    "generated_at": "2026-04-13T12:27:57+00:00",
+    "generated_at": "2026-04-13T13:16:08+00:00",
     "files": {
         "CHANGELOG.md": "8c310df68e6ca19f9d7bec9f964eaf1a55822065f5b5a8969e1cf144e4b99c81",
         "README.md": "43166b9584e42e02ae2e5dc04064d180476729b40137ca8a140b3618bb50350b",

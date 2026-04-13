@@ -8,6 +8,20 @@ use Modules\CatAuthors\repositories\AuthorRepository;
 
 final class AuthorProfileService
 {
+    private const SOCIAL_NETWORKS = [
+        'twitter',
+        'linkedin',
+        'github',
+        'instagram',
+        'mastodon',
+        'facebook',
+        'youtube',
+        'tiktok',
+        'telegram',
+        'threads',
+        'bluesky',
+    ];
+
     public function __construct(
         private readonly AuthorRepository $repo,
         private readonly AuthorValidationService $validator
@@ -16,9 +30,10 @@ final class AuthorProfileService
     public function dashboard(): array
     {
         return [
-            'total'    => $this->repo->countProfiles(),
-            'profiles' => $this->repo->allProfiles(),
-            'users'    => $this->repo->allAdminUsersWithProfileFlag(),
+            'total'           => $this->repo->countProfiles(),
+            'profiles'        => $this->repo->allProfiles(),
+            'users'           => $this->repo->allAdminUsersWithProfileFlag(),
+            'available_users' => $this->repo->availableAdminUsers(),
         ];
     }
 
@@ -32,7 +47,6 @@ final class AuthorProfileService
         return $this->repo->findProfile($id);
     }
 
-    /** Create profile. Returns ['ok', profile_id] or ['error', message] */
     public function create(array $input): array
     {
         $data = $this->sanitize($input);
@@ -47,7 +61,6 @@ final class AuthorProfileService
         return ['ok', $id];
     }
 
-    /** Update profile. Returns ['ok', profile_id] or ['error', message] */
     public function update(int $id, array $input): array
     {
         if ($this->repo->findProfile($id) === null) {
@@ -72,23 +85,48 @@ final class AuthorProfileService
 
     private function sanitize(array $input): array
     {
+        $firstName = trim((string) ($input['first_name'] ?? ''));
+        $lastName = trim((string) ($input['last_name'] ?? ''));
+        $displayName = trim((string) ($input['display_name'] ?? ''));
+        if ($displayName === '') {
+            $displayName = trim($firstName . ' ' . $lastName);
+        }
+
+        $socialNetworks = $input['social_network'] ?? [];
+        $socialUrls = $input['social_url'] ?? [];
+        if (!is_array($socialNetworks)) {
+            $socialNetworks = [];
+        }
+        if (!is_array($socialUrls)) {
+            $socialUrls = [];
+        }
+
         $socials = [];
-        foreach (['twitter', 'linkedin', 'github', 'instagram', 'mastodon'] as $key) {
-            $val = trim((string) ($input['social_' . $key] ?? ''));
-            if ($val !== '') {
-                $socials[$key] = $val;
+        foreach ($socialNetworks as $index => $networkValue) {
+            $network = strtolower(trim((string) $networkValue));
+            $url = trim((string) ($socialUrls[$index] ?? ''));
+            if ($network === '' || $url === '') {
+                continue;
             }
+            if (!in_array($network, self::SOCIAL_NETWORKS, true)) {
+                continue;
+            }
+            $socials[] = [
+                'network' => $network,
+                'url' => $url,
+            ];
         }
 
         $userId = (int) ($input['user_id'] ?? 0);
 
         return [
             'user_id'         => $userId > 0 ? $userId : null,
-            'display_name'    => trim((string) ($input['display_name'] ?? '')),
+            'first_name'      => $firstName,
+            'last_name'       => $lastName,
+            'display_name'    => $displayName,
             'slug'            => trim((string) ($input['slug'] ?? '')),
             'bio'             => trim((string) ($input['bio'] ?? '')) ?: null,
             'avatar_media_id' => ((int) ($input['avatar_media_id'] ?? 0)) ?: null,
-            'website_url'     => trim((string) ($input['website_url'] ?? '')) ?: null,
             'socials_json'    => $socials !== [] ? json_encode($socials, JSON_UNESCAPED_UNICODE) : null,
             'visibility'      => trim((string) ($input['visibility'] ?? 'public')),
         ];
