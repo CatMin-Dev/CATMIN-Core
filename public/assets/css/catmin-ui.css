@@ -1326,6 +1326,26 @@ html {
     display: none;
 }
 
+.cat-module-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--cat-space-3);
+    width: 100%;
+    margin-inline: 0;
+    align-items: stretch;
+}
+
+.cat-module-stat-col {
+    flex: 1 1 280px;
+    min-width: 0;
+    display: flex;
+}
+
+.cat-module-stat-col > .card {
+    width: 100%;
+    margin: 0;
+}
+
 @media (max-width: 991.98px) {
     .cat-admin-shell {
         grid-template-columns: 1fr;

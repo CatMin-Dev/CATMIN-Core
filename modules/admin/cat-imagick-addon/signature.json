@@ -1,0 +1,10 @@
+{
+    "schema_version": "1.0.0",
+    "algorithm": "rsa-sha256",
+    "module_slug": "cat-imagick-addon",
+    "module_version": "1.0.0-dev.2",
+    "signed_hash": "ea9da99a904c5318dd23bab7c9b784136c578e4ded1186d7af256ca1f81f89a1",
+    "signature": "ECtsw01J64IrdyoK8P1RVgcxpXj9s/7V89wgIy/qJrnu7zbcY1fpeV5Bpzv/wefiL7JC4tyNhb4/a7XljFaxIVEa7+8pcsnJUTQpBQBqKRS74aHhmaNZuBhF8MjGdr6/4FAzgAfZoDIiN7JBE5C9UkHh65g8Q2NArEgk28rGbBF0YPZkbunWU8auxj6KEcdukSN8GS9lUB4eDYBcchWngrXMALWD4LRYORoFVOBVtbz2xEBggkHFUFSndpN0Pdm2mGe0kmpiMHHtTkWa+cf5zFYOX8f2iiElNu3aMnjx/das5f1Nvg7hCJGYmY5yw9wFHQBmPVyHP/gk8L9i1Sko9wteYW3645cB8JOV08I/1oAPdMKiQoO8ccrygHeLx+c88DQWwOr4cTbe/2OO+ja0NL+uLKQiQFjqxuNUx/5ttvi5Rr3UghxCjL8kLvpArWNUuwRfBP/QDyVI837pevfPEUtOk+nVK3j72reTRxyuA7gGU06cdNmTMQ9vTmXJzO4Eqggfh1kcuvxapxRpdkglbaMT0GXDJUUZsWXfl6JW1+6dBQYSMidH5UL7GCoF4ZEE1QBUNvj5ydzmR0Ql1c+IOFwWADulJ1Pgv6Eu0ZuhNY7w5kmzwWt0YNDPE1ccgft4yU05bw80S/oGECZjJUF0EJcSqZOATxQtHyMY99RYWoY=",
+    "key_id": "catmin-official-dev-20260410",
+    "signed_at": "2026-04-13T18:27:18+00:00"
+}

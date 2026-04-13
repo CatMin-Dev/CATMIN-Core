@@ -1,0 +1,84 @@
+{
+  "module_schema_version": "1.0.0",
+  "name": "CAT Media Link",
+  "display_name": "CAT Media",
+  "slug": "cat-media-link",
+  "type": "admin",
+  "version": "1.0.0-dev.2",
+  "description": "Bridge media transverse pour featured, galerie, social image et usages.",
+  "summary": "Gestion media centralisee et reutilisable pour page/blog/directory sans recoder la logique.",
+  "author": "CATMIN",
+  "homepage": "https://github.com/CatMin-Dev/modules",
+  "support_url": "https://github.com/CatMin-Dev/modules/issues",
+  "docs_url": "https://github.com/CatMin-Dev/core",
+  "readme_url": "https://github.com/CatMin-Dev/modules",
+  "changelog_url": "https://github.com/CatMin-Dev/modules",
+  "keywords": ["media", "gallery", "featured", "bridge"],
+  "category": "media",
+  "icon": "bi bi-images",
+  "enabled": true,
+  "enabled_by_default": false,
+  "installable": true,
+  "autoload": true,
+  "show_in_manager": true,
+  "show_in_market": true,
+  "release_channel": "beta",
+  "lifecycle_status": "active",
+  "maintenance_status": "maintained",
+  "php_min": "8.3",
+  "catmin_min": "0.4.0-rc.15",
+  "catmin_max": "0.x",
+  "db_supported": ["sqlite", "mysql", "mariadb"],
+  "capabilities": [
+    "content.media.read",
+    "content.media.write",
+    "content.media.manage",
+    "content.media.audit"
+  ],
+  "trusted_module": true,
+  "load": {
+    "routes": true,
+    "views": true,
+    "assets": false,
+    "migrations": true,
+    "hooks": true,
+    "translations": true,
+    "widgets": true,
+    "permissions": true,
+    "settings": false
+  },
+  "dependencies": {
+    "requires": ["cat-imagick-addon", "cat-cropper-addon"],
+    "conflicts": [],
+    "replaces": []
+  },
+  "admin_sidebar": [
+    {
+      "key": "media-link",
+      "label": "Media",
+      "label_fr": "Médias",
+      "label_en": "Media",
+      "href": "modules/media-link",
+      "group": "media",
+      "order": 20,
+      "permissions": ["content.media.read"]
+    }
+  ],
+  "sidebar_entries": [
+    {
+      "group": "media",
+      "key": "cat-media-link.dashboard",
+      "label": "Médias",
+      "label_i18n": {
+        "fr": "Médias",
+        "en": "Media"
+      },
+      "icon": "images",
+      "route": "/modules/media-link",
+      "order": 20,
+      "visibility": "default",
+      "permissions": ["content.media.read"]
+    }
+  ],
+  "tags": ["cat-media-link", "bridge", "media"]
+}

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 return [
     'title' => 'Authors',
-    'description' => 'Manage editorial author accounts attached to existing admin users',
+    'description' => 'Manage editorial authors linked to existing admin users',
     'intro' => 'Each author record extends an existing admin account with simple editorial metadata.',
     'total_profiles' => 'Active author accounts',
     'total_users' => 'Admin accounts',
@@ -24,7 +24,8 @@ return [
     'visibility_unlisted' => 'Unlisted',
     'bio' => 'Biography',
     'socials' => 'Social networks',
-    'listing_title' => 'Author accounts',
+    'listing_title' => 'Authors',
+    'manage_accounts' => 'Authors management',
     'no_profiles' => 'No active author accounts yet.',
     'no_available_users' => 'Every admin account already has an author record, or no account is available.',
     'account' => 'Account',
@@ -32,6 +33,7 @@ return [
     'actions' => 'Actions',
     'confirm_delete' => 'Remove this author record? The admin account will remain.',
     'btn_add_author' => 'Enable author',
+    'btn_back_list' => 'Back to list',
     'btn_add_social' => 'Add network',
     'btn_create' => 'Enable this author account',
     'btn_save' => 'Save',
@@ -43,4 +45,7 @@ return [
     'msg_profile_created' => 'Author account enabled successfully.',
     'msg_profile_updated' => 'Author account updated.',
     'msg_profile_deleted' => 'Author record removed.',
+    'msg_profile_not_found' => 'Author profile not found.',
+    'social_active' => 'Active',
+    'social_inactive' => 'Inactive',
 ];

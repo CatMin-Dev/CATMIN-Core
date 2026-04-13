@@ -23,4 +23,14 @@ final class AuthorSelectorService
             ];
         }, $this->repo->allProfiles());
     }
+
+    public function availableAdminUsers(): array
+    {
+        return $this->repo->availableAdminUsers();
+    }
+
+    public function allAdminUsers(): array
+    {
+        return $this->repo->allAdminUsersWithProfileFlag();
+    }
 }

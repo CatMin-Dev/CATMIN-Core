@@ -23,6 +23,18 @@ return [
         'middleware' => ['auth.admin'],
     ],
     [
+        'method'     => 'GET',
+        'path'       => '/modules/author-bridge/create',
+        'handler'    => static fn (Request $request) => $controller->createForm($request),
+        'middleware' => ['auth.admin'],
+    ],
+    [
+        'method'     => 'GET',
+        'path'       => '/modules/author-bridge/edit',
+        'handler'    => static fn (Request $request) => $controller->editForm($request),
+        'middleware' => ['auth.admin'],
+    ],
+    [
         'method'     => 'POST',
         'path'       => '/modules/author-bridge/profile/create',
         'handler'    => static fn (Request $request) => $controller->createProfile($request),
@@ -50,6 +62,12 @@ return [
         'method'     => 'GET',
         'path'       => '/modules/author-bridge/panel',
         'handler'    => static fn (Request $request) => $controller->panel($request),
+        'middleware' => ['auth.admin'],
+    ],
+    [
+        'method'     => 'GET',
+        'path'       => '/modules/author-bridge/assets/admin.js',
+        'handler'    => static fn (Request $request) => $controller->adminScript($request),
         'middleware' => ['auth.admin'],
     ],
 ];

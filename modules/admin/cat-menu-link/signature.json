@@ -1,0 +1,10 @@
+{
+    "schema_version": "1.0.0",
+    "algorithm": "rsa-sha256",
+    "module_slug": "cat-menu-link",
+    "module_version": "1.0.0-dev.2",
+    "signed_hash": "af5e7be2afb13a899beb59a38450ba4615f87256d64b11fdd3f4a386469422a6",
+    "signature": "Utiad5JfUnYvE4zKr8ifMxaLOFD/4BEnxJFAy8T7y53oI4KKnzqyZk7fZtNB3RAYE8iHBoT7LGqqgztC/LBJc4eF8wGaUPcjB7pp5jzRTFDk9yydINkQh3jpVWkoShTxJjM2LZtLrBhbkkaFZGKzODaHtjq9DvwufYk0uZROMjebfqSCUNwsgcNtdaYrbvjA+nd2/BaOyh/tdy509u1sM7h7UwqHAzgIpjW67P970kgJHSmy64HJhuXCWYozNq2BF5ObSftxUfZT6EXJFVZl+znhlzoyjccJo29Dl9U39lfBV6cLZJ3wWfOA9Af0GCnOZd7VA3K203yLtLPGRf4i3SadlSyIISJxzxBtM5SwGjHuFJvv7fBh/JxtTSWqQaDGQ9duEyRplPGLyxWUJ4nkyTHUWBCDUXdRwEL7IxjGqXHQveCcdwA/WVt0b34C/8d6EFucNlLlGN2G9Ejvu2iRwNXstR7PdpOGrkNWh8PlNS4YkvK7ObFXtMhnhtV65qaHvPki+Wtt9m+KCc0gWr2FAATnmPN41/F6bd7gWQ9P9uJlmvd8z3MfkUgrMj982IA10FMW6TUxahOap1qZKMoRuSDiYcxHZMN5kQbFenfK6P6wz/hBrwigpGlby3fVinuoeTCUec8R5x2zXFvurfz2EOE0qd9PWrngi5BEnKYwsb8=",
+    "key_id": "catmin-official-dev-20260410",
+    "signed_at": "2026-04-13T18:27:19+00:00"
+}

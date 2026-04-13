@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 return [
     'title' => 'Auteurs',
-    'description' => 'Gestion des comptes auteurs editoriaux relies aux comptes admin existants',
+    'description' => 'Gestion des auteurs editoriaux relies aux comptes admin existants',
     'intro' => 'Chaque auteur enrichit un compte admin existant avec des metadonnees editoriales simples.',
     'total_profiles' => 'Comptes auteurs actifs',
     'total_users' => 'Comptes admin',
@@ -24,7 +24,8 @@ return [
     'visibility_unlisted' => 'Non liste',
     'bio' => 'Biographie',
     'socials' => 'Reseaux sociaux',
-    'listing_title' => 'Comptes auteurs',
+    'listing_title' => 'Auteurs',
+    'manage_accounts' => 'Gestion des auteurs',
     'no_profiles' => 'Aucun compte auteur actif.',
     'no_available_users' => 'Tous les comptes admin ont deja une fiche auteur ou aucun compte n est disponible.',
     'account' => 'Compte',
@@ -32,6 +33,7 @@ return [
     'actions' => 'Actions',
     'confirm_delete' => 'Retirer cette fiche auteur ? Le compte admin sera conserve.',
     'btn_add_author' => 'Activer un auteur',
+    'btn_back_list' => 'Retour liste',
     'btn_add_social' => 'Ajouter un reseau',
     'btn_create' => 'Activer ce compte auteur',
     'btn_save' => 'Enregistrer',
@@ -43,4 +45,7 @@ return [
     'msg_profile_created' => 'Compte auteur active avec succes.',
     'msg_profile_updated' => 'Compte auteur mis a jour.',
     'msg_profile_deleted' => 'Fiche auteur retiree.',
+    'msg_profile_not_found' => 'Profil auteur introuvable.',
+    'social_active' => 'Actif',
+    'social_inactive' => 'Inactif',
 ];

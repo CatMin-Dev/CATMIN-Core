@@ -35,10 +35,10 @@ ob_start();
 <section class="alert alert-light border mb-3"><strong><?= htmlspecialchars((string) ($tr['audit_summary'] ?? 'Audit summary'), ENT_QUOTES, 'UTF-8') ?>:</strong> <?= htmlspecialchars($auditSummary, ENT_QUOTES, 'UTF-8') ?></section>
 <?php endif; ?>
 
-<section class="row g-3 mb-3">
-  <div class="col-12 col-md-4"><div class="card h-100"><div class="card-body"><p class="small text-body-secondary mb-1"><?= htmlspecialchars((string) ($tr['total'] ?? 'Indexed contents'), ENT_QUOTES, 'UTF-8') ?></p><p class="h3 mb-0"><?= (int) ($stats['total'] ?? 0) ?></p></div></div></div>
-  <div class="col-12 col-md-4"><div class="card h-100"><div class="card-body"><p class="small text-body-secondary mb-1"><?= htmlspecialchars((string) ($tr['avg_score'] ?? 'Average score'), ENT_QUOTES, 'UTF-8') ?></p><p class="h3 mb-0"><?= (int) ($stats['avg_score'] ?? 0) ?>/100</p></div></div></div>
-  <div class="col-12 col-md-4"><div class="card h-100"><div class="card-body"><p class="small text-body-secondary mb-1"><?= htmlspecialchars((string) ($tr['need_attention'] ?? 'Need attention'), ENT_QUOTES, 'UTF-8') ?></p><p class="h3 mb-0 text-warning"><?= (int) ($stats['need_attention'] ?? 0) ?></p></div></div></div>
+<section class="cat-module-stats mb-3">
+  <div class="cat-module-stat-col"><div class="card h-100"><div class="card-body"><p class="small text-body-secondary mb-1"><?= htmlspecialchars((string) ($tr['total'] ?? 'Indexed contents'), ENT_QUOTES, 'UTF-8') ?></p><p class="h3 mb-0"><?= (int) ($stats['total'] ?? 0) ?></p></div></div></div>
+  <div class="cat-module-stat-col"><div class="card h-100"><div class="card-body"><p class="small text-body-secondary mb-1"><?= htmlspecialchars((string) ($tr['avg_score'] ?? 'Average score'), ENT_QUOTES, 'UTF-8') ?></p><p class="h3 mb-0"><?= (int) ($stats['avg_score'] ?? 0) ?>/100</p></div></div></div>
+  <div class="cat-module-stat-col"><div class="card h-100"><div class="card-body"><p class="small text-body-secondary mb-1"><?= htmlspecialchars((string) ($tr['need_attention'] ?? 'Need attention'), ENT_QUOTES, 'UTF-8') ?></p><p class="h3 mb-0 text-warning"><?= (int) ($stats['need_attention'] ?? 0) ?></p></div></div></div>
 </section>
 
 <section class="card mb-3"><div class="card-body">

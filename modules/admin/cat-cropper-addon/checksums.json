@@ -1,0 +1,13 @@
+{
+    "schema_version": "1.0.0",
+    "algorithm": "sha256",
+    "module_slug": "cat-cropper-addon",
+    "module_version": "1.0.0-dev.2",
+    "generated_at": "2026-04-13T18:27:18+00:00",
+    "files": {
+        "CHANGELOG.md": "192eac186a39b49c6b9ea278472dcd46b09f2ad57125739556c0b7393b0efd0e",
+        "README.md": "d1df7e2a3253304a4ed2674c82d5f2fb3a65c73dce202b6bf7db23d8380ee073",
+        "manifest.json": "da5d089c1b05b9aeffba610e4eefb66e8b7fd2789f37ed0bbb7f8eeccf44ec58"
+    },
+    "module_hash": "54a2a83eef24e374fa9a68c94b664d2272a60044d8cbd506abea6859695ec430"
+}

@@ -29,10 +29,10 @@ ob_start();
 ?>
 <?php if ($message !== ''): ?><section class="alert alert-<?= htmlspecialchars($messageType, ENT_QUOTES, 'UTF-8') ?> mb-3"><?= htmlspecialchars($message, ENT_QUOTES, 'UTF-8') ?></section><?php endif; ?>
 
-<section class="row g-3 mb-3">
-  <div class="col-12 col-md-4"><div class="card h-100"><div class="card-body"><p class="small text-body-secondary mb-1"><?= htmlspecialchars((string) ($tr['total_tags'] ?? 'Total tags'), ENT_QUOTES, 'UTF-8') ?></p><p class="h3 mb-0"><?= (int) ($stats['total_tags'] ?? 0) ?></p></div></div></div>
-  <div class="col-12 col-md-4"><div class="card h-100"><div class="card-body"><p class="small text-body-secondary mb-1"><?= htmlspecialchars((string) ($tr['total_links'] ?? 'Total links'), ENT_QUOTES, 'UTF-8') ?></p><p class="h3 mb-0"><?= (int) ($stats['total_links'] ?? 0) ?></p></div></div></div>
-  <div class="col-12 col-md-4"><div class="card h-100"><div class="card-body"><p class="small text-body-secondary mb-1"><?= htmlspecialchars((string) ($tr['used_tags'] ?? 'Used tags'), ENT_QUOTES, 'UTF-8') ?></p><p class="h3 mb-0"><?= (int) ($stats['used_tags'] ?? 0) ?></p></div></div></div>
+<section class="cat-module-stats mb-3">
+  <div class="cat-module-stat-col"><div class="card h-100"><div class="card-body"><p class="small text-body-secondary mb-1"><?= htmlspecialchars((string) ($tr['total_tags'] ?? 'Total tags'), ENT_QUOTES, 'UTF-8') ?></p><p class="h3 mb-0"><?= (int) ($stats['total_tags'] ?? 0) ?></p></div></div></div>
+  <div class="cat-module-stat-col"><div class="card h-100"><div class="card-body"><p class="small text-body-secondary mb-1"><?= htmlspecialchars((string) ($tr['total_links'] ?? 'Total links'), ENT_QUOTES, 'UTF-8') ?></p><p class="h3 mb-0"><?= (int) ($stats['total_links'] ?? 0) ?></p></div></div></div>
+  <div class="cat-module-stat-col"><div class="card h-100"><div class="card-body"><p class="small text-body-secondary mb-1"><?= htmlspecialchars((string) ($tr['used_tags'] ?? 'Used tags'), ENT_QUOTES, 'UTF-8') ?></p><p class="h3 mb-0"><?= (int) ($stats['used_tags'] ?? 0) ?></p></div></div></div>
 </section>
 
 <section class="card mb-3"><div class="card-body">

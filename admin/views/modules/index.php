@@ -307,7 +307,7 @@ ob_start();
                                     <span class="badge text-bg-warning"><?= htmlspecialchars(__('common.inactive'), ENT_QUOTES, 'UTF-8') ?></span>
                                 <?php endif; ?>
                             <?php else: ?>
-                                <div class="cat-module-action-group" role="group" aria-label="<?= htmlspecialchars(__('common.actions'), ENT_QUOTES, 'UTF-8') ?>">
+                                <div class="input-group input-group-sm justify-content-end flex-nowrap cat-module-action-group" role="group" aria-label="<?= htmlspecialchars(__('common.actions'), ENT_QUOTES, 'UTF-8') ?>">
                                     <?php if ($dependencyBlocking): ?>
                                         <form method="post" action="<?= htmlspecialchars($adminBase . '/modules/dependencies/resolve', ENT_QUOTES, 'UTF-8') ?>">
                                             <input type="hidden" name="_csrf" value="<?= $csrf ?>">
@@ -315,7 +315,7 @@ ob_start();
                                             <input type="hidden" name="slug" value="<?= htmlspecialchars($slug, ENT_QUOTES, 'UTF-8') ?>">
                                             <input type="hidden" name="activate_target" value="1">
                                             <input type="hidden" name="return_to" value="<?= $isStatusView ? 'status' : 'manager' ?>">
-                                            <button class="btn btn-sm btn-danger" type="submit">
+                                            <button class="btn btn-danger" type="submit" title="<?= htmlspecialchars(__('modules.action.install_enable_dependencies'), ENT_QUOTES, 'UTF-8') ?>">
                                                 <?= htmlspecialchars(__('modules.action.install_enable_dependencies'), ENT_QUOTES, 'UTF-8') ?>
                                             </button>
                                         </form>
@@ -326,7 +326,7 @@ ob_start();
                                         <input type="hidden" name="slug" value="<?= htmlspecialchars($slug, ENT_QUOTES, 'UTF-8') ?>">
                                         <input type="hidden" name="target" value="<?= $enabled ? '0' : '1' ?>">
                                         <input type="hidden" name="return_to" value="<?= $isStatusView ? 'status' : 'manager' ?>">
-                                        <button class="btn btn-sm <?= $enabled ? 'btn-outline-danger' : 'btn-outline-success' ?>" type="submit">
+                                        <button class="btn <?= $enabled ? 'btn-success' : 'btn-outline-success' ?>" type="submit" title="<?= htmlspecialchars($enabled ? __('common.disable') : __('common.enable'), ENT_QUOTES, 'UTF-8') ?>">
                                             <?= htmlspecialchars($enabled ? __('common.disable') : __('common.enable'), ENT_QUOTES, 'UTF-8') ?>
                                         </button>
                                     </form>
@@ -334,9 +334,13 @@ ob_start();
                                         <input type="hidden" name="_csrf" value="<?= $csrf ?>">
                                         <input type="hidden" name="scope" value="<?= htmlspecialchars($scope, ENT_QUOTES, 'UTF-8') ?>">
                                         <input type="hidden" name="slug" value="<?= htmlspecialchars($slug, ENT_QUOTES, 'UTF-8') ?>">
-                                        <button class="btn btn-sm btn-outline-secondary" type="submit">Snapshot</button>
+                                        <button class="btn btn-outline-secondary" type="submit" title="Snapshot">
+                                            <i class="bi bi-camera me-1"></i>Snapshot
+                                        </button>
                                     </form>
-                                    <a class="btn btn-sm btn-outline-danger" href="<?= htmlspecialchars($adminBase . '/modules/uninstall/confirm?scope=' . rawurlencode($scope) . '&slug=' . rawurlencode($slug), ENT_QUOTES, 'UTF-8') ?>">Uninstall</a>
+                                    <a class="btn btn-outline-danger" title="Uninstall" href="<?= htmlspecialchars($adminBase . '/modules/uninstall/confirm?scope=' . rawurlencode($scope) . '&slug=' . rawurlencode($slug), ENT_QUOTES, 'UTF-8') ?>">
+                                        <i class="bi bi-trash3 me-1"></i>Uninstall
+                                    </a>
                                 </div>
                             <?php endif; ?>
                         </td>

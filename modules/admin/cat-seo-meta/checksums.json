@@ -2,8 +2,8 @@
     "schema_version": "1.0.0",
     "algorithm": "sha256",
     "module_slug": "cat-seo-meta",
-    "module_version": "1.0.0-dev.3",
-    "generated_at": "2026-04-13T13:16:08+00:00",
+    "module_version": "1.0.0-dev.4",
+    "generated_at": "2026-04-13T18:27:19+00:00",
     "files": {
         "CHANGELOG.md": "30424282e5ea590073fa7cd12fe3942b208e73f2bae60d12e24c0df7ac0379a9",
         "README.md": "d14bd8fb0718cb730a18699be4da3faacfc7ba6d87a7047e1ed4eb637289c115",
@@ -12,7 +12,7 @@
         "hooks.php": "bae3935a855c3e8b14bb71676791450d81cb891a6546e9f5a319340e08694c95",
         "lang/en/module.php": "b0ce3af21846e74c7e50d4de0c372f4e4dbb4ec513c551d4d4c9a3c8fc0ad659",
         "lang/fr/module.php": "82e692a4af5a3d3218dcf2c0f2c39ae9f10996e882a4f4551d550e2d43427ec4",
-        "manifest.json": "5caba17d72555ed4e5e75e612f93e366a96b49b247c26c2d3957531949214884",
+        "manifest.json": "5e329788a09a3f71bbbec8d02eef5c8e4e9c4adeb900210ec7a4449739a25fc6",
         "migrations/001_create_mod_cat_seo_meta.php": "a9a8fe545a3cb52c6497b0fc3fa64fb6ff03ae051722c5c13c958da6a2c27630",
         "permissions.php": "f7ec7b0ff18eef6a52544ead68f41e2111eb25abe11ad34ebc6667d4374b0f2c",
         "repositories/SeoMetaRepository.php": "75907ea22a1758a089e465a8817d7d7c4ae66a41cc10e6280e573c0325adbe50",
@@ -24,12 +24,12 @@
         "services/SeoPreviewService.php": "361d95bff57dabebd195380a46ef4eb9292cdb37316771cd750ba448ecb3252f",
         "services/SeoScoreService.php": "747338fa41bd76bcdcbc47b6c9906f8aa2c25c25c0f94d991bdfce8542ce2690",
         "views/embedded_panel.php": "2688924ad296c03bfa4e0feed7efe07418ecd570cf3bc0ecba654c655fbb3322",
-        "views/index.php": "f696773d44e4a247ec20eaa97c4d4fc1ab326ae854eae025459cfed5bedd038e",
+        "views/index.php": "5772a4e4b15538462f77af6fabfc37777234d78f06151e145c405785fa3257bb",
         "widgets/missing_meta_alert.php": "468434ffe1e676d9930cd4080e9baa915732fa03ed89280ec2909879adc5ffcf",
         "widgets/seo_quick_summary.php": "2ece6e2b3debd0320c37d54369cbf83863aeb8a2565414a2d18990886c5dec15",
         "widgets/seo_score_badge.php": "c95d0a71a76170cecb73434ae85e14bd1cbed9f05117485666bbe6fea887adb6",
         "widgets/seo_score_meter.php": "0e7f1b2a3c5dd22ce73db94b6aff230e48cc6f323fe59eaa4d8695a1c13b80fd",
         "widgets/social_preview.php": "e4631f8cd338644c11b7a1683af3a58fa3c32b19173688675c353e6c2614f9ed"
     },
-    "module_hash": "5b6a2663ad165c18effe1593fe7188a1909d841228b15ab0d7ddb9243acf97fb"
+    "module_hash": "57dd439738a7dad8944d591ea8734043e8faa038f4cdc22ac25e9e076670633a"
 }

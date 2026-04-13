@@ -2,8 +2,8 @@
     "schema_version": "1.0.0",
     "algorithm": "sha256",
     "module_slug": "cat-categories",
-    "module_version": "1.0.0-dev.2",
-    "generated_at": "2026-04-13T13:16:08+00:00",
+    "module_version": "1.0.0-dev.3",
+    "generated_at": "2026-04-13T18:27:18+00:00",
     "files": {
         "CHANGELOG.md": "d78cf01b702f71c7c1a1c3fa31ce3ab7fef08db4d7d48dcd75b3fa7058d12d39",
         "README.md": "03979adbc15a7e47f23892eec7e95ed95c3978728014c52de9bba113d6f423b5",
@@ -12,7 +12,7 @@
         "hooks.php": "2d142579c1762c31e435881d1ae6ed49cc6b55f6796f7a0a67ab9b4ac393d62f",
         "lang/en/module.php": "4d26b22b24bdb16a2358bcc97c56247f62f47c9610f40b188f984e83b7129a9c",
         "lang/fr/module.php": "bea24ad7abba201040df38fc6af58b942d5d4320a9196afae5e0a5c02326b682",
-        "manifest.json": "b5896930bd95a3a9e012419062c36f81245d99637f8a5a704ee8236221ecec98",
+        "manifest.json": "f167fdca06d2f3067be14b05581d2c4fe87551594987c8c9fa2d2ceee0e5e91f",
         "migrations/001_create_mod_cat_categories_tables.php": "76f9fc6ff8de55513e45245be8b9946b2299d0e905a1c5b75694d7c3f75dac69",
         "permissions.php": "4e809da84886ec07346e045017ab2cc1a8d38547aaa2a532fe7face320431210",
         "repositories/CategoriesRepository.php": "1dbac297adc5fc7b328950b4bc6e9002d2a7e2323232bf0e74262a58c359ace3",
@@ -24,11 +24,11 @@
         "services/CategoryTreeService.php": "74269d7b706a2ad912388a7ed904af37c9c30d3a3b97cc3faf3c03ed53854adf",
         "services/CategoryUsageService.php": "dab9e317063f450db528399750f72ff5a1a8abeefcd92cb70d6ce91f308a480b",
         "views/embedded_panel.php": "350ddd304472b753f5430f91a3436e31ad3e0eb919a396bfc544b5b8412690d6",
-        "views/index.php": "32d29b62a605d54aad0efb0ab2ba724e7e2427ee602a3d3273f14f71112975f4",
+        "views/index.php": "5df4a9554b5f8fccc402143116c645dbe0f877b580fe647d91054ae90250a872",
         "widgets/category_badge_admin.php": "199c790ad1d519d9031ef779614a8c9300ece783a798f7f187cd4c68e174c411",
         "widgets/category_breadcrumb.php": "a026978e736d7f9f9d70ab0ba7f366d7aae12bd93c9736d5964c294731cb1232",
         "widgets/category_pills_front.php": "ab6d7946050c3266508ee4f826468f700cc53efda5476d9a10cbf81446222d15",
         "widgets/category_tree_selector_admin.php": "54bd3fcb83ba0941a637372445c343c95b75e4af795393e334ae1a048fd43a4c"
     },
-    "module_hash": "3e8c8cac899a9b0a5d52a2f588584691d1bb5236b4caaff2a2fdfef3df338242"
+    "module_hash": "1375c3a72631090c9eb842e03a00b6b483e2aafaba063c7af322a480aaae5fa2"
 }

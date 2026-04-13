@@ -1,0 +1,10 @@
+{
+    "schema_version": "1.0.0",
+    "algorithm": "rsa-sha256",
+    "module_slug": "cat-media-link",
+    "module_version": "1.0.0-dev.2",
+    "signed_hash": "787af3d2622f0e7378de37e84879b0af9e92fd61388823062eda985052862584",
+    "signature": "TGTYmi6u0HXJfCsjQ9zyH7ntFgp9536ip8gnBiXzqSPaMQJLfER1FknMUC3KSaQKOlbIvjwuwkZSdHMKzJPu3rjtrb1iEIp8CVxz7vh76wiv7gwBzXNzSBhwmRRoTC/N864XY7BRtQwSFSQ7LeYUbapZpYSa9KMAIA8VWesLdW8QereZFMKkkLw9Zt14L4TiyLAweRwNF5OaFAY5MGD3gNqEkYwIzw0/uBDGNxdl6/N7qfVdsZasrlCmIUger3N+3NTeJdEmOW1YhiNjGFy3lVlnyX9uFYgOXCrhlBCfQPJiuMYVLcx3rLD/zeiaCejuuh3k1ibMd+WonnCVoZaRr+6aX+HM5wHxPN5BTXEu40V4wapKyuN6sxkdxILJ6jkQrOXw11EOAJfo53xWawy9WjCtO52wAHM74Dvr6Y3LMFrLR/qdnWOu7c0ellLJTeoFgihKeS27TaMIZfQlkJyyeia0gEnNUBsfhtzNRljnMCFrXRS955zlLsSC+q+5C7ITUeE6TbJSNLtEbWLLzhKVCT2+9duqRg0Cy1y+PVLn7hf9xPWrzcC59Kc8pUN3Pa07a6lIPY3jIYerhpCPIR4Du+ybXMSkaZmXmraN5vyG97WZdAlWImnIUCN8Qy3O9IS18cevCeRSbpi96MDY+uZFnuHTpKF4kWtMQgg1L617Kb4=",
+    "key_id": "catmin-official-dev-20260410",
+    "signed_at": "2026-04-13T18:27:19+00:00"
+}

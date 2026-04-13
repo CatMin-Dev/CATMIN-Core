@@ -1,0 +1,18 @@
+{
+  "schema": "catmin.bridge.contract.v1",
+  "module": "cat-menu-link",
+  "bridge": "menu-link",
+  "entity_scope": ["page", "blog", "directory", "custom"],
+  "provides": {
+    "menu_attachment": true,
+    "tree_ordering": true,
+    "breadcrumbs_seed": true
+  },
+  "link_types": ["entity_link", "custom_url"],
+  "widgets": [
+    "menu_attachment_badge",
+    "breadcrumbs_source_snippet",
+    "navigation_status_badge",
+    "linked_menu_panel"
+  ]
+}

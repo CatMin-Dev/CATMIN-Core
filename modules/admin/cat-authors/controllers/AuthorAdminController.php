@@ -47,6 +47,44 @@ final class AuthorAdminController
         ]);
     }
 
+    public function createForm(Request $request): Response
+    {
+        if (($guard = $this->guard(['authors.write', 'author.write', 'core.modules.manage'])) !== null) {
+            return $guard;
+        }
+
+        return $this->render('create', [
+            'users'        => $this->selectorService->availableAdminUsers(),
+            'message'      => trim((string) $request->input('msg', '')),
+            'messageType'  => trim((string) $request->input('mt', 'info')),
+            'tr'           => $this->tr,
+        ]);
+    }
+
+    public function editForm(Request $request): Response
+    {
+        if (($guard = $this->guard(['authors.write', 'author.write', 'core.modules.manage'])) !== null) {
+            return $guard;
+        }
+
+        $id = (int) $request->input('id', 0);
+        $profile = $id > 0 ? $this->profileService->findProfile($id) : null;
+        if ($profile === null) {
+            return $this->redirect('/modules/author-bridge', [
+                'msg' => (string) ($this->tr['msg_profile_not_found'] ?? 'Profile not found.'),
+                'mt'  => 'danger',
+            ]);
+        }
+
+        return $this->render('edit', [
+            'profile'      => $profile,
+            'users'        => $this->selectorService->allAdminUsers(),
+            'message'      => trim((string) $request->input('msg', '')),
+            'messageType'  => trim((string) $request->input('mt', 'info')),
+            'tr'           => $this->tr,
+        ]);
+    }
+
     public function createProfile(Request $request): Response
     {
         if (($guard = $this->guard(['authors.write', 'author.write', 'core.modules.manage'])) !== null) {
@@ -125,6 +163,23 @@ final class AuthorAdminController
             'entityType' => $entityType,
             'entityId'   => $entityId,
             'tr'         => $this->tr,
+        ]);
+    }
+
+    public function adminScript(Request $request): Response
+    {
+        if (($guard = $this->guard(['authors.read', 'author.read', 'core.modules.manage'])) !== null) {
+            return $guard;
+        }
+
+        $path = CATMIN_MODULES . '/admin/cat-authors/assets/js/author-admin.js';
+        if (!is_file($path)) {
+            return Response::html('// script not found', 404, ['Content-Type' => 'application/javascript; charset=UTF-8']);
+        }
+
+        return Response::html((string) file_get_contents($path), 200, [
+            'Content-Type' => 'application/javascript; charset=UTF-8',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate',
         ]);
     }
 
