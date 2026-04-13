@@ -45,7 +45,7 @@ final class AuthorAdminController
 
     public function index(Request $request): Response
     {
-        if (($guard = $this->guard('author.read')) !== null) {
+        if (($guard = $this->guard(['authors.read', 'author.read'])) !== null) {
             return $guard;
         }
 
@@ -69,7 +69,7 @@ final class AuthorAdminController
 
     public function createProfile(Request $request): Response
     {
-        if (($guard = $this->guard('author.write')) !== null) {
+        if (($guard = $this->guard(['authors.write', 'author.write'])) !== null) {
             return $guard;
         }
 
@@ -83,7 +83,7 @@ final class AuthorAdminController
 
     public function updateProfile(Request $request): Response
     {
-        if (($guard = $this->guard('author.write')) !== null) {
+        if (($guard = $this->guard(['authors.write', 'author.write'])) !== null) {
             return $guard;
         }
 
@@ -98,7 +98,7 @@ final class AuthorAdminController
 
     public function deleteProfile(Request $request): Response
     {
-        if (($guard = $this->guard('author.delete')) !== null) {
+        if (($guard = $this->guard(['authors.delete', 'author.delete'])) !== null) {
             return $guard;
         }
 
@@ -119,7 +119,7 @@ final class AuthorAdminController
 
     public function syncEntity(Request $request): Response
     {
-        if (($guard = $this->guard('author.write')) !== null) {
+        if (($guard = $this->guard(['authors.write', 'author.write'])) !== null) {
             return $guard;
         }
 
@@ -140,7 +140,7 @@ final class AuthorAdminController
 
     public function saveRoleRegistry(Request $request): Response
     {
-        if (($guard = $this->guard('author.configure')) !== null) {
+        if (($guard = $this->guard(['authors.configure', 'author.configure'])) !== null) {
             return $guard;
         }
 
@@ -167,7 +167,7 @@ final class AuthorAdminController
 
     public function panel(Request $request): Response
     {
-        if (($guard = $this->guard('author.read')) !== null) {
+        if (($guard = $this->guard(['authors.read', 'author.read'])) !== null) {
             return $guard;
         }
 
@@ -241,7 +241,7 @@ final class AuthorAdminController
         return '/' . $path;
     }
 
-    private function guard(string $permission): ?Response
+    private function guard(string|array $permission): ?Response
     {
         $pdo      = (new ConnectionManager())->connection();
         $sessions = new SessionManager($pdo);
@@ -249,8 +249,18 @@ final class AuthorAdminController
         if ($uid === null) {
             return Response::html('', 302, ['Location' => $this->adminBase() . '/login']);
         }
-        if (function_exists('auth_can') && !auth_can($permission)) {
-            return (new \CoreErrorDispatcher())->response(403, ['title' => 'Access denied', 'message' => 'Required permission: ' . $permission]);
+        $required = is_array($permission) ? array_values($permission) : [$permission];
+        if (function_exists('auth_can')) {
+            $allowed = false;
+            foreach ($required as $perm) {
+                if (is_string($perm) && $perm !== '' && auth_can($perm)) {
+                    $allowed = true;
+                    break;
+                }
+            }
+            if (!$allowed) {
+                return (new \CoreErrorDispatcher())->response(403, ['title' => 'Access denied', 'message' => 'Required permission: ' . implode(' OR ', array_map('strval', $required))]);
+            }
         }
         return null;
     }

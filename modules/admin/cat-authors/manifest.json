@@ -55,7 +55,7 @@
       "href": "/modules/author-bridge",
       "group": "organization",
       "order": 50,
-      "permission": "author.read"
+      "permissions": ["authors.read", "author.read"]
     }
   ],
   "settings": {

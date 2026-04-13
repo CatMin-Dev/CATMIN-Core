@@ -3,18 +3,18 @@
     "algorithm": "sha256",
     "module_slug": "cat-authors",
     "module_version": "1.0.0-dev.1",
-    "generated_at": "2026-04-13T09:28:31+00:00",
+    "generated_at": "2026-04-13T10:37:38+00:00",
     "files": {
         "CHANGELOG.md": "398093b8670ad4977e5e77d053fe392dee90f4690bc49231ac3997f4fcf014b2",
         "README.md": "979eed46570daa666eb5a85838aae5d4382627b0488f5ff6056aa51fceacf96e",
         "bridge.contract.json": "f9d28682c8847e9e161d1a2fb94ae4ff95b5ad81d13f80ebd47b2d802e876980",
-        "controllers/AuthorAdminController.php": "fe9edb2344499e73e3d1b68e7a5ae0102afa7d60bab3dfdaba8c88b381240f15",
+        "controllers/AuthorAdminController.php": "33b9efa4058286823bc6a7e28225f2e9e627368e8090d0f4137e1d63c855ec8f",
         "hooks.php": "ef82fe1ce72961e4dcef97798a9e197140fdfef268a6c4b068c2de3c70064495",
         "lang/en/module.php": "b0330b3a16f2e92501f0d2310ac089ee395b139ee344b2f627dcb19424b312da",
         "lang/fr/module.php": "fc4c209edb6666f8da56cc4bf359485b018ca013dfb4402b3ed8a81b52bcf31a",
-        "manifest.json": "b86bac543af34dc487e21664f405ec18065d7eb2b22287200f5fe260293ff1e8",
+        "manifest.json": "3d18281747c472c12d4d53d3dfdea27bb7834baaa942ddd67e1a605350420ff7",
         "migrations/001_create_mod_cat_author_tables.php": "211f72014083e5823b26ee9e66ad50717d1cc176a2083031135ddd0efb951d5b",
-        "permissions.php": "952d14ee622e31f64e92c6c99f6efb2321a31b9e8efdbf9e58d9febda65e9682",
+        "permissions.php": "e9415739ae274b50c4fc43794d704738e29ab590293c289f084b4406b8c6dec6",
         "repositories/AuthorRepository.php": "169f31bfe9c0e8227e742b71a3fc9ea2fe21f91bc2f34455ac09188f590bd602",
         "routes.php": "ca31c95b0eed34769339df3aa1084ad88024da44e583f8c62de737d9fed8dbc5",
         "services/AuthorDisplayService.php": "1c6758462a8f5786b5a7c8ee06bb5abf0e2ad87c714615872893d1905dd78564",
@@ -32,5 +32,5 @@
         "widgets/author_identity_inline.php": "618d05d1b61184cb96ecd72a663ee9b0475055320d14b888a3ae71caf32d65f7",
         "widgets/author_mini_card_front.php": "ebd3465450189ecc94d96aca93072632d39b977b1aae3cecf15afaa732a8ea3d"
     },
-    "module_hash": "b5449bdc6e35f67c748ebf52331a6635b38469359d21cac900ccf0420ce3a6df"
+    "module_hash": "f5385de22721dec3f92fd01b65b189e75ca62db50cc7728ff46c36d8ca9f92e1"
 }
