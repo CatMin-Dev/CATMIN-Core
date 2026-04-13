@@ -10,6 +10,14 @@ declare(strict_types=1);
 
 use Core\database\ConnectionManager;
 
+if (!function_exists('catmin_is_superadmin_slug')) {
+    function catmin_is_superadmin_slug(?string $roleSlug): bool
+    {
+        $slug = strtolower(trim((string) $roleSlug));
+        return $slug === 'super-admin' || $slug === 'superadmin';
+    }
+}
+
 if (!function_exists('auth_can')) {
     /**
      * Check if the current user has a specific permission
@@ -46,12 +54,12 @@ if (!function_exists('auth_can')) {
         try {
             $db = (new ConnectionManager())->connection();
 
-            // Get user's role and ban status
-            $stmt = $db->prepare('SELECT role_id, is_banned FROM admin_users WHERE id = ? LIMIT 1');
+            // Get the user's role from the current admin schema.
+            $stmt = $db->prepare('SELECT role_id FROM admin_users WHERE id = ? LIMIT 1');
             $stmt->execute([$userId]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            if (!$user || $user['is_banned']) {
+            if (!$user) {
                 return false;
             }
 
@@ -60,7 +68,7 @@ if (!function_exists('auth_can')) {
             $stmt->execute([$user['role_id']]);
             $role = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            if ($role && $role['slug'] === 'superadmin') {
+            if ($role && catmin_is_superadmin_slug((string) ($role['slug'] ?? ''))) {
                 return true;
             }
 
@@ -184,6 +192,6 @@ if (!function_exists('user_is_superadmin')) {
      */
     function user_is_superadmin(): bool
     {
-        return user_role() === 'superadmin';
+        return catmin_is_superadmin_slug(user_role());
     }
 }

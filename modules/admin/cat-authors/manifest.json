@@ -52,7 +52,7 @@
       "label": "Auteurs",
       "label_fr": "Auteurs",
       "label_en": "Authors",
-      "href": "/modules/author-bridge",
+      "href": "modules/author-bridge",
       "group": "organization",
       "order": 50,
       "permissions": ["authors.read", "author.read"]

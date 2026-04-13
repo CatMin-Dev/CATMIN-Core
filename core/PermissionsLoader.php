@@ -28,12 +28,10 @@ class PermissionsLoader
      */
     public function loadFromModules(): int
     {
-        $registry = new modules\ModuleRegistry();
-        $enabled = $registry->enabled();
         $loaded = 0;
 
-        foreach ($enabled as $module) {
-            $loaded += $this->registerModulePermissions($module['path']);
+        foreach (glob(CATMIN_MODULES . '/*/*', GLOB_ONLYDIR) ?: [] as $modulePath) {
+            $loaded += $this->registerModulePermissions($modulePath);
         }
 
         return $loaded;
@@ -55,8 +53,29 @@ class PermissionsLoader
         }
 
         $registered = 0;
-        foreach ($permissions as $slug => $name) {
-            if ($this->registerPermission($slug, $name)) {
+        foreach ($permissions as $slug => $definition) {
+            $permissionSlug = null;
+            $permissionName = '';
+            $permissionDescription = '';
+
+            if (is_string($slug)) {
+                $permissionSlug = $slug;
+                $permissionName = is_string($definition) ? $definition : $slug;
+                if (is_array($definition)) {
+                    $permissionName = (string) ($definition['name'] ?? $slug);
+                    $permissionDescription = (string) ($definition['description'] ?? '');
+                }
+            } elseif (is_array($definition)) {
+                $permissionSlug = isset($definition['slug']) ? (string) $definition['slug'] : null;
+                $permissionName = (string) ($definition['name'] ?? ($permissionSlug ?? ''));
+                $permissionDescription = (string) ($definition['description'] ?? '');
+            }
+
+            if ($permissionSlug === null || trim($permissionSlug) === '') {
+                continue;
+            }
+
+            if ($this->registerPermission($permissionSlug, $permissionName, $permissionDescription)) {
                 $registered++;
             }
         }
@@ -100,9 +119,9 @@ class PermissionsLoader
             );
             $stmt->execute([$slug, $name ?: $slug, $description, gmdate('Y-m-d H:i:s')]);
 
-            // Assign to superadmin automatically
-            $stmt = $this->db->prepare('SELECT id FROM admin_roles WHERE slug = ? LIMIT 1');
-            $stmt->execute(['superadmin']);
+            // Assign to the canonical superadmin role automatically.
+            $stmt = $this->db->prepare('SELECT id FROM admin_roles WHERE slug IN (?, ?) ORDER BY id ASC LIMIT 1');
+            $stmt->execute(['super-admin', 'superadmin']);
             $superadmin = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($superadmin) {
