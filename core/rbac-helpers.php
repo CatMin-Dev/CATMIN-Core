@@ -8,7 +8,7 @@ declare(strict_types=1);
  * Global helper functions for permission checking.
  */
 
-use Catmin\Database\ORM;
+use Core\database\ConnectionManager;
 
 if (!function_exists('auth_can')) {
     /**
@@ -19,44 +19,60 @@ if (!function_exists('auth_can')) {
      */
     function auth_can(string $permission): bool
     {
-        // Get current session
-        $session = session();
-        if (!$session) {
-            return false;
+        // Get user ID from session
+        $userId = null;
+        
+        // Try session manager first
+        if (function_exists('session') && is_callable('session')) {
+            try {
+                $sess = session();
+                if ($sess && is_object($sess) && method_exists($sess, 'get')) {
+                    $userId = $sess->get('admin_user_id');
+                }
+            } catch (\Throwable) {
+                // Fall through to $_SESSION
+            }
         }
-
-        $userId = $session->get('admin_user_id');
+        
+        // Fall back to $_SESSION directly
+        if (!$userId && isset($_SESSION['admin_user_id'])) {
+            $userId = $_SESSION['admin_user_id'];
+        }
+        
         if (!$userId) {
             return false;
         }
 
         try {
-            $db = ORM::connection();
+            $db = (new ConnectionManager())->connection();
 
-            // Get user's role
-            $user = $db->table('admin_users')
-                ->where('id', $userId)
-                ->first(['role_id', 'is_banned']);
+            // Get user's role and ban status
+            $stmt = $db->prepare('SELECT role_id, is_banned FROM admin_users WHERE id = ? LIMIT 1');
+            $stmt->execute([$userId]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if (!$user || $user['is_banned']) {
                 return false;
             }
 
             // Superadmin always has all permissions
-            $role = $db->table('admin_roles')
-                ->where('id', $user['role_id'])
-                ->first(['slug']);
+            $stmt = $db->prepare('SELECT slug FROM admin_roles WHERE id = ? LIMIT 1');
+            $stmt->execute([$user['role_id']]);
+            $role = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($role && $role['slug'] === 'superadmin') {
                 return true;
             }
 
             // Check if user's role has this permission
-            $hasPermission = $db->table('admin_role_permissions as rp')
-                ->join('admin_permissions as p', 'p.id', '=', 'rp.permission_id')
-                ->where('rp.role_id', $user['role_id'])
-                ->where('p.slug', $permission)
-                ->first();
+            $stmt = $db->prepare(
+                'SELECT rp.id FROM admin_role_permissions rp
+                 INNER JOIN admin_permissions p ON p.id = rp.permission_id
+                 WHERE rp.role_id = ? AND p.slug = ?
+                 LIMIT 1'
+            );
+            $stmt->execute([$user['role_id'], $permission]);
+            $hasPermission = $stmt->fetch(PDO::FETCH_ASSOC);
 
             return (bool) $hasPermission;
         } catch (\Throwable) {
@@ -117,28 +133,41 @@ if (!function_exists('user_role')) {
     function user_role(): ?string
     {
         try {
-            $session = session();
-            if (!$session) {
-                return null;
+            $userId = null;
+            
+            // Try session manager first
+            if (function_exists('session') && is_callable('session')) {
+                try {
+                    $sess = session();
+                    if ($sess && is_object($sess) && method_exists($sess, 'get')) {
+                        $userId = $sess->get('admin_user_id');
+                    }
+                } catch (\Throwable) {
+                    // Fall through to $_SESSION
+                }
             }
-
-            $userId = $session->get('admin_user_id');
+            
+            // Fall back to $_SESSION directly
+            if (!$userId && isset($_SESSION['admin_user_id'])) {
+                $userId = $_SESSION['admin_user_id'];
+            }
+            
             if (!$userId) {
                 return null;
             }
 
-            $db = ORM::connection();
-            $user = $db->table('admin_users')
-                ->where('id', $userId)
-                ->first(['role_id']);
+            $db = (new ConnectionManager())->connection();
+            $stmt = $db->prepare('SELECT role_id FROM admin_users WHERE id = ? LIMIT 1');
+            $stmt->execute([$userId]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if (!$user) {
                 return null;
             }
 
-            $role = $db->table('admin_roles')
-                ->where('id', $user['role_id'])
-                ->first(['slug']);
+            $stmt = $db->prepare('SELECT slug FROM admin_roles WHERE id = ? LIMIT 1');
+            $stmt->execute([$user['role_id']]);
+            $role = $stmt->fetch(PDO::FETCH_ASSOC);
 
             return $role ? $role['slug'] : null;
         } catch (\Throwable) {
