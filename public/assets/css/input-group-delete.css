@@ -1,0 +1,150 @@
+/**
+ * Input Group Component Styles
+ * 
+ * Styles for Bootstrap input groups with delete/remove buttons
+ */
+
+.input-group {
+    --bs-input-group-delete-hover-bg: #dc3545;
+    --bs-input-group-delete-hover-border: #bd2130;
+}
+
+.input-group .btn-outline-danger {
+    border-color: rgba(220, 53, 69, 0.3);
+    color: #dc3545;
+    transition: all 0.15s ease-in-out;
+}
+
+.input-group .btn-outline-danger:hover,
+.input-group .btn-outline-danger:focus {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: #fff;
+}
+
+.input-group .btn-outline-danger:active {
+    background-color: #bd2130;
+    border-color: #b02a27;
+    box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.5);
+}
+
+/* Icon styling for delete buttons */
+.input-group .btn i.icon-trash-2,
+.input-group .btn i.icon-trash,
+.input-group .btn i.icon-x {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    vertical-align: -0.125em;
+}
+
+/* Responsive: Stack on mobile */
+@media (max-width: 576px) {
+    .input-group-vertical {
+        flex-direction: column;
+    }
+
+    .input-group-vertical > .form-control,
+    .input-group-vertical > .form-select,
+    .input-group-vertical > .btn {
+        border-radius: 0.375rem;
+        margin-bottom: 0.375rem;
+    }
+
+    .input-group-vertical > .btn:last-child {
+        margin-bottom: 0;
+    }
+}
+
+/* Spacing utilities for input groups */
+.input-group-sm {
+    gap: 0.25rem;
+}
+
+.input-group-sm > .form-control,
+.input-group-sm > .form-select {
+    font-size: 0.875rem;
+    padding: 0.375rem 0.75rem;
+}
+
+.input-group-sm > .btn {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+}
+
+/* Input group with inline labels */
+.input-group.with-label {
+    position: relative;
+}
+
+.input-group.with-label > label {
+    position: absolute;
+    top: -1.25rem;
+    left: 0;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #6c757d;
+}
+
+/* Disabled state */
+.input-group.disabled > .form-control,
+.input-group.disabled > .form-select {
+    background-color: #e9ecef;
+    cursor: not-allowed;
+}
+
+.input-group.disabled > .btn-outline-danger {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+/* Success/Error states */
+.input-group.is-invalid > .form-control,
+.input-group.is-invalid > .form-select {
+    border-color: #dc3545;
+}
+
+.input-group.is-valid > .form-control,
+.input-group.is-valid > .form-select {
+    border-color: #198754;
+}
+
+/* Animated removal placeholder */
+.input-group.removing {
+    animation: fadeOut 0.3s ease-out forwards;
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+}
+
+/* Loading state */
+.input-group.loading > .btn {
+    pointer-events: none;
+    opacity: 0.75;
+}
+
+.input-group.loading > .btn::before {
+    content: '';
+    display: inline-block;
+    width: 0.75rem;
+    height: 0.75rem;
+    margin-right: 0.375rem;
+    border: 2px solid #dc3545;
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
