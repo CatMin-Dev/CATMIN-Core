@@ -3,12 +3,12 @@
     "algorithm": "sha256",
     "module_slug": "cat-authors",
     "module_version": "1.0.0-dev.1",
-    "generated_at": "2026-04-13T10:37:38+00:00",
+    "generated_at": "2026-04-13T10:38:24+00:00",
     "files": {
         "CHANGELOG.md": "398093b8670ad4977e5e77d053fe392dee90f4690bc49231ac3997f4fcf014b2",
         "README.md": "979eed46570daa666eb5a85838aae5d4382627b0488f5ff6056aa51fceacf96e",
         "bridge.contract.json": "f9d28682c8847e9e161d1a2fb94ae4ff95b5ad81d13f80ebd47b2d802e876980",
-        "controllers/AuthorAdminController.php": "33b9efa4058286823bc6a7e28225f2e9e627368e8090d0f4137e1d63c855ec8f",
+        "controllers/AuthorAdminController.php": "0614b92e4ccd8a5b59d59e5240ac1e3bd8d276f8a98bc11e9afb6df45b4ac5a6",
         "hooks.php": "ef82fe1ce72961e4dcef97798a9e197140fdfef268a6c4b068c2de3c70064495",
         "lang/en/module.php": "b0330b3a16f2e92501f0d2310ac089ee395b139ee344b2f627dcb19424b312da",
         "lang/fr/module.php": "fc4c209edb6666f8da56cc4bf359485b018ca013dfb4402b3ed8a81b52bcf31a",
@@ -32,5 +32,5 @@
         "widgets/author_identity_inline.php": "618d05d1b61184cb96ecd72a663ee9b0475055320d14b888a3ae71caf32d65f7",
         "widgets/author_mini_card_front.php": "ebd3465450189ecc94d96aca93072632d39b977b1aae3cecf15afaa732a8ea3d"
     },
-    "module_hash": "f5385de22721dec3f92fd01b65b189e75ca62db50cc7728ff46c36d8ca9f92e1"
+    "module_hash": "451ffa939087e3f3fffba6dea6f5d4edd2b0666f4d5e5d2a8bc8cfcb82e72689"
 }

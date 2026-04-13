@@ -45,7 +45,7 @@ final class AuthorAdminController
 
     public function index(Request $request): Response
     {
-        if (($guard = $this->guard(['authors.read', 'author.read'])) !== null) {
+        if (($guard = $this->guard(['authors.read', 'author.read', 'core.modules.manage'])) !== null) {
             return $guard;
         }
 
@@ -69,7 +69,7 @@ final class AuthorAdminController
 
     public function createProfile(Request $request): Response
     {
-        if (($guard = $this->guard(['authors.write', 'author.write'])) !== null) {
+        if (($guard = $this->guard(['authors.write', 'author.write', 'core.modules.manage'])) !== null) {
             return $guard;
         }
 
@@ -83,7 +83,7 @@ final class AuthorAdminController
 
     public function updateProfile(Request $request): Response
     {
-        if (($guard = $this->guard(['authors.write', 'author.write'])) !== null) {
+        if (($guard = $this->guard(['authors.write', 'author.write', 'core.modules.manage'])) !== null) {
             return $guard;
         }
 
@@ -98,7 +98,7 @@ final class AuthorAdminController
 
     public function deleteProfile(Request $request): Response
     {
-        if (($guard = $this->guard(['authors.delete', 'author.delete'])) !== null) {
+        if (($guard = $this->guard(['authors.delete', 'author.delete', 'core.modules.manage'])) !== null) {
             return $guard;
         }
 
@@ -119,7 +119,7 @@ final class AuthorAdminController
 
     public function syncEntity(Request $request): Response
     {
-        if (($guard = $this->guard(['authors.write', 'author.write'])) !== null) {
+        if (($guard = $this->guard(['authors.write', 'author.write', 'core.modules.manage'])) !== null) {
             return $guard;
         }
 
@@ -140,7 +140,7 @@ final class AuthorAdminController
 
     public function saveRoleRegistry(Request $request): Response
     {
-        if (($guard = $this->guard(['authors.configure', 'author.configure'])) !== null) {
+        if (($guard = $this->guard(['authors.configure', 'author.configure', 'core.modules.manage'])) !== null) {
             return $guard;
         }
 
@@ -167,7 +167,7 @@ final class AuthorAdminController
 
     public function panel(Request $request): Response
     {
-        if (($guard = $this->guard(['authors.read', 'author.read'])) !== null) {
+        if (($guard = $this->guard(['authors.read', 'author.read', 'core.modules.manage'])) !== null) {
             return $guard;
         }
 
