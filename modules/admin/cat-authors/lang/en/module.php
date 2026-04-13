@@ -60,4 +60,8 @@ return [
     'panel_help'          => 'Manage author profiles under Organisation → Authors.',
     'no_author'           => 'No author',
     'no_profiles_panel'   => 'No author profiles available.',
+    'msg_profile_created' => 'Profile created successfully.',
+    'msg_profile_updated' => 'Profile updated.',
+    'msg_profile_deleted' => 'Profile deleted.',
+    'msg_roles_registry_updated' => 'Author roles registry updated.',
 ];

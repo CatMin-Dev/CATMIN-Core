@@ -16,4 +16,8 @@ return [
     'usage' => 'Usage',
     'empty' => 'Aucun tag trouve',
     'placeholder' => 'Tape un tag puis virgule ou espace',
+    'embedded_ui' => 'Interface tags embarquee',
+    'id' => 'ID',
+    'name' => 'Nom',
+    'slug' => 'Slug',
 ];

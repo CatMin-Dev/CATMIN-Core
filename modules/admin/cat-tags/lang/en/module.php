@@ -16,4 +16,8 @@ return [
     'usage' => 'Usage',
     'empty' => 'No tags found',
     'placeholder' => 'Type a tag then comma or space',
+    'embedded_ui' => 'Embedded tags UI',
+    'id' => 'ID',
+    'name' => 'Name',
+    'slug' => 'Slug',
 ];

@@ -91,7 +91,9 @@ final class TagsAdminController
 
     private function loadTranslations(): array
     {
-        $locale = strtolower(trim((string) config('app.locale', 'fr')));
+        $locale = function_exists('catmin_locale')
+            ? strtolower(trim(catmin_locale()))
+            : strtolower(trim((string) config('app.locale', 'fr')));
         if (!in_array($locale, ['fr', 'en'], true)) {
             $locale = 'fr';
         }

@@ -69,13 +69,13 @@ ob_start();
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Validation SEO avant sauvegarde</h5>
+        <h5 class="modal-title"><?= htmlspecialchars((string) ($tr['validation_title'] ?? 'SEO validation before saving'), ENT_QUOTES, 'UTF-8') ?></h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <p class="small text-body-secondary mb-2">Revois les suggestions puis confirme la sauvegarde.</p>
+        <p class="small text-body-secondary mb-2"><?= htmlspecialchars((string) ($tr['validation_help'] ?? 'Review the suggestions, then confirm saving.'), ENT_QUOTES, 'UTF-8') ?></p>
         <div class="d-flex align-items-center gap-2 mb-2">
-          <span class="small text-body-secondary">Score live</span>
+          <span class="small text-body-secondary"><?= htmlspecialchars((string) ($tr['live_score'] ?? 'Live score'), ENT_QUOTES, 'UTF-8') ?></span>
           <span class="badge text-bg-secondary" id="seo-live-score">0/100</span>
         </div>
         <div class="progress mb-3" role="progressbar" aria-label="Live SEO score" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
@@ -84,8 +84,8 @@ ob_start();
         <ul class="list-group" id="seo-live-checks"></ul>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Modifier</button>
-        <button type="button" class="btn btn-primary" id="seo-confirm-save">Confirmer sauvegarde</button>
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><?= htmlspecialchars((string) ($tr['edit'] ?? 'Edit'), ENT_QUOTES, 'UTF-8') ?></button>
+        <button type="button" class="btn btn-primary" id="seo-confirm-save"><?= htmlspecialchars((string) ($tr['confirm_save'] ?? 'Confirm save'), ENT_QUOTES, 'UTF-8') ?></button>
       </div>
     </div>
   </div>
@@ -94,7 +94,7 @@ ob_start();
 <section class="row g-3">
   <div class="col-12 col-lg-6"><div class="card h-100"><div class="card-body">
     <h2 class="h6 mb-3"><?= htmlspecialchars((string) ($tr['attention_list'] ?? 'Incomplete contents'), ENT_QUOTES, 'UTF-8') ?></h2>
-    <div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th>Entity</th><th>Score</th><th>Updated</th></tr></thead><tbody>
+    <div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th><?= htmlspecialchars((string) ($tr['entity_label'] ?? 'Entity'), ENT_QUOTES, 'UTF-8') ?></th><th><?= htmlspecialchars((string) ($tr['score_label'] ?? 'Score'), ENT_QUOTES, 'UTF-8') ?></th><th><?= htmlspecialchars((string) ($tr['updated_label'] ?? 'Updated'), ENT_QUOTES, 'UTF-8') ?></th></tr></thead><tbody>
     <?php if ($attention === []): ?><tr><td colspan="3" class="text-center py-4 text-body-secondary"><?= htmlspecialchars((string) ($tr['empty'] ?? 'No SEO rows yet'), ENT_QUOTES, 'UTF-8') ?></td></tr><?php else: ?>
     <?php foreach ($attention as $row): ?>
     <tr>
@@ -172,28 +172,28 @@ ob_start();
     const canonical = read('canonical_url');
     const ogImage = parseInt(read('og_image_media_id') || '0', 10);
 
-    if (title) { score += 20; lines.push(['ok', 'SEO title present']); }
-    else { lines.push(['warn', 'SEO title missing']); }
-    if (title.length >= 35 && title.length <= 65) { score += 10; lines.push(['ok', 'Title length optimal']); }
-    else if (title) { lines.push(['warn', 'Title length should be 35-65 chars']); }
+    if (title) { score += 20; lines.push(['ok', '<?= htmlspecialchars((string) ($tr['check_title_present'] ?? 'SEO title present'), ENT_QUOTES, 'UTF-8') ?>']); }
+    else { lines.push(['warn', '<?= htmlspecialchars((string) ($tr['check_title_missing'] ?? 'SEO title missing'), ENT_QUOTES, 'UTF-8') ?>']); }
+    if (title.length >= 35 && title.length <= 65) { score += 10; lines.push(['ok', '<?= htmlspecialchars((string) ($tr['check_title_length_ok'] ?? 'Title length optimal'), ENT_QUOTES, 'UTF-8') ?>']); }
+    else if (title) { lines.push(['warn', '<?= htmlspecialchars((string) ($tr['check_title_length_warn'] ?? 'Title length should be 35-65 chars'), ENT_QUOTES, 'UTF-8') ?>']); }
 
-    if (meta) { score += 20; lines.push(['ok', 'Meta description present']); }
-    else { lines.push(['warn', 'Meta description missing']); }
-    if (meta.length >= 120 && meta.length <= 170) { score += 10; lines.push(['ok', 'Meta length optimal']); }
-    else if (meta) { lines.push(['warn', 'Meta length should be 120-170 chars']); }
+    if (meta) { score += 20; lines.push(['ok', '<?= htmlspecialchars((string) ($tr['check_meta_present'] ?? 'Meta description present'), ENT_QUOTES, 'UTF-8') ?>']); }
+    else { lines.push(['warn', '<?= htmlspecialchars((string) ($tr['check_meta_missing'] ?? 'Meta description missing'), ENT_QUOTES, 'UTF-8') ?>']); }
+    if (meta.length >= 120 && meta.length <= 170) { score += 10; lines.push(['ok', '<?= htmlspecialchars((string) ($tr['check_meta_length_ok'] ?? 'Meta length optimal'), ENT_QUOTES, 'UTF-8') ?>']); }
+    else if (meta) { lines.push(['warn', '<?= htmlspecialchars((string) ($tr['check_meta_length_warn'] ?? 'Meta length should be 120-170 chars'), ENT_QUOTES, 'UTF-8') ?>']); }
 
-    if (focus) { score += 10; lines.push(['ok', 'Focus keyword set']); }
-    else { lines.push(['warn', 'Focus keyword missing']); }
-    if (ogTitle) { score += 8; lines.push(['ok', 'OG title present']); }
-    if (ogDesc) { score += 7; lines.push(['ok', 'OG description present']); }
-    if (ogImage > 0) { score += 10; lines.push(['ok', 'OG image present']); }
-    else { lines.push(['warn', 'OG image missing']); }
-    if (canonical) { score += 5; lines.push(['ok', 'Canonical URL set']); }
+    if (focus) { score += 10; lines.push(['ok', '<?= htmlspecialchars((string) ($tr['check_focus_present'] ?? 'Focus keyword set'), ENT_QUOTES, 'UTF-8') ?>']); }
+    else { lines.push(['warn', '<?= htmlspecialchars((string) ($tr['check_focus_missing'] ?? 'Focus keyword missing'), ENT_QUOTES, 'UTF-8') ?>']); }
+    if (ogTitle) { score += 8; lines.push(['ok', '<?= htmlspecialchars((string) ($tr['check_og_title_present'] ?? 'OG title present'), ENT_QUOTES, 'UTF-8') ?>']); }
+    if (ogDesc) { score += 7; lines.push(['ok', '<?= htmlspecialchars((string) ($tr['check_og_desc_present'] ?? 'OG description present'), ENT_QUOTES, 'UTF-8') ?>']); }
+    if (ogImage > 0) { score += 10; lines.push(['ok', '<?= htmlspecialchars((string) ($tr['check_og_image_present'] ?? 'OG image present'), ENT_QUOTES, 'UTF-8') ?>']); }
+    else { lines.push(['warn', '<?= htmlspecialchars((string) ($tr['check_og_image_missing'] ?? 'OG image missing'), ENT_QUOTES, 'UTF-8') ?>']); }
+    if (canonical) { score += 5; lines.push(['ok', '<?= htmlspecialchars((string) ($tr['check_canonical_present'] ?? 'Canonical URL set'), ENT_QUOTES, 'UTF-8') ?>']); }
 
     score = Math.max(0, Math.min(100, score));
     scoreBadge.textContent = score + '/100';
     scoreBar.style.width = score + '%';
-    checks.innerHTML = lines.map(([tone, text]) => '<li class="list-group-item d-flex justify-content-between align-items-center"><span>' + text + '</span><span class="badge text-bg-' + (tone === 'ok' ? 'success' : 'warning') + '">' + tone.toUpperCase() + '</span></li>').join('');
+    checks.innerHTML = lines.map(([tone, text]) => '<li class="list-group-item d-flex justify-content-between align-items-center"><span>' + text + '</span><span class="badge text-bg-' + (tone === 'ok' ? 'success' : 'warning') + '">' + (tone === 'ok' ? '<?= htmlspecialchars((string) ($tr['status_ok'] ?? 'OK'), ENT_QUOTES, 'UTF-8') ?>' : '<?= htmlspecialchars((string) ($tr['status_warn'] ?? 'WARN'), ENT_QUOTES, 'UTF-8') ?>') + '</span></li>').join('');
   };
 
   openBtn.addEventListener('click', () => {

@@ -36,7 +36,7 @@ ob_start();
 </section>
 
 <section class="card mb-3"><div class="card-body">
-  <h2 class="h5 mb-3">UI embarquee tags</h2>
+  <h2 class="h5 mb-3"><?= htmlspecialchars((string) ($tr['embedded_ui'] ?? 'Embedded tags UI'), ENT_QUOTES, 'UTF-8') ?></h2>
   <form method="post" action="<?= htmlspecialchars($adminBase . '/modules/tags-bridge/sync', ENT_QUOTES, 'UTF-8') ?>" class="row g-2">
     <input type="hidden" name="_csrf" value="<?= $csrf ?>">
     <div class="col-12 col-md-3"><label class="form-label"><?= htmlspecialchars((string) ($tr['entity_type'] ?? 'Entity type'), ENT_QUOTES, 'UTF-8') ?></label><input class="form-control" name="entity_type" value="<?= htmlspecialchars($entityType, ENT_QUOTES, 'UTF-8') ?>" required></div>
@@ -54,7 +54,7 @@ ob_start();
   </form>
 </div></section>
 
-<section class="card"><div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>ID</th><th>Name</th><th>Slug</th><th><?= htmlspecialchars((string) ($tr['usage'] ?? 'Usage'), ENT_QUOTES, 'UTF-8') ?></th></tr></thead><tbody>
+<section class="card"><div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th><?= htmlspecialchars((string) ($tr['id'] ?? 'ID'), ENT_QUOTES, 'UTF-8') ?></th><th><?= htmlspecialchars((string) ($tr['name'] ?? 'Name'), ENT_QUOTES, 'UTF-8') ?></th><th><?= htmlspecialchars((string) ($tr['slug'] ?? 'Slug'), ENT_QUOTES, 'UTF-8') ?></th><th><?= htmlspecialchars((string) ($tr['usage'] ?? 'Usage'), ENT_QUOTES, 'UTF-8') ?></th></tr></thead><tbody>
 <?php if ($rows === []): ?><tr><td colspan="4" class="text-center py-5 text-body-secondary"><?= htmlspecialchars((string) ($tr['empty'] ?? 'No tags found'), ENT_QUOTES, 'UTF-8') ?></td></tr><?php else: ?>
 <?php foreach ($rows as $r): ?>
 <tr><td>#<?= (int) ($r['id'] ?? 0) ?></td><td><?= htmlspecialchars((string) ($r['name'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td><td><code><?= htmlspecialchars((string) ($r['slug'] ?? ''), ENT_QUOTES, 'UTF-8') ?></code></td><td><span class="badge text-bg-secondary"><?= (int) ($r['usage_count'] ?? 0) ?></span></td></tr>

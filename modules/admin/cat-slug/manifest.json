@@ -4,7 +4,7 @@
   "display_name": "CAT Slug Bridge",
   "slug": "cat-slug",
   "type": "admin",
-  "version": "1.0.0-dev.4",
+  "version": "1.0.0-dev.5",
   "description": "Bridge centralise de generation, normalisation et reservation des slugs.",
   "summary": "Slug service unique reutilisable par PAGE, BLOG, DIRECTORY et futurs modules.",
   "author": "CATMIN",

@@ -76,7 +76,7 @@ final class AuthorAdminController
         [$status, $result] = $this->profileService->create($request->all());
         return $this->redirect('/modules/author-bridge', [
             'tab' => 'profiles',
-            'msg' => $status === 'ok' ? 'Profil créé avec succès.' : (string) $result,
+            'msg' => $status === 'ok' ? (string) ($this->tr['msg_profile_created'] ?? 'Profile created successfully.') : (string) $result,
             'mt'  => $status === 'ok' ? 'success' : 'danger',
         ]);
     }
@@ -91,7 +91,7 @@ final class AuthorAdminController
         [$status, $result] = $this->profileService->update($id, $request->all());
         return $this->redirect('/modules/author-bridge', [
             'tab' => 'profiles',
-            'msg' => $status === 'ok' ? 'Profil mis à jour.' : (string) $result,
+            'msg' => $status === 'ok' ? (string) ($this->tr['msg_profile_updated'] ?? 'Profile updated.') : (string) $result,
             'mt'  => $status === 'ok' ? 'success' : 'danger',
         ]);
     }
@@ -108,7 +108,7 @@ final class AuthorAdminController
         }
         return $this->redirect('/modules/author-bridge', [
             'tab' => 'profiles',
-            'msg' => 'Profil supprimé.',
+            'msg' => (string) ($this->tr['msg_profile_deleted'] ?? 'Profile deleted.'),
             'mt'  => 'success',
         ]);
     }
@@ -156,7 +156,7 @@ final class AuthorAdminController
 
         return $this->redirect('/modules/author-bridge', [
             'tab' => 'roles',
-            'msg' => 'Registre des rôles auteurs mis à jour.',
+            'msg' => (string) ($this->tr['msg_roles_registry_updated'] ?? 'Author roles registry updated.'),
             'mt'  => 'success',
         ]);
     }
@@ -192,7 +192,9 @@ final class AuthorAdminController
 
     private function loadTranslations(): array
     {
-        $locale = strtolower(trim((string) config('app.locale', 'fr')));
+        $locale = function_exists('catmin_locale')
+            ? strtolower(trim(catmin_locale()))
+            : strtolower(trim((string) config('app.locale', 'fr')));
         if (!in_array($locale, ['fr', 'en'], true)) {
             $locale = 'fr';
         }

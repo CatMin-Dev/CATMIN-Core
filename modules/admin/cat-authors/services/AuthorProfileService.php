@@ -51,7 +51,7 @@ final class AuthorProfileService
     public function update(int $id, array $input): array
     {
         if ($this->repo->findProfile($id) === null) {
-            return ['error', 'Profil introuvable.'];
+            return ['error', $this->message('Profil introuvable.', 'Profile not found.')];
         }
         $data = $this->sanitize($input);
         if ($data['slug'] === '') {
@@ -92,5 +92,11 @@ final class AuthorProfileService
             'socials_json'    => $socials !== [] ? json_encode($socials, JSON_UNESCAPED_UNICODE) : null,
             'visibility'      => trim((string) ($input['visibility'] ?? 'public')),
         ];
+    }
+
+    private function message(string $fr, string $en): string
+    {
+        $locale = function_exists('catmin_locale') ? strtolower(trim(catmin_locale())) : 'fr';
+        return $locale === 'en' ? $en : $fr;
     }
 }

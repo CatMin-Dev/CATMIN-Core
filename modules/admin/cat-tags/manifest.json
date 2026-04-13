@@ -4,7 +4,7 @@
   "display_name": "CAT Tags Bridge",
   "slug": "cat-tags",
   "type": "admin",
-  "version": "1.0.0-dev.1",
+  "version": "1.0.0-dev.2",
   "description": "Bridge transversal de tags avec liaison entites, autocomplete et usage count.",
   "summary": "Moteur TAGS central reutilisable par BLOG, PAGE, DIRECTORY et futurs modules.",
   "author": "CATMIN",

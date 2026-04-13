@@ -297,7 +297,7 @@ ob_start();
                                 </ul>
                             <?php endif; ?>
                         </td>
-                        <td class="text-end">
+                        <td class="text-end cat-modules-actions-cell">
                             <?php if ($isStatusView): ?>
                                 <?php if ($errors !== []): ?>
                                     <span class="badge text-bg-danger"><?= htmlspecialchars(__('modules.table.action_required'), ENT_QUOTES, 'UTF-8') ?></span>
@@ -307,9 +307,9 @@ ob_start();
                                     <span class="badge text-bg-warning"><?= htmlspecialchars(__('common.inactive'), ENT_QUOTES, 'UTF-8') ?></span>
                                 <?php endif; ?>
                             <?php else: ?>
-                                <div class="d-inline-flex flex-wrap justify-content-end gap-1">
+                                <div class="cat-module-action-group" role="group" aria-label="<?= htmlspecialchars(__('common.actions'), ENT_QUOTES, 'UTF-8') ?>">
                                     <?php if ($dependencyBlocking): ?>
-                                        <form method="post" action="<?= htmlspecialchars($adminBase . '/modules/dependencies/resolve', ENT_QUOTES, 'UTF-8') ?>" class="d-inline">
+                                        <form method="post" action="<?= htmlspecialchars($adminBase . '/modules/dependencies/resolve', ENT_QUOTES, 'UTF-8') ?>">
                                             <input type="hidden" name="_csrf" value="<?= $csrf ?>">
                                             <input type="hidden" name="scope" value="<?= htmlspecialchars($scope, ENT_QUOTES, 'UTF-8') ?>">
                                             <input type="hidden" name="slug" value="<?= htmlspecialchars($slug, ENT_QUOTES, 'UTF-8') ?>">
@@ -320,7 +320,7 @@ ob_start();
                                             </button>
                                         </form>
                                     <?php endif; ?>
-                                    <form method="post" action="<?= htmlspecialchars($adminBase . '/modules/toggle', ENT_QUOTES, 'UTF-8') ?>" class="d-inline">
+                                    <form method="post" action="<?= htmlspecialchars($adminBase . '/modules/toggle', ENT_QUOTES, 'UTF-8') ?>">
                                         <input type="hidden" name="_csrf" value="<?= $csrf ?>">
                                         <input type="hidden" name="scope" value="<?= htmlspecialchars($scope, ENT_QUOTES, 'UTF-8') ?>">
                                         <input type="hidden" name="slug" value="<?= htmlspecialchars($slug, ENT_QUOTES, 'UTF-8') ?>">
@@ -330,7 +330,7 @@ ob_start();
                                             <?= htmlspecialchars($enabled ? __('common.disable') : __('common.enable'), ENT_QUOTES, 'UTF-8') ?>
                                         </button>
                                     </form>
-                                    <form method="post" action="<?= htmlspecialchars($adminBase . '/modules/snapshot/create', ENT_QUOTES, 'UTF-8') ?>" class="d-inline">
+                                    <form method="post" action="<?= htmlspecialchars($adminBase . '/modules/snapshot/create', ENT_QUOTES, 'UTF-8') ?>">
                                         <input type="hidden" name="_csrf" value="<?= $csrf ?>">
                                         <input type="hidden" name="scope" value="<?= htmlspecialchars($scope, ENT_QUOTES, 'UTF-8') ?>">
                                         <input type="hidden" name="slug" value="<?= htmlspecialchars($slug, ENT_QUOTES, 'UTF-8') ?>">

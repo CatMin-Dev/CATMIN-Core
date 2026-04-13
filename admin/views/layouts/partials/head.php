@@ -11,6 +11,6 @@
     <link rel="stylesheet" href="/assets/css/catmin-components.css?v=3">
     <link rel="stylesheet" href="/assets/css/catmin-staff.css?v=2">
     <link rel="stylesheet" href="/assets/css/catmin-roles.css?v=2">
-    <link rel="stylesheet" href="/assets/css/catmin-modules.css?v=1">
+    <link rel="stylesheet" href="/assets/css/catmin-modules.css?v=2">
     <script src="/assets/js/odin-color.js?v=2"></script>
 </head>

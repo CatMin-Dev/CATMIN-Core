@@ -2,17 +2,17 @@
     "schema_version": "1.0.0",
     "algorithm": "sha256",
     "module_slug": "cat-tags",
-    "module_version": "1.0.0-dev.1",
-    "generated_at": "2026-04-13T08:46:03+00:00",
+    "module_version": "1.0.0-dev.2",
+    "generated_at": "2026-04-13T12:27:57+00:00",
     "files": {
         "CHANGELOG.md": "8c310df68e6ca19f9d7bec9f964eaf1a55822065f5b5a8969e1cf144e4b99c81",
         "README.md": "43166b9584e42e02ae2e5dc04064d180476729b40137ca8a140b3618bb50350b",
         "bridge.contract.json": "4eb6146d5905e653d3030cc384491ceec25d0bb2ec42e5846a7bc7bf05c24ba7",
-        "controllers/TagsAdminController.php": "205a0e7b7d2e7228e28c707616c292287785da1add7c6f922c52be65b19e2453",
+        "controllers/TagsAdminController.php": "db4e948271a83e3d6ad7ccd2dba1417578a6941b4349a696e0be47da019e6858",
         "hooks.php": "72f3c06e94ef5238dce0532295855b69f6a561f3db49d54d4883cfdbe3ea60e8",
-        "lang/en/module.php": "a9ab65e5edffde1c7b5a1bb55a72b86805e263ced5c68547d776c6ade92b34af",
-        "lang/fr/module.php": "4397ed7c4e6729b7a6cc9d4b61f535357528d0a9e0fae0d51988da4d5dc6291b",
-        "manifest.json": "7e2c0a5c37b18f211095539aa1ada39ff2a425febdd12fc2a4a3321e410a862b",
+        "lang/en/module.php": "c14bd4c08befb35b5c0afa0028b4aedde3e5b5b25f57031d13e9cc013061427c",
+        "lang/fr/module.php": "63988c576cb5c2d0daa49b1cd40033610754086889e64b51a570ba50b3b0bf35",
+        "manifest.json": "e6ac588e16de31aab2ecf20cca7bdf1d8eb38f1994491b2d22a86b95d231e834",
         "migrations/001_create_mod_cat_tags_tables.php": "342b76277aab6046d67d620418ac4ecfb2f0b626b2d2a0a87bf4db0d1c3ee757",
         "permissions.php": "84118cdccf4e338254ac5dfd09309c69aaad1cf6f89a1a51affae6586fa72235",
         "repositories/TagsRepository.php": "06933963b90432ce9052c6f9d402300dcf77e7ffd4001466aa100e59224a0432",
@@ -24,12 +24,12 @@
         "services/TagsIntegrationService.php": "dbf73d25ac32862001e9d4d32839529a812478a913e4d29cb7fc654590ca7fd5",
         "services/TagsService.php": "4b5fe95eff3a43d054ad265159f6d6ab8e0d8f56553c6d1d9adec4214b8ef06f",
         "views/embedded_panel.php": "aadc89a805ab77efc3d69ccf3cf74ce3a91564d2637c472814deb9180951a5fe",
-        "views/index.php": "e1ca7b8463c2d97241428dafcb2ecb631b93b06572b1ee48c4557fbf7408eaa8",
+        "views/index.php": "48fa50813eb87596cbb72bf1d70e41986d9dbb8a475a80026f96254165d370e2",
         "widgets/tag_cloud_front.php": "f26928abd522638bc9d4053e9d441f0fe6b64aab0055b4f12b4ddf23cd4f3816",
         "widgets/tags_badges_front.php": "93f84065971a9ba060170ebb61d61dd44fbf7eb9746fe1c954b61381aa2cabad",
         "widgets/tags_chips_admin.php": "6a40ebb815c99d5e1f2751f15c5a4ba3c2fa43e816debc3304909a41488fe0f9",
         "widgets/tags_list_comma_front.php": "180c8d5dca716c21367d7f83b36b19cba7a7ed30fdc49c3f1b0362f68021e509",
         "widgets/usage_badge_admin.php": "2fdf0bf0ca98bdfd598b9a8cd61fca4ef51981da007b6fd65a2e95748154fe39"
     },
-    "module_hash": "5f8efe6d6e3309ce06ece51486dd3245eae1a410c0c80b1096266d407dea72c5"
+    "module_hash": "b845156527396db71c4cea649f762379157de681677685a3771420b78b9e9fcd"
 }

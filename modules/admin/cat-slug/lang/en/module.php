@@ -21,4 +21,11 @@ return [
     'empty' => 'No slug stored.',
     'yes' => 'yes',
     'no' => 'no',
+    'slug_label' => 'Slug',
+    'entity_label' => 'Entity',
+    'primary_label' => 'Primary',
+    'created_label' => 'Created',
+    'source_placeholder' => 'My title',
+    'manual_placeholder' => 'optional',
+    'msg_execution_done' => 'Execution completed',
 ];

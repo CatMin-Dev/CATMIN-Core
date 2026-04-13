@@ -18,4 +18,8 @@ return [
     'root_categories' => 'Categories racines',
     'usage' => 'Usage',
     'empty' => 'Aucune categorie',
+    'create_section' => 'Creer une categorie',
+    'selector_section' => 'Selecteur de categories par entite',
+    'tree_section' => 'Arborescence',
+    'msg_operation_done' => 'Operation terminee',
 ];

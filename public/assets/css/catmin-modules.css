@@ -16,3 +16,34 @@
     font-size: 0.84rem;
     color: var(--palette-red-700);
 }
+
+.cat-modules-actions-cell {
+    min-width: 18rem;
+}
+
+.cat-module-action-group {
+    display: inline-flex;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.cat-module-action-group form {
+    margin: 0;
+}
+
+.cat-module-action-group .btn {
+    white-space: nowrap;
+}
+
+@media (max-width: 767.98px) {
+    .cat-modules-actions-cell {
+        min-width: 0;
+    }
+
+    .cat-module-action-group {
+        flex-wrap: wrap;
+    }
+}

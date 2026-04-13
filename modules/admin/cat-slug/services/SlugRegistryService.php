@@ -21,13 +21,13 @@ final class SlugRegistryService
         $scopeKey = trim($scopeKey) === '' ? 'global' : trim($scopeKey);
         $entityType = trim($entityType);
         if ($entityType === '' || $entityId <= 0) {
-            return ['ok' => false, 'message' => 'entity_type et entity_id sont obligatoires'];
+            return ['ok' => false, 'message' => $this->message('entity_type et entity_id sont obligatoires', 'entity_type and entity_id are required')];
         }
 
         $raw = trim((string) $manualSlug) !== '' ? (string) $manualSlug : $sourceText;
         $base = $this->generator->generate($raw);
         if ($base === '') {
-            return ['ok' => false, 'message' => 'Impossible de generer un slug'];
+            return ['ok' => false, 'message' => $this->message('Impossible de generer un slug', 'Unable to generate a slug')];
         }
 
         $valid = $this->validator->validate($base);
@@ -45,7 +45,7 @@ final class SlugRegistryService
         return [
             'ok' => $ok,
             'slug' => $unique,
-            'message' => $ok ? 'Slug reserve' : 'Reservation echouee',
+            'message' => $ok ? $this->message('Slug reserve', 'Slug reserved') : $this->message('Reservation echouee', 'Reservation failed'),
         ];
     }
 
@@ -57,7 +57,7 @@ final class SlugRegistryService
         }
 
         $exists = $this->repo->exists($slug, trim($scopeKey) === '' ? 'global' : trim($scopeKey), $excludeEntity);
-        return ['valid' => true, 'available' => !$exists, 'reason' => $exists ? 'deja utilise' : 'disponible'];
+        return ['valid' => true, 'available' => !$exists, 'reason' => $exists ? $this->message('deja utilise', 'already used') : $this->message('disponible', 'available')];
     }
 
     public function suggest(string $sourceText, string $scopeKey = 'global'): string
@@ -76,5 +76,11 @@ final class SlugRegistryService
     public function recent(int $limit = 50): array
     {
         return $this->repo->recent($limit);
+    }
+
+    private function message(string $fr, string $en): string
+    {
+        $locale = function_exists('catmin_locale') ? strtolower(trim(catmin_locale())) : 'fr';
+        return $locale === 'en' ? $en : $fr;
     }
 }

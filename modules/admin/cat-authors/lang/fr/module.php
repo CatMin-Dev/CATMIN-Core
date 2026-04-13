@@ -60,4 +60,8 @@ return [
     'panel_help'          => 'Vous pouvez gérer les profils auteurs depuis Organisation → Auteurs.',
     'no_author'           => 'Sans auteur',
     'no_profiles_panel'   => 'Aucun profil auteur disponible.',
+    'msg_profile_created' => 'Profil cree avec succes.',
+    'msg_profile_updated' => 'Profil mis a jour.',
+    'msg_profile_deleted' => 'Profil supprime.',
+    'msg_roles_registry_updated' => 'Registre des roles auteurs mis a jour.',
 ];

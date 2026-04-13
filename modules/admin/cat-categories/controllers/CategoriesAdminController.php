@@ -69,7 +69,7 @@ final class CategoriesAdminController
         $state = $this->service->createCategory($name, $parentId > 0 ? $parentId : null, $sortOrder);
 
         return $this->redirect('/modules/categories-bridge', [
-            'msg' => (string) ($state['message'] ?? 'Operation terminee'),
+            'msg' => (string) ($state['message'] ?? ($this->tr['msg_operation_done'] ?? 'Operation completed')),
             'mt' => (bool) ($state['ok'] ?? false) ? 'success' : 'danger',
         ]);
     }
@@ -104,7 +104,9 @@ final class CategoriesAdminController
 
     private function loadTranslations(): array
     {
-        $locale = strtolower(trim((string) config('app.locale', 'fr')));
+        $locale = function_exists('catmin_locale')
+            ? strtolower(trim(catmin_locale()))
+            : strtolower(trim((string) config('app.locale', 'fr')));
         if (!in_array($locale, ['fr', 'en'], true)) {
             $locale = 'fr';
         }

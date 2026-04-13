@@ -4,7 +4,7 @@
   "display_name": "CAT Authors Bridge",
   "slug": "cat-authors",
   "type": "admin",
-  "version": "1.0.0-dev.1",
+  "version": "1.0.0-dev.2",
   "description": "Bridge transversal de profils auteurs editoriaux lies aux comptes admin.",
   "summary": "Gestion des profils auteurs, liaison utilisateurs admin, selection auteur dans modules maitres, registre des roles autorises.",
   "author": "CATMIN",

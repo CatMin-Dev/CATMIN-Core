@@ -56,7 +56,7 @@ ob_start();
 </section>
 
 <section class="card mb-3"><div class="card-body">
-  <h2 class="h5 mb-3">Creation categorie</h2>
+  <h2 class="h5 mb-3"><?= htmlspecialchars((string) ($tr['create_section'] ?? 'Create category'), ENT_QUOTES, 'UTF-8') ?></h2>
   <form method="post" action="<?= htmlspecialchars($adminBase . '/modules/categories-bridge/create', ENT_QUOTES, 'UTF-8') ?>" class="row g-2">
     <input type="hidden" name="_csrf" value="<?= $csrf ?>">
     <div class="col-12 col-md-4"><label class="form-label"><?= htmlspecialchars((string) ($tr['name'] ?? 'Name'), ENT_QUOTES, 'UTF-8') ?></label><input class="form-control" name="name" required></div>
@@ -67,7 +67,7 @@ ob_start();
 </div></section>
 
 <section class="card mb-3"><div class="card-body">
-  <h2 class="h5 mb-3">Selecteur categories entite</h2>
+  <h2 class="h5 mb-3"><?= htmlspecialchars((string) ($tr['selector_section'] ?? 'Entity category selector'), ENT_QUOTES, 'UTF-8') ?></h2>
   <form method="post" action="<?= htmlspecialchars($adminBase . '/modules/categories-bridge/sync', ENT_QUOTES, 'UTF-8') ?>" class="row g-2">
     <input type="hidden" name="_csrf" value="<?= $csrf ?>">
     <div class="col-12 col-md-3"><label class="form-label"><?= htmlspecialchars((string) ($tr['entity_type'] ?? 'Entity type'), ENT_QUOTES, 'UTF-8') ?></label><input class="form-control" name="entity_type" value="<?= htmlspecialchars($entityType, ENT_QUOTES, 'UTF-8') ?>" required></div>
@@ -78,7 +78,7 @@ ob_start();
 </div></section>
 
 <section class="card"><div class="card-body">
-  <h2 class="h5 mb-3">Arborescence</h2>
+  <h2 class="h5 mb-3"><?= htmlspecialchars((string) ($tr['tree_section'] ?? 'Tree'), ENT_QUOTES, 'UTF-8') ?></h2>
   <?php if ($tree === []): ?>
     <p class="text-body-secondary mb-0"><?= htmlspecialchars((string) ($tr['empty'] ?? 'No categories'), ENT_QUOTES, 'UTF-8') ?></p>
   <?php else: ?>

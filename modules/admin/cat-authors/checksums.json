@@ -2,17 +2,17 @@
     "schema_version": "1.0.0",
     "algorithm": "sha256",
     "module_slug": "cat-authors",
-    "module_version": "1.0.0-dev.1",
-    "generated_at": "2026-04-13T11:39:51+00:00",
+    "module_version": "1.0.0-dev.2",
+    "generated_at": "2026-04-13T12:27:56+00:00",
     "files": {
         "CHANGELOG.md": "398093b8670ad4977e5e77d053fe392dee90f4690bc49231ac3997f4fcf014b2",
         "README.md": "979eed46570daa666eb5a85838aae5d4382627b0488f5ff6056aa51fceacf96e",
         "bridge.contract.json": "f9d28682c8847e9e161d1a2fb94ae4ff95b5ad81d13f80ebd47b2d802e876980",
-        "controllers/AuthorAdminController.php": "0614b92e4ccd8a5b59d59e5240ac1e3bd8d276f8a98bc11e9afb6df45b4ac5a6",
+        "controllers/AuthorAdminController.php": "461b8d2c13dd44b0692f63ccc327b3f122be72bc27390997e44ecb7a1b8181a0",
         "hooks.php": "ef82fe1ce72961e4dcef97798a9e197140fdfef268a6c4b068c2de3c70064495",
-        "lang/en/module.php": "b0330b3a16f2e92501f0d2310ac089ee395b139ee344b2f627dcb19424b312da",
-        "lang/fr/module.php": "fc4c209edb6666f8da56cc4bf359485b018ca013dfb4402b3ed8a81b52bcf31a",
-        "manifest.json": "5338bc06c56e1cfc993468ce8c7e270a3775ac8168c44ca4bb5ec83699891eda",
+        "lang/en/module.php": "a1f93119cdc632c6c00ac07f7bc63a021bc69b5a4daf8c792450fcd416db29ca",
+        "lang/fr/module.php": "1530d78e4cbecc4e754792167bbbf1241eb4be9f57bf3aadf3ea2bf93fc06a6b",
+        "manifest.json": "fdad3dc9401a37c5c20be853581507e8411431b88eb702d9c5c0ead47669732d",
         "migrations/001_create_mod_cat_author_tables.php": "211f72014083e5823b26ee9e66ad50717d1cc176a2083031135ddd0efb951d5b",
         "permissions.php": "e9415739ae274b50c4fc43794d704738e29ab590293c289f084b4406b8c6dec6",
         "repositories/AuthorRepository.php": "169f31bfe9c0e8227e742b71a3fc9ea2fe21f91bc2f34455ac09188f590bd602",
@@ -20,10 +20,10 @@
         "services/AuthorDisplayService.php": "1c6758462a8f5786b5a7c8ee06bb5abf0e2ad87c714615872893d1905dd78564",
         "services/AuthorIntegrationService.php": "8581313930abaaa4d629a1b399d28a4e563fc355c3e51f48d0293a391f6c2304",
         "services/AuthorLinkService.php": "22c54e7cf24cc50537db68de95d6d7e1dd0d5c689b57ed96c0344f81e78bbf8c",
-        "services/AuthorProfileService.php": "e1d37a9161005e735b9b9f382c9a9787a9dbf4d9ed7689a0e3935381549bf6bd",
+        "services/AuthorProfileService.php": "f69a7d79bf0e5592b8ed940c47bfdc90204b65c0b554cda0826d9ba71b29316c",
         "services/AuthorRoleRegistryService.php": "32eae4fa4c7934baf688cd5a0e9e5d86421e9e4a753bf6fa364d157dfa36fd54",
         "services/AuthorSelectorService.php": "f184154d737722db61a0430ae84a1dccc7037529a2659909cb0557912f003136",
-        "services/AuthorValidationService.php": "b822c1957f7e93868e5a4725e7924fcb9c67d54428890eef8a09f3daa40fc0ad",
+        "services/AuthorValidationService.php": "e75f3a49d0c85dbb44f3da155b2fa330030918ef5760a1dcbbc0dadc4f4e63ab",
         "views/embedded_panel.php": "b6e0da1c4ef5e5325434b3657019901109724e91383109fd04f4c46c7e321e59",
         "views/index.php": "c1fc4d3d33e3f22ae4b7b49990b8dfebb7529be5970acb7481443454f388fb3c",
         "widgets/author_badge_admin.php": "772f51cd7be9b0ff7ad27aeb1c67aff1d8cc8e606b879100ba1b77592586bded",
@@ -32,5 +32,5 @@
         "widgets/author_identity_inline.php": "618d05d1b61184cb96ecd72a663ee9b0475055320d14b888a3ae71caf32d65f7",
         "widgets/author_mini_card_front.php": "ebd3465450189ecc94d96aca93072632d39b977b1aae3cecf15afaa732a8ea3d"
     },
-    "module_hash": "a40abdca85e8f5451cee0b52ab6f8fd2997f0644649ff5e475f8d4f9a4bbd4a6"
+    "module_hash": "72991b5f3281d2812faf48bdab7d2894a3fb0b1a3401cf9c2fb8bb54cb6ce3fd"
 }

@@ -62,7 +62,7 @@ final class SlugAdminController
 
         $result = $this->service->generateAndReserve($entityType, $entityId, $sourceText, $scopeKey, $manualSlug === '' ? null : $manualSlug);
         return $this->redirect('/modules/slug-bridge', [
-            'msg' => (string) ($result['message'] ?? 'Execution terminee'),
+            'msg' => (string) ($result['message'] ?? ($this->tr['msg_execution_done'] ?? 'Execution completed')),
             'mt' => ($result['ok'] ?? false) ? 'success' : 'danger',
             'suggested' => (string) ($result['slug'] ?? ''),
         ]);
@@ -88,7 +88,9 @@ final class SlugAdminController
 
     private function loadTranslations(): array
     {
-        $locale = strtolower(trim((string) config('app.locale', 'fr')));
+        $locale = function_exists('catmin_locale')
+            ? strtolower(trim(catmin_locale()))
+            : strtolower(trim((string) config('app.locale', 'fr')));
         $allowed = ['fr', 'en'];
         if (!in_array($locale, $allowed, true)) {
             $locale = 'fr';

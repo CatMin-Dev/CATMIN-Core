@@ -27,7 +27,8 @@ final class SeoMetaService
         }
 
         $normalized = $this->normalize($payload);
-        $locale = strtolower(trim((string) ($payload['locale'] ?? config('app.locale', 'fr'))));
+        $resolvedLocale = $payload['locale'] ?? (function_exists('catmin_locale') ? catmin_locale() : config('app.locale', 'fr'));
+        $locale = strtolower(trim((string) $resolvedLocale));
         $keywords = $this->keywordSuggestService->suggest($payload, $locale);
         if (($normalized['focus_keyword'] ?? '') === '' && ($keywords['focus_keyword'] ?? '') !== '') {
             $normalized['focus_keyword'] = (string) ($keywords['focus_keyword'] ?? '');

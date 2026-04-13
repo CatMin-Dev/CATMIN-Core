@@ -50,30 +50,36 @@ final class AuthorValidationService
 
         $displayName = trim((string) ($data['display_name'] ?? ''));
         if ($displayName === '') {
-            $errors[] = 'Le nom d\'affichage est requis.';
+            $errors[] = $this->message('Le nom d\'affichage est requis.', 'Display name is required.');
         } elseif (mb_strlen($displayName, 'UTF-8') > 160) {
-            $errors[] = 'Le nom d\'affichage ne doit pas dépasser 160 caractères.';
+            $errors[] = $this->message('Le nom d\'affichage ne doit pas dépasser 160 caractères.', 'Display name must not exceed 160 characters.');
         }
 
         $slug = trim((string) ($data['slug'] ?? ''));
         if ($slug === '') {
-            $errors[] = 'Le slug est requis.';
+            $errors[] = $this->message('Le slug est requis.', 'Slug is required.');
         } elseif (!preg_match('/^[a-z0-9\-]+$/', $slug)) {
-            $errors[] = 'Le slug ne peut contenir que des lettres minuscules, chiffres et tirets.';
+            $errors[] = $this->message('Le slug ne peut contenir que des lettres minuscules, chiffres et tirets.', 'Slug may only contain lowercase letters, numbers, and hyphens.');
         } elseif ($this->repo->slugExists($slug, $excludeId)) {
-            $errors[] = 'Ce slug est déjà utilisé par un autre profil.';
+            $errors[] = $this->message('Ce slug est déjà utilisé par un autre profil.', 'This slug is already used by another profile.');
         }
 
         $visibility = trim((string) ($data['visibility'] ?? 'public'));
         if (!in_array($visibility, ['public', 'private', 'unlisted'], true)) {
-            $errors[] = 'Visibilité invalide (public, private, unlisted).';
+            $errors[] = $this->message('Visibilité invalide (public, private, unlisted).', 'Invalid visibility (public, private, unlisted).');
         }
 
         $websiteUrl = trim((string) ($data['website_url'] ?? ''));
         if ($websiteUrl !== '' && !filter_var($websiteUrl, FILTER_VALIDATE_URL)) {
-            $errors[] = 'L\'URL du site web est invalide.';
+            $errors[] = $this->message('L\'URL du site web est invalide.', 'Website URL is invalid.');
         }
 
         return $errors;
+    }
+
+    private function message(string $fr, string $en): string
+    {
+        $locale = function_exists('catmin_locale') ? strtolower(trim(catmin_locale())) : 'fr';
+        return $locale === 'en' ? $en : $fr;
     }
 }

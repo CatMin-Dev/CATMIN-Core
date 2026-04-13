@@ -33,9 +33,9 @@ ob_start();
         <input type="hidden" name="_csrf" value="<?= $csrf ?>">
         <div class="col-12 col-md-3"><label class="form-label"><?= htmlspecialchars((string) ($tr['entity_type'] ?? 'Entity type'), ENT_QUOTES, 'UTF-8') ?></label><input class="form-control" name="entity_type" placeholder="page" required></div>
         <div class="col-12 col-md-2"><label class="form-label"><?= htmlspecialchars((string) ($tr['entity_id'] ?? 'Entity ID'), ENT_QUOTES, 'UTF-8') ?></label><input class="form-control" type="number" min="1" name="entity_id" required></div>
-        <div class="col-12 col-md-3"><label class="form-label"><?= htmlspecialchars((string) ($tr['source_text'] ?? 'Source text'), ENT_QUOTES, 'UTF-8') ?></label><input class="form-control" name="source_text" placeholder="Mon titre" required></div>
+        <div class="col-12 col-md-3"><label class="form-label"><?= htmlspecialchars((string) ($tr['source_text'] ?? 'Source text'), ENT_QUOTES, 'UTF-8') ?></label><input class="form-control" name="source_text" placeholder="<?= htmlspecialchars((string) ($tr['source_placeholder'] ?? 'My title'), ENT_QUOTES, 'UTF-8') ?>" required></div>
         <div class="col-12 col-md-2"><label class="form-label"><?= htmlspecialchars((string) ($tr['scope'] ?? 'Scope'), ENT_QUOTES, 'UTF-8') ?></label><input class="form-control" name="scope_key" value="global"></div>
-        <div class="col-12 col-md-2"><label class="form-label"><?= htmlspecialchars((string) ($tr['manual_slug'] ?? 'Manual slug'), ENT_QUOTES, 'UTF-8') ?></label><input class="form-control" name="manual_slug" placeholder="optionnel"></div>
+        <div class="col-12 col-md-2"><label class="form-label"><?= htmlspecialchars((string) ($tr['manual_slug'] ?? 'Manual slug'), ENT_QUOTES, 'UTF-8') ?></label><input class="form-control" name="manual_slug" placeholder="<?= htmlspecialchars((string) ($tr['manual_placeholder'] ?? 'optional'), ENT_QUOTES, 'UTF-8') ?>"></div>
         <div class="col-12 d-grid d-md-flex justify-content-md-end"><button class="btn btn-primary" type="submit"><?= htmlspecialchars((string) ($tr['generate'] ?? 'Generate'), ENT_QUOTES, 'UTF-8') ?></button></div>
     </form>
     <?php if ($suggested !== ''): ?><p class="small text-body-secondary mt-2 mb-0"><?= htmlspecialchars((string) ($tr['slug_selected'] ?? 'Selected slug'), ENT_QUOTES, 'UTF-8') ?>: <code><?= htmlspecialchars($suggested, ENT_QUOTES, 'UTF-8') ?></code></p><?php endif; ?>
@@ -45,13 +45,13 @@ ob_start();
     <h2 class="h6 mb-2"><?= htmlspecialchars((string) ($tr['validate_title'] ?? 'Validate a slug'), ENT_QUOTES, 'UTF-8') ?></h2>
     <form method="post" action="<?= htmlspecialchars($adminBase . '/modules/slug-bridge/validate', ENT_QUOTES, 'UTF-8') ?>" class="row g-2 align-items-end">
         <input type="hidden" name="_csrf" value="<?= $csrf ?>">
-        <div class="col-12 col-md-5"><label class="form-label">Slug</label><input class="form-control" name="slug" placeholder="mon-slug" required></div>
+        <div class="col-12 col-md-5"><label class="form-label"><?= htmlspecialchars((string) ($tr['slug_label'] ?? 'Slug'), ENT_QUOTES, 'UTF-8') ?></label><input class="form-control" name="slug" placeholder="my-slug" required></div>
         <div class="col-12 col-md-4"><label class="form-label"><?= htmlspecialchars((string) ($tr['scope'] ?? 'Scope'), ENT_QUOTES, 'UTF-8') ?></label><input class="form-control" name="scope_key" value="global"></div>
         <div class="col-12 col-md-3 d-grid"><button class="btn btn-outline-primary" type="submit"><?= htmlspecialchars((string) ($tr['validate'] ?? 'Check'), ENT_QUOTES, 'UTF-8') ?></button></div>
     </form>
 </div></section>
 
-<section class="card"><div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>ID</th><th>Entity</th><th>Slug</th><th>Scope</th><th>Primary</th><th>Created</th></tr></thead><tbody>
+<section class="card"><div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>ID</th><th><?= htmlspecialchars((string) ($tr['entity_label'] ?? 'Entity'), ENT_QUOTES, 'UTF-8') ?></th><th><?= htmlspecialchars((string) ($tr['slug_label'] ?? 'Slug'), ENT_QUOTES, 'UTF-8') ?></th><th><?= htmlspecialchars((string) ($tr['scope'] ?? 'Scope'), ENT_QUOTES, 'UTF-8') ?></th><th><?= htmlspecialchars((string) ($tr['primary_label'] ?? 'Primary'), ENT_QUOTES, 'UTF-8') ?></th><th><?= htmlspecialchars((string) ($tr['created_label'] ?? 'Created'), ENT_QUOTES, 'UTF-8') ?></th></tr></thead><tbody>
 <?php if ($rows === []): ?><tr><td colspan="6" class="text-center py-5 text-body-secondary"><?= htmlspecialchars((string) ($tr['empty'] ?? 'No slug stored.'), ENT_QUOTES, 'UTF-8') ?></td></tr><?php else: ?>
 <?php foreach ($rows as $r): ?>
 <tr>

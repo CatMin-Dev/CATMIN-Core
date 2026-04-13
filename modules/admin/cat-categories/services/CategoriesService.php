@@ -21,19 +21,19 @@ final class CategoriesService
     {
         $name = trim($name);
         if ($name === '') {
-            return ['ok' => false, 'message' => 'Nom categorie obligatoire'];
+            return ['ok' => false, 'message' => $this->message('Nom categorie obligatoire', 'Category name is required')];
         }
         $slug = $this->slugify($name);
         if ($slug === '') {
-            return ['ok' => false, 'message' => 'Slug categorie invalide'];
+            return ['ok' => false, 'message' => $this->message('Slug categorie invalide', 'Invalid category slug')];
         }
 
         if (is_array($this->repo->bySlug($slug))) {
-            return ['ok' => false, 'message' => 'Categorie deja existante'];
+            return ['ok' => false, 'message' => $this->message('Categorie deja existante', 'Category already exists')];
         }
 
         $id = $this->repo->createCategory($name, $slug, $parentId, $sortOrder);
-        return ['ok' => $id > 0, 'message' => $id > 0 ? 'Categorie creee' : 'Creation categorie impossible'];
+        return ['ok' => $id > 0, 'message' => $id > 0 ? $this->message('Categorie creee', 'Category created') : $this->message('Creation categorie impossible', 'Unable to create category')];
     }
 
     public function dashboard(): array
@@ -66,5 +66,11 @@ final class CategoriesService
         $value = preg_replace('/[\s_-]+/u', '-', $value) ?? $value;
         $value = trim((string) $value, '-');
         return mb_substr($value, 0, 180);
+    }
+
+    private function message(string $fr, string $en): string
+    {
+        $locale = function_exists('catmin_locale') ? strtolower(trim(catmin_locale())) : 'fr';
+        return $locale === 'en' ? $en : $fr;
     }
 }

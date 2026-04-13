@@ -18,4 +18,8 @@ return [
     'root_categories' => 'Root categories',
     'usage' => 'Usage',
     'empty' => 'No categories',
+    'create_section' => 'Create category',
+    'selector_section' => 'Entity category selector',
+    'tree_section' => 'Tree',
+    'msg_operation_done' => 'Operation completed',
 ];

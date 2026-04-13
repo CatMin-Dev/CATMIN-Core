@@ -21,4 +21,11 @@ return [
     'empty' => 'Aucun slug enregistre.',
     'yes' => 'oui',
     'no' => 'non',
+    'slug_label' => 'Slug',
+    'entity_label' => 'Entite',
+    'primary_label' => 'Principal',
+    'created_label' => 'Creation',
+    'source_placeholder' => 'Mon titre',
+    'manual_placeholder' => 'optionnel',
+    'msg_execution_done' => 'Execution terminee',
 ];
