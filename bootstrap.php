@@ -18,6 +18,7 @@ if (!defined('CATMIN_AREA')) {
 }
 
 require_once CATMIN_CORE . '/support/helpers.php';
+require_once CATMIN_CORE . '/rbac-helpers.php';
 require_once CATMIN_CORE . '/events-bus.php';
 require_once CATMIN_CORE . '/error-dispatcher.php';
 require_once CATMIN_CORE . '/failsafe/FailsafeManager.php';
@@ -56,3 +57,13 @@ $loader = new Core\config\RuntimeConfigLoader(Core\config\Config::repository(), 
 $loader->load(CATMIN_CONFIG, CATMIN_STORAGE . '/config/runtime.json');
 Core\versioning\VersionHistory::syncCurrentVersion();
 Core\failsafe\FailsafeManager::register();
+
+// Load module permissions into admin_permissions table during admin area requests
+if (CATMIN_AREA === 'admin') {
+    try {
+        $permLoader = new Core\PermissionsLoader();
+        $permLoader->loadFromModules();
+    } catch (\Throwable) {
+        // Silently fail - permissions loading shouldn't break the framework
+    }
+}

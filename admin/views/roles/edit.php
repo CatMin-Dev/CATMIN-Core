@@ -21,7 +21,7 @@ ob_start();
 <form method="post" action="<?= htmlspecialchars((string) ($adminBase . '/roles/' . (int) ($role['id'] ?? 0) . '/edit'), ENT_QUOTES, 'UTF-8') ?>" class="d-grid gap-3">
     <input type="hidden" name="_csrf" value="<?= htmlspecialchars((new CsrfManager())->token(), ENT_QUOTES, 'UTF-8') ?>">
     <?php require __DIR__ . '/partials/form.php'; ?>
-    <?php require __DIR__ . '/partials/permissions-matrix.php'; ?>
+    <?php require __DIR__ . '/partials/permissions-matrix-new.php'; ?>
     <div class="d-flex gap-2">
         <button class="btn btn-primary" type="submit"><?= htmlspecialchars(__('common.save'), ENT_QUOTES, 'UTF-8') ?></button>
         <a class="btn btn-outline-secondary" href="<?= htmlspecialchars((string) ($adminBase . '/roles/' . (int) ($role['id'] ?? 0)), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars(__('common.cancel'), ENT_QUOTES, 'UTF-8') ?></a>
