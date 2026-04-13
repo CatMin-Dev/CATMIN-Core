@@ -1,0 +1,30 @@
+{
+  "contract_version": "1.0.0",
+  "module_slug": "cat-authors",
+  "provides": [
+    "authors.profile.create",
+    "authors.profile.read",
+    "authors.profile.update",
+    "authors.profile.delete",
+    "authors.link.sync",
+    "authors.selector.embed",
+    "authors.roles.registry.read",
+    "authors.roles.registry.write"
+  ],
+  "consumes": [
+    "seo.slug.generate"
+  ],
+  "hooks": {
+    "registers": [
+      {
+        "hook": "content.editor.panels",
+        "description": "Injecte le sélecteur auteur dans les éditeurs de contenu",
+        "order": 90
+      }
+    ]
+  },
+  "consumer_policy": {
+    "intended_consumers": ["cat-blog", "cat-page", "cat-directory"],
+    "embed_method": "catmin_hook_apply('content.editor.panels', [], ['module_slug' => 'cat-blog'])"
+  }
+}
