@@ -7,7 +7,10 @@ final class CoreModuleManifestStandard
     private const TYPE_ENUM = ['core', 'admin', 'front', 'integration', 'driver'];
     private const CHANNEL_ENUM = ['stable', 'beta', 'alpha', 'experimental'];
     private const LIFECYCLE_ENUM = ['active', 'deprecated', 'abandoned', 'replaced', 'archived', 'experimental'];
-    private const CATEGORY_ENUM = ['content', 'seo', 'media', 'system', 'security', 'settings', 'marketing', 'commerce', 'integration', 'custom'];
+    private const CATEGORY_ENUM = ['content', 'seo', 'media', 'system', 'security', 'settings', 'marketing', 'commerce', 'integration', 'organization', 'custom'];
+    private const CATEGORY_ALIASES = [
+        'organisation' => 'organization',
+    ];
 
     public function normalize(array $manifest): array
     {
@@ -48,7 +51,7 @@ final class CoreModuleManifestStandard
             'readme_url' => trim((string) ($manifest['readme_url'] ?? '')),
             'changelog_url' => trim((string) ($manifest['changelog_url'] ?? '')),
             'keywords' => is_array($manifest['keywords'] ?? null) ? array_values(array_filter(array_map(static fn ($k): string => trim((string) $k), (array) $manifest['keywords']), static fn (string $k): bool => $k !== '')) : [],
-            'category' => strtolower(trim((string) ($manifest['category'] ?? 'custom'))),
+            'category' => $this->normalizeCategory((string) ($manifest['category'] ?? 'custom')),
             'icon' => trim((string) ($manifest['icon'] ?? '')),
             'enabled_by_default' => array_key_exists('enabled_by_default', $manifest)
                 ? (bool) $manifest['enabled_by_default']
@@ -137,7 +140,7 @@ final class CoreModuleManifestStandard
         }
 
         $category = (string) ($normalized['category'] ?? '');
-        if ($category !== '' && !in_array($category, self::CATEGORY_ENUM, true)) {
+        if ($category !== '' && !in_array($category, $this->allowedCategories(), true)) {
             $errors[] = 'Category invalide: ' . $category;
         }
 
@@ -229,6 +232,52 @@ final class CoreModuleManifestStandard
         }
 
         return array_values(array_unique($rows));
+    }
+
+    private function normalizeCategory(string $category): string
+    {
+        $category = strtolower(trim($category));
+        if ($category === '') {
+            return 'custom';
+        }
+        return self::CATEGORY_ALIASES[$category] ?? $category;
+    }
+
+    /**
+     * Returns allowed categories for module manifests.
+     *
+     * Extensible through config and hooks so future addons can target
+     * pre-existing or custom taxonomies without touching this class.
+     */
+    private function allowedCategories(): array
+    {
+        $categories = self::CATEGORY_ENUM;
+
+        if (function_exists('config')) {
+            $extra = config('modules.manifest_categories', []);
+            if (is_array($extra)) {
+                foreach ($extra as $item) {
+                    $value = $this->normalizeCategory((string) $item);
+                    if ($value !== '') {
+                        $categories[] = $value;
+                    }
+                }
+            }
+        }
+
+        if (function_exists('catmin_hook_apply')) {
+            $hooked = catmin_hook_apply('module.manifest.allowed_categories', $categories, []);
+            if (is_array($hooked)) {
+                $categories = $hooked;
+            }
+        }
+
+        $categories = array_values(array_unique(array_filter(array_map(
+            static fn ($v): string => strtolower(trim((string) $v)),
+            $categories
+        ), static fn (string $v): bool => $v !== '')));
+
+        return $categories;
     }
 
     private function normalizeDbConstraints(mixed $value): array
