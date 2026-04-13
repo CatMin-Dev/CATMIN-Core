@@ -1,0 +1,80 @@
+{
+  "module_schema_version": "1.0.0",
+  "name": "CAT Categories",
+  "display_name": "CAT Categories Bridge",
+  "slug": "cat-categories",
+  "type": "admin",
+  "version": "1.0.0-dev.1",
+  "description": "Bridge transversal de categories structurees et hierarchiques.",
+  "summary": "Moteur categories central pour BLOG, PRODUITS, DIRECTORY et contenus structures.",
+  "author": "CATMIN",
+  "homepage": "https://github.com/CatMin-Dev/modules",
+  "support_url": "https://github.com/CatMin-Dev/modules/issues",
+  "docs_url": "https://github.com/CatMin-Dev/core",
+  "readme_url": "https://github.com/CatMin-Dev/modules",
+  "changelog_url": "https://github.com/CatMin-Dev/modules",
+  "keywords": ["categories", "taxonomy", "hierarchy", "bridge"],
+  "category": "content",
+  "icon": "bi bi-diagram-3",
+  "enabled": true,
+  "enabled_by_default": false,
+  "installable": true,
+  "autoload": true,
+  "show_in_manager": true,
+  "show_in_market": true,
+  "release_channel": "beta",
+  "lifecycle_status": "active",
+  "maintenance_status": "maintained",
+  "php_min": "8.3",
+  "catmin_min": "0.4.0-rc.13",
+  "catmin_max": "0.x",
+  "db_supported": ["sqlite", "mysql", "mariadb"],
+  "capabilities": ["categories.read", "categories.write", "categories.delete", "categories.configure"],
+  "trusted_module": true,
+  "load": {
+    "routes": true,
+    "views": true,
+    "assets": false,
+    "migrations": true,
+    "hooks": true,
+    "translations": true,
+    "permissions": true,
+    "settings": false
+  },
+  "dependencies": {
+    "requires": ["cat-seo-meta", "cat-tags"],
+    "conflicts": [],
+    "replaces": []
+  },
+  "admin_sidebar": [
+    {
+      "group": "features",
+      "key": "cat-categories.dashboard",
+      "label": "Categories",
+      "label_i18n": {
+        "fr": "Categories",
+        "en": "Categories"
+      },
+      "href": "modules/categories-bridge",
+      "order": 250,
+      "permissions": ["categories.read"]
+    }
+  ],
+  "sidebar_entries": [
+    {
+      "group": "features",
+      "key": "cat-categories.dashboard",
+      "label": "Categories",
+      "label_i18n": {
+        "fr": "Categories",
+        "en": "Categories"
+      },
+      "icon": "diagram-3",
+      "route": "/modules/categories-bridge",
+      "order": 250,
+      "visibility": "default",
+      "permissions": ["categories.read"]
+    }
+  ],
+  "tags": ["categories", "taxonomy", "hierarchy", "r009"]
+}
