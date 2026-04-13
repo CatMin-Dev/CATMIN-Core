@@ -29,6 +29,7 @@ require_once CATMIN_CORE . '/module-repository-registry.php';
 require_once CATMIN_CORE . '/module-uninstaller.php';
 require_once CATMIN_CORE . '/module-snapshot-manager.php';
 require_once CATMIN_CORE . '/module-rollback-runner.php';
+require_once CATMIN_CORE . '/module-mandatory-dependencies.php';
 require_once CATMIN_CORE . '/trust-center.php';
 require_once CATMIN_CORE . '/queue-engine.php';
 require_once CATMIN_CORE . '/update-intelligent-notifier.php';
@@ -3116,6 +3117,7 @@ return [
 
                 $visiting[$slug] = true;
                 $requires = (array) (($item['manifest']['dependencies']['requires'] ?? []));
+                $requires = array_values(array_unique(array_merge($requires, CoreModuleMandatoryDependencies::forSlug($slug))));
                 foreach ($requires as $dep) {
                     $depSlug = strtolower(trim((string) $dep));
                     if ($depSlug === '' || $isActive($depSlug)) {

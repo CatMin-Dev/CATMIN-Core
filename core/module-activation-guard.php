@@ -6,6 +6,7 @@ require_once CATMIN_CORE . '/module-loader.php';
 require_once CATMIN_CORE . '/module-compatibility-checker.php';
 require_once CATMIN_CORE . '/module-integrity.php';
 require_once CATMIN_CORE . '/module-capability-policy.php';
+require_once CATMIN_CORE . '/module-mandatory-dependencies.php';
 
 final class CoreModuleActivationGuard
 {
@@ -36,7 +37,7 @@ final class CoreModuleActivationGuard
             }
         }
 
-        foreach ((array) ($manifest['dependencies']['requires'] ?? []) as $required) {
+        foreach (CoreModuleMandatoryDependencies::mergedWithManifest($manifest) as $required) {
             $required = strtolower(trim((string) $required));
             if ($required === '') {
                 continue;

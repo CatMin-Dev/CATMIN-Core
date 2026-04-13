@@ -15,6 +15,7 @@ require_once CATMIN_CORE . '/module-integrity.php';
 require_once CATMIN_CORE . '/module-activator.php';
 require_once CATMIN_CORE . '/module-snapshot-manager.php';
 require_once CATMIN_CORE . '/module-loader.php';
+require_once CATMIN_CORE . '/module-mandatory-dependencies.php';
 
 final class CoreModuleInstallRunner
 {
@@ -101,10 +102,17 @@ final class CoreModuleInstallRunner
         $type = strtolower(trim((string) ($manifest['type'] ?? '')));
         $slug = strtolower(trim((string) ($manifest['slug'] ?? '')));
 
-        if ($slug === 'cat-seo-meta' && !$this->isModuleActive('cat-slug')) {
+        foreach (CoreModuleMandatoryDependencies::forSlug($slug) as $requiredSlug) {
+            if ($this->isModuleActive($requiredSlug)) {
+                continue;
+            }
             $rollback->cleanupPath($extractDir);
-            catmin_event_emit('module.install.failed', ['slug' => $slug, 'errors' => ['dependency_required_active:cat-slug'], 'context' => $context]);
-            return ['ok' => false, 'message' => 'CAT SEO Meta requiert CAT Slug actif avant installation', 'errors' => ['dependency_required_active:cat-slug']];
+            catmin_event_emit('module.install.failed', ['slug' => $slug, 'errors' => ['dependency_required_active:' . $requiredSlug], 'context' => $context]);
+            return [
+                'ok' => false,
+                'message' => 'Dependance active requise avant installation: ' . $requiredSlug,
+                'errors' => ['dependency_required_active:' . $requiredSlug],
+            ];
         }
 
         $dest = CATMIN_MODULES . '/' . $type . '/' . $slug;

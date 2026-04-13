@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once CATMIN_CORE . '/module-loader.php';
 require_once CATMIN_CORE . '/module-activation-guard.php';
 require_once CATMIN_CORE . '/module-state-store.php';
+require_once CATMIN_CORE . '/module-mandatory-dependencies.php';
 
 final class CoreModuleActivator
 {
@@ -71,7 +72,14 @@ final class CoreModuleActivator
             $loader = new CoreModuleLoader();
             $snapshot = $loader->scan();
             foreach ($snapshot['modules'] as $module) {
-                foreach ($this->extractRequires((array) ($module['manifest'] ?? [])) as $depSlug) {
+                $requiredDeps = $this->extractRequires((array) ($module['manifest'] ?? []));
+                $requiredDeps = array_merge(
+                    $requiredDeps,
+                    CoreModuleMandatoryDependencies::forSlug((string) ($module['manifest']['slug'] ?? ''))
+                );
+                $requiredDeps = array_values(array_unique($requiredDeps));
+
+                foreach ($requiredDeps as $depSlug) {
                     if ($depSlug === $slug && ((bool) ($module['enabled'] ?? false))) {
                         $modSlug = (string) ($module['manifest']['slug'] ?? '-');
                         return ['ok' => false, 'message' => 'Désactivation refusée, dépendance active: ' . $modSlug];

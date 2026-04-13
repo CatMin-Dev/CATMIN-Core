@@ -2,23 +2,23 @@
     "schema_version": "1.0.0",
     "algorithm": "sha256",
     "module_slug": "cat-seo-meta",
-    "module_version": "1.0.0-dev.1",
-    "generated_at": "2026-04-13T08:15:46+00:00",
+    "module_version": "1.0.0-dev.2",
+    "generated_at": "2026-04-13T08:23:23+00:00",
     "files": {
-        "CHANGELOG.md": "fba8939a7383fcacab9aed9967dc2735b86b3a21e5234b6f2a8dab4abb5afd15",
-        "README.md": "55ba87f472d9d9410a8189229377cdcc0f57790c28e0a3a6aaf3c897d92e8947",
-        "bridge.contract.json": "b11b3b88677966b277ca873c76b2bb8b45ac91cc89fa3959787418d7377d5634",
+        "CHANGELOG.md": "30424282e5ea590073fa7cd12fe3942b208e73f2bae60d12e24c0df7ac0379a9",
+        "README.md": "d14bd8fb0718cb730a18699be4da3faacfc7ba6d87a7047e1ed4eb637289c115",
+        "bridge.contract.json": "e1e52997b263f876f4c23f5070fe8dba7f78cc95bc3e86fd50c2a618e8d67aed",
         "controllers/SeoMetaAdminController.php": "aeacf54473de647acd548e936f3e7ccda9314d1f8fc4e643b74424eb3c52d3e8",
-        "hooks.php": "e178a5f9d5fe2f6e1ff38abc64ab1086d35eb626162232d7a04d6b02ac7c5e32",
+        "hooks.php": "bae3935a855c3e8b14bb71676791450d81cb891a6546e9f5a319340e08694c95",
         "lang/en/module.php": "9915ef676b18ace3a0881cd10d533a1ba192482467bde5ed74ea68e6ba9477ac",
         "lang/fr/module.php": "24a27db1d6ee46f033eca0dd54a8af34084e30d98f26346835312122c838c37b",
-        "manifest.json": "0262352c47af424d91b70b6bf3f2f0695732dd09102293cde786646fc6d9e047",
+        "manifest.json": "3b5c40af77f72bd1319b881df832d4315e1502e5e7b16fab6c6f300caa91c004",
         "migrations/001_create_mod_cat_seo_meta.php": "a9a8fe545a3cb52c6497b0fc3fa64fb6ff03ae051722c5c13c958da6a2c27630",
         "permissions.php": "f7ec7b0ff18eef6a52544ead68f41e2111eb25abe11ad34ebc6667d4374b0f2c",
         "repositories/SeoMetaRepository.php": "75907ea22a1758a089e465a8817d7d7c4ae66a41cc10e6280e573c0325adbe50",
         "routes.php": "1fcbfab1f35ad518c1a85454aff07ddeaa33bd5eb1a1366a9add3417dd528274",
         "services/SeoAuditService.php": "be1b3872abd5e39fadc33791cfbdf1322dc08ad47600218668fead16c25d20fa",
-        "services/SeoIntegrationService.php": "81c3868acbba2fedbb76073ec9066fd1c8d700dc400565c7e6f6445b0f53445d",
+        "services/SeoIntegrationService.php": "44bac50f164c2941b1fa2c8e9ea406165447074d53041dddd4e7a8def7c68ba3",
         "services/SeoKeywordSuggestService.php": "24457e23730e7f2ddaea7bdf3752bdaba86ad9a965b4e5afe7c41e413d0ec48e",
         "services/SeoMetaService.php": "dc1680158dbb76f2c45dd63455a65e6d870933a967d458350b86ebac134fefdc",
         "services/SeoPreviewService.php": "361d95bff57dabebd195380a46ef4eb9292cdb37316771cd750ba448ecb3252f",
@@ -31,5 +31,5 @@
         "widgets/seo_score_meter.php": "0e7f1b2a3c5dd22ce73db94b6aff230e48cc6f323fe59eaa4d8695a1c13b80fd",
         "widgets/social_preview.php": "e4631f8cd338644c11b7a1683af3a58fa3c32b19173688675c353e6c2614f9ed"
     },
-    "module_hash": "3ab40bae64ac7d449985bbb206cab4c0c7268d90ebdbf76b7d956c816199c2dd"
+    "module_hash": "2cf123b4957ac2d5803a5f75526625a513dcd01f931dca15dbffb7ff2c634463"
 }

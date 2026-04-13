@@ -1,6 +1,6 @@
 {
   "bridge": "cat-seo-meta",
-  "version": "1.0.0-dev.1",
+  "version": "1.0.0-dev.2",
   "kind": "transversal",
   "services": [
     "SeoMetaService",
@@ -25,5 +25,13 @@
     "cat-page",
     "cat-blog",
     "cat-directory"
-  ]
+  ],
+  "consumer_policy": {
+    "mandatory": true,
+    "required_modules": [
+      "cat-slug",
+      "cat-seo-meta"
+    ],
+    "panel_hook": "content.editor.panels"
+  }
 }

@@ -20,3 +20,10 @@ CAT SEO Meta est un bridge transversal pour centraliser les metadonnees SEO, le 
 ## Notes
 
 Le bridge n automatise pas magiquement la SEO: il detecte, score, alerte et assiste.
+
+## Integration future modules maitres
+
+- Hook prepare: `content.editor.panels`
+- Modules cibles: `cat-page`, `cat-blog`, `cat-directory`
+- Policy obligatoire: ces modules doivent fonctionner avec `cat-slug` + `cat-seo-meta`
+- Quand les modules maitres existeront et appliqueront le hook, le panneau SEO embarque sera ajoute automatiquement.
