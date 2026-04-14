@@ -14,6 +14,7 @@ final class MenuLinkRepository
     public function __construct()
     {
         $this->pdo = (new ConnectionManager())->connection();
+        $this->ensureSchema();
     }
 
     public function stats(): array
@@ -129,5 +130,54 @@ final class MenuLinkRepository
             return 0;
         }
         return (int) $value->fetchColumn();
+    }
+
+    private function ensureSchema(): void
+    {
+        $driver = (string) $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+        if ($driver === 'sqlite') {
+            $this->pdo->exec(
+                'CREATE TABLE IF NOT EXISTS mod_cat_menu_link_items ('
+                . 'id INTEGER PRIMARY KEY AUTOINCREMENT,'
+                . 'menu_key VARCHAR(120) NOT NULL,'
+                . 'entity_type VARCHAR(80) NOT NULL,'
+                . 'entity_id INTEGER NOT NULL,'
+                . 'parent_item_id INTEGER NULL,'
+                . 'label_override VARCHAR(180) NULL,'
+                . 'target_url VARCHAR(500) NULL,'
+                . 'link_type VARCHAR(40) NOT NULL DEFAULT \'entity_link\','
+                . 'sort_order INTEGER NOT NULL DEFAULT 0,'
+                . 'is_visible INTEGER NOT NULL DEFAULT 1,'
+                . 'created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,'
+                . 'updated_at DATETIME NULL'
+                . ')'
+            );
+            $this->pdo->exec('CREATE INDEX IF NOT EXISTS ix_mod_cat_menu_link_menu ON mod_cat_menu_link_items(menu_key)');
+            $this->pdo->exec('CREATE INDEX IF NOT EXISTS ix_mod_cat_menu_link_entity ON mod_cat_menu_link_items(entity_type, entity_id)');
+            $this->pdo->exec('CREATE INDEX IF NOT EXISTS ix_mod_cat_menu_link_parent ON mod_cat_menu_link_items(parent_item_id)');
+            $this->pdo->exec('CREATE INDEX IF NOT EXISTS ix_mod_cat_menu_link_sort ON mod_cat_menu_link_items(sort_order)');
+            return;
+        }
+
+        $this->pdo->exec(
+            'CREATE TABLE IF NOT EXISTS mod_cat_menu_link_items ('
+            . 'id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,'
+            . 'menu_key VARCHAR(120) NOT NULL,'
+            . 'entity_type VARCHAR(80) NOT NULL,'
+            . 'entity_id BIGINT UNSIGNED NOT NULL,'
+            . 'parent_item_id BIGINT UNSIGNED NULL,'
+            . 'label_override VARCHAR(180) NULL,'
+            . 'target_url VARCHAR(500) NULL,'
+            . 'link_type VARCHAR(40) NOT NULL DEFAULT \'entity_link\','
+            . 'sort_order INT NOT NULL DEFAULT 0,'
+            . 'is_visible TINYINT(1) NOT NULL DEFAULT 1,'
+            . 'created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,'
+            . 'updated_at DATETIME NULL,'
+            . 'KEY ix_mod_cat_menu_link_menu (menu_key),'
+            . 'KEY ix_mod_cat_menu_link_entity (entity_type, entity_id),'
+            . 'KEY ix_mod_cat_menu_link_parent (parent_item_id),'
+            . 'KEY ix_mod_cat_menu_link_sort (sort_order)'
+            . ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
+        );
     }
 }

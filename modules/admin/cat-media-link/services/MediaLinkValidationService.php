@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\CatMediaLink\services;
 
-use Core\module\CoreModuleLoader;
+require_once CATMIN_CORE . '/module-loader.php';
 
 final class MediaLinkValidationService
 {
@@ -31,7 +31,7 @@ final class MediaLinkValidationService
     public function moduleDependencies(): array
     {
         $required = ['cat-imagick-addon', 'cat-cropper-addon'];
-        $snapshot = (new CoreModuleLoader())->scan();
+        $snapshot = (new \CoreModuleLoader())->scan();
         $rows = [];
         foreach ($required as $slug) {
             $state = ['slug' => $slug, 'present' => false, 'enabled' => false];

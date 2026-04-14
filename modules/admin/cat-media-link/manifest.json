@@ -4,7 +4,7 @@
   "display_name": "CAT Media",
   "slug": "cat-media-link",
   "type": "admin",
-  "version": "1.0.0-dev.2",
+  "version": "1.0.0-dev.3",
   "description": "Bridge media transverse pour featured, galerie, social image et usages.",
   "summary": "Gestion media centralisee et reutilisable pour page/blog/directory sans recoder la logique.",
   "author": "CATMIN",

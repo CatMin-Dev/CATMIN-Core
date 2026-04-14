@@ -10,6 +10,8 @@ use Core\http\Request;
 use Core\http\Response;
 use Modules\CatMediaLink\repositories\MediaLinkRepository;
 use Modules\CatMediaLink\services\FeaturedMediaService;
+use Modules\CatMediaLink\services\CropperService;
+use Modules\CatMediaLink\services\ImageProcessingService;
 use Modules\CatMediaLink\services\MediaGalleryService;
 use Modules\CatMediaLink\services\MediaLinkService;
 use Modules\CatMediaLink\services\MediaLinkValidationService;
@@ -30,7 +32,9 @@ final class MediaLinkAdminController
             new MediaLinkValidationService(),
             new MediaGalleryService(),
             new FeaturedMediaService(),
-            new MediaUsageService($repository)
+            new MediaUsageService($repository),
+            new ImageProcessingService(),
+            new CropperService()
         );
         $this->tr = $this->loadTranslations();
     }
@@ -44,12 +48,15 @@ final class MediaLinkAdminController
         $entityType = strtolower(trim((string) $request->input('entity_type', 'page')));
         $entityId = max(0, (int) $request->input('entity_id', 0));
         $preview = $entityId > 0 ? $this->service->entityPreview($entityType, $entityId) : ['links' => [], 'featured' => null];
+        $variantMediaId = max(0, (int) $request->input('variant_media_id', 0));
 
         return $this->render('index', [
             'state' => $this->service->dashboard(),
             'preview' => $preview,
+            'variantState' => $this->service->variantState($variantMediaId),
             'entityType' => $entityType,
             'entityId' => $entityId,
+            'variantMediaId' => $variantMediaId,
             'message' => trim((string) $request->input('msg', '')),
             'messageType' => trim((string) $request->input('mt', 'info')),
             'tr' => $this->tr,
@@ -133,6 +140,96 @@ final class MediaLinkAdminController
             'entityType' => $entityType,
             'entityId' => $entityId,
             'tr' => $this->tr,
+        ]);
+    }
+
+    public function savePreset(Request $request): Response
+    {
+        if (($guard = $this->guard('content.media.manage')) !== null) {
+            return $guard;
+        }
+
+        $result = $this->service->savePreset($request->post());
+        return $this->redirect('/modules/media-link', [
+            'msg' => (string) ($result['message'] ?? 'Operation terminée.'),
+            'mt' => (bool) ($result['ok'] ?? false) ? 'success' : 'danger',
+        ]);
+    }
+
+    public function deletePreset(Request $request): Response
+    {
+        if (($guard = $this->guard('content.media.manage')) !== null) {
+            return $guard;
+        }
+
+        $result = $this->service->deletePreset((int) $request->input('id', 0));
+        return $this->redirect('/modules/media-link', [
+            'msg' => (string) ($result['message'] ?? 'Operation terminée.'),
+            'mt' => (bool) ($result['ok'] ?? false) ? 'success' : 'danger',
+        ]);
+    }
+
+    public function saveImageSettings(Request $request): Response
+    {
+        if (($guard = $this->guard('content.media.manage')) !== null) {
+            return $guard;
+        }
+
+        $result = $this->service->saveSettings($request->post());
+        return $this->redirect('/modules/media-link', [
+            'msg' => (string) ($result['message'] ?? 'Operation terminée.'),
+            'mt' => (bool) ($result['ok'] ?? false) ? 'success' : 'danger',
+        ]);
+    }
+
+    public function regenerateVariants(Request $request): Response
+    {
+        if (($guard = $this->guard('content.media.manage')) !== null) {
+            return $guard;
+        }
+
+        $mediaId = (int) $request->input('media_id', 0);
+        $result = $this->service->regenerateVariants($mediaId);
+        return $this->redirect('/modules/media-link', [
+            'variant_media_id' => $mediaId,
+            'msg' => (string) ($result['message'] ?? 'Operation terminée.'),
+            'mt' => (bool) ($result['ok'] ?? false) ? 'success' : 'danger',
+        ]);
+    }
+
+    public function saveManualCrop(Request $request): Response
+    {
+        if (($guard = $this->guard('content.media.manage')) !== null) {
+            return $guard;
+        }
+
+        $mediaId = (int) $request->input('media_id', 0);
+        $result = $this->service->manualCropVariant(
+            $mediaId,
+            trim((string) $request->input('preset_key', '')),
+            trim((string) $request->input('crop_data', '')),
+            (bool) ((int) $request->input('override_existing', 1) === 1)
+        );
+
+        return $this->redirect('/modules/media-link', [
+            'variant_media_id' => $mediaId,
+            'msg' => (string) ($result['message'] ?? 'Operation terminée.'),
+            'mt' => (bool) ($result['ok'] ?? false) ? 'success' : 'danger',
+        ]);
+    }
+
+    public function deleteVariant(Request $request): Response
+    {
+        if (($guard = $this->guard('content.media.manage')) !== null) {
+            return $guard;
+        }
+
+        $mediaId = (int) $request->input('media_id', 0);
+        $result = $this->service->deleteVariant((int) $request->input('id', 0));
+        return $this->redirect('/modules/media-link', [
+            'variant_media_id' => $mediaId,
+            'msg' => (string) ($result['message'] ?? 'Operation terminée.'),
+            'mt' => (bool) ($result['ok'] ?? false) ? 'success' : 'danger',
         ]);
     }
 
