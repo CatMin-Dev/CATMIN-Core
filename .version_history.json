@@ -1,5 +1,17 @@
 [
     {
+        "version": "0.5.0-RC.7",
+        "date": "2026-04-14",
+        "scope": "core",
+        "changes": [
+            "settings sidebar rendering hardened with stable rounded-corner clipping and internal separators",
+            "topbar apps dropdown footer links aligned to CatMin theme with hover/focus-visible states",
+            "system updates and queue pages layout wrappers normalized to remove side gutter inset regressions",
+            "french health title corrected to \"Santé Système\" and admin CSS cache-buster bumped to v28"
+        ],
+        "prompt": "ui-polish-firefox-corner-rc7"
+    },
+    {
         "version": "0.5.0-RC.6",
         "date": "2026-04-14",
         "scope": "core",

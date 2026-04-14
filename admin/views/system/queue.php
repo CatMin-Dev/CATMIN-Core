@@ -19,19 +19,21 @@ $csrf = htmlspecialchars((new CsrfManager())->token(), ENT_QUOTES, 'UTF-8');
 
 ob_start();
 ?>
-<section class="row g-3 mb-3">
-    <div class="col-6 col-xl-2"><div class="card h-100"><div class="card-body"><small class="text-body-secondary d-block">Pending</small><strong><?= (int) ($stats['pending'] ?? 0) ?></strong></div></div></div>
-    <div class="col-6 col-xl-2"><div class="card h-100"><div class="card-body"><small class="text-body-secondary d-block">Running</small><strong><?= (int) ($stats['running'] ?? 0) ?></strong></div></div></div>
-    <div class="col-6 col-xl-2"><div class="card h-100"><div class="card-body"><small class="text-body-secondary d-block">Retry</small><strong><?= (int) ($stats['retry'] ?? 0) ?></strong></div></div></div>
-    <div class="col-6 col-xl-2"><div class="card h-100"><div class="card-body"><small class="text-body-secondary d-block">Failed</small><strong class="text-danger"><?= (int) ($stats['failed'] ?? 0) ?></strong></div></div></div>
-    <div class="col-6 col-xl-2"><div class="card h-100"><div class="card-body"><small class="text-body-secondary d-block">Done</small><strong class="text-success"><?= (int) ($stats['done'] ?? 0) ?></strong></div></div></div>
-    <div class="col-6 col-xl-2">
-        <form method="post" action="<?= htmlspecialchars($adminBase . '/system/queue/enqueue-test', ENT_QUOTES, 'UTF-8') ?>" class="card h-100">
-            <div class="card-body d-grid">
-                <input type="hidden" name="_csrf" value="<?= $csrf ?>">
-                <button type="submit" class="btn btn-primary btn-sm">Ajouter job test</button>
-            </div>
-        </form>
+<section class="mb-3">
+    <div class="row g-3">
+        <div class="col-6 col-xl-2"><div class="card h-100"><div class="card-body"><small class="text-body-secondary d-block">Pending</small><strong><?= (int) ($stats['pending'] ?? 0) ?></strong></div></div></div>
+        <div class="col-6 col-xl-2"><div class="card h-100"><div class="card-body"><small class="text-body-secondary d-block">Running</small><strong><?= (int) ($stats['running'] ?? 0) ?></strong></div></div></div>
+        <div class="col-6 col-xl-2"><div class="card h-100"><div class="card-body"><small class="text-body-secondary d-block">Retry</small><strong><?= (int) ($stats['retry'] ?? 0) ?></strong></div></div></div>
+        <div class="col-6 col-xl-2"><div class="card h-100"><div class="card-body"><small class="text-body-secondary d-block">Failed</small><strong class="text-danger"><?= (int) ($stats['failed'] ?? 0) ?></strong></div></div></div>
+        <div class="col-6 col-xl-2"><div class="card h-100"><div class="card-body"><small class="text-body-secondary d-block">Done</small><strong class="text-success"><?= (int) ($stats['done'] ?? 0) ?></strong></div></div></div>
+        <div class="col-6 col-xl-2">
+            <form method="post" action="<?= htmlspecialchars($adminBase . '/system/queue/enqueue-test', ENT_QUOTES, 'UTF-8') ?>" class="card h-100">
+                <div class="card-body d-grid">
+                    <input type="hidden" name="_csrf" value="<?= $csrf ?>">
+                    <button type="submit" class="btn btn-primary btn-sm">Ajouter job test</button>
+                </div>
+            </form>
+        </div>
     </div>
 </section>
 

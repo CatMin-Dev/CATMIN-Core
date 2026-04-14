@@ -477,7 +477,7 @@ return [
     'system.monitoring.modules_hint' => 'Modules invalides/incompatibles',
     'system.monitoring.health_title' => 'Santé système',
     'system.monitoring.view_health_check' => 'Voir health check',
-    'system.health.title' => 'System Health',
+    'system.health.title' => 'Santé Système',
     'system.health.check' => 'Health check',
     'system.health.global_status' => 'Statut global',
     'system.health.global_help' => 'Lecture health checks core/environnement/DB/sécurité.',

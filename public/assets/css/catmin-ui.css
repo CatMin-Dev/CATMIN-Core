@@ -176,9 +176,10 @@ html {
     padding-left: 0;
     margin-bottom: 0;
     position: relative;
-    isolation: isolate;
+    background: var(--cat-bg-surface);
     border-radius: var(--cat-radius-md);
     overflow: hidden !important;
+    clip-path: inset(0 round var(--cat-radius-md));
     box-shadow: var(--cat-shadow-sm);
     border: 1px solid var(--cat-border-color);
     --bs-list-group-active-bg: var(--cat-accent);
@@ -189,12 +190,29 @@ html {
 .cat-settings-nav.list-group .list-group-item {
     position: relative;
     border: 0;
-    border-bottom: 1px solid color-mix(in srgb, var(--cat-border-color) 70%, transparent);
     color: var(--cat-text-main);
     background: var(--cat-bg-surface);
+    background-clip: padding-box;
     padding: 10px 14px;
     font-weight: 600;
     margin-top: 0 !important;
+}
+
+.cat-settings-nav.list-group .list-group-item:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 1px;
+    background: color-mix(in srgb, var(--cat-border-color) 70%, transparent);
+}
+
+.cat-settings-nav.list-group .list-group-item:last-child {
+    border-bottom: 0;
+    border-bottom-left-radius: calc(var(--cat-radius-md) - 1px);
+    border-bottom-right-radius: calc(var(--cat-radius-md) - 1px);
+    background-clip: padding-box;
 }
 
 .cat-settings-nav.list-group .list-group-item:not(.active):hover {
@@ -205,6 +223,11 @@ html {
 .cat-settings-nav.list-group .list-group-item.active {
     background: var(--cat-accent);
     color: var(--palette-stone-50);
+}
+
+.cat-settings-nav.list-group .list-group-item:last-child.active {
+    border-bottom-left-radius: calc(var(--cat-radius-md) - 1px);
+    border-bottom-right-radius: calc(var(--cat-radius-md) - 1px);
 }
 
 .cat-settings-nav.list-group .list-group-item.active:hover {
@@ -793,6 +816,24 @@ html {
 
 .cat-topbar-dropdown-foot {
     border-top: 1px solid var(--cat-border-color);
+}
+
+.cat-topbar-dropdown-foot a {
+    color: var(--cat-accent);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.cat-topbar-dropdown-foot a:hover,
+.cat-topbar-dropdown-foot a:focus {
+    color: var(--cat-accent-hover);
+    text-decoration: none;
+}
+
+.cat-topbar-dropdown-foot a:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--cat-accent) 55%, white);
+    outline-offset: 2px;
+    border-radius: 6px;
 }
 
 .cat-topbar-dropdown-body {

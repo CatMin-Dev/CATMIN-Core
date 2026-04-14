@@ -170,31 +170,33 @@ ob_start();
     </div>
 </section>
 
-<section class="row g-3 mb-3">
-    <div class="col-12 col-xl-6">
-        <article class="card h-100">
-            <div class="card-header bg-transparent border-0 pt-3"><h3 class="h6 mb-0"><?= htmlspecialchars(__('updates.precheck.title'), ENT_QUOTES, 'UTF-8') ?></h3></div>
-            <div class="card-body pt-2">
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item px-0 d-flex justify-content-between"><span><?= htmlspecialchars(__('updates.precheck.backup'), ENT_QUOTES, 'UTF-8') ?></span><span class="badge <?= !empty($backup['exists']) ? 'text-bg-success' : 'text-bg-warning' ?>"><?= htmlspecialchars(!empty($backup['exists']) ? __('common.ok') : __('common.warning'), ENT_QUOTES, 'UTF-8') ?></span></li>
-                    <li class="list-group-item px-0 d-flex justify-content-between"><span><?= htmlspecialchars(__('updates.precheck.trust'), ENT_QUOTES, 'UTF-8') ?></span><span class="badge <?= $trustAlerts > 0 ? 'text-bg-danger' : 'text-bg-success' ?>"><?= $trustAlerts ?></span></li>
-                    <li class="list-group-item px-0 d-flex justify-content-between"><span><?= htmlspecialchars(__('updates.precheck.modules_updates'), ENT_QUOTES, 'UTF-8') ?></span><span class="badge text-bg-warning"><?= $modulesWithUpdates ?></span></li>
-                </ul>
-            </div>
-        </article>
-    </div>
-    <div class="col-12 col-xl-6">
-        <article class="card h-100">
-            <div class="card-header bg-transparent border-0 pt-3"><h3 class="h6 mb-0"><?= htmlspecialchars(__('updates.backup.title'), ENT_QUOTES, 'UTF-8') ?></h3></div>
-            <div class="card-body pt-2">
-                <?php if (!empty($backup['exists'])): ?>
-                    <p class="mb-1"><strong><?= htmlspecialchars((string) ($backup['file'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></strong></p>
-                    <p class="small text-body-secondary mb-0"><?= htmlspecialchars((string) ($backup['time'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></p>
-                <?php else: ?>
-                    <p class="text-body-secondary mb-0"><?= htmlspecialchars(__('updates.backup.empty'), ENT_QUOTES, 'UTF-8') ?></p>
-                <?php endif; ?>
-            </div>
-        </article>
+<section class="mb-3">
+    <div class="row g-3">
+        <div class="col-12 col-xl-6">
+            <article class="card h-100">
+                <div class="card-header bg-transparent border-0 pt-3"><h3 class="h6 mb-0"><?= htmlspecialchars(__('updates.precheck.title'), ENT_QUOTES, 'UTF-8') ?></h3></div>
+                <div class="card-body pt-2">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item px-0 d-flex justify-content-between"><span><?= htmlspecialchars(__('updates.precheck.backup'), ENT_QUOTES, 'UTF-8') ?></span><span class="badge <?= !empty($backup['exists']) ? 'text-bg-success' : 'text-bg-warning' ?>"><?= htmlspecialchars(!empty($backup['exists']) ? __('common.ok') : __('common.warning'), ENT_QUOTES, 'UTF-8') ?></span></li>
+                        <li class="list-group-item px-0 d-flex justify-content-between"><span><?= htmlspecialchars(__('updates.precheck.trust'), ENT_QUOTES, 'UTF-8') ?></span><span class="badge <?= $trustAlerts > 0 ? 'text-bg-danger' : 'text-bg-success' ?>"><?= $trustAlerts ?></span></li>
+                        <li class="list-group-item px-0 d-flex justify-content-between"><span><?= htmlspecialchars(__('updates.precheck.modules_updates'), ENT_QUOTES, 'UTF-8') ?></span><span class="badge text-bg-warning"><?= $modulesWithUpdates ?></span></li>
+                    </ul>
+                </div>
+            </article>
+        </div>
+        <div class="col-12 col-xl-6">
+            <article class="card h-100">
+                <div class="card-header bg-transparent border-0 pt-3"><h3 class="h6 mb-0"><?= htmlspecialchars(__('updates.backup.title'), ENT_QUOTES, 'UTF-8') ?></h3></div>
+                <div class="card-body pt-2">
+                    <?php if (!empty($backup['exists'])): ?>
+                        <p class="mb-1"><strong><?= htmlspecialchars((string) ($backup['file'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></strong></p>
+                        <p class="small text-body-secondary mb-0"><?= htmlspecialchars((string) ($backup['time'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></p>
+                    <?php else: ?>
+                        <p class="text-body-secondary mb-0"><?= htmlspecialchars(__('updates.backup.empty'), ENT_QUOTES, 'UTF-8') ?></p>
+                    <?php endif; ?>
+                </div>
+            </article>
+        </div>
     </div>
 </section>
 
