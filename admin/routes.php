@@ -52,6 +52,11 @@ $coreLogsTable = $corePrefix . 'logs';
 $coreBackupsTable = $corePrefix . 'backups';
 $coreCronTasksTable = $corePrefix . 'cron_tasks';
 
+$corePermissionsWhere = static function (string $alias = ''): string {
+    $prefix = $alias !== '' ? $alias . '.' : '';
+    return '(' . $prefix . "slug LIKE 'admin.%' OR " . $prefix . "slug LIKE 'core.%')";
+};
+
 $pushFlash = static function (string $message, string $type = 'success'): void {
     if (session_status() !== PHP_SESSION_ACTIVE) {
         @session_start();
@@ -3640,13 +3645,13 @@ return [
     [
         'method' => 'GET',
         'path' => '/roles/create',
-        'handler' => static function () use ($permissionsTable, $buildPermissionsMatrix, $ensureSuperAdminPermissions): Response {
+        'handler' => static function () use ($permissionsTable, $buildPermissionsMatrix, $ensureSuperAdminPermissions, $corePermissionsWhere): Response {
             $controller = new AuthController();
             $adminBase = $controller->adminBasePath();
             $pdo = (new ConnectionManager())->connection();
             $ensureSuperAdminPermissions($pdo);
 
-            $permsStmt = $pdo->query('SELECT id, name, slug, description FROM ' . $permissionsTable . ' ORDER BY slug ASC');
+            $permsStmt = $pdo->query('SELECT id, name, slug, description FROM ' . $permissionsTable . ' WHERE ' . $corePermissionsWhere() . ' ORDER BY slug ASC');
             $permissions = $permsStmt !== false ? ($permsStmt->fetchAll(\PDO::FETCH_ASSOC) ?: []) : [];
 
             return View::make('roles.create', [
@@ -3662,7 +3667,7 @@ return [
     [
         'method' => 'POST',
         'path' => '/roles/create',
-        'handler' => static function (Request $request) use ($rolesTable, $permissionsTable, $rolePermissionsTable, $buildPermissionsMatrix, $redirect, $ensureSuperAdminPermissions): Response {
+        'handler' => static function (Request $request) use ($rolesTable, $permissionsTable, $rolePermissionsTable, $buildPermissionsMatrix, $redirect, $ensureSuperAdminPermissions, $corePermissionsWhere): Response {
             $controller = new AuthController();
             $adminBase = $controller->adminBasePath();
             $pdo = (new ConnectionManager())->connection();
@@ -3682,8 +3687,10 @@ return [
                 $errors['slug'] = 'Slug invalide (a-z0-9-).';
             }
 
-            $permsStmt = $pdo->query('SELECT id, name, slug, description FROM ' . $permissionsTable . ' ORDER BY slug ASC');
+            $permsStmt = $pdo->query('SELECT id, name, slug, description FROM ' . $permissionsTable . ' WHERE ' . $corePermissionsWhere() . ' ORDER BY slug ASC');
             $permissions = $permsStmt !== false ? ($permsStmt->fetchAll(\PDO::FETCH_ASSOC) ?: []) : [];
+            $allowedPermissionIds = array_values(array_map('intval', array_column($permissions, 'id')));
+            $permissionIds = array_values(array_intersect($permissionIds, $allowedPermissionIds));
 
             if ($errors !== []) {
                 return View::make('roles.create', [
@@ -3718,7 +3725,7 @@ return [
     [
         'method' => 'GET',
         'path' => '/roles/{id}',
-        'handler' => static function (string $id) use ($rolesTable, $permissionsTable, $rolePermissionsTable, $usersTable, $ensureSuperAdminPermissions): Response {
+        'handler' => static function (string $id) use ($rolesTable, $permissionsTable, $rolePermissionsTable, $usersTable, $ensureSuperAdminPermissions, $corePermissionsWhere): Response {
             $controller = new AuthController();
             $adminBase = $controller->adminBasePath();
             $pdo = (new ConnectionManager())->connection();
@@ -3734,7 +3741,7 @@ return [
             $permStmt = $pdo->prepare(
                 'SELECT p.id, p.name, p.slug, p.description FROM ' . $permissionsTable . ' p '
                 . 'INNER JOIN ' . $rolePermissionsTable . ' rp ON rp.permission_id = p.id '
-                . 'WHERE rp.role_id = :role_id ORDER BY p.slug ASC'
+                . 'WHERE rp.role_id = :role_id AND ' . $corePermissionsWhere('p') . ' ORDER BY p.slug ASC'
             );
             $permStmt->execute(['role_id' => (int) $id]);
             $activePermissions = $permStmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -3757,7 +3764,7 @@ return [
     [
         'method' => 'GET',
         'path' => '/roles/{id}/edit',
-        'handler' => static function (string $id) use ($rolesTable, $permissionsTable, $rolePermissionsTable, $buildPermissionsMatrix, $ensureSuperAdminPermissions): Response {
+        'handler' => static function (string $id) use ($rolesTable, $permissionsTable, $rolePermissionsTable, $buildPermissionsMatrix, $ensureSuperAdminPermissions, $corePermissionsWhere): Response {
             $controller = new AuthController();
             $adminBase = $controller->adminBasePath();
             $pdo = (new ConnectionManager())->connection();
@@ -3770,7 +3777,7 @@ return [
                 return Response::text('Not Found', 404);
             }
 
-            $permsStmt = $pdo->query('SELECT id, name, slug, description FROM ' . $permissionsTable . ' ORDER BY slug ASC');
+            $permsStmt = $pdo->query('SELECT id, name, slug, description FROM ' . $permissionsTable . ' WHERE ' . $corePermissionsWhere() . ' ORDER BY slug ASC');
             $permissions = $permsStmt !== false ? ($permsStmt->fetchAll(\PDO::FETCH_ASSOC) ?: []) : [];
 
             $activeStmt = $pdo->prepare('SELECT permission_id FROM ' . $rolePermissionsTable . ' WHERE role_id = :role_id');
@@ -3796,7 +3803,7 @@ return [
     [
         'method' => 'POST',
         'path' => '/roles/{id}/edit',
-        'handler' => static function (Request $request, string $id) use ($rolesTable, $permissionsTable, $rolePermissionsTable, $buildPermissionsMatrix, $isCriticalRole, $redirect, $ensureSuperAdminPermissions): Response {
+        'handler' => static function (Request $request, string $id) use ($rolesTable, $permissionsTable, $rolePermissionsTable, $buildPermissionsMatrix, $isCriticalRole, $redirect, $ensureSuperAdminPermissions, $corePermissionsWhere): Response {
             $controller = new AuthController();
             $adminBase = $controller->adminBasePath();
             $pdo = (new ConnectionManager())->connection();
@@ -3827,8 +3834,10 @@ return [
                 $errors['slug'] = 'Slug invalide (a-z0-9-).';
             }
 
-            $permsStmt = $pdo->query('SELECT id, name, slug, description FROM ' . $permissionsTable . ' ORDER BY slug ASC');
+            $permsStmt = $pdo->query('SELECT id, name, slug, description FROM ' . $permissionsTable . ' WHERE ' . $corePermissionsWhere() . ' ORDER BY slug ASC');
             $permissions = $permsStmt !== false ? ($permsStmt->fetchAll(\PDO::FETCH_ASSOC) ?: []) : [];
+            $allowedPermissionIds = array_values(array_map('intval', array_column($permissions, 'id')));
+            $permissionIds = array_values(array_intersect($permissionIds, $allowedPermissionIds));
 
             if ($errors !== []) {
                 return View::make('roles.edit', [
