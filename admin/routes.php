@@ -1434,35 +1434,6 @@ return [
             $sidebarItemOrderRaw = (string) (($settings['ui']['sidebar_item_order'] ?? '') ?: '');
             $sidebarItemOrder = array_values(array_filter(array_map('trim', explode(',', $sidebarItemOrderRaw)), static fn (string $value): bool => $value !== ''));
             $sidebarOrderIds = (array) (($settings['ui']['sidebar_order_ids'] ?? []) ?: []);
-            $sidebarLocale = function_exists('catmin_locale')
-                ? strtolower((string) catmin_locale())
-                : strtolower((string) config('app.locale', 'fr'));
-            if (!in_array($sidebarLocale, ['fr', 'en'], true)) {
-                $sidebarLocale = 'fr';
-            }
-
-            $resolveSidebarLabel = static function (array $item, string $fallback, string $locale): string {
-                $labelI18n = $item['label_i18n'] ?? null;
-                if (is_array($labelI18n)) {
-                    $localized = trim((string) ($labelI18n[$locale] ?? ''));
-                    if ($localized !== '') {
-                        return $localized;
-                    }
-                }
-
-                $localizedKey = 'label_' . $locale;
-                $localized = trim((string) ($item[$localizedKey] ?? ''));
-                if ($localized !== '') {
-                    return $localized;
-                }
-
-                $label = trim((string) ($item['label'] ?? ''));
-                return $label !== '' ? $label : $fallback;
-            };
-
-            $loader = new CoreModuleLoader();
-            $snapshot = $loader->scan();
-
             $sidebarEntries = [
                 ['key' => 'organization.staff', 'group' => 'organization', 'label' => __('nav.staff_admins'), 'source' => 'core', 'order' => 10],
                 ['key' => 'organization.roles', 'group' => 'organization', 'label' => __('nav.roles_permissions'), 'source' => 'core', 'order' => 20],
@@ -1480,56 +1451,40 @@ return [
                 ['key' => 'modules.trust-center', 'group' => 'modules', 'label' => __('nav.trust_center'), 'source' => 'core', 'order' => 40],
             ];
 
-            $moduleEntrySeen = [];
-            foreach ((array) ($snapshot['modules'] ?? []) as $module) {
-                // Show entries from all discovered modules so the user can
-                // configure navigation even before (re)activation/validation.
-                if (!is_array($module)) {
-                    continue;
-                }
-                $manifestPath = (string) ($module['manifest_path'] ?? '');
-                $manifest = [];
-                if ($manifestPath !== '' && is_file($manifestPath)) {
-                    $rawManifest = file_get_contents($manifestPath);
-                    $decodedManifest = is_string($rawManifest) ? json_decode($rawManifest, true) : null;
-                    if (is_array($decodedManifest)) {
-                        $manifest = $decodedManifest;
-                    }
-                }
-                if ($manifest === []) {
-                    $manifest = (array) ($module['manifest'] ?? []);
-                }
-                $items = $manifest['admin_sidebar'] ?? $manifest['sidebar'] ?? $manifest['sidebar_entries'] ?? [];
-                if (!is_array($items)) {
-                    continue;
-                }
-                $isActive = (bool) ($module['enabled'] ?? false);
-                foreach ($items as $item) {
-                    if (!is_array($item)) {
-                        continue;
-                    }
-                    $groupKey = strtolower(trim((string) ($item['group'] ?? 'modules')));
-                    $entryKey = strtolower(trim((string) ($item['key'] ?? '')));
-                    if ($groupKey === '' || $entryKey === '') {
-                        continue;
-                    }
-                    $compound = $groupKey . '.' . $entryKey;
-                    if (isset($moduleEntrySeen[$compound])) {
-                        continue;
-                    }
-                    $moduleEntrySeen[$compound] = true;
-                    $sidebarEntries[] = [
-                        'key' => $compound,
-                        'group' => $groupKey,
-                        'label' => $resolveSidebarLabel($item, $entryKey, $sidebarLocale),
-                        'source' => 'module',
-                        'active' => $isActive,
-                        'order' => (int) ($item['order'] ?? 100),
-                    ];
-                }
-            }
-
             $coreSidebarGroups = ['dashboard', 'organization', 'system', 'modules', 'settings'];
+            $coreSidebarEntryKeys = array_values(array_map(
+                static fn (array $entry): string => (string) ($entry['key'] ?? ''),
+                $sidebarEntries
+            ));
+
+            $sidebarOrder = array_values(array_filter(
+                $sidebarOrder,
+                static fn (string $value): bool => in_array($value, $coreSidebarGroups, true)
+            ));
+            $sidebarItemOrder = array_values(array_filter(
+                $sidebarItemOrder,
+                static fn (string $value): bool => in_array($value, $coreSidebarEntryKeys, true)
+            ));
+
+            $filteredSidebarOrderIds = [];
+            foreach ($sidebarOrderIds as $groupKey => $id) {
+                $groupKey = strtolower(trim((string) $groupKey));
+                if ($groupKey === '' || !in_array($groupKey, $coreSidebarGroups, true)) {
+                    continue;
+                }
+                $numeric = max(1, (int) $id);
+                if ($groupKey === 'dashboard') {
+                    $numeric = 1;
+                } elseif ($numeric <= 1) {
+                    $numeric = 2;
+                }
+                $filteredSidebarOrderIds[$groupKey] = $numeric;
+            }
+            if (!isset($filteredSidebarOrderIds['dashboard'])) {
+                $filteredSidebarOrderIds['dashboard'] = 1;
+            }
+            $sidebarOrderIds = $filteredSidebarOrderIds;
+
             $sidebarGroups = [];
             foreach ($coreSidebarGroups as $key) {
                 $meta = $sidebarGroupMeta[$key] ?? [];
@@ -1539,63 +1494,6 @@ return [
                     'icon' => (string) ($meta['icon'] ?? 'chat'),
                     'order' => (int) ($meta['order'] ?? 99),
                     'source' => 'core',
-                ];
-            }
-
-            foreach ((array) ($snapshot['modules'] ?? []) as $module) {
-                if (!((bool) ($module['enabled'] ?? false))) {
-                    continue;
-                }
-                $manifestPath = (string) ($module['manifest_path'] ?? '');
-                $manifest = [];
-                if ($manifestPath !== '' && is_file($manifestPath)) {
-                    $rawManifest = file_get_contents($manifestPath);
-                    $decodedManifest = is_string($rawManifest) ? json_decode($rawManifest, true) : null;
-                    if (is_array($decodedManifest)) {
-                        $manifest = $decodedManifest;
-                    }
-                }
-                if ($manifest === []) {
-                    $manifest = (array) ($module['manifest'] ?? []);
-                }
-                $items = $manifest['admin_sidebar'] ?? $manifest['sidebar'] ?? $manifest['sidebar_entries'] ?? [];
-                if (!is_array($items)) {
-                    continue;
-                }
-                foreach ($items as $item) {
-                    if (!is_array($item)) {
-                        continue;
-                    }
-                    $groupKey = strtolower(trim((string) ($item['group'] ?? 'modules')));
-                    if ($groupKey === '') {
-                        continue;
-                    }
-                    if (isset($sidebarGroups[$groupKey])) {
-                        continue;
-                    }
-                    $meta = $sidebarGroupMeta[$groupKey] ?? null;
-                    $sidebarGroups[$groupKey] = [
-                        'key' => $groupKey,
-                        'label' => $meta !== null ? (string) ($meta['label'] ?? ucfirst($groupKey)) : ucfirst($groupKey),
-                        'icon' => $meta !== null ? (string) ($meta['icon'] ?? 'chat') : 'chat',
-                        'order' => (int) ($meta['order'] ?? 99),
-                        'source' => 'module',
-                    ];
-                }
-            }
-
-            // Preserve groups already saved in order settings, even if module is currently disabled.
-            foreach ($sidebarOrder as $groupKey) {
-                if ($groupKey === '' || isset($sidebarGroups[$groupKey])) {
-                    continue;
-                }
-                $meta = $sidebarGroupMeta[$groupKey] ?? null;
-                $sidebarGroups[$groupKey] = [
-                    'key' => $groupKey,
-                    'label' => $meta !== null ? (string) ($meta['label'] ?? ucfirst($groupKey)) : ucfirst($groupKey),
-                    'icon' => $meta !== null ? (string) ($meta['icon'] ?? 'chat') : 'chat',
-                    'order' => (int) ($meta['order'] ?? 99),
-                    'source' => 'module',
                 ];
             }
 
@@ -1675,10 +1573,27 @@ return [
                 'username' => trim((string) ($post['email_username'] ?? ($mailSource['username'] ?? ''))),
             ];
             $postedSidebarOrderIds = is_array($post['sidebar_order_ids'] ?? null) ? (array) $post['sidebar_order_ids'] : [];
+            $allowedSidebarGroups = ['dashboard', 'organization', 'system', 'modules', 'settings'];
+            $allowedSidebarEntries = [
+                'organization.staff',
+                'organization.roles',
+                'system.monitoring',
+                'system.health',
+                'system.core-update',
+                'system.queue',
+                'system.logs',
+                'system.notifications',
+                'system.cron',
+                'system.maintenance',
+                'modules.module-manager',
+                'modules.module-status',
+                'modules.module-market',
+                'modules.trust-center',
+            ];
             $normalizedSidebarOrderIds = [];
             foreach ($postedSidebarOrderIds as $groupKey => $id) {
                 $groupKey = strtolower(trim((string) $groupKey));
-                if ($groupKey === '') {
+                if ($groupKey === '' || !in_array($groupKey, $allowedSidebarGroups, true)) {
                     continue;
                 }
                 $numeric = max(1, (int) $id);
@@ -1697,6 +1612,12 @@ return [
             $sortableSidebarOrderIds = $normalizedSidebarOrderIds;
             uasort($sortableSidebarOrderIds, static fn (int $a, int $b): int => $a <=> $b);
             $computedSidebarOrder = implode(',', array_keys($sortableSidebarOrderIds));
+            $postedSidebarItemOrderRaw = trim((string) ($post['sidebar_item_order'] ?? ($data['ui']['sidebar_item_order'] ?? '')));
+            $postedSidebarItemOrder = array_values(array_filter(array_map(
+                'trim',
+                explode(',', $postedSidebarItemOrderRaw)
+            ), static fn (string $value): bool => $value !== '' && in_array($value, $allowedSidebarEntries, true)));
+            $normalizedSidebarItemOrder = implode(',', array_values(array_unique($postedSidebarItemOrder)));
             $data['ui'] = [
                 'theme_default' => trim((string) ($post['theme_default'] ?? ($data['ui']['theme_default'] ?? 'corporate'))),
                 'compact_sidebar' => ((string) ($post['compact_sidebar'] ?? '0')) === '1',
@@ -1705,7 +1626,7 @@ return [
                 'sidebar_order' => $computedSidebarOrder !== ''
                     ? $computedSidebarOrder
                     : trim((string) ($post['sidebar_order'] ?? ($data['ui']['sidebar_order'] ?? ''))),
-                'sidebar_item_order' => trim((string) ($post['sidebar_item_order'] ?? ($data['ui']['sidebar_item_order'] ?? ''))),
+                'sidebar_item_order' => $normalizedSidebarItemOrder,
                 'sidebar_order_ids' => $normalizedSidebarOrderIds,
             ];
             $data['maintenance'] = [
@@ -1908,10 +1829,27 @@ return [
                 'username' => trim((string) ($post['email_username'] ?? ($mailSource['username'] ?? ''))),
             ];
             $postedSidebarOrderIds = is_array($post['sidebar_order_ids'] ?? null) ? (array) $post['sidebar_order_ids'] : [];
+            $allowedSidebarGroups = ['dashboard', 'organization', 'system', 'modules', 'settings'];
+            $allowedSidebarEntries = [
+                'organization.staff',
+                'organization.roles',
+                'system.monitoring',
+                'system.health',
+                'system.core-update',
+                'system.queue',
+                'system.logs',
+                'system.notifications',
+                'system.cron',
+                'system.maintenance',
+                'modules.module-manager',
+                'modules.module-status',
+                'modules.module-market',
+                'modules.trust-center',
+            ];
             $normalizedSidebarOrderIds = [];
             foreach ($postedSidebarOrderIds as $groupKey => $id) {
                 $groupKey = strtolower(trim((string) $groupKey));
-                if ($groupKey === '') {
+                if ($groupKey === '' || !in_array($groupKey, $allowedSidebarGroups, true)) {
                     continue;
                 }
                 $numeric = max(1, (int) $id);
@@ -1930,6 +1868,12 @@ return [
             $sortableSidebarOrderIds = $normalizedSidebarOrderIds;
             uasort($sortableSidebarOrderIds, static fn (int $a, int $b): int => $a <=> $b);
             $computedSidebarOrder = implode(',', array_keys($sortableSidebarOrderIds));
+            $postedSidebarItemOrderRaw = trim((string) ($post['sidebar_item_order'] ?? ($data['ui']['sidebar_item_order'] ?? '')));
+            $postedSidebarItemOrder = array_values(array_filter(array_map(
+                'trim',
+                explode(',', $postedSidebarItemOrderRaw)
+            ), static fn (string $value): bool => $value !== '' && in_array($value, $allowedSidebarEntries, true)));
+            $normalizedSidebarItemOrder = implode(',', array_values(array_unique($postedSidebarItemOrder)));
             $data['ui'] = [
                 'theme_default' => trim((string) ($post['theme_default'] ?? ($data['ui']['theme_default'] ?? 'corporate'))),
                 'compact_sidebar' => ((string) ($post['compact_sidebar'] ?? '0')) === '1',
@@ -1938,7 +1882,7 @@ return [
                 'sidebar_order' => $computedSidebarOrder !== ''
                     ? $computedSidebarOrder
                     : trim((string) ($post['sidebar_order'] ?? ($data['ui']['sidebar_order'] ?? ''))),
-                'sidebar_item_order' => trim((string) ($post['sidebar_item_order'] ?? ($data['ui']['sidebar_item_order'] ?? ''))),
+                'sidebar_item_order' => $normalizedSidebarItemOrder,
                 'sidebar_order_ids' => $normalizedSidebarOrderIds,
             ];
             $data['maintenance'] = [
