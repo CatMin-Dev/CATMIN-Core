@@ -44,6 +44,9 @@ $ui = (array) ($settings['ui'] ?? []);
 $maintenance = (array) ($settings['maintenance'] ?? []);
 $backup = (array) ($settings['backup'] ?? []);
 $system = (array) ($settings['system'] ?? []);
+$revisionSettings = isset($revisionSettings) && is_array($revisionSettings) ? $revisionSettings : [];
+$revisionCronTask = isset($revisionCronTask) && is_array($revisionCronTask) ? $revisionCronTask : null;
+$revisionLatestBackup = isset($revisionLatestBackup) && is_array($revisionLatestBackup) ? $revisionLatestBackup : null;
 $mediaSettings = isset($mediaSettings) && is_array($mediaSettings) ? $mediaSettings : [];
 $mediaPresets = isset($mediaPresets) && is_array($mediaPresets) ? $mediaPresets : [];
 $sidebarGroups = isset($sidebarGroups) && is_array($sidebarGroups) ? $sidebarGroups : [];
@@ -454,6 +457,78 @@ $inlineMessage = '';
                     <button class="btn btn-primary" type="submit"><?= htmlspecialchars(__('common.save'), ENT_QUOTES, 'UTF-8') ?></button>
                     <a class="btn btn-outline-secondary" href="<?= htmlspecialchars($adminBase . '/settings/performance', ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars(__('common.reload'), ENT_QUOTES, 'UTF-8') ?></a>
                 </div>
+            </form>
+
+            <form method="post" action="<?= htmlspecialchars($adminBase . '/modules/revision/settings', ENT_QUOTES, 'UTF-8') ?>" class="d-grid gap-3 mt-3">
+                <input type="hidden" name="_csrf" value="<?= $csrf ?>">
+                <input type="hidden" name="redirect_to" value="/settings/performance">
+                <section class="card">
+                    <div class="card-header bg-transparent border-0 pt-3">
+                        <h3 class="h6 mb-0">CAT Revision</h3>
+                    </div>
+                    <div class="card-body pt-2">
+                        <p class="small text-body-secondary">Parametres revisions, retention et liaison avec la tache native Core Backup.</p>
+                        <div class="row g-3">
+                            <div class="col-6 col-lg-2">
+                                <label class="form-label d-block">Activer revision</label>
+                                <label class="form-check form-switch mt-2">
+                                    <input class="form-check-input" type="checkbox" name="revision.enabled" value="1" <?= ((string) ($revisionSettings['revision.enabled'] ?? '1') === '1') ? 'checked' : '' ?>>
+                                    <span class="form-check-label">Actif</span>
+                                </label>
+                            </div>
+                            <div class="col-6 col-lg-2">
+                                <label class="form-label">Revisions max / entite</label>
+                                <input class="form-control" type="number" min="1" max="500" name="revision.max_keep_per_entity" value="<?= (int) ($revisionSettings['revision.max_keep_per_entity'] ?? 25) ?>">
+                            </div>
+                            <div class="col-6 col-lg-2">
+                                <label class="form-label d-block">Snapshot auto avant publish</label>
+                                <label class="form-check form-switch mt-2">
+                                    <input class="form-check-input" type="checkbox" name="revision.auto_snapshot_before_publish" value="1" <?= ((string) ($revisionSettings['revision.auto_snapshot_before_publish'] ?? '1') === '1') ? 'checked' : '' ?>>
+                                    <span class="form-check-label">Actif</span>
+                                </label>
+                            </div>
+                            <div class="col-6 col-lg-2">
+                                <label class="form-label d-block">Snapshot auto avant restore</label>
+                                <label class="form-check form-switch mt-2">
+                                    <input class="form-check-input" type="checkbox" name="revision.auto_snapshot_before_restore" value="1" <?= ((string) ($revisionSettings['revision.auto_snapshot_before_restore'] ?? '1') === '1') ? 'checked' : '' ?>>
+                                    <span class="form-check-label">Actif</span>
+                                </label>
+                            </div>
+                            <div class="col-6 col-lg-2">
+                                <label class="form-label d-block">Resume de diff</label>
+                                <label class="form-check form-switch mt-2">
+                                    <input class="form-check-input" type="checkbox" name="revision.enable_diff_summary" value="1" <?= ((string) ($revisionSettings['revision.enable_diff_summary'] ?? '1') === '1') ? 'checked' : '' ?>>
+                                    <span class="form-check-label">Actif</span>
+                                </label>
+                            </div>
+                            <div class="col-6 col-lg-2">
+                                <label class="form-label d-block">Lier tache Core Backup</label>
+                                <label class="form-check form-switch mt-2">
+                                    <input class="form-check-input" type="checkbox" name="revision.cron_core_backup_enabled" value="1" <?= ((string) ($revisionSettings['revision.cron_core_backup_enabled'] ?? '0') === '1') ? 'checked' : '' ?>>
+                                    <span class="form-check-label">Actif</span>
+                                </label>
+                            </div>
+                            <div class="col-12 col-lg-6">
+                                <label class="form-label">Planification cron Core Backup</label>
+                                <input class="form-control" name="revision.cron_core_backup_schedule" value="<?= htmlspecialchars((string) ($revisionSettings['revision.cron_core_backup_schedule'] ?? '30 2 * * *'), ENT_QUOTES, 'UTF-8') ?>">
+                                <p class="small text-body-secondary mb-0">Format cron 5 segments. Exemple: 30 2 * * *</p>
+                            </div>
+                        </div>
+                        <div class="d-flex flex-wrap gap-3 mt-3 small text-body-secondary">
+                            <span>Statut tache native: <?= htmlspecialchars(is_array($revisionCronTask) ? (((int) ($revisionCronTask['is_active'] ?? 0) === 1) ? 'active' : 'inactive') : 'absente', ENT_QUOTES, 'UTF-8') ?></span>
+                            <span>Dernier backup: <?= htmlspecialchars(is_array($revisionLatestBackup) ? ((string) ($revisionLatestBackup['created_at'] ?? '-')) : '-', ENT_QUOTES, 'UTF-8') ?></span>
+                        </div>
+                    </div>
+                </section>
+                <div class="d-flex flex-wrap gap-2">
+                    <button class="btn btn-primary" type="submit">Sauvegarder CAT Revision</button>
+                </div>
+            </form>
+
+            <form method="post" action="<?= htmlspecialchars($adminBase . '/modules/revision/backup-now', ENT_QUOTES, 'UTF-8') ?>" class="mt-2">
+                <input type="hidden" name="_csrf" value="<?= $csrf ?>">
+                <input type="hidden" name="redirect_to" value="/settings/performance">
+                <button class="btn btn-outline-secondary" type="submit">Executer Core Backup maintenant</button>
             </form>
         <?php elseif ($section === 'security'): ?>
             <form method="post" action="<?= htmlspecialchars($adminBase . '/settings/security', ENT_QUOTES, 'UTF-8') ?>" class="d-grid gap-3" data-cat-autosave>
