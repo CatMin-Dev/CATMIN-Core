@@ -34,6 +34,7 @@ require_once CATMIN_CORE . '/trust-center.php';
 require_once CATMIN_CORE . '/queue-engine.php';
 require_once CATMIN_CORE . '/update-intelligent-notifier.php';
 require_once CATMIN_CORE . '/telemetry-minimal.php';
+require_once CATMIN_CORE . '/maintenance/BackupManager.php';
 
 $security = new SecurityManager(Request::capture(), 'admin');
 $authRequired = $security->adminAuthRequiredMiddleware();
@@ -50,6 +51,7 @@ $eventsTable = $adminPrefix . 'security_events';
 $coreSettingsTable = $corePrefix . 'settings';
 $coreLogsTable = $corePrefix . 'logs';
 $coreBackupsTable = $corePrefix . 'backups';
+$coreMaintenanceAuditTable = $corePrefix . 'maintenance_audit';
 $coreCronTasksTable = $corePrefix . 'cron_tasks';
 
 $corePermissionsWhere = static function (string $alias = ''): string {
@@ -79,6 +81,25 @@ $consumeFlash = static function (): array {
     return [
         'message' => (string) ($flash['message'] ?? ''),
         'type' => (string) ($flash['type'] ?? 'success'),
+    ];
+};
+
+$canManageMaintenance = static function (): bool {
+    if (!function_exists('auth_can')) {
+        return true;
+    }
+
+    return auth_can('core.maintenance.manage') || auth_can('core.system.manage');
+};
+
+$maintenanceActorContext = static function () use ($canManageMaintenance): array {
+    $controller = new AuthController();
+    $user = $controller->currentUser();
+    return [
+        'user_id' => (int) ($user['id'] ?? 0),
+        'username' => (string) (($user['username'] ?? '') ?: ($user['email'] ?? '')),
+        'ip' => (string) ($_SERVER['REMOTE_ADDR'] ?? ''),
+        'authorized' => $canManageMaintenance(),
     ];
 };
 
@@ -691,7 +712,7 @@ $loadSystemState = static function (\PDO $pdo, string $settingsTable, string $ba
 
     return [
         'maintenance' => (bool) $readCoreSetting($pdo, $settingsTable, 'maintenance', 'enabled', false),
-        'maintenance_level' => max(1, min(3, (int) $readCoreSetting($pdo, $settingsTable, 'maintenance', 'level', 1))),
+        'maintenance_level' => max(0, min(4, (int) $readCoreSetting($pdo, $settingsTable, 'maintenance', 'level', 0))),
         'maintenance_reason' => (string) $readCoreSetting($pdo, $settingsTable, 'maintenance', 'reason', ''),
         'maintenance_message' => (string) $readCoreSetting($pdo, $settingsTable, 'maintenance', 'message', 'Maintenance en cours'),
         'maintenance_allow_admin' => (bool) $readCoreSetting($pdo, $settingsTable, 'maintenance', 'allow_admin', true),
@@ -710,7 +731,7 @@ $saveSystemState = static function (\PDO $pdo, string $settingsTable, array $sta
         $ok = $ok && $upsertCoreSetting($pdo, $settingsTable, 'maintenance', 'enabled', ((bool) $state['maintenance']) ? '1' : '0', false);
     }
     if (array_key_exists('maintenance_level', $state)) {
-        $ok = $ok && $upsertCoreSetting($pdo, $settingsTable, 'maintenance', 'level', (string) max(1, min(3, (int) $state['maintenance_level'])), false);
+        $ok = $ok && $upsertCoreSetting($pdo, $settingsTable, 'maintenance', 'level', (string) max(0, min(4, (int) $state['maintenance_level'])), false);
     }
     if (array_key_exists('maintenance_reason', $state)) {
         $ok = $ok && $upsertCoreSetting($pdo, $settingsTable, 'maintenance', 'reason', trim((string) $state['maintenance_reason']), false);
@@ -949,7 +970,7 @@ $buildSqlDump = static function (\PDO $pdo): string {
     return implode(PHP_EOL, $lines) . PHP_EOL;
 };
 
-return [
+$routes = [
     [
         'method' => 'GET',
         'path' => '/login',
@@ -2487,19 +2508,33 @@ return [
     [
         'method' => 'GET',
         'path' => '/maintenance',
-        'handler' => static function (Request $request) use ($loadSystemState, $listBackups, $coreSettingsTable, $coreBackupsTable, $consumeFlash): Response {
+        'handler' => static function (Request $request) use ($loadSystemState, $coreSettingsTable, $coreBackupsTable, $coreMaintenanceAuditTable, $consumeFlash, $canManageMaintenance): Response {
             $controller = new AuthController();
             $adminBase = $controller->adminBasePath();
+            if (!$canManageMaintenance()) {
+                return (new \CoreErrorDispatcher())->adminAccessDenied(['message' => 'Permission maintenance requise.']);
+            }
+
             $pdo = (new ConnectionManager())->connection();
             $flash = $consumeFlash();
+            $engine = new \Core\maintenance\MaintenanceEngine();
+            $manager = new \Core\maintenance\BackupManager($pdo, $coreBackupsTable, $coreMaintenanceAuditTable);
 
             $state = $loadSystemState($pdo, $coreSettingsTable, $coreBackupsTable);
-            $backups = $listBackups($pdo, $coreBackupsTable);
+            $backups = $manager->listBackups(200);
+            $diagnostics = $manager->diagnostics();
+            $audit = $manager->auditLog(120);
+            $maintenanceLevels = $manager->maintenanceLevels();
+            $activeLevelPolicy = $engine->policyForLevel((int) ($state['maintenance_level'] ?? 0));
 
             return View::make('maintenance.index', [
                 'adminBase' => $adminBase,
                 'state' => $state,
                 'backups' => $backups,
+                'diagnostics' => $diagnostics,
+                'audit' => $audit,
+                'maintenanceLevels' => $maintenanceLevels,
+                'activeLevelPolicy' => $activeLevelPolicy,
                 'message' => (string) ($flash['message'] ?? ''),
                 'messageType' => (string) ($flash['type'] ?? 'success'),
             ], 'admin');
@@ -2510,14 +2545,18 @@ return [
     [
         'method' => 'POST',
         'path' => '/maintenance/toggle',
-        'handler' => static function (Request $request) use ($loadSystemState, $saveSystemState, $redirect, $coreSettingsTable, $coreBackupsTable, $appendCoreLog, $coreLogsTable): Response {
+        'handler' => static function (Request $request) use ($loadSystemState, $saveSystemState, $redirect, $coreSettingsTable, $coreBackupsTable, $appendCoreLog, $coreLogsTable, $canManageMaintenance): Response {
             $controller = new AuthController();
             $adminBase = $controller->adminBasePath();
+            if (!$canManageMaintenance()) {
+                return (new \CoreErrorDispatcher())->adminAccessDenied(['message' => 'Permission maintenance requise.']);
+            }
+
             $pdo = (new ConnectionManager())->connection();
             $state = $loadSystemState($pdo, $coreSettingsTable, $coreBackupsTable);
             $enabled = ((string) $request->input('maintenance', '0')) === '1';
             $state['maintenance'] = $enabled;
-            $state['maintenance_level'] = max(1, min(3, (int) $request->input('maintenance_level', (int) ($state['maintenance_level'] ?? 1))));
+            $state['maintenance_level'] = max(0, min(4, (int) $request->input('maintenance_level', (int) ($state['maintenance_level'] ?? 0))));
             $state['maintenance_reason'] = trim((string) $request->input('maintenance_reason', (string) ($state['maintenance_reason'] ?? '')));
             $state['maintenance_message'] = trim((string) $request->input('maintenance_message', (string) ($state['maintenance_message'] ?? 'Maintenance en cours')));
             $state['maintenance_allow_admin'] = ((string) $request->input('maintenance_allow_admin', '0')) === '1';
@@ -2551,80 +2590,28 @@ return [
     [
         'method' => 'POST',
         'path' => '/maintenance/backup/create',
-        'handler' => static function () use ($saveSystemState, $redirect, $coreSettingsTable, $coreBackupsTable, $appendCoreLog, $coreLogsTable, $buildSqlDump): Response {
+        'handler' => static function (Request $request) use ($saveSystemState, $redirect, $coreSettingsTable, $coreBackupsTable, $appendCoreLog, $coreLogsTable, $coreMaintenanceAuditTable, $canManageMaintenance, $maintenanceActorContext): Response {
             $controller = new AuthController();
             $adminBase = $controller->adminBasePath();
+            if (!$canManageMaintenance()) {
+                return (new \CoreErrorDispatcher())->adminAccessDenied(['message' => 'Permission maintenance requise.']);
+            }
+
             $pdo = (new ConnectionManager())->connection();
-            $dir = CATMIN_STORAGE . '/backups';
-            if (!is_dir($dir)) {
-                @mkdir($dir, 0775, true);
-            }
-            $driver = (string) config('database.default', 'sqlite');
-            $createdAt = date('Y-m-d H:i:s');
-            $filename = date('YmdHis');
-            $ok = false;
-            $target = '';
-            $size = 0;
-            $checksum = '';
-
-            $zipName = $filename . '.zip';
-            $target = $dir . '/' . $zipName;
-            $meta = [
-                'generated_at' => date('c'),
-                'driver' => $driver,
-                'app_env' => (string) config('app.env', 'production'),
-                'version' => Version::current(),
-            ];
-            $sqlDump = $buildSqlDump($pdo);
-
-            if (class_exists('ZipArchive')) {
-                $zip = new \ZipArchive();
-                $opened = $zip->open($target, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
-                if ($opened === true) {
-                    $zip->addFromString('dump.sql', $sqlDump);
-                    $zip->addFromString('meta.json', (string) json_encode($meta, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
-                    if ($driver === 'sqlite') {
-                        $sqlitePath = (string) config('database.connections.sqlite.database', CATMIN_ROOT . '/db/database.sqlite');
-                        if (is_file($sqlitePath)) {
-                            $zip->addFile($sqlitePath, 'database.sqlite');
-                        }
-                    }
-                    $ok = $zip->close();
-                    $filename = $zipName;
-                }
-            }
-
-            if (!$ok) {
-                $sqlName = $filename . '.sql';
-                $target = $dir . '/' . $sqlName;
-                $ok = @file_put_contents($target, $sqlDump) !== false;
-                $filename = $sqlName;
-            }
-
-            $size = $ok ? (int) (@filesize($target) ?: 0) : 0;
-            $checksum = $ok ? (string) (@hash_file('sha256', $target) ?: '') : '';
-
-            $insert = $pdo->prepare(
-                'INSERT INTO ' . $coreBackupsTable . ' (backup_type, status, file_path, checksum, size_bytes, created_at) VALUES (:backup_type, :status, :file_path, :checksum, :size_bytes, :created_at)'
-            );
-            $insert->execute([
-                'backup_type' => 'manual',
-                'status' => $ok ? 'success' : 'failed',
-                'file_path' => $target,
-                'checksum' => $checksum !== '' ? $checksum : null,
-                'size_bytes' => $size,
-                'created_at' => $createdAt,
-            ]);
+            $manager = new \Core\maintenance\BackupManager($pdo, $coreBackupsTable, $coreMaintenanceAuditTable);
+            $type = trim((string) $request->input('backup_type', 'db_only'));
+            $created = $manager->createBackup($type, array_merge($maintenanceActorContext(), ['origin' => 'manual']));
+            $ok = (bool) ($created['ok'] ?? false);
 
             if ($ok) {
-                $saveSystemState($pdo, $coreSettingsTable, ['last_backup' => $createdAt]);
-                $appendCoreLog($pdo, $coreLogsTable, 'backup', 'info', 'Backup manuel cree', ['file' => $filename, 'size' => $size]);
+                $saveSystemState($pdo, $coreSettingsTable, ['last_backup' => date('Y-m-d H:i:s')]);
+                $appendCoreLog($pdo, $coreLogsTable, 'backup', 'info', 'Backup cree', ['file' => (string) ($created['name'] ?? ''), 'type' => $type]);
             } else {
-                $appendCoreLog($pdo, $coreLogsTable, 'backup', 'error', 'Echec creation backup manuel', ['file' => $filename]);
+                $appendCoreLog($pdo, $coreLogsTable, 'backup', 'error', 'Echec creation backup', ['type' => $type]);
             }
 
             return $redirect($adminBase . '/maintenance', [
-                'msg' => $ok ? 'Sauvegarde creee: ' . $filename : 'Echec creation sauvegarde.',
+                'msg' => (string) ($created['message'] ?? ($ok ? 'Sauvegarde creee.' : 'Echec creation sauvegarde.')),
                 'mt' => $ok ? 'success' : 'danger',
             ]);
         },
@@ -2634,39 +2621,26 @@ return [
     [
         'method' => 'GET',
         'path' => '/maintenance/backup/download',
-        'handler' => static function (Request $request) use ($redirect, $coreBackupsTable): Response {
+        'handler' => static function (Request $request) use ($redirect, $coreBackupsTable, $coreMaintenanceAuditTable, $canManageMaintenance): Response {
             $controller = new AuthController();
             $adminBase = $controller->adminBasePath();
+            if (!$canManageMaintenance()) {
+                return (new \CoreErrorDispatcher())->adminAccessDenied(['message' => 'Permission maintenance requise.']);
+            }
+
             $pdo = (new ConnectionManager())->connection();
+            $manager = new \Core\maintenance\BackupManager($pdo, $coreBackupsTable, $coreMaintenanceAuditTable);
             $backup = trim((string) $request->input('backup', ''));
             if ($backup === '') {
                 return $redirect($adminBase . '/maintenance', ['msg' => 'Backup invalide.', 'mt' => 'danger']);
             }
 
-            $stmt = $pdo->prepare('SELECT file_path FROM ' . $coreBackupsTable . ' WHERE backup_type != \'restore\' ORDER BY created_at DESC');
-            $stmt->execute();
-            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-            $rows = is_array($rows) ? $rows : [];
-
-            $selected = null;
-            foreach ($rows as $row) {
-                $path = (string) ($row['file_path'] ?? '');
-                if ($path !== '' && basename($path) === basename($backup)) {
-                    $selected = $path;
-                    break;
-                }
-            }
-
-            if ($selected === null || !is_file($selected)) {
+            $read = $manager->readBackup($backup);
+            if (!((bool) ($read['ok'] ?? false))) {
                 return $redirect($adminBase . '/maintenance', ['msg' => 'Backup introuvable.', 'mt' => 'danger']);
             }
 
-            $real = realpath($selected);
-            $allowedRoot = realpath(CATMIN_STORAGE . '/backups');
-            if (!is_string($real) || !is_string($allowedRoot) || !str_starts_with($real, $allowedRoot . '/')) {
-                return $redirect($adminBase . '/maintenance', ['msg' => 'Chemin backup refuse.', 'mt' => 'danger']);
-            }
-
+            $real = (string) ($read['path'] ?? '');
             $content = (string) @file_get_contents($real);
             if ($content === '') {
                 return $redirect($adminBase . '/maintenance', ['msg' => 'Backup vide ou illisible.', 'mt' => 'danger']);
@@ -2692,51 +2666,34 @@ return [
     [
         'method' => 'GET',
         'path' => '/maintenance/backup/read',
-        'handler' => static function (Request $request) use ($redirect, $coreBackupsTable): Response {
+        'handler' => static function (Request $request) use ($redirect, $coreBackupsTable, $coreMaintenanceAuditTable, $canManageMaintenance): Response {
             $controller = new AuthController();
             $adminBase = $controller->adminBasePath();
+            if (!$canManageMaintenance()) {
+                return (new \CoreErrorDispatcher())->adminAccessDenied(['message' => 'Permission maintenance requise.']);
+            }
+
             $pdo = (new ConnectionManager())->connection();
+            $manager = new \Core\maintenance\BackupManager($pdo, $coreBackupsTable, $coreMaintenanceAuditTable);
             $backup = trim((string) $request->input('backup', ''));
             if ($backup === '') {
                 return $redirect($adminBase . '/maintenance', ['msg' => 'Backup invalide.', 'mt' => 'danger']);
             }
 
-            $stmt = $pdo->prepare('SELECT file_path FROM ' . $coreBackupsTable . ' WHERE backup_type != \'restore\' ORDER BY created_at DESC');
-            $stmt->execute();
-            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-            $rows = is_array($rows) ? $rows : [];
-
-            $selected = null;
-            foreach ($rows as $row) {
-                $path = (string) ($row['file_path'] ?? '');
-                if ($path !== '' && basename($path) === basename($backup)) {
-                    $selected = $path;
-                    break;
-                }
+            $read = $manager->readBackup($backup);
+            if (!((bool) ($read['ok'] ?? false))) {
+                return $redirect($adminBase . '/maintenance', ['msg' => (string) ($read['message'] ?? 'Backup introuvable.'), 'mt' => 'danger']);
             }
-
-            if ($selected === null || !is_file($selected)) {
-                return $redirect($adminBase . '/maintenance', ['msg' => 'Backup introuvable.', 'mt' => 'danger']);
-            }
-
-            $real = realpath($selected);
-            $allowedRoot = realpath(CATMIN_STORAGE . '/backups');
-            if (!is_string($real) || !is_string($allowedRoot) || !str_starts_with($real, $allowedRoot . '/')) {
-                return $redirect($adminBase . '/maintenance', ['msg' => 'Chemin backup refuse.', 'mt' => 'danger']);
-            }
-
-            $ext = strtolower((string) pathinfo($real, PATHINFO_EXTENSION));
-            $isText = in_array($ext, ['txt', 'json', 'log', 'md', 'csv', 'sql'], true);
-            $raw = $isText ? ((string) @file_get_contents($real)) : '';
-            $preview = $isText ? mb_substr($raw, 0, 250000) : ('Fichier binaire (' . strtoupper($ext !== '' ? $ext : 'unknown') . ').');
 
             return View::make('maintenance.read', [
                 'adminBase' => $adminBase,
-                'backupName' => basename($real),
-                'backupPath' => $real,
-                'backupSize' => (int) (@filesize($real) ?: 0),
-                'previewText' => $preview,
-                'isTextPreview' => $isText,
+                'backupName' => (string) ($read['name'] ?? '-'),
+                'backupPath' => (string) ($read['path'] ?? ''),
+                'backupSize' => (int) ($read['size'] ?? 0),
+                'backupManifest' => (array) ($read['manifest'] ?? []),
+                'backupDetails' => (array) ($read['details'] ?? []),
+                'previewText' => (string) ($read['preview_text'] ?? ''),
+                'isTextPreview' => (bool) ($read['is_text_preview'] ?? false),
             ], 'admin');
         },
         'middleware' => [$authRequired],
@@ -2745,52 +2702,29 @@ return [
     [
         'method' => 'POST',
         'path' => '/maintenance/backup/delete',
-        'handler' => static function (Request $request) use ($redirect, $coreBackupsTable, $appendCoreLog, $coreLogsTable): Response {
+        'handler' => static function (Request $request) use ($redirect, $coreBackupsTable, $appendCoreLog, $coreLogsTable, $coreMaintenanceAuditTable, $canManageMaintenance, $maintenanceActorContext): Response {
             $controller = new AuthController();
             $adminBase = $controller->adminBasePath();
+            if (!$canManageMaintenance()) {
+                return (new \CoreErrorDispatcher())->adminAccessDenied(['message' => 'Permission maintenance requise.']);
+            }
+
             $pdo = (new ConnectionManager())->connection();
+            $manager = new \Core\maintenance\BackupManager($pdo, $coreBackupsTable, $coreMaintenanceAuditTable);
             $backup = trim((string) $request->input('backup', ''));
             if ($backup === '') {
                 return $redirect($adminBase . '/maintenance', ['msg' => 'Backup invalide.', 'mt' => 'danger']);
             }
 
-            $stmt = $pdo->query('SELECT id, file_path FROM ' . $coreBackupsTable . ' WHERE backup_type != \'restore\' ORDER BY created_at DESC');
-            $rows = $stmt !== false ? ($stmt->fetchAll(\PDO::FETCH_ASSOC) ?: []) : [];
-            $targetId = 0;
-            $targetPath = '';
-            foreach ($rows as $row) {
-                $path = (string) ($row['file_path'] ?? '');
-                if ($path !== '' && basename($path) === basename($backup)) {
-                    $targetId = (int) ($row['id'] ?? 0);
-                    $targetPath = $path;
-                    break;
-                }
-            }
-
-            if ($targetId <= 0 || $targetPath === '') {
-                return $redirect($adminBase . '/maintenance', ['msg' => 'Backup introuvable.', 'mt' => 'danger']);
-            }
-
-            $real = realpath($targetPath);
-            $allowedRoot = realpath(CATMIN_STORAGE . '/backups');
-            if (!is_string($real) || !is_string($allowedRoot) || !str_starts_with($real, $allowedRoot . '/')) {
-                return $redirect($adminBase . '/maintenance', ['msg' => 'Chemin backup refuse.', 'mt' => 'danger']);
-            }
-
-            $fileDeleted = !is_file($real) || @unlink($real);
-            $dbDeleted = false;
-            if ($fileDeleted) {
-                $del = $pdo->prepare('DELETE FROM ' . $coreBackupsTable . ' WHERE id = :id');
-                $dbDeleted = $del->execute(['id' => $targetId]);
-            }
-
-            $ok = $fileDeleted && $dbDeleted;
+            $repair = ((string) $request->input('repair_orphan', '0')) === '1';
+            $result = $manager->deleteBackup($backup, $maintenanceActorContext(), $repair);
+            $ok = (bool) ($result['ok'] ?? false);
             if ($ok) {
-                $appendCoreLog($pdo, $coreLogsTable, 'backup', 'warning', 'Backup supprime', ['file' => basename($real)]);
+                $appendCoreLog($pdo, $coreLogsTable, 'backup', 'warning', 'Backup supprime', ['file' => $backup]);
             }
 
             return $redirect($adminBase . '/maintenance', [
-                'msg' => $ok ? ('Backup supprime: ' . basename($real)) : 'Echec suppression backup.',
+                'msg' => (string) ($result['message'] ?? ($ok ? 'Backup supprime.' : 'Echec suppression backup.')),
                 'mt' => $ok ? 'success' : 'danger',
             ]);
         },
@@ -2799,48 +2733,61 @@ return [
 
     [
         'method' => 'POST',
-        'path' => '/maintenance/restore',
-        'handler' => static function (Request $request) use ($saveSystemState, $redirect, $coreSettingsTable, $coreBackupsTable, $appendCoreLog, $coreLogsTable): Response {
+        'path' => '/maintenance/backup/repair',
+        'handler' => static function (Request $request) use ($redirect, $coreBackupsTable, $coreMaintenanceAuditTable, $canManageMaintenance, $maintenanceActorContext): Response {
             $controller = new AuthController();
             $adminBase = $controller->adminBasePath();
+            if (!$canManageMaintenance()) {
+                return (new \CoreErrorDispatcher())->adminAccessDenied(['message' => 'Permission maintenance requise.']);
+            }
+
+            $backup = trim((string) $request->input('backup', ''));
             $pdo = (new ConnectionManager())->connection();
+            $manager = new \Core\maintenance\BackupManager($pdo, $coreBackupsTable, $coreMaintenanceAuditTable);
+            $result = $manager->deleteBackup($backup, $maintenanceActorContext(), true);
+
+            return $redirect($adminBase . '/maintenance', [
+                'msg' => (string) ($result['message'] ?? 'Reparation index terminee.'),
+                'mt' => ((bool) ($result['ok'] ?? false)) ? 'success' : 'danger',
+            ]);
+        },
+        'middleware' => [$authRequired, $csrfCheck],
+    ],
+
+    [
+        'method' => 'POST',
+        'path' => '/maintenance/restore',
+        'handler' => static function (Request $request) use ($saveSystemState, $redirect, $coreSettingsTable, $coreBackupsTable, $appendCoreLog, $coreLogsTable, $coreMaintenanceAuditTable, $canManageMaintenance, $maintenanceActorContext): Response {
+            $controller = new AuthController();
+            $adminBase = $controller->adminBasePath();
+            if (!$canManageMaintenance()) {
+                return (new \CoreErrorDispatcher())->adminAccessDenied(['message' => 'Permission maintenance requise.']);
+            }
+
+            $pdo = (new ConnectionManager())->connection();
+            $manager = new \Core\maintenance\BackupManager($pdo, $coreBackupsTable, $coreMaintenanceAuditTable);
             $backup = trim((string) $request->input('backup', ''));
             if ($backup === '') {
                 return $redirect($adminBase . '/maintenance', ['msg' => 'Backup invalide.', 'mt' => 'danger']);
             }
 
-            $selectedPath = null;
-            $stmt = $pdo->query('SELECT file_path FROM ' . $coreBackupsTable . ' ORDER BY created_at DESC');
-            $rows = $stmt !== false ? ($stmt->fetchAll(\PDO::FETCH_ASSOC) ?: []) : [];
-            foreach ($rows as $row) {
-                $path = (string) ($row['file_path'] ?? '');
-                if ($path !== '' && basename($path) === basename($backup)) {
-                    $selectedPath = $path;
-                    break;
-                }
-            }
-            if ($selectedPath === null) {
-                return $redirect($adminBase . '/maintenance', ['msg' => 'Backup introuvable en base.', 'mt' => 'danger']);
-            }
+            $mode = trim((string) $request->input('restore_mode', 'db_only'));
+            $dryRun = ((string) $request->input('dry_run', '0')) === '1';
+            $preSnapshot = ((string) $request->input('auto_snapshot', '1')) === '1';
+            $result = $manager->restoreBackup($backup, $mode, $dryRun, $preSnapshot, $maintenanceActorContext());
+            $ok = (bool) ($result['ok'] ?? false);
 
-            $restoreStamp = date('Y-m-d H:i:s') . ' (' . basename($selectedPath) . ')';
-            $saveSystemState($pdo, $coreSettingsTable, ['last_restore' => $restoreStamp]);
-            $insert = $pdo->prepare(
-                'INSERT INTO ' . $coreBackupsTable . ' (backup_type, status, file_path, checksum, size_bytes, created_at) VALUES (:backup_type, :status, :file_path, :checksum, :size_bytes, :created_at)'
-            );
-            $insert->execute([
-                'backup_type' => 'restore',
-                'status' => 'simulated',
-                'file_path' => $selectedPath,
-                'checksum' => null,
-                'size_bytes' => 0,
-                'created_at' => date('Y-m-d H:i:s'),
-            ]);
-            $appendCoreLog($pdo, $coreLogsTable, 'backup', 'warning', 'Restore simule execute', ['file' => basename($selectedPath)]);
+            if ($ok) {
+                $restoreStamp = date('Y-m-d H:i:s') . ' (' . basename($backup) . ')';
+                $saveSystemState($pdo, $coreSettingsTable, ['last_restore' => $restoreStamp]);
+                $appendCoreLog($pdo, $coreLogsTable, 'backup', 'warning', 'Restore execute', ['file' => basename($backup), 'mode' => $mode, 'dry_run' => $dryRun]);
+            } else {
+                $appendCoreLog($pdo, $coreLogsTable, 'backup', 'error', 'Restore echec', ['file' => basename($backup), 'mode' => $mode]);
+            }
 
             return $redirect($adminBase . '/maintenance', [
-                'msg' => 'Restore simule sur backup: ' . basename($selectedPath),
-                'mt' => 'warning',
+                'msg' => (string) ($result['message'] ?? ($ok ? 'Restore execute.' : 'Restore en echec.')),
+                'mt' => $dryRun ? 'warning' : ($ok ? 'success' : 'danger'),
             ]);
         },
         'middleware' => [$authRequired, $csrfCheck],
@@ -3859,3 +3806,43 @@ return [
         'middleware' => [$authRequired, $recentPassword, $csrfCheck],
     ],
 ];
+
+$publicAdminRoutes = [
+    'GET /login',
+    'POST /login',
+    'GET /locked',
+    'GET /password/request',
+    'POST /password/request',
+    'GET /password/reset',
+    'POST /password/reset',
+];
+
+foreach ($routes as &$route) {
+    $method = strtoupper((string) ($route['method'] ?? 'GET'));
+    $path = (string) ($route['path'] ?? '/');
+    if (in_array($method . ' ' . $path, $publicAdminRoutes, true)) {
+        continue;
+    }
+
+    $middlewares = $route['middleware'] ?? [];
+    if (!is_array($middlewares)) {
+        $middlewares = [$middlewares];
+    }
+
+    $hasAuth = false;
+    foreach ($middlewares as $middleware) {
+        if ($middleware === $authRequired) {
+            $hasAuth = true;
+            break;
+        }
+    }
+
+    if (!$hasAuth) {
+        $middlewares[] = $authRequired;
+    }
+
+    $route['middleware'] = $middlewares;
+}
+unset($route);
+
+return $routes;

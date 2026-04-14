@@ -51,7 +51,7 @@ final class CoreSettingsSchema
             'security.admin_noindex' => ['group' => 'security', 'type' => 'bool', 'default' => (bool) config('security.admin_noindex', true), 'autoload' => true, 'protected' => true, 'system' => true],
 
             'maintenance.enabled' => ['group' => 'maintenance', 'type' => 'bool', 'default' => false, 'autoload' => true, 'protected' => false, 'system' => true],
-            'maintenance.level' => ['group' => 'maintenance', 'type' => 'int', 'default' => 1, 'autoload' => true, 'protected' => false, 'system' => true],
+            'maintenance.level' => ['group' => 'maintenance', 'type' => 'int', 'default' => 0, 'autoload' => true, 'protected' => false, 'system' => true],
             'maintenance.reason' => ['group' => 'maintenance', 'type' => 'string', 'default' => '', 'autoload' => true, 'protected' => false, 'system' => true],
             'maintenance.message' => ['group' => 'maintenance', 'type' => 'string', 'default' => 'Maintenance en cours', 'autoload' => true, 'protected' => false, 'system' => true],
             'maintenance.allow_admin' => ['group' => 'maintenance', 'type' => 'bool', 'default' => true, 'autoload' => true, 'protected' => false, 'system' => true],

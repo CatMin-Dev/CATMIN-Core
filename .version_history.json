@@ -1,12 +1,27 @@
 [
     {
+        "version": "0.5.0-RC.2",
+        "date": "2026-04-14",
+        "scope": "core",
+        "changes": [
+            "maintenance/backups/restore subsystem fully refactored with dedicated BackupManager service",
+            "maintenance levels expanded to 0..4 with stronger runtime access policy",
+            "backup metadata hardened for backup_format 0.1.0-RC.1 with manifest, integrity, origin and actor context",
+            "orphan backup handling and index repair flow added, with dedicated maintenance audit journal",
+            "maintenance admin UI redesigned in four blocks (maintenance, backups, diagnostics, audit) and restore modes with dry-run"
+        ],
+        "prompt": "catmin-maintenance-hardcore-rc2"
+    },
+    {
         "version": "0.5.0-RC.1",
         "date": "2026-04-14",
         "scope": "release",
         "changes": [
             "release 0.5.0-RC.1 published for CATMIN-Core",
             "front core loader architecture shipped with lowercase core/front convention",
-            "README and release metadata aligned to 0.5.0-RC.1"
+            "README and release metadata aligned to 0.5.0-RC.1",
+            "technical tracks promoted: db_schema/module_manifest/installer_format -> 0.1.0-RC.1",
+            "backup_format intentionally kept at 0.1.0-dev.1 (pending dedicated backup work)"
         ],
         "prompt": "release-0.5.0-RC.1"
     },

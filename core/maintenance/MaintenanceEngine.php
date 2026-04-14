@@ -19,7 +19,7 @@ final class MaintenanceEngine
     {
         $defaults = [
             'enabled' => false,
-            'level' => 1,
+            'level' => 0,
             'reason' => '',
             'message' => 'Maintenance en cours',
             'started_at' => '',
@@ -51,7 +51,7 @@ final class MaintenanceEngine
 
             $state['enabled'] = in_array(strtolower((string) ($state['enabled'] ?? '0')), ['1', 'true', 'yes', 'on'], true);
             $state['allow_admin'] = in_array(strtolower((string) ($state['allow_admin'] ?? '1')), ['1', 'true', 'yes', 'on'], true);
-            $state['level'] = max(1, min(3, (int) ($state['level'] ?? 1)));
+            $state['level'] = max(0, min(4, (int) ($state['level'] ?? 0)));
             $allowedIpsRaw = $state['allowed_ips'] ?? '';
             if (is_array($allowedIpsRaw)) {
                 $state['allowed_ips'] = array_values(array_unique(array_map(static fn ($v): string => trim((string) $v), $allowedIpsRaw)));
@@ -75,7 +75,10 @@ final class MaintenanceEngine
     public function allowsCurrentRequest(string $area): bool
     {
         $state = $this->state();
-        if (!((bool) ($state['enabled'] ?? false))) {
+        $enabled = (bool) ($state['enabled'] ?? false);
+        $level = max(0, min(4, (int) ($state['level'] ?? 0)));
+
+        if (!$enabled || $level === 0) {
             return true;
         }
 
@@ -89,12 +92,23 @@ final class MaintenanceEngine
         }
 
         if ($area === 'admin') {
-            if ($this->isSuperAdmin()) {
+            $isSuperAdmin = $this->isSuperAdmin();
+            $userId = $this->currentAdminId();
+            $isWhitelistedAdmin = $userId !== null && in_array($userId, (array) ($state['allowed_admin_ids'] ?? []), true);
+
+            if ($level === 4) {
+                return $isSuperAdmin && ($isWhitelistedAdmin || in_array($clientIp, (array) ($state['allowed_ips'] ?? []), true));
+            }
+
+            if ($isSuperAdmin) {
                 return true;
             }
 
-            $userId = $this->currentAdminId();
-            if ($userId !== null && in_array($userId, (array) ($state['allowed_admin_ids'] ?? []), true)) {
+            if ($level >= 3) {
+                return $isWhitelistedAdmin;
+            }
+
+            if ($isWhitelistedAdmin) {
                 return true;
             }
 
@@ -102,6 +116,43 @@ final class MaintenanceEngine
         }
 
         return false;
+    }
+
+    public function policyForLevel(int $level): array
+    {
+        $level = max(0, min(4, $level));
+        return match ($level) {
+            0 => [
+                'access' => 'Normal',
+                'blocked' => 'Aucun blocage',
+                'allowed' => 'Toutes operations standards',
+                'usage' => 'Exploitation normale',
+            ],
+            1 => [
+                'access' => 'Admins + whitelists',
+                'blocked' => 'Front public',
+                'allowed' => 'Operations non destructives',
+                'usage' => 'Intervention legere',
+            ],
+            2 => [
+                'access' => 'Admins limites + whitelists',
+                'blocked' => 'Front + operations non conformes',
+                'allowed' => 'Operations techniques controlees',
+                'usage' => 'Maintenance technique',
+            ],
+            3 => [
+                'access' => 'Superadmin + admins whitelistes',
+                'blocked' => 'Acces admin general',
+                'allowed' => 'Operations critiques',
+                'usage' => 'Maintenance lourde',
+            ],
+            default => [
+                'access' => 'Superadmin whiteliste uniquement',
+                'blocked' => 'Tout hors exception',
+                'allowed' => 'Urgence/restore critique',
+                'usage' => 'Verrouillage total',
+            ],
+        };
     }
 
     private function currentAdminId(): ?int
