@@ -1425,26 +1425,6 @@ return [
                 }
             }
 
-            $revisionSettings = [];
-            $revisionCronTask = null;
-            $revisionLatestBackup = null;
-            try {
-                $revisionRepoPath = CATMIN_MODULES . '/admin/cat-revision/repositories/RevisionRepository.php';
-                if (is_file($revisionRepoPath)) {
-                    require_once $revisionRepoPath;
-                    if (class_exists('Modules\\CatRevision\\repositories\\RevisionRepository')) {
-                        $revisionRepo = new \Modules\CatRevision\repositories\RevisionRepository();
-                        $revisionSettings = $revisionRepo->getSettings();
-                        $revisionCronTask = $revisionRepo->coreBackupCronTask();
-                        $revisionLatestBackup = $revisionRepo->latestCoreBackup();
-                    }
-                }
-            } catch (\Throwable) {
-                $revisionSettings = [];
-                $revisionCronTask = null;
-                $revisionLatestBackup = null;
-            }
-
             $sidebarGroupMeta = [
                 'dashboard' => ['label' => __('nav.dashboard'), 'icon' => 'house-door', 'order' => 10],
                 'organization' => ['label' => __('nav.organization'), 'icon' => 'diagram-3', 'order' => 40],
@@ -1635,9 +1615,6 @@ return [
                 'policy' => $registry->policy(),
                 'mediaSettings' => $mediaSettings,
                 'mediaPresets' => $mediaPresets,
-                'revisionSettings' => $revisionSettings,
-                'revisionCronTask' => $revisionCronTask,
-                'revisionLatestBackup' => $revisionLatestBackup,
                 'sidebarGroups' => array_values($sidebarGroups),
                 'sidebarOrder' => $sidebarOrder,
                 'sidebarOrderIds' => $sidebarOrderIds,
