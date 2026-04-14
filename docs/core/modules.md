@@ -21,6 +21,12 @@
 - les consommateurs core doivent lire le snapshot central `CoreModuleRuntimeSnapshot`
 - le snapshot central aligne router, boot, permissions loader, sidebar/settings admin et diagnostics modules
 
+## Lifecycle BDD module
+- états DB supportés : `installed`, `migrated`, `enabled`, `disabled`, `uninstalled_keep_data`, `uninstalled_drop_data`
+- `disable` ne supprime jamais les données
+- `uninstall keep_data` conserve les données et marque l'état `uninstalled_keep_data`
+- `uninstall drop_data` est destructif : confirmation explicite obligatoire + migrations DOWN
+
 ## Références éditeurs
 - `docs/modules/community-repository-standard.md`
 - `docs/release/module-release-pipeline.md`

@@ -2982,6 +2982,7 @@ return [
             $slug = strtolower(trim((string) $request->input('slug', '')));
             $policy = strtolower(trim((string) $request->input('data_policy', 'keep_data')));
             $confirmed = (string) $request->input('confirm', '0') === '1';
+            $destructiveConfirmed = (string) $request->input('confirm_destructive', '0') === '1';
             if (!$confirmed) {
                 return $redirect($adminBase . '/modules/uninstall/confirm', [
                     'scope' => $scope,
@@ -2990,7 +2991,7 @@ return [
                     'mt' => 'danger',
                 ]);
             }
-            $result = (new CoreModuleUninstaller())->uninstall($scope, $slug, $policy);
+            $result = (new CoreModuleUninstaller())->uninstall($scope, $slug, $policy, $destructiveConfirmed);
             return $redirect($adminBase . '/modules', [
                 'msg' => (string) ($result['message'] ?? 'Désinstallation terminée.'),
                 'mt' => (bool) ($result['ok'] ?? false) ? 'success' : 'danger',

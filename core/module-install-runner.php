@@ -134,9 +134,36 @@ final class CoreModuleInstallRunner
         }
         $rollback->cleanupPath($extractDir);
 
-        $migrations = (new CoreModuleMigrationRunner())->run($dest);
+        $migrations = (new CoreModuleMigrationRunner())->run($dest, 'up', false);
+        if (!(bool) ($migrations['ok'] ?? false)) {
+            catmin_event_emit('module.install.failed', [
+                'slug' => $slug,
+                'errors' => [(string) ($migrations['message'] ?? 'module_migrations_failed')],
+                'context' => $context,
+            ]);
+            return [
+                'ok' => false,
+                'message' => 'Installation interrompue: migrations module KO',
+                'errors' => [(string) ($migrations['message'] ?? 'module_migrations_failed')],
+            ];
+        }
+
+        $lastMigration = '-';
+        $executedMigrations = (array) ($migrations['executed'] ?? []);
+        if ($executedMigrations !== []) {
+            $lastMigration = (string) end($executedMigrations);
+        }
+
         $stateStore = new CoreModuleStateStore();
-        $stateStore->persist($slug, (string) ($manifest['name'] ?? $slug), (string) ($manifest['version'] ?? '0.0.0'), false);
+        $stateStore->persist(
+            $slug,
+            (string) ($manifest['name'] ?? $slug),
+            (string) ($manifest['version'] ?? '0.0.0'),
+            false,
+            $executedMigrations !== [] ? 'migrated' : 'installed',
+            (string) ($manifest['schema_version'] ?? ($manifest['module_schema_version'] ?? '')),
+            $lastMigration
+        );
 
         if ($activate) {
             $guard = (new CoreModuleActivationGuard())->assertCanActivate($dest, $manifest, (string) ($context['repo_trust'] ?? ''));
@@ -149,6 +176,9 @@ final class CoreModuleInstallRunner
                 catmin_event_emit('module.install.failed', ['slug' => $slug, 'errors' => [(string) ($activation['message'] ?? 'activation_failed')], 'context' => $context]);
                 return ['ok' => false, 'message' => 'Installation OK mais activation KO', 'errors' => [(string) ($activation['message'] ?? 'activation_failed')]];
             }
+            $stateStore->markLifecycle($slug, 'enabled', $lastMigration);
+        } else {
+            $stateStore->markLifecycle($slug, 'disabled', $lastMigration);
         }
 
         $logger->log('install_complete', 'ok', ['slug' => $slug, 'type' => $type, 'activated' => $activate]);

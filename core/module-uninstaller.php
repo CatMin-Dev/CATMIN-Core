@@ -19,15 +19,16 @@ final class CoreModuleUninstaller
     }
 
     /** @return array{ok:bool,message:string,errors?:array<int,string>,impact?:array<string,mixed>} */
-    public function uninstall(string $scope, string $slug, string $policy): array
+    public function uninstall(string $scope, string $slug, string $policy, bool $destructiveConfirmed = false): array
     {
         catmin_event_emit('module.uninstall.requested', [
             'scope' => $scope,
             'slug' => $slug,
             'policy' => $policy,
+            'destructive_confirmed' => $destructiveConfirmed,
         ]);
 
-        $valid = (new CoreModuleUninstallValidator())->validate($scope, $slug, $policy);
+        $valid = (new CoreModuleUninstallValidator())->validate($scope, $slug, $policy, $destructiveConfirmed);
         if (!(bool) ($valid['ok'] ?? false)) {
             catmin_event_emit('module.uninstall.denied', [
                 'scope' => $scope,

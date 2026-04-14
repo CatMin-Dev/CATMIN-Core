@@ -55,15 +55,18 @@ ob_start();
                 <div class="col-12 col-lg-4">
                     <label class="form-label">Politique données</label>
                     <select class="form-select" name="data_policy">
-                        <option value="keep_data">keep_data (recommandé)</option>
-                        <option value="archive_data">archive_data</option>
-                        <option value="remove_data">remove_data</option>
+                        <option value="keep_data">keep_data (safe)</option>
+                        <option value="drop_data">drop_data (destructif)</option>
                     </select>
                 </div>
                 <div class="col-12">
                     <label class="form-check">
                         <input class="form-check-input" type="checkbox" name="confirm" value="1">
                         <span class="form-check-label">Je confirme la désinstallation.</span>
+                    </label>
+                    <label class="form-check mt-2">
+                        <input class="form-check-input" type="checkbox" name="confirm_destructive" value="1">
+                        <span class="form-check-label">Je confirme explicitement l'action destructive si la politique choisie est drop_data.</span>
                     </label>
                 </div>
                 <div class="col-12 d-flex gap-2">

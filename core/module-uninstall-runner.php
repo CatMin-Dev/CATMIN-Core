@@ -2,11 +2,12 @@
 
 declare(strict_types=1);
 
-use Core\database\ConnectionManager;
-
 require_once CATMIN_CORE . '/module-activator.php';
 require_once CATMIN_CORE . '/module-uninstall-logger.php';
 require_once CATMIN_CORE . '/module-snapshot-manager.php';
+require_once CATMIN_CORE . '/module-state-store.php';
+require_once CATMIN_CORE . '/module-migration-runner.php';
+require_once CATMIN_CORE . '/module-data-retention-policy.php';
 
 final class CoreModuleUninstallRunner
 {
@@ -23,6 +24,10 @@ final class CoreModuleUninstallRunner
             return ['ok' => false, 'message' => 'Module invalide'];
         }
 
+        $retentionPolicy = new CoreModuleDataRetentionPolicy();
+        $normalizedPolicy = $retentionPolicy->normalize($policy);
+        $destructive = $retentionPolicy->isDestructive($normalizedPolicy);
+
         $modulePath = CATMIN_MODULES . '/' . $scope . '/' . $slug;
         if (!is_dir($modulePath)) {
             return ['ok' => false, 'message' => 'Module introuvable'];
@@ -33,7 +38,12 @@ final class CoreModuleUninstallRunner
             return ['ok' => false, 'message' => 'Snapshot pré-uninstall impossible'];
         }
 
-        $this->logger->log('uninstall.request', ['scope' => $scope, 'slug' => $slug, 'policy' => $policy]);
+        $this->logger->log('uninstall.request', [
+            'scope' => $scope,
+            'slug' => $slug,
+            'policy' => $normalizedPolicy,
+            'destructive' => $destructive,
+        ]);
 
         if ((bool) ($impact['enabled'] ?? false)) {
             $deactivate = (new CoreModuleActivator())->deactivate($scope, $slug);
@@ -44,7 +54,7 @@ final class CoreModuleUninstallRunner
         }
 
         $archivePath = '';
-        if ($policy === 'archive_data') {
+        if (!$destructive) {
             $archiveBase = CATMIN_STORAGE . '/modules/uninstall-archives';
             if (!is_dir($archiveBase)) {
                 @mkdir($archiveBase, 0775, true);
@@ -54,13 +64,37 @@ final class CoreModuleUninstallRunner
             $this->copyDir($modulePath, $archivePath);
         }
 
+        $lastMigration = '';
+        if ($destructive) {
+            $down = (new CoreModuleMigrationRunner())->run($modulePath, 'down', true);
+            if (!(bool) ($down['ok'] ?? false)) {
+                $this->logger->log('uninstall.refused.down_migrations', [
+                    'scope' => $scope,
+                    'slug' => $slug,
+                    'message' => (string) ($down['message'] ?? ''),
+                ]);
+
+                return ['ok' => false, 'message' => (string) ($down['message'] ?? 'Migrations DOWN impossibles')];
+            }
+
+            $executed = (array) ($down['executed'] ?? []);
+            if ($executed !== []) {
+                $lastMigration = (string) end($executed);
+            }
+        }
+
         $this->cleanupPath($modulePath);
-        $this->removeModuleState($slug);
+        (new CoreModuleStateStore())->markLifecycle(
+            $slug,
+            $destructive ? 'uninstalled_drop_data' : 'uninstalled_keep_data',
+            $lastMigration
+        );
 
         $this->logger->log('uninstall.success', [
             'scope' => $scope,
             'slug' => $slug,
-            'policy' => $policy,
+            'policy' => $normalizedPolicy,
+            'db_state' => $destructive ? 'uninstalled_drop_data' : 'uninstalled_keep_data',
             'archive_path' => $archivePath,
         ]);
 
@@ -70,18 +104,6 @@ final class CoreModuleUninstallRunner
             'archive_path' => $archivePath,
             'snapshot_id' => (string) (($snapshot['snapshot']['snapshot_id'] ?? '')),
         ];
-    }
-
-    private function removeModuleState(string $slug): void
-    {
-        try {
-            $table = (string) config('database.prefixes.core', 'core_') . 'modules';
-            $pdo = (new ConnectionManager())->connection();
-            $stmt = $pdo->prepare('DELETE FROM ' . $table . ' WHERE slug = :slug');
-            $stmt->execute(['slug' => $slug]);
-        } catch (\Throwable $e) {
-            $this->logger->log('uninstall.state.cleanup_failed', ['slug' => $slug, 'error' => $e->getMessage()]);
-        }
     }
 
     private function copyDir(string $source, string $dest): bool

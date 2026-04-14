@@ -93,7 +93,10 @@ final class CoreModuleActivator
             $slug,
             (string) ($manifest['name'] ?? $slug),
             (string) ($manifest['version'] ?? '0.0.0'),
-            $enabled
+            $enabled,
+            $enabled ? 'enabled' : 'disabled',
+            (string) ($manifest['schema_version'] ?? ($manifest['module_schema_version'] ?? '')),
+            ''
         );
 
         Core\logs\Logger::info($enabled ? 'Module activé' : 'Module désactivé', ['scope' => $scope, 'slug' => $slug]);

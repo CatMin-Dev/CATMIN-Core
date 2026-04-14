@@ -8,7 +8,7 @@ require_once CATMIN_CORE . '/module-data-retention-policy.php';
 final class CoreModuleUninstallValidator
 {
     /** @return array{ok:bool,impact:array<string,mixed>,policy:string,errors:array<int,string>} */
-    public function validate(string $scope, string $slug, string $policy): array
+    public function validate(string $scope, string $slug, string $policy, bool $destructiveConfirmed = false): array
     {
         $analysis = (new CoreModuleUninstallImpactAnalyzer())->analyze($scope, $slug);
         if (!(bool) ($analysis['ok'] ?? false)) {
@@ -16,7 +16,8 @@ final class CoreModuleUninstallValidator
         }
 
         $impact = (array) ($analysis['impact'] ?? []);
-        $normalizedPolicy = (new CoreModuleDataRetentionPolicy())->normalize($policy);
+        $retentionPolicy = new CoreModuleDataRetentionPolicy();
+        $normalizedPolicy = $retentionPolicy->normalize($policy);
         $errors = [];
 
         if ((bool) ($impact['non_uninstallable'] ?? false)) {
@@ -24,6 +25,9 @@ final class CoreModuleUninstallValidator
         }
         if ((array) ($impact['active_reverse_dependencies'] ?? []) !== []) {
             $errors[] = 'module_has_active_reverse_dependencies';
+        }
+        if ($retentionPolicy->isDestructive($normalizedPolicy) && !$destructiveConfirmed) {
+            $errors[] = 'destructive_confirmation_required';
         }
 
         return [
