@@ -1,5 +1,17 @@
 [
     {
+        "version": "0.5.0-RC.6",
+        "date": "2026-04-14",
+        "scope": "core",
+        "changes": [
+            "cron core-backup now uses BackupManager unified flow (db_only, metadata, integrity) instead of legacy JSON drop",
+            "cron core-logs-rotate now rotates all site logs (*.log) with safe recreation and writable permissions",
+            "maintenance page no longer shows dedicated audit panel and points operators to global logs",
+            "maintenance diagnostics last failure now shows timestamp only, with full error lines preserved in global logs"
+        ],
+        "prompt": "cron-backup-logs-refactor-rc6"
+    },
+    {
         "version": "0.5.0-RC.5",
         "date": "2026-04-14",
         "scope": "core",

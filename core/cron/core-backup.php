@@ -6,56 +6,35 @@ require dirname(__DIR__, 2) . '/bootstrap.php';
 
 use Core\database\ConnectionManager;
 use Core\logs\Logger;
-use Core\versioning\Version;
+use Core\maintenance\BackupManager;
 
-$dir = CATMIN_STORAGE . '/backups';
-if (!is_dir($dir)) {
-    @mkdir($dir, 0775, true);
-}
+try {
+    $pdo = (new ConnectionManager())->connection();
+    $corePrefix = (string) config('database.prefixes.core', 'core_');
+    $manager = new BackupManager($pdo, $corePrefix . 'backups', $corePrefix . 'maintenance_audit');
 
-$driver = (string) config('database.default', 'sqlite');
-$stamp = date('YmdHis');
-$filename = $stamp . '.json';
-$target = $dir . '/' . $filename;
+    $result = $manager->createBackup('db_only', [
+        'origin' => 'cron.core-backup',
+        'user_id' => 0,
+        'username' => 'cron',
+        'ip' => '127.0.0.1',
+    ]);
 
-$payload = [
-    'generated_at' => date('c'),
-    'source' => 'cron.core-backup',
-    'driver' => $driver,
-    'version' => Version::current(),
-];
+    $ok = (bool) ($result['ok'] ?? false);
+    $file = (string) ($result['name'] ?? '');
 
-$ok = @file_put_contents(
-    $target,
-    (string) json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL
-) !== false;
+    Logger::info('Cron core-backup executed', [
+        'status' => $ok ? 'ok' : 'error',
+        'file' => $file,
+        'message' => (string) ($result['message'] ?? ''),
+    ]);
 
-if ($ok) {
-    try {
-        $pdo = (new ConnectionManager())->connection();
-        $table = (string) config('database.prefixes.core', 'core_') . 'backups';
-        $insert = $pdo->prepare(
-            'INSERT INTO ' . $table . ' (backup_type, status, file_path, checksum, size_bytes, created_at) VALUES (:backup_type, :status, :file_path, :checksum, :size_bytes, :created_at)'
-        );
-        $size = (int) (@filesize($target) ?: 0);
-        $checksum = (string) (@hash_file('sha256', $target) ?: '');
-        $insert->execute([
-            'backup_type' => 'auto',
-            'status' => 'success',
-            'file_path' => $target,
-            'checksum' => $checksum !== '' ? $checksum : null,
-            'size_bytes' => $size,
-            'created_at' => date('Y-m-d H:i:s'),
-        ]);
-    } catch (\Throwable $e) {
-        Logger::error('Cron core-backup DB insert failed', ['error' => substr($e->getMessage(), 0, 160)]);
+    echo 'core-backup status=' . ($ok ? 'ok' : 'error') . ' file=' . $file . PHP_EOL;
+    if (!$ok) {
+        exit(1);
     }
+} catch (\Throwable $e) {
+    Logger::error('Cron core-backup failed', ['error' => $e->getMessage()]);
+    echo 'core-backup status=error file=' . '' . PHP_EOL;
+    exit(1);
 }
-
-Logger::info('Cron core-backup executed', [
-    'status' => $ok ? 'ok' : 'error',
-    'file' => $filename,
-    'driver' => $driver,
-]);
-
-echo 'core-backup status=' . ($ok ? 'ok' : 'error') . ' file=' . $filename . PHP_EOL;

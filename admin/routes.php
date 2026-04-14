@@ -2523,7 +2523,6 @@ $routes = [
             $state = $loadSystemState($pdo, $coreSettingsTable, $coreBackupsTable);
             $backups = $manager->listBackups(200);
             $diagnostics = $manager->diagnostics();
-            $audit = $manager->auditLog(120);
             $maintenanceLevels = $manager->maintenanceLevels();
             $activeLevelPolicy = $engine->policyForLevel((int) ($state['maintenance_level'] ?? 0));
 
@@ -2532,7 +2531,6 @@ $routes = [
                 'state' => $state,
                 'backups' => $backups,
                 'diagnostics' => $diagnostics,
-                'audit' => $audit,
                 'maintenanceLevels' => $maintenanceLevels,
                 'activeLevelPolicy' => $activeLevelPolicy,
                 'message' => (string) ($flash['message'] ?? ''),

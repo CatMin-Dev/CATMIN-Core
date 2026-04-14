@@ -631,6 +631,7 @@ return [
     'maintenance.diagnostics.storage_ok' => 'OK',
     'maintenance.diagnostics.storage_error' => 'ERROR',
     'maintenance.diagnostics.orphans' => 'Orphans',
+    'maintenance.diagnostics.open_logs' => 'Open full logs',
     'maintenance.audit.title' => 'Audit log',
     'maintenance.audit.date' => 'Date',
     'maintenance.audit.action' => 'Action',

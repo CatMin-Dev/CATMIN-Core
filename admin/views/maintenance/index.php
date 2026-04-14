@@ -7,7 +7,6 @@ use Core\security\CsrfManager;
 $state = isset($state) && is_array($state) ? $state : [];
 $backups = isset($backups) && is_array($backups) ? $backups : [];
 $diagnostics = isset($diagnostics) && is_array($diagnostics) ? $diagnostics : [];
-$audit = isset($audit) && is_array($audit) ? $audit : [];
 $maintenanceLevels = isset($maintenanceLevels) && is_array($maintenanceLevels) ? $maintenanceLevels : [];
 $activeLevelPolicy = isset($activeLevelPolicy) && is_array($activeLevelPolicy) ? $activeLevelPolicy : [];
 $message = trim((string) ($message ?? ''));
@@ -234,34 +233,8 @@ ob_start();
             <div class="col-12 col-md-6 col-xl-3"><div class="border rounded p-2"><small class="text-body-secondary d-block"><?= htmlspecialchars(__('maintenance.diagnostics.storage'), ENT_QUOTES, 'UTF-8') ?></small><strong><?= !empty($diagnostics['storage_ok']) ? htmlspecialchars(__('maintenance.diagnostics.storage_ok'), ENT_QUOTES, 'UTF-8') : htmlspecialchars(__('maintenance.diagnostics.storage_error'), ENT_QUOTES, 'UTF-8') ?></strong></div></div>
             <div class="col-12 col-md-6 col-xl-3"><div class="border rounded p-2"><small class="text-body-secondary d-block"><?= htmlspecialchars(__('maintenance.diagnostics.orphans'), ENT_QUOTES, 'UTF-8') ?></small><strong><?= (int) ($diagnostics['orphans'] ?? 0) ?></strong></div></div>
         </div>
-    </div>
-</section>
-
-<section class="card mb-3">
-    <div class="card-header bg-transparent border-0 pt-3">
-        <h3 class="h6 mb-0"><?= htmlspecialchars(__('maintenance.audit.title'), ENT_QUOTES, 'UTF-8') ?></h3>
-    </div>
-    <div class="card-body pt-2">
-        <div class="table-responsive">
-            <table class="table table-sm align-middle mb-0">
-                <thead><tr><th><?= htmlspecialchars(__('maintenance.audit.date'), ENT_QUOTES, 'UTF-8') ?></th><th><?= htmlspecialchars(__('maintenance.audit.action'), ENT_QUOTES, 'UTF-8') ?></th><th><?= htmlspecialchars(__('maintenance.audit.result'), ENT_QUOTES, 'UTF-8') ?></th><th><?= htmlspecialchars(__('maintenance.audit.author'), ENT_QUOTES, 'UTF-8') ?></th><th><?= htmlspecialchars(__('maintenance.audit.ip'), ENT_QUOTES, 'UTF-8') ?></th><th><?= htmlspecialchars(__('maintenance.audit.message'), ENT_QUOTES, 'UTF-8') ?></th></tr></thead>
-                <tbody>
-                <?php if ($audit === []): ?>
-                    <tr><td colspan="6" class="text-body-secondary"><?= htmlspecialchars(__('maintenance.audit.empty'), ENT_QUOTES, 'UTF-8') ?></td></tr>
-                <?php else: ?>
-                    <?php foreach ($audit as $event): ?>
-                        <tr>
-                            <td><?= htmlspecialchars((string) ($event['created_at'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
-                            <td><code><?= htmlspecialchars((string) ($event['action'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></code></td>
-                            <td><span class="badge <?= $badgeClass((string) ($event['result'] ?? 'secondary')) ?>"><?= htmlspecialchars((string) ($event['result'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></span></td>
-                            <td><?= htmlspecialchars((string) ($event['actor_username'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
-                            <td><?= htmlspecialchars((string) ($event['ip_address'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
-                            <td><?= htmlspecialchars((string) ($event['message'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
-                        </tr>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-                </tbody>
-            </table>
+        <div class="mt-2 small">
+            <a href="<?= htmlspecialchars($adminBase . '/logs', ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars(__('maintenance.diagnostics.open_logs'), ENT_QUOTES, 'UTF-8') ?></a>
         </div>
     </div>
 </section>

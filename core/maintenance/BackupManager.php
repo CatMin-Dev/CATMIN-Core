@@ -196,7 +196,7 @@ final class BackupManager
                 'message' => 'Sauvegarde créée: ' . $filename,
             ];
         } catch (Throwable $e) {
-            return $this->registerBackupFailure($type, '', [], $context, 'Échec création sauvegarde: ' . substr($e->getMessage(), 0, 180));
+            return $this->registerBackupFailure($type, '', [], $context, 'Échec création sauvegarde: ' . $e->getMessage());
         } finally {
             $this->releaseLock($lock);
         }
@@ -408,32 +408,26 @@ final class BackupManager
             if (is_array($restore)) {
                 $lastRestore = (string) ($restore['created_at'] ?? '-');
                 if (strtolower((string) ($restore['status'] ?? '')) !== 'success') {
-                    $lastFailure = (string) ($restore['last_error'] ?? 'restore.failed');
+                    $lastFailure = (string) ($restore['created_at'] ?? '-');
                 }
             }
 
             $failureStmt = $this->pdo->query(
-                "SELECT created_at, last_error, status, backup_type FROM " . $this->backupsTable
+                "SELECT created_at FROM " . $this->backupsTable
                 . " WHERE (LOWER(COALESCE(status, '')) IN ('failed','error') OR TRIM(COALESCE(last_error, '')) != '')"
                 . " ORDER BY created_at DESC LIMIT 1"
             );
             $failure = $failureStmt !== false ? $failureStmt->fetch(PDO::FETCH_ASSOC) : false;
             if (is_array($failure)) {
-                $failureDate = (string) ($failure['created_at'] ?? '-');
-                $failureMsg = trim((string) ($failure['last_error'] ?? ''));
-                $failureType = trim((string) ($failure['backup_type'] ?? 'backup'));
-                if ($failureMsg === '') {
-                    $failureMsg = 'statut=' . (string) ($failure['status'] ?? 'failed');
-                }
-                $lastFailure = $failureDate . ' [' . $failureType . '] ' . $failureMsg;
+                $lastFailure = (string) ($failure['created_at'] ?? '-');
             }
         } catch (Throwable) {
         }
 
         if ($lastFailure === '-') {
-            $logFailure = $this->lastBackupRuntimeFailureFromLogs();
-            if ($logFailure !== '') {
-                $lastFailure = $logFailure;
+            $logFailureAt = $this->lastBackupRuntimeFailureAtFromLogs();
+            if ($logFailureAt !== '') {
+                $lastFailure = $logFailureAt;
             }
         }
 
@@ -457,6 +451,7 @@ final class BackupManager
     public function auditLog(int $limit = 120): array
     {
         $limit = max(1, min(500, $limit));
+
         try {
             $stmt = $this->pdo->prepare(
                 'SELECT id, action, result, message, actor_user_id, actor_username, ip_address, created_at, context FROM ' . $this->auditTable . ' ORDER BY created_at DESC LIMIT :limit'
@@ -537,7 +532,7 @@ final class BackupManager
         } catch (Throwable) {
         }
 
-        $this->logAudit('backup.create', 'error', 'Échec création backup', ['error' => substr($message, 0, 240), 'type' => $type, 'path' => $path], $context);
+        $this->logAudit('backup.create', 'error', 'Échec création backup', ['error' => $message, 'type' => $type, 'path' => $path], $context);
         return ['ok' => false, 'message' => $message];
     }
 
@@ -1134,23 +1129,88 @@ final class BackupManager
 
     private function logAudit(string $action, string $result, string $message, array $context = [], array $actor = []): void
     {
+        $rawMessage = trim($message);
+        $event = [
+            'action' => substr($action, 0, 120),
+            'result' => substr($result, 0, 40),
+            'message' => $rawMessage,
+            'actor_user_id' => (int) ($actor['user_id'] ?? 0),
+            'actor_username' => substr((string) ($actor['username'] ?? ''), 0, 120),
+            'ip_address' => substr((string) ($actor['ip'] ?? ''), 0, 64),
+            'context' => $context,
+            'created_at' => gmdate('Y-m-d H:i:s'),
+        ];
+
         try {
             $stmt = $this->pdo->prepare(
                 'INSERT INTO ' . $this->auditTable . ' (action, result, message, actor_user_id, actor_username, ip_address, context, created_at) '
                 . 'VALUES (:action, :result, :message, :actor_user_id, :actor_username, :ip_address, :context, :created_at)'
             );
             $stmt->execute([
-                'action' => substr($action, 0, 120),
-                'result' => substr($result, 0, 40),
-                'message' => substr($message, 0, 255),
-                'actor_user_id' => (int) ($actor['user_id'] ?? 0),
-                'actor_username' => substr((string) ($actor['username'] ?? ''), 0, 120),
-                'ip_address' => substr((string) ($actor['ip'] ?? ''), 0, 64),
-                'context' => (string) json_encode($context, JSON_UNESCAPED_SLASHES),
-                'created_at' => gmdate('Y-m-d H:i:s'),
+                'action' => (string) $event['action'],
+                'result' => (string) $event['result'],
+                'message' => substr((string) $event['message'], 0, 255),
+                'actor_user_id' => (int) $event['actor_user_id'],
+                'actor_username' => (string) $event['actor_username'],
+                'ip_address' => (string) $event['ip_address'],
+                'context' => (string) json_encode((array) ($event['context'] ?? []), JSON_UNESCAPED_SLASHES),
+                'created_at' => (string) $event['created_at'],
             ]);
         } catch (Throwable) {
         }
+
+        $level = 'INFO';
+        $resultNorm = strtolower((string) ($event['result'] ?? ''));
+        if (in_array($resultNorm, ['error', 'failed', 'danger'], true)) {
+            $level = 'ERROR';
+        } elseif (in_array($resultNorm, ['warning', 'warn'], true)) {
+            $level = 'WARNING';
+        }
+
+        $this->appendToGlobalLogs($level, (string) ($event['message'] ?? ''), [
+            'channel' => 'maintenance',
+            'action' => (string) ($event['action'] ?? ''),
+            'result' => (string) ($event['result'] ?? ''),
+            'actor_user_id' => (int) ($event['actor_user_id'] ?? 0),
+            'actor_username' => (string) ($event['actor_username'] ?? ''),
+            'ip_address' => (string) ($event['ip_address'] ?? ''),
+            'context' => (array) ($event['context'] ?? []),
+        ]);
+    }
+
+    /** @param array<string, mixed> $context */
+    private function appendToGlobalLogs(string $level, string $message, array $context = []): void
+    {
+        $path = CATMIN_STORAGE . '/logs/catmin.log';
+        $dir = dirname($path);
+        if (!is_dir($dir) && !@mkdir($dir, 0775, true) && !is_dir($dir)) {
+            return;
+        }
+
+        $level = strtoupper(trim($level));
+        if ($level === '') {
+            $level = 'INFO';
+        }
+
+        $payload = $context !== []
+            ? (string) json_encode($context, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
+            : '';
+
+        $line = '[' . gmdate('Y-m-d\\TH:i:sP') . '] ' . $level . ': [maintenance] ' . trim($message);
+        if ($payload !== '' && $payload !== 'null') {
+            $line .= ' ' . $payload;
+        }
+
+        if (trim($line) === '') {
+            return;
+        }
+
+        if (is_file($path)) {
+            @chmod($path, 0664);
+        }
+
+        @file_put_contents($path, $line . PHP_EOL, FILE_APPEND | LOCK_EX);
+        @chmod($path, 0664);
     }
 
     private function acquireLock()
@@ -1179,7 +1239,7 @@ final class BackupManager
         }
     }
 
-    private function lastBackupRuntimeFailureFromLogs(): string
+    private function lastBackupRuntimeFailureAtFromLogs(): string
     {
         $logFiles = [
             CATMIN_STORAGE . '/logs/catmin.log',
@@ -1190,7 +1250,6 @@ final class BackupManager
             if (!is_file($logFile)) {
                 continue;
             }
-
             $lines = @file($logFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
             if (!is_array($lines) || $lines === []) {
                 continue;
@@ -1198,27 +1257,17 @@ final class BackupManager
 
             for ($i = count($lines) - 1; $i >= 0; $i--) {
                 $line = (string) $lines[$i];
-                if (stripos($line, '/maintenance/backup/create') === false) {
+                $isMaintenanceLine = stripos($line, '[maintenance]') !== false || stripos($line, '/maintenance/backup/create') !== false;
+                if (!$isMaintenanceLine) {
                     continue;
                 }
                 if (stripos($line, 'ERROR') === false) {
                     continue;
                 }
-                $timestamp = '';
+
                 if (preg_match('/^\[([^\]]+)\]/', $line, $m) === 1) {
-                    $timestamp = trim((string) ($m[1] ?? ''));
+                    return trim((string) ($m[1] ?? ''));
                 }
-
-                $runtimeMessage = '';
-                if (preg_match('/"message":"([^"]+)"/', $line, $m) === 1) {
-                    $runtimeMessage = stripcslashes((string) ($m[1] ?? ''));
-                }
-
-                if ($runtimeMessage !== '') {
-                    return ($timestamp !== '' ? ('[' . $timestamp . '] ') : '') . $runtimeMessage;
-                }
-
-                return mb_substr($line, 0, 220);
             }
         }
 
