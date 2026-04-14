@@ -16,3 +16,10 @@
 
 ## Runtime
 - fichiers d'état et logs dans `storage/` + `logs/`.
+
+## Cohérence DB au boot
+- `core/db-coherence-guard.php` est exécuté au boot (hors zone install).
+- le guard applique les migrations core manquantes avant exécution.
+- il valide la version de schéma attendue et les tables critiques.
+- il synchronise l'état runtime des modules avec `core_modules.status`.
+- en cas d'incohérence critique, le boot est bloqué avec journalisation.

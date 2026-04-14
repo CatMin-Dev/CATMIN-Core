@@ -23,7 +23,9 @@ final class InstallerLockManager
             'payload' => $payload,
         ];
 
-        file_put_contents($this->lockFile(), json_encode($record, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), LOCK_EX);
+        $json = json_encode($record, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        file_put_contents($this->lockFile(), $json, LOCK_EX);
+        file_put_contents(CATMIN_STORAGE . '/install.lock', $json, LOCK_EX);
 
         $note = CATMIN_STORAGE . '/install/neutralization-note.txt';
         file_put_contents($note, "Installer locked. You can now remove the /install directory from deployment if desired.\n", LOCK_EX);

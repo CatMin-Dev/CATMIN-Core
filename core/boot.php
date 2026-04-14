@@ -20,6 +20,7 @@ final class CoreBoot
 
         self::checkInstallLock();
         self::initErrorHandling();
+        self::enforceDatabaseCoherence();
         self::initSession();
         self::loadModules();
         self::initHooks();
@@ -112,6 +113,27 @@ final class CoreBoot
     {
         require_once CATMIN_CORE . '/failsafe/FailsafeManager.php';
         Core\failsafe\FailsafeManager::register();
+    }
+
+    private static function enforceDatabaseCoherence(): void
+    {
+        if (CATMIN_AREA === 'install') {
+            return;
+        }
+
+        require_once CATMIN_CORE . '/db-coherence-guard.php';
+        $report = (new CoreDbCoherenceGuard())->run();
+        if ((bool) ($report['ok'] ?? false)) {
+            return;
+        }
+
+        $critical = array_values(array_filter(array_map('strval', (array) ($report['critical'] ?? [])), static fn (string $line): bool => trim($line) !== ''));
+        $message = 'Core DB incoherence detected';
+        if ($critical !== []) {
+            $message .= ': ' . implode(' | ', $critical);
+        }
+
+        throw new RuntimeException($message);
     }
 
     private static function initSession(): void

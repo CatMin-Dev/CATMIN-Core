@@ -31,8 +31,11 @@ final class MigrationRunner
         $applied = $this->appliedMigrations($pdo, $prefixes['core'] ?? 'core_');
         $batch = $this->nextBatch($pdo, $prefixes['core'] ?? 'core_');
 
+        $files = glob(rtrim($migrationsPath, '/') . '/*.php') ?: [];
+        sort($files, SORT_STRING);
+
         $executed = [];
-        foreach (glob(rtrim($migrationsPath, '/') . '/*.php') ?: [] as $file) {
+        foreach ($files as $file) {
             $name = basename($file);
             if (in_array($name, $applied, true)) {
                 continue;

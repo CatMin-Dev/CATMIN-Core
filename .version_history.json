@@ -1,5 +1,16 @@
 [
     {
+        "version": "0.4.0-RC.20",
+        "date": "2026-04-14",
+        "scope": "core",
+        "changes": [
+            "boot-time DB coherence guard added with migration auto-apply and critical stop on incoherence",
+            "core DB migration ordering hardened and install lock writing aligned on install.lock + installed.lock",
+            "health diagnostics and logging strengthened for DB/version/tables coherence enforcement"
+        ],
+        "prompt": "catmin-core-db-correctifs"
+    },
+    {
         "version": "0.4.0-RC.19",
         "date": "2026-04-14",
         "scope": "core",

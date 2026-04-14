@@ -7,6 +7,9 @@ namespace Core\system;
 use Core\database\ConnectionManager;
 use Core\versioning\Version;
 
+require_once CATMIN_CORE . '/module-loader.php';
+require_once CATMIN_CORE . '/module-state-store.php';
+
 final class HealthCheckService
 {
     public function run(): array
@@ -137,7 +140,7 @@ final class HealthCheckService
                 $dbCurrent = 'unknown';
             }
             $dbExpected = (string) config('database.schema_version', 'unknown');
-            $checks[] = $this->mk('db.version', 'Version DB', $dbCurrent === $dbExpected ? 'healthy' : 'warning', 'Actuelle: ' . $dbCurrent . ' / Attendue: ' . $dbExpected);
+            $checks[] = $this->mk('db.version', 'Version DB', $dbCurrent === $dbExpected ? 'healthy' : 'critical', 'Actuelle: ' . $dbCurrent . ' / Attendue: ' . $dbExpected);
         } catch (\Throwable $e) {
             $checks[] = $this->mk('db.connection', 'Connexion DB', 'critical', 'Indisponible: ' . substr($e->getMessage(), 0, 120));
         }
@@ -177,15 +180,44 @@ final class HealthCheckService
             $snapshot = $loader->scan();
             $modules = (array) ($snapshot['modules'] ?? []);
             $invalid = 0;
+            $knownSlugs = [];
             foreach ($modules as $module) {
                 $errors = (array) ($module['errors'] ?? []);
                 $state = (string) ($module['state'] ?? '');
+                $slug = strtolower(trim((string) ($module['manifest']['slug'] ?? '')));
+                if ($slug !== '') {
+                    $knownSlugs[$slug] = true;
+                }
                 if ($errors !== [] || in_array($state, ['error', 'invalid', 'incompatible'], true)) {
                     $invalid++;
                 }
             }
-            $status = $invalid > 0 ? 'warning' : 'healthy';
-            $checks[] = $this->mk('modules.validity', 'Modules', $status, $invalid > 0 ? ($invalid . ' module(s) en anomalie') : 'Modules cohérents');
+
+            $stateBySlug = (new \CoreModuleStateStore())->stateBySlug();
+            $orphaned = [];
+            foreach (array_keys($stateBySlug) as $dbSlug) {
+                $dbState = strtolower(trim((string) ($stateBySlug[$dbSlug]['db_state'] ?? '')));
+                if (in_array($dbState, ['uninstalled_keep_data', 'uninstalled_drop_data'], true)) {
+                    continue;
+                }
+                if (!isset($knownSlugs[$dbSlug])) {
+                    $orphaned[] = $dbSlug;
+                }
+            }
+
+            $status = ($invalid > 0 || $orphaned !== []) ? 'warning' : 'healthy';
+            $detail = [];
+            if ($invalid > 0) {
+                $detail[] = $invalid . ' module(s) en anomalie';
+            }
+            if ($orphaned !== []) {
+                $detail[] = count($orphaned) . ' état(s) orphelin(s)';
+            }
+            if ($detail === []) {
+                $detail[] = 'Modules cohérents';
+            }
+
+            $checks[] = $this->mk('modules.validity', 'Modules', $status, implode(' | ', $detail));
         } catch (\Throwable $e) {
             $checks[] = $this->mk('modules.validity', 'Modules', 'warning', 'Check indisponible: ' . substr($e->getMessage(), 0, 120));
         }
