@@ -1366,6 +1366,7 @@ return [
             $section = match ($section) {
                 'mail' => 'mail',
                 'security' => 'security',
+                'media' => 'media',
                 'apps', 'module-repositories', 'market' => 'advanced',
                 'appearance', 'sidebar', 'performance', 'advanced' => $section,
                 default => 'general',
@@ -1381,7 +1382,7 @@ return [
     [
         'method' => 'GET',
         'path' => '/settings/{section}',
-        'where' => ['section' => 'general|appearance|sidebar|mail|performance|security|advanced|apps|module-repositories'],
+        'where' => ['section' => 'general|appearance|sidebar|mail|performance|security|media|advanced|apps|module-repositories'],
         'handler' => static function (Request $request, string $section) use ($consumeFlash, $appsRepository): Response {
             $controller = new AuthController();
             $adminBase = $controller->adminBasePath();
@@ -1403,6 +1404,18 @@ return [
             }
             $settings['interface'] = $settings['ui'];
             $settings['email'] = $settings['mail'];
+
+            $mediaSettings = [];
+            $mediaPresets = [];
+            $mediaRepoPath = CATMIN_MODULES . '/admin/cat-media-link/repositories/MediaLinkRepository.php';
+            if (is_file($mediaRepoPath)) {
+                require_once $mediaRepoPath;
+                if (class_exists('Modules\\CatMediaLink\\repositories\\MediaLinkRepository')) {
+                    $mediaRepo = new \Modules\CatMediaLink\repositories\MediaLinkRepository();
+                    $mediaSettings = $mediaRepo->getSettings();
+                    $mediaPresets = $mediaRepo->listPresets();
+                }
+            }
 
             $sidebarGroupMeta = [
                 'dashboard' => ['label' => __('nav.dashboard'), 'icon' => 'house-door', 'order' => 10],
@@ -1592,6 +1605,8 @@ return [
                 'apps' => $appsRepository->listAll(),
                 'repositories' => $registry->listRepositories(),
                 'policy' => $registry->policy(),
+                'mediaSettings' => $mediaSettings,
+                'mediaPresets' => $mediaPresets,
                 'sidebarGroups' => array_values($sidebarGroups),
                 'sidebarOrder' => $sidebarOrder,
                 'sidebarOrderIds' => $sidebarOrderIds,
@@ -1627,6 +1642,7 @@ return [
             $section = match ($section) {
                 'mail' => 'mail',
                 'security' => 'security',
+                'media' => 'media',
                 'appearance' => 'appearance',
                 'sidebar' => 'sidebar',
                 'performance' => 'performance',
@@ -1746,7 +1762,7 @@ return [
     [
         'method' => 'POST',
         'path' => '/settings/{section}',
-        'where' => ['section' => 'general|appearance|sidebar|mail|performance|security|advanced|apps|module-repositories'],
+        'where' => ['section' => 'general|appearance|sidebar|mail|performance|security|media|advanced|apps|module-repositories'],
         'handler' => static function (Request $request, string $section) use ($upsertCoreSetting, $redirect, $coreSettingsTable, $appendCoreLog, $coreLogsTable, $appsValidator, $appsRepository, $notificationsRepository): Response {
             $controller = new AuthController();
             $adminBase = $controller->adminBasePath();
@@ -1765,6 +1781,7 @@ return [
             $section = match ($rawSection) {
                 'mail' => 'mail',
                 'security' => 'security',
+                'media' => 'media',
                 'appearance' => 'appearance',
                 'sidebar' => 'sidebar',
                 'performance' => 'performance',
