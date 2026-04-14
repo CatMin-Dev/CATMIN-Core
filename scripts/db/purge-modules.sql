@@ -1,21 +1,21 @@
--- Drop module tables (execute only after backup)
-DROP TABLE IF EXISTS cat_page_pages;
-DROP TABLE IF EXISTS cat_page_pages_meta;
-DROP TABLE IF EXISTS cat_page_revisions;
-DROP TABLE IF EXISTS cat_page_audit_trail;
-DROP TABLE IF EXISTS cat_page_workflow;
-DROP TABLE IF EXISTS cat_page_preview_tokens;
-DROP TABLE IF EXISTS cat_page_search_index;
-DROP TABLE IF EXISTS mod_cat_blog_posts;
-DROP TABLE IF EXISTS mod_cat_blog_meta;
-DROP TABLE IF EXISTS mod_cat_blog_revisions;
-DROP TABLE IF EXISTS mod_cat_logger_logs;
-DROP TABLE IF EXISTS cat_cache_entries;
-DROP TABLE IF EXISTS cat_media_assets;
-DROP TABLE IF EXISTS cat_menu_items;
-DROP TABLE IF EXISTS cat_relations_links;
-DROP TABLE IF EXISTS cat_search_index;
-DROP TABLE IF EXISTS cat_seo_rules;
-DROP TABLE IF EXISTS cat_settings_extended;
-DROP TABLE IF EXISTS cat_tags_tags;
-DROP TABLE IF EXISTS user_profiles;
+-- Generic purge for module tables (MySQL/MariaDB).
+-- It drops every table matching @module_table_like.
+
+SET @module_table_like := 'mod\_%';
+
+SELECT GROUP_CONCAT(
+		CONCAT(
+				'DROP TABLE IF EXISTS `',
+				REPLACE(table_name, '`', '``'),
+				'`'
+		)
+		SEPARATOR '; '
+) INTO @purge_sql
+FROM information_schema.tables
+WHERE table_schema = DATABASE()
+	AND table_name LIKE @module_table_like;
+
+SET @purge_sql := IFNULL(@purge_sql, 'SELECT ''No module tables matched'' AS info');
+PREPARE purge_stmt FROM @purge_sql;
+EXECUTE purge_stmt;
+DEALLOCATE PREPARE purge_stmt;

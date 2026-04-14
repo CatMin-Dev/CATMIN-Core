@@ -3,7 +3,7 @@ set -euo pipefail
 
 if [ "${1:-}" = "" ] || [ "${2:-}" = "" ] || [ "${3:-}" = "" ]; then
   echo "Usage: $0 <modules-root> <private-key.pem> <key-id>" >&2
-  echo "Example: $0 catmin/modules/admin release/keys/catmin-official-dev-20260410-private.pem catmin-official-dev-20260410" >&2
+  echo "Example: $0 catmin/modules/admin release/keys/catmin-official-main-2026-private.pem catmin-official-main-2026" >&2
   exit 1
 fi
 

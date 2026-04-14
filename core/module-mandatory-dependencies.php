@@ -11,15 +11,7 @@ final class CoreModuleMandatoryDependencies
     {
         $slug = strtolower(trim($slug));
 
-        return match ($slug) {
-            'cat-seo-meta' => ['cat-slug'],
-            'cat-tags' => ['cat-seo-meta'],
-            'cat-categories' => ['cat-seo-meta', 'cat-tags'],
-            'cat-authors' => ['cat-seo-meta'],
-            'cat-page', 'cat-blog', 'cat-directory' => ['cat-slug', 'cat-seo-meta', 'cat-tags', 'cat-categories', 'cat-authors'],
-            'cat-products' => ['cat-slug', 'cat-seo-meta', 'cat-tags', 'cat-categories'],
-            default => [],
-        };
+        return [];
     }
 
     public static function mergedWithManifest(array $manifest): array

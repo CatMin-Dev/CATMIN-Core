@@ -17,7 +17,7 @@ Document officiel pour les éditeurs `community` et `trusted` qui veulent publie
 - Si dépôt multi-modules: publier `catmin-repository.json`.
 
 Référence pipeline:
-- `docs/release/module-release-pipeline-078-080.md`
+- `docs/release/module-release-pipeline.md`
 
 ### Étape 3: Publier la release
 - Dépôt public accessible.

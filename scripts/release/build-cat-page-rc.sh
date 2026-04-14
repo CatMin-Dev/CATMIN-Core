@@ -2,20 +2,28 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-MODULE_DIR="${ROOT_DIR}/modules/admin/cat-page"
+MODULE_DIR="${1:-}"
 RELEASE_ROOT="${ROOT_DIR}/../release/modules"
 
+if [ "${MODULE_DIR}" = "" ]; then
+  echo "Usage: $0 <module-dir>" >&2
+  echo "Example: $0 ${ROOT_DIR}/modules/admin/my-module" >&2
+  exit 1
+fi
+
 if [ ! -d "${MODULE_DIR}" ]; then
-  echo "CAT-PAGE module not found: ${MODULE_DIR}" >&2
+  echo "Module directory not found: ${MODULE_DIR}" >&2
   exit 1
 fi
 
 if [ ! -f "${MODULE_DIR}/manifest.json" ]; then
-  echo "CAT-PAGE manifest missing: ${MODULE_DIR}/manifest.json" >&2
+  echo "Manifest missing: ${MODULE_DIR}/manifest.json" >&2
   exit 1
 fi
 
-echo "[1/4] Lint CAT-PAGE PHP files..."
+MODULE_LABEL="$(basename "${MODULE_DIR}")"
+
+echo "[1/4] Lint PHP files for ${MODULE_LABEL}..."
 while IFS= read -r -d '' file; do
   php -l "${file}" >/dev/null
 done < <(find "${MODULE_DIR}" -type f -name '*.php' -print0)

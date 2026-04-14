@@ -40,7 +40,7 @@ Never package:
 - `scripts/release/sync-official-modules-index.php`
 
 ## Exemple concret
-- `docs/release/module-pipeline-example-file-map-082.md`
+- `docs/release/module-pipeline-example-file-map.md`
 
 ## Usage
 
@@ -58,7 +58,7 @@ With RSA signing:
 
 ```bash
 MODULE_SIGNING_KEY=/abs/keys/module-private.pem \
-MODULE_SIGNING_KEY_ID=catmin-official-key-001 \
+MODULE_SIGNING_KEY_ID=catmin-official-main-2026 \
 bash scripts/release/build-module-release.sh /abs/path/to/module
 ```
 
@@ -67,7 +67,7 @@ Strict RELEASE mode (signature mandatory):
 ```bash
 CATMIN_RELEASE_TARGET=release \
 MODULE_SIGNING_KEY=/abs/keys/module-private.pem \
-MODULE_SIGNING_KEY_ID=catmin-official-key-001 \
+MODULE_SIGNING_KEY_ID=catmin-official-main-2026 \
 bash scripts/release/build-module-release.sh /abs/path/to/module
 ```
 

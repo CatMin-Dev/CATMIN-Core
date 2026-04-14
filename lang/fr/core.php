@@ -63,7 +63,6 @@ return [
     'settings.section.sidebar' => 'Sidebar',
     'settings.section.content' => 'Contenu',
     'settings.section.seo' => 'SEO',
-    'settings.section.media' => 'Médias',
     'settings.section.organization' => 'Organisation',
     'settings.section.marketing' => 'Marketing',
     'settings.section.notifications' => 'Notifications',

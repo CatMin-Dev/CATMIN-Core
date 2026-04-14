@@ -5,7 +5,7 @@ Donner un exemple concret et exploitable du mapping source -> package -> artefac
 
 ## Exemple dépôt source
 Chemin source:
-- `/modules/admin/cat-page/`
+- `/modules/admin/<module-slug>/`
 
 Contenu attendu:
 - `manifest.json`
@@ -22,7 +22,7 @@ Contenu attendu:
 
 ## Exemple package final
 Nom package:
-- `cat-page-1.0.0.zip`
+- `<module-slug>-<version>.zip`
 
 Contenu interne du ZIP (racine module):
 - `manifest.json`
@@ -45,12 +45,12 @@ Exclusions release (non exhaustif):
 - clés privées (`*.key`, `*.pem`, `*.p12`, `*.pfx`)
 
 ## Artefacts release attendus
-Pour `cat-page:1.0.0`:
-- `cat-page-1.0.0.zip`
-- `cat-page-1.0.0.manifest.json`
-- `cat-page-1.0.0.checksums.json`
-- `cat-page-1.0.0.signature.json` (si signature active)
-- `cat-page-1.0.0.release-metadata.json`
+Pour `<module-slug>:<version>`:
+- `<module-slug>-<version>.zip`
+- `<module-slug>-<version>.manifest.json`
+- `<module-slug>-<version>.checksums.json`
+- `<module-slug>-<version>.signature.json` (si signature active)
+- `<module-slug>-<version>.release-metadata.json`
 
 ## Exemple workflow global
 1. Dépôt source valide.
@@ -72,18 +72,18 @@ Pour `cat-page:1.0.0`:
 
 ## Exemple commandes (pipeline local)
 ```bash
-bash scripts/release/build-module-release.sh /abs/path/modules/admin/cat-page
+bash scripts/release/build-module-release.sh /abs/path/modules/admin/<module-slug>
 ```
 
 Avec signature:
 ```bash
 MODULE_SIGNING_KEY=/abs/keys/module-private.pem \
-MODULE_SIGNING_KEY_ID=catmin-official-key-001 \
-bash scripts/release/build-module-release.sh /abs/path/modules/admin/cat-page
+MODULE_SIGNING_KEY_ID=catmin-official-main-2026 \
+bash scripts/release/build-module-release.sh /abs/path/modules/admin/<module-slug>
 ```
 
 Vérification explicite:
 ```bash
-php scripts/release/verify-module-release.php /abs/release/modules/cat-page-1.0.0/module.zip --require-signature
+php scripts/release/verify-module-release.php /abs/release/modules/<module-slug>-<version>/module.zip --require-signature
 ```
 

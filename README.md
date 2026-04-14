@@ -90,12 +90,12 @@ Artefacts attendus:
 - `docs/core/release.md`
 - `docs/release/standalone-final.md`
 - `docs/release/release-checklist.md`
-- `docs/release/final-release-checklist-v1-047.md`
+- `docs/release/final-release-checklist.md`
 
 ### Modules / trust
-- `docs/modules/repository-registry-063-066.md`
-- `docs/modules/market-trust-policy-065-069-070.md`
-- `docs/modules/community-signing-trust-admission-081.md`
+- `docs/modules/repository-registry.md`
+- `docs/modules/market-trust-policy.md`
+- `docs/modules/community-signing-trust-admission.md`
 
 ## Dépôts
 

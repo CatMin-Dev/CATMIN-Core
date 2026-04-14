@@ -27,7 +27,7 @@
 - Archiver rapport de build.
 
 ## Références V1
-- Checklist finale complète: `docs/release/final-release-checklist-v1-047.md`
-- Recovery et limites connues: `docs/release/recovery-known-limits-v1-046.md`
-- Backup initial install: `docs/release/installer-initial-backup-v1-048.md`
-- Topbar / i18n / notifications / apps: `docs/release/topbar-bridges-i18n-notifications-apps-049-052.md`
+- Checklist finale complète: `docs/release/final-release-checklist.md`
+- Recovery et limites connues: `docs/release/recovery-known-limits.md`
+- Backup initial install: `docs/release/installer-initial-backup.md`
+- Topbar / i18n / notifications / apps: `docs/release/topbar-bridges-i18n-notifications-apps.md`

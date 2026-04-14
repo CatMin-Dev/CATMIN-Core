@@ -1,9 +1,9 @@
 # CATMIN Modules Wave 1 Roadmap (055)
 
 ## Wave 1 modules (order)
-1. CAT-PAGE
-2. CAT-SEO
-3. CAT-MEDIA
+1. Module CMS (pages/contenu)
+2. Module SEO/metadata
+3. Module media/assets
 
 ## Module baseline structure
 - `manifest.json`

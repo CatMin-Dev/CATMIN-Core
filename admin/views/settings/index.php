@@ -19,7 +19,6 @@ $sections = [
     'mail' => __('settings.section.mail'),
     'performance' => __('settings.section.performance'),
     'security' => __('settings.section.security'),
-    'media' => 'Media',
     'advanced' => __('settings.section.advanced'),
 ];
 
@@ -44,8 +43,6 @@ $ui = (array) ($settings['ui'] ?? []);
 $maintenance = (array) ($settings['maintenance'] ?? []);
 $backup = (array) ($settings['backup'] ?? []);
 $system = (array) ($settings['system'] ?? []);
-$mediaSettings = isset($mediaSettings) && is_array($mediaSettings) ? $mediaSettings : [];
-$mediaPresets = isset($mediaPresets) && is_array($mediaPresets) ? $mediaPresets : [];
 $sidebarGroups = isset($sidebarGroups) && is_array($sidebarGroups) ? $sidebarGroups : [];
 $sidebarOrder = isset($sidebarOrder) && is_array($sidebarOrder) ? $sidebarOrder : [];
 $sidebarOrderIds = isset($sidebarOrderIds) && is_array($sidebarOrderIds) ? $sidebarOrderIds : [];
@@ -492,118 +489,6 @@ $inlineMessage = '';
                     <a class="btn btn-outline-secondary" href="<?= htmlspecialchars($adminBase . '/settings/security', ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars(__('common.reload'), ENT_QUOTES, 'UTF-8') ?></a>
                 </div>
             </form>
-        <?php elseif ($section === 'media'): ?>
-            <div class="d-grid gap-3">
-                <section class="card">
-                    <div class="card-header bg-transparent border-0 pt-3">
-                        <h3 class="h6 mb-0">Media processing</h3>
-                    </div>
-                    <div class="card-body pt-2">
-                        <form method="post" action="<?= htmlspecialchars($adminBase . '/modules/media-link/settings/save', ENT_QUOTES, 'UTF-8') ?>" class="row g-3">
-                            <input type="hidden" name="_csrf" value="<?= $csrf ?>">
-                            <input type="hidden" name="redirect_to" value="/settings/media">
-                            <div class="col-12 col-lg-4">
-                                <label class="form-label">Default quality</label>
-                                <input class="form-control" type="number" min="1" max="100" name="default_quality" value="<?= (int) ($mediaSettings['default_quality'] ?? 82) ?>">
-                            </div>
-                            <div class="col-12 col-lg-4">
-                                <label class="form-label">Allowed formats</label>
-                                <input class="form-control" type="text" name="allowed_formats" value="<?= htmlspecialchars((string) ($mediaSettings['allowed_formats'] ?? 'jpg,webp,png'), ENT_QUOTES, 'UTF-8') ?>">
-                            </div>
-                            <div class="col-12 col-lg-4">
-                                <label class="form-label">Fallback mode</label>
-                                <?php $fallbackMode = (string) ($mediaSettings['fallback_mode'] ?? 'original'); ?>
-                                <select class="form-select" name="fallback_mode">
-                                    <option value="original" <?= $fallbackMode === 'original' ? 'selected' : '' ?>>original</option>
-                                    <option value="preset_default" <?= $fallbackMode === 'preset_default' ? 'selected' : '' ?>>preset_default</option>
-                                </select>
-                            </div>
-                            <div class="col-12 d-flex flex-wrap gap-3">
-                                <label class="form-check"><input class="form-check-input" type="checkbox" name="auto_generate_enabled" value="1" <?= !empty($mediaSettings['auto_generate_enabled']) ? 'checked' : '' ?>> <span class="form-check-label">Auto generate variants</span></label>
-                                <label class="form-check"><input class="form-check-input" type="checkbox" name="manual_editor_enabled" value="1" <?= !empty($mediaSettings['manual_editor_enabled']) ? 'checked' : '' ?>> <span class="form-check-label">Manual editor enabled</span></label>
-                                <label class="form-check"><input class="form-check-input" type="checkbox" name="crop_required" value="1" <?= !empty($mediaSettings['crop_required']) ? 'checked' : '' ?>> <span class="form-check-label">Crop required</span></label>
-                            </div>
-                            <div class="col-12 d-flex gap-2">
-                                <button class="btn btn-primary" type="submit"><?= htmlspecialchars(__('common.save'), ENT_QUOTES, 'UTF-8') ?></button>
-                                <a class="btn btn-outline-secondary" href="<?= htmlspecialchars($adminBase . '/settings/media', ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars(__('common.reload'), ENT_QUOTES, 'UTF-8') ?></a>
-                            </div>
-                        </form>
-                    </div>
-                </section>
-
-                <section class="card">
-                    <div class="card-header bg-transparent border-0 pt-3">
-                        <h3 class="h6 mb-0">Media presets</h3>
-                    </div>
-                    <div class="card-body pt-2">
-                        <div class="table-responsive mb-3">
-                            <table class="table table-sm align-middle mb-0">
-                                <thead>
-                                    <tr><th>Key</th><th>Label</th><th>Size</th><th>Mode</th><th>Format</th><th>Quality</th><th>Status</th><th class="text-end">Actions</th></tr>
-                                </thead>
-                                <tbody>
-                                <?php if ($mediaPresets === []): ?>
-                                    <tr><td colspan="8" class="text-body-secondary">No presets.</td></tr>
-                                <?php else: ?>
-                                    <?php foreach ($mediaPresets as $preset): ?>
-                                        <tr>
-                                            <td><?= htmlspecialchars((string) ($preset['preset_key'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
-                                            <td><?= htmlspecialchars((string) ($preset['label'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
-                                            <td><?= (int) ($preset['width'] ?? 0) ?>x<?= (int) ($preset['height'] ?? 0) ?></td>
-                                            <td><?= htmlspecialchars((string) ($preset['crop_mode'] ?? 'cover'), ENT_QUOTES, 'UTF-8') ?></td>
-                                            <td><?= htmlspecialchars((string) ($preset['format'] ?? 'jpg'), ENT_QUOTES, 'UTF-8') ?></td>
-                                            <td><?= (int) ($preset['quality'] ?? 82) ?></td>
-                                            <td><?= !empty($preset['is_enabled']) ? 'enabled' : 'disabled' ?></td>
-                                            <td class="text-end">
-                                                <form method="post" action="<?= htmlspecialchars($adminBase . '/modules/media-link/presets/delete', ENT_QUOTES, 'UTF-8') ?>" class="d-inline" onsubmit="return confirm('Delete preset?');">
-                                                    <input type="hidden" name="_csrf" value="<?= $csrf ?>">
-                                                    <input type="hidden" name="id" value="<?= (int) ($preset['id'] ?? 0) ?>">
-                                                    <input type="hidden" name="redirect_to" value="/settings/media">
-                                                    <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
-                                                </form>
-                                            </td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                <?php endif; ?>
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <form method="post" action="<?= htmlspecialchars($adminBase . '/modules/media-link/presets/save', ENT_QUOTES, 'UTF-8') ?>" class="row g-2">
-                            <input type="hidden" name="_csrf" value="<?= $csrf ?>">
-                            <input type="hidden" name="redirect_to" value="/settings/media">
-                            <div class="col-12 col-md-2"><input class="form-control" type="text" name="preset_key" placeholder="preset_key" required></div>
-                            <div class="col-12 col-md-2"><input class="form-control" type="text" name="label" placeholder="Label" required></div>
-                            <div class="col-6 col-md-1"><input class="form-control" type="number" min="1" name="width" placeholder="W" required></div>
-                            <div class="col-6 col-md-1"><input class="form-control" type="number" min="1" name="height" placeholder="H" required></div>
-                            <div class="col-6 col-md-2">
-                                <select class="form-select" name="crop_mode">
-                                    <option value="cover">cover</option>
-                                    <option value="contain">contain</option>
-                                    <option value="fit">fit</option>
-                                </select>
-                            </div>
-                            <div class="col-6 col-md-2">
-                                <select class="form-select" name="format">
-                                    <option value="jpg">jpg</option>
-                                    <option value="webp">webp</option>
-                                    <option value="png">png</option>
-                                </select>
-                            </div>
-                            <div class="col-6 col-md-1"><input class="form-control" type="number" min="1" max="100" name="quality" value="82"></div>
-                            <div class="col-12 d-flex flex-wrap gap-3">
-                                <label class="form-check"><input class="form-check-input" type="checkbox" name="is_enabled" value="1" checked> <span class="form-check-label">enabled</span></label>
-                                <label class="form-check"><input class="form-check-input" type="checkbox" name="auto_generate" value="1" checked> <span class="form-check-label">auto</span></label>
-                                <label class="form-check"><input class="form-check-input" type="checkbox" name="allow_manual_override" value="1" checked> <span class="form-check-label">manual override</span></label>
-                                <label class="form-check"><input class="form-check-input" type="checkbox" name="ratio_locked" value="1" checked> <span class="form-check-label">ratio locked</span></label>
-                            </div>
-                            <div class="col-12 d-flex gap-2">
-                                <button class="btn btn-primary" type="submit">Add preset</button>
-                            </div>
-                        </form>
-                    </div>
-                </section>
-            </div>
         <?php elseif ($section === 'advanced'): ?>
             <div class="d-grid gap-3">
                 <section class="card">
