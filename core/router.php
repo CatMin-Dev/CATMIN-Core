@@ -18,7 +18,7 @@ require_once __DIR__ . '/exceptions/MiddlewareAbortException.php';
 require_once __DIR__ . '/support/pattern-matcher.php';
 require_once __DIR__ . '/support/url-generator.php';
 require_once __DIR__ . '/support/route-helpers.php';
-require_once __DIR__ . '/module-loader.php';
+require_once __DIR__ . '/module-runtime-snapshot.php';
 require_once __DIR__ . '/error-dispatcher.php';
 
 final class Router
@@ -178,8 +178,8 @@ final class Router
 
     private function loadModuleRoutes(string $zone): void
     {
-        $loader = new CoreModuleLoader();
-        foreach ($loader->loadableForZone($zone) as $module) {
+        $snapshot = new CoreModuleRuntimeSnapshot();
+        foreach ($snapshot->loadableForZone($zone) as $module) {
             $routesFile = (string) ($module['routes_file'] ?? '');
             if ($routesFile === '' || !is_file($routesFile)) {
                 continue;

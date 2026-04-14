@@ -12,7 +12,7 @@ use Core\system\HealthCheckService;
 use Core\system\MonitoringService;
 use Core\versioning\Version;
 
-require_once CATMIN_CORE . '/module-loader.php';
+require_once CATMIN_CORE . '/module-runtime-snapshot.php';
 require_once CATMIN_CORE . '/module-activator.php';
 require_once CATMIN_CORE . '/module-integrity-scanner.php';
 require_once CATMIN_CORE . '/settings-engine.php';
@@ -223,8 +223,7 @@ $resolveGitMeta = static function (): array {
 };
 
 $scanModules = static function (): array {
-    $loader = new CoreModuleLoader();
-    $snapshot = $loader->scan();
+    $snapshot = (new CoreModuleRuntimeSnapshot())->all();
     $integrityReport = (new CoreModuleIntegrityScanner())->scanAll(false);
     $integrityBySlug = [];
     foreach ((array) ($integrityReport['modules'] ?? []) as $integrityRow) {
@@ -375,7 +374,7 @@ $resolveModuleDependencies = static function (string $scope, string $slug, bool 
             return true;
         }
 
-        $snapshot = (new CoreModuleLoader())->scan();
+        $snapshot = (new CoreModuleRuntimeSnapshot())->all();
         $depModule = $findBySlug($snapshot, $depSlug);
 
         if (!is_array($depModule)) {
@@ -409,7 +408,7 @@ $resolveModuleDependencies = static function (string $scope, string $slug, bool 
                 return false;
             }
             $messages[] = 'Dépendance installée: ' . $depSlug;
-            $snapshot = (new CoreModuleLoader())->scan();
+            $snapshot = (new CoreModuleRuntimeSnapshot())->all();
             $depModule = $findBySlug($snapshot, $depSlug);
             if (!is_array($depModule)) {
                 $errors[] = 'Dépendance installée mais introuvable après scan: ' . $depSlug;
@@ -441,7 +440,7 @@ $resolveModuleDependencies = static function (string $scope, string $slug, bool 
         return true;
     };
 
-    $snapshot = (new CoreModuleLoader())->scan();
+    $snapshot = (new CoreModuleRuntimeSnapshot())->all();
     $targetModule = $findByScopeSlug($snapshot, $scope, $slug);
     if (!is_array($targetModule)) {
         return ['ok' => false, 'message' => 'Module cible introuvable.'];
@@ -3043,7 +3042,7 @@ return [
             $catalogItems = is_array($catalog['items'] ?? null) ? $catalog['items'] : [];
 
             $isActive = static function (string $depSlug): bool {
-                $snapshot = (new CoreModuleLoader())->scan();
+                $snapshot = (new CoreModuleRuntimeSnapshot())->all();
                 foreach ((array) ($snapshot['modules'] ?? []) as $module) {
                     $mSlug = strtolower(trim((string) ($module['manifest']['slug'] ?? '')));
                     if ($mSlug === $depSlug) {

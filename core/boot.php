@@ -135,9 +135,9 @@ final class CoreBoot
     private static function loadModules(): void
     {
         if (!defined('CATMIN_LOADED_MODULES')) {
-            require_once CATMIN_CORE . '/module-loader.php';
+            require_once CATMIN_CORE . '/module-runtime-snapshot.php';
 
-            $snapshot = (new CoreModuleLoader())->scan();
+            $snapshot = (new CoreModuleRuntimeSnapshot())->all();
             $loaded = [];
             foreach ((array) ($snapshot['modules'] ?? []) as $module) {
                 if (!is_array($module)) {

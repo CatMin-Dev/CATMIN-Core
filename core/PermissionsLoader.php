@@ -29,8 +29,21 @@ class PermissionsLoader
     public function loadFromModules(): int
     {
         $loaded = 0;
+        require_once CATMIN_CORE . '/module-runtime-snapshot.php';
 
-        foreach (glob(CATMIN_MODULES . '/*/*', GLOB_ONLYDIR) ?: [] as $modulePath) {
+        $runtimeSnapshot = new \CoreModuleRuntimeSnapshot();
+        $modules = $runtimeSnapshot->modules();
+
+        foreach ($modules as $module) {
+            if (!((bool) ($module['valid'] ?? false)) || !((bool) ($module['compatible'] ?? false)) || !((bool) ($module['enabled'] ?? false))) {
+                continue;
+            }
+
+            $modulePath = (string) ($module['path'] ?? '');
+            if ($modulePath === '' || !is_dir($modulePath)) {
+                continue;
+            }
+
             $loaded += $this->registerModulePermissions($modulePath);
         }
 

@@ -9,35 +9,24 @@ final class CoreLoader
      */
     public static function loadModules(): array
     {
+        require_once CATMIN_CORE . '/module-runtime-snapshot.php';
+
+        $snapshot = new CoreModuleRuntimeSnapshot();
         $loaded = [];
 
-        foreach (glob(CATMIN_MODULES . '/*', GLOB_ONLYDIR) ?: [] as $scopeDir) {
-            $scope = strtolower(trim((string) basename($scopeDir)));
-
-            foreach (glob($scopeDir . '/*', GLOB_ONLYDIR) ?: [] as $moduleDir) {
-                $manifestFile = $moduleDir . '/manifest.json';
-                if (!is_file($manifestFile)) {
-                    continue;
-                }
-
-                $raw = file_get_contents($manifestFile);
-                $decoded = is_string($raw) ? json_decode($raw, true) : null;
-                if (!is_array($decoded)) {
-                    continue;
-                }
-
-                $enabled = (bool) ($decoded['enabled'] ?? true);
-                if (!$enabled) {
-                    continue;
-                }
-
-                $loaded[] = [
-                    'name' => (string) ($decoded['name'] ?? basename($moduleDir)),
-                    'type' => (string) ($decoded['type'] ?? $scope),
-                    'path' => $moduleDir,
-                    'enabled' => true,
-                ];
+        foreach ($snapshot->modules() as $module) {
+            if (!((bool) ($module['valid'] ?? false)) || !((bool) ($module['compatible'] ?? false)) || !((bool) ($module['enabled'] ?? false))) {
+                continue;
             }
+
+            $manifest = (array) ($module['manifest'] ?? []);
+            $moduleDir = (string) ($module['path'] ?? '');
+            $loaded[] = [
+                'name' => (string) ($manifest['name'] ?? basename($moduleDir !== '' ? $moduleDir : 'module')),
+                'type' => (string) ($manifest['type'] ?? 'module'),
+                'path' => $moduleDir,
+                'enabled' => true,
+            ];
         }
 
         return $loaded;

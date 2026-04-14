@@ -55,7 +55,7 @@ final class CoreModuleManifestStandard
             'icon' => trim((string) ($manifest['icon'] ?? '')),
             'enabled_by_default' => array_key_exists('enabled_by_default', $manifest)
                 ? (bool) $manifest['enabled_by_default']
-                : ((bool) ($manifest['enabled'] ?? false)),
+                : false,
             'installable' => array_key_exists('installable', $manifest) ? (bool) $manifest['installable'] : true,
             'autoload' => array_key_exists('autoload', $manifest) ? (bool) $manifest['autoload'] : true,
             'show_in_manager' => array_key_exists('show_in_manager', $manifest) ? (bool) $manifest['show_in_manager'] : true,

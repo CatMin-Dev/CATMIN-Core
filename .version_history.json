@@ -1,5 +1,16 @@
 [
     {
+        "version": "0.4.0-RC.19",
+        "date": "2026-04-14",
+        "scope": "core",
+        "changes": [
+            "module activation state unified around runtime truth from core_modules.status",
+            "central runtime snapshot service added and consumed by boot/router/permissions/admin module scans",
+            "direct manifest enabled runtime reads removed in core/admin paths, enabled_by_default kept as initial intent"
+        ],
+        "prompt": "catmin-core-correctifs-prompts-01"
+    },
+    {
         "version": "0.4.0-rc.4",
         "date": "2026-04-12",
         "scope": "release",

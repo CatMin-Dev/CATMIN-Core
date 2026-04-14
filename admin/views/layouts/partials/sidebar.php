@@ -153,43 +153,21 @@ $resolveSidebarLabel = static function (array $item, string $fallback, string $l
 };
 
 $moduleNavEntries = [];
-$adminModulesDir = defined('CATMIN_MODULES') ? CATMIN_MODULES . '/admin' : null;
-$moduleStateBySlug = [];
-
 try {
-    $pdo = (new Core\database\ConnectionManager())->connection();
-    $corePrefix = (string) config('database.prefixes.core', 'core_');
-    $modulesTable = $corePrefix . 'modules';
-    $stmt = $pdo->query('SELECT slug, status FROM ' . $modulesTable);
-    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $row) {
-        $slug = strtolower(trim((string) ($row['slug'] ?? '')));
-        if ($slug === '') {
-            continue;
-        }
-        $moduleStateBySlug[$slug] = strtolower(trim((string) ($row['status'] ?? 'inactive')));
-    }
-} catch (Throwable $exception) {
-    $moduleStateBySlug = [];
-}
-
-if (is_string($adminModulesDir) && is_dir($adminModulesDir)) {
-    foreach (glob($adminModulesDir . '/*', GLOB_ONLYDIR) ?: [] as $moduleDir) {
-        $manifestFile = is_file($moduleDir . '/manifest.json') ? $moduleDir . '/manifest.json' : $moduleDir . '/module.json';
-        if (!is_file($manifestFile)) {
+    require_once CATMIN_CORE . '/module-runtime-snapshot.php';
+    $runtimeSnapshot = new CoreModuleRuntimeSnapshot();
+    foreach ($runtimeSnapshot->modules() as $moduleRow) {
+        if (!((bool) ($moduleRow['valid'] ?? false)) || !((bool) ($moduleRow['compatible'] ?? false)) || !((bool) ($moduleRow['enabled'] ?? false))) {
             continue;
         }
 
-        $raw = file_get_contents($manifestFile);
-        $manifest = is_string($raw) ? (json_decode($raw, true) ?: []) : [];
-
-        $slug = strtolower(trim((string) ($manifest['slug'] ?? basename($moduleDir))));
-        $manifestEnabled = (bool) ($manifest['enabled'] ?? true);
-        $dbState = $moduleStateBySlug[$slug] ?? null;
-        $isEnabled = $dbState === null ? $manifestEnabled : ($dbState === 'active');
-
-        if (!$isEnabled) {
+        $manifest = is_array($moduleRow['manifest'] ?? null) ? $moduleRow['manifest'] : [];
+        $moduleType = strtolower(trim((string) ($manifest['type'] ?? '')));
+        if ($moduleType !== 'admin' && $moduleType !== 'core') {
             continue;
         }
+
+        $slug = strtolower(trim((string) ($manifest['slug'] ?? basename((string) ($moduleRow['path'] ?? 'module')))));
 
         $items = $manifest['admin_sidebar'] ?? $manifest['sidebar'] ?? $manifest['sidebar_entries'] ?? [];
         if (!is_array($items)) {
@@ -233,6 +211,8 @@ if (is_string($adminModulesDir) && is_dir($adminModulesDir)) {
             ];
         }
     }
+} catch (Throwable $exception) {
+    $moduleNavEntries = [];
 }
 
 if ($moduleNavEntries !== []) {
