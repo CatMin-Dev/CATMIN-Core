@@ -1,5 +1,16 @@
 [
     {
+        "version": "0.5.0-RC.1",
+        "date": "2026-04-14",
+        "scope": "release",
+        "changes": [
+            "release 0.5.0-RC.1 published for CATMIN-Core",
+            "front core loader architecture shipped with lowercase core/front convention",
+            "README and release metadata aligned to 0.5.0-RC.1"
+        ],
+        "prompt": "release-0.5.0-RC.1"
+    },
+    {
         "version": "0.4.0-RC.22",
         "date": "2026-04-14",
         "scope": "core",
