@@ -1388,6 +1388,14 @@ return [
             $adminBase = $controller->adminBasePath();
             $engine = new CoreSettingsEngine();
             $flash = $consumeFlash();
+            $queryMsg = trim((string) $request->input('msg', ''));
+            $queryType = trim((string) $request->input('mt', 'success'));
+            if (((string) ($flash['message'] ?? '')) === '' && $queryMsg !== '') {
+                $flash = [
+                    'message' => $queryMsg,
+                    'type' => $queryType !== '' ? $queryType : 'success',
+                ];
+            }
             $section = strtolower(trim($section));
             $registry = new CoreModuleRepositoryRegistry();
 
