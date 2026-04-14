@@ -1,5 +1,16 @@
 [
     {
+        "version": "0.5.0-RC.5",
+        "date": "2026-04-14",
+        "scope": "core",
+        "changes": [
+            "maintenance admin pages now use i18n keys instead of hardcoded French labels",
+            "english locale completed for maintenance dashboard and backup detail view",
+            "french locale keys aligned with the same maintenance i18n matrix"
+        ],
+        "prompt": "maintenance-i18n-rc5"
+    },
+    {
         "version": "0.5.0-RC.4",
         "date": "2026-04-14",
         "scope": "core",

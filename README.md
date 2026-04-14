@@ -1,6 +1,6 @@
 # CATMIN Core
 
-[![Version](https://img.shields.io/badge/version-0.5.0--RC.4-e23561)](https://github.com/CatMin-Dev/CATMIN-Core/releases/tag/0.5.0-RC.4)
+[![Version](https://img.shields.io/badge/version-0.5.0--RC.5-e23561)](https://github.com/CatMin-Dev/CATMIN-Core/releases/tag/0.5.0-RC.5)
 ![PHP](https://img.shields.io/badge/php-8.3%2B-44403c)
 ![DB Schema](https://img.shields.io/badge/db_schema-0.1.0--RC.1-c2234d)
 ![Installer](https://img.shields.io/badge/installer-lock%20enforced-16a34a)
@@ -104,4 +104,4 @@ Artefacts attendus:
 
 ---
 
-CATMIN `0.5.0-RC.4` - core standalone avec garde-fous d'installation sur permissions runtime et modèle lock backup aligné production.
+CATMIN `0.5.0-RC.5` - core standalone avec internationalisation complète de la maintenance (FR/EN) et libellés admin harmonisés.

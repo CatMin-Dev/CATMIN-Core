@@ -43,8 +43,8 @@ ob_start();
 ?>
 <section class="card mb-3">
     <div class="card-header bg-transparent border-0 pt-3 d-flex justify-content-between align-items-center">
-        <h3 class="h6 mb-0">Maintenance</h3>
-        <span class="badge <?= $maintenance ? 'text-bg-warning' : 'text-bg-success' ?>"><?= $maintenance ? 'Maintenance active' : 'Maintenance désactivée' ?></span>
+        <h3 class="h6 mb-0"><?= htmlspecialchars(__('maintenance.section.mode'), ENT_QUOTES, 'UTF-8') ?></h3>
+        <span class="badge <?= $maintenance ? 'text-bg-warning' : 'text-bg-success' ?>"><?= htmlspecialchars($maintenance ? __('maintenance.status.enabled') : __('maintenance.status.disabled'), ENT_QUOTES, 'UTF-8') ?></span>
     </div>
     <div class="card-body pt-2">
         <form method="post" action="<?= htmlspecialchars($adminBase . '/maintenance/toggle', ENT_QUOTES, 'UTF-8') ?>" class="d-grid gap-3">
@@ -61,17 +61,17 @@ ob_start();
             </div>
             <div class="row g-3">
                 <div class="col-12 col-lg-3">
-                    <label class="form-label">Niveau de maintenance</label>
+                    <label class="form-label"><?= htmlspecialchars(__('maintenance.level_config_label'), ENT_QUOTES, 'UTF-8') ?></label>
                     <select class="form-select" name="maintenance_level">
                         <?php foreach ($maintenanceLevels as $level): ?>
                             <?php $lvl = (int) ($level['level'] ?? 0); ?>
-                            <option value="<?= $lvl ?>" <?= $maintenanceLevel === $lvl ? 'selected' : '' ?>><?= htmlspecialchars((string) ($level['label'] ?? ('Niveau ' . $lvl)), ENT_QUOTES, 'UTF-8') ?></option>
+                            <option value="<?= $lvl ?>" <?= $maintenanceLevel === $lvl ? 'selected' : '' ?>><?= htmlspecialchars((string) ($level['label'] ?? (__('maintenance.level_option_prefix') . ' ' . $lvl)), ENT_QUOTES, 'UTF-8') ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
                 <div class="col-12 col-lg-9">
                     <label class="form-label"><?= htmlspecialchars(__('maintenance.reason'), ENT_QUOTES, 'UTF-8') ?></label>
-                    <input class="form-control" type="text" name="maintenance_reason" value="<?= htmlspecialchars($maintenanceReason, ENT_QUOTES, 'UTF-8') ?>" placeholder="Ex: Mise à jour schéma BDD">
+                    <input class="form-control" type="text" name="maintenance_reason" value="<?= htmlspecialchars($maintenanceReason, ENT_QUOTES, 'UTF-8') ?>" placeholder="<?= htmlspecialchars(__('maintenance.placeholder.reason_db'), ENT_QUOTES, 'UTF-8') ?>">
                 </div>
                 <div class="col-12">
                     <label class="form-label"><?= htmlspecialchars(__('maintenance.public_message'), ENT_QUOTES, 'UTF-8') ?></label>
@@ -94,27 +94,27 @@ ob_start();
         <div class="row g-3 mt-1">
             <div class="col-12 col-lg-6">
                 <div class="border rounded p-2 small bg-body-tertiary">
-                    <strong>Politique active</strong><br>
-                    Accès: <?= htmlspecialchars((string) ($activeLevelPolicy['access'] ?? '-'), ENT_QUOTES, 'UTF-8') ?><br>
-                    Bloqué: <?= htmlspecialchars((string) ($activeLevelPolicy['blocked'] ?? '-'), ENT_QUOTES, 'UTF-8') ?><br>
-                    Autorisé: <?= htmlspecialchars((string) ($activeLevelPolicy['allowed'] ?? '-'), ENT_QUOTES, 'UTF-8') ?><br>
-                    Usage: <?= htmlspecialchars((string) ($activeLevelPolicy['usage'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
+                    <strong><?= htmlspecialchars(__('maintenance.policy.title'), ENT_QUOTES, 'UTF-8') ?></strong><br>
+                    <?= htmlspecialchars(__('maintenance.policy.access'), ENT_QUOTES, 'UTF-8') ?>: <?= htmlspecialchars((string) ($activeLevelPolicy['access'] ?? '-'), ENT_QUOTES, 'UTF-8') ?><br>
+                    <?= htmlspecialchars(__('maintenance.policy.blocked'), ENT_QUOTES, 'UTF-8') ?>: <?= htmlspecialchars((string) ($activeLevelPolicy['blocked'] ?? '-'), ENT_QUOTES, 'UTF-8') ?><br>
+                    <?= htmlspecialchars(__('maintenance.policy.allowed'), ENT_QUOTES, 'UTF-8') ?>: <?= htmlspecialchars((string) ($activeLevelPolicy['allowed'] ?? '-'), ENT_QUOTES, 'UTF-8') ?><br>
+                    <?= htmlspecialchars(__('maintenance.policy.usage'), ENT_QUOTES, 'UTF-8') ?>: <?= htmlspecialchars((string) ($activeLevelPolicy['usage'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
                 </div>
             </div>
             <div class="col-12 col-lg-6">
                 <div class="border rounded p-2 small bg-body-tertiary">
-                    <strong>Méta</strong><br>
-                    Active par: <?= htmlspecialchars((string) ($state['maintenance_enabled_by'] ?? '-'), ENT_QUOTES, 'UTF-8') ?><br>
-                    Début: <?= htmlspecialchars((string) ($state['maintenance_started_at'] ?? '-'), ENT_QUOTES, 'UTF-8') ?><br>
-                    Dernière sauvegarde: <?= htmlspecialchars((string) ($state['last_backup'] ?? '-'), ENT_QUOTES, 'UTF-8') ?><br>
-                    Dernière restauration: <?= htmlspecialchars((string) ($state['last_restore'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
+                    <strong><?= htmlspecialchars(__('maintenance.meta.title'), ENT_QUOTES, 'UTF-8') ?></strong><br>
+                    <?= htmlspecialchars(__('maintenance.enabled_by'), ENT_QUOTES, 'UTF-8') ?>: <?= htmlspecialchars((string) ($state['maintenance_enabled_by'] ?? '-'), ENT_QUOTES, 'UTF-8') ?><br>
+                    <?= htmlspecialchars(__('maintenance.started_at'), ENT_QUOTES, 'UTF-8') ?>: <?= htmlspecialchars((string) ($state['maintenance_started_at'] ?? '-'), ENT_QUOTES, 'UTF-8') ?><br>
+                    <?= htmlspecialchars(__('maintenance.last_backup'), ENT_QUOTES, 'UTF-8') ?>: <?= htmlspecialchars((string) ($state['last_backup'] ?? '-'), ENT_QUOTES, 'UTF-8') ?><br>
+                    <?= htmlspecialchars(__('maintenance.last_restore'), ENT_QUOTES, 'UTF-8') ?>: <?= htmlspecialchars((string) ($state['last_restore'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
                 </div>
             </div>
         </div>
 
         <div class="table-responsive mt-3">
             <table class="table table-sm align-middle mb-0">
-                <thead><tr><th>Niveau</th><th>Accès</th><th>Bloqué</th><th>Autorisé</th><th>Usage</th></tr></thead>
+                <thead><tr><th><?= htmlspecialchars(__('maintenance.levels.table.level'), ENT_QUOTES, 'UTF-8') ?></th><th><?= htmlspecialchars(__('maintenance.levels.table.access'), ENT_QUOTES, 'UTF-8') ?></th><th><?= htmlspecialchars(__('maintenance.levels.table.blocked'), ENT_QUOTES, 'UTF-8') ?></th><th><?= htmlspecialchars(__('maintenance.levels.table.allowed'), ENT_QUOTES, 'UTF-8') ?></th><th><?= htmlspecialchars(__('maintenance.levels.table.usage'), ENT_QUOTES, 'UTF-8') ?></th></tr></thead>
                 <tbody>
                 <?php foreach ($maintenanceLevels as $level): ?>
                     <tr>
@@ -133,18 +133,18 @@ ob_start();
 
 <section class="card mb-3">
     <div class="card-header bg-transparent border-0 pt-3 d-flex justify-content-between align-items-center">
-        <h3 class="h6 mb-0">Sauvegardes</h3>
+        <h3 class="h6 mb-0"><?= htmlspecialchars(__('maintenance.backups'), ENT_QUOTES, 'UTF-8') ?></h3>
         <form method="post" action="<?= htmlspecialchars($adminBase . '/maintenance/backup/create', ENT_QUOTES, 'UTF-8') ?>" class="d-flex gap-2">
             <input type="hidden" name="_csrf" value="<?= $csrf ?>">
             <select class="form-select form-select-sm" name="backup_type">
-                <option value="db_only">Base de données seule</option>
-                <option value="files_only">Fichiers seuls</option>
-                <option value="db_files">Base + fichiers</option>
-                <option value="full_instance">Instance complète</option>
-                <option value="pre_update_snapshot">Snapshot pré-mise à jour</option>
-                <option value="pre_restore_snapshot">Snapshot pré-restauration</option>
+                <option value="db_only"><?= htmlspecialchars(__('maintenance.backup.types.db_only'), ENT_QUOTES, 'UTF-8') ?></option>
+                <option value="files_only"><?= htmlspecialchars(__('maintenance.backup.types.files_only'), ENT_QUOTES, 'UTF-8') ?></option>
+                <option value="db_files"><?= htmlspecialchars(__('maintenance.backup.types.db_files'), ENT_QUOTES, 'UTF-8') ?></option>
+                <option value="full_instance"><?= htmlspecialchars(__('maintenance.backup.types.full_instance'), ENT_QUOTES, 'UTF-8') ?></option>
+                <option value="pre_update_snapshot"><?= htmlspecialchars(__('maintenance.backup.types.pre_update_snapshot'), ENT_QUOTES, 'UTF-8') ?></option>
+                <option value="pre_restore_snapshot"><?= htmlspecialchars(__('maintenance.backup.types.pre_restore_snapshot'), ENT_QUOTES, 'UTF-8') ?></option>
             </select>
-            <button class="btn btn-sm btn-primary" type="submit" data-loading-text="Création...">Créer sauvegarde</button>
+            <button class="btn btn-sm btn-primary" type="submit" data-loading-text="<?= htmlspecialchars(__('maintenance.loading.creating'), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars(__('maintenance.create_backup'), ENT_QUOTES, 'UTF-8') ?></button>
         </form>
     </div>
     <div class="card-body pt-2">
@@ -152,15 +152,15 @@ ob_start();
             <table class="table table-sm align-middle mb-0">
                 <thead>
                 <tr>
-                    <th>Nom</th>
-                    <th>Type</th>
-                    <th>Taille</th>
-                    <th>Date</th>
-                    <th>Version</th>
-                    <th>Format</th>
-                    <th>Intégrité</th>
-                    <th>Origine</th>
-                    <th class="text-end">Actions</th>
+                    <th><?= htmlspecialchars(__('maintenance.table.name'), ENT_QUOTES, 'UTF-8') ?></th>
+                    <th><?= htmlspecialchars(__('maintenance.table.type'), ENT_QUOTES, 'UTF-8') ?></th>
+                    <th><?= htmlspecialchars(__('maintenance.table.size'), ENT_QUOTES, 'UTF-8') ?></th>
+                    <th><?= htmlspecialchars(__('maintenance.table.date'), ENT_QUOTES, 'UTF-8') ?></th>
+                    <th><?= htmlspecialchars(__('maintenance.table.version'), ENT_QUOTES, 'UTF-8') ?></th>
+                    <th><?= htmlspecialchars(__('maintenance.table.format'), ENT_QUOTES, 'UTF-8') ?></th>
+                    <th><?= htmlspecialchars(__('maintenance.table.integrity'), ENT_QUOTES, 'UTF-8') ?></th>
+                    <th><?= htmlspecialchars(__('maintenance.table.origin'), ENT_QUOTES, 'UTF-8') ?></th>
+                    <th class="text-end"><?= htmlspecialchars(__('maintenance.table.actions'), ENT_QUOTES, 'UTF-8') ?></th>
                 </tr>
                 </thead>
                 <tbody>
@@ -179,30 +179,30 @@ ob_start();
                             <td><span class="badge <?= $badgeClass((string) ($backup['integrity'] ?? 'secondary')) ?>"><?= htmlspecialchars((string) ($backup['integrity'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></span></td>
                             <td><?= htmlspecialchars((string) ($backup['origin'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                             <td class="text-end">
-                                <a class="btn btn-sm btn-outline-secondary" href="<?= htmlspecialchars($adminBase . '/maintenance/backup/read?backup=' . rawurlencode($backupName), ENT_QUOTES, 'UTF-8') ?>">Voir détails</a>
-                                <a class="btn btn-sm btn-outline-primary" href="<?= htmlspecialchars($adminBase . '/maintenance/backup/download?backup=' . rawurlencode($backupName), ENT_QUOTES, 'UTF-8') ?>">Télécharger</a>
-                                <form method="post" action="<?= htmlspecialchars($adminBase . '/maintenance/restore', ENT_QUOTES, 'UTF-8') ?>" class="d-inline" data-cat-confirm="Cette restauration peut écraser des données. Continuer ?">
+                                <a class="btn btn-sm btn-outline-secondary" href="<?= htmlspecialchars($adminBase . '/maintenance/backup/read?backup=' . rawurlencode($backupName), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars(__('maintenance.action.view_details'), ENT_QUOTES, 'UTF-8') ?></a>
+                                <a class="btn btn-sm btn-outline-primary" href="<?= htmlspecialchars($adminBase . '/maintenance/backup/download?backup=' . rawurlencode($backupName), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars(__('maintenance.action.download'), ENT_QUOTES, 'UTF-8') ?></a>
+                                <form method="post" action="<?= htmlspecialchars($adminBase . '/maintenance/restore', ENT_QUOTES, 'UTF-8') ?>" class="d-inline" data-cat-confirm="<?= htmlspecialchars(__('maintenance.confirm.restore_overwrite'), ENT_QUOTES, 'UTF-8') ?>">
                                     <input type="hidden" name="_csrf" value="<?= $csrf ?>">
                                     <input type="hidden" name="backup" value="<?= htmlspecialchars($backupName, ENT_QUOTES, 'UTF-8') ?>">
                                     <input type="hidden" name="auto_snapshot" value="1">
                                     <select class="form-select form-select-sm d-inline-block" style="width:auto" name="restore_mode">
-                                        <option value="db_only">Restaurer BDD</option>
-                                        <option value="files_only">Restaurer fichiers</option>
-                                        <option value="full">Restaurer complet</option>
+                                        <option value="db_only"><?= htmlspecialchars(__('maintenance.action.restore_db'), ENT_QUOTES, 'UTF-8') ?></option>
+                                        <option value="files_only"><?= htmlspecialchars(__('maintenance.action.restore_files'), ENT_QUOTES, 'UTF-8') ?></option>
+                                        <option value="full"><?= htmlspecialchars(__('maintenance.action.restore_full'), ENT_QUOTES, 'UTF-8') ?></option>
                                     </select>
-                                    <label class="form-check-label small ms-1"><input class="form-check-input" type="checkbox" name="dry_run" value="1"> Simulation</label>
+                                    <label class="form-check-label small ms-1"><input class="form-check-input" type="checkbox" name="dry_run" value="1"> <?= htmlspecialchars(__('maintenance.action.simulate'), ENT_QUOTES, 'UTF-8') ?></label>
                                     <button class="btn btn-sm btn-outline-warning" type="submit"><?= htmlspecialchars(__('maintenance.restore'), ENT_QUOTES, 'UTF-8') ?></button>
                                 </form>
-                                <form method="post" action="<?= htmlspecialchars($adminBase . '/maintenance/backup/delete', ENT_QUOTES, 'UTF-8') ?>" class="d-inline" data-cat-confirm="Suppression irréversible. Continuer ?">
+                                <form method="post" action="<?= htmlspecialchars($adminBase . '/maintenance/backup/delete', ENT_QUOTES, 'UTF-8') ?>" class="d-inline" data-cat-confirm="<?= htmlspecialchars(__('maintenance.confirm.delete_irreversible'), ENT_QUOTES, 'UTF-8') ?>">
                                     <input type="hidden" name="_csrf" value="<?= $csrf ?>">
                                     <input type="hidden" name="backup" value="<?= htmlspecialchars($backupName, ENT_QUOTES, 'UTF-8') ?>">
                                     <button class="btn btn-sm btn-outline-danger" type="submit"><?= htmlspecialchars(__('common.delete'), ENT_QUOTES, 'UTF-8') ?></button>
                                 </form>
                                 <?php if (!empty($backup['is_orphan'])): ?>
-                                    <form method="post" action="<?= htmlspecialchars($adminBase . '/maintenance/backup/repair', ENT_QUOTES, 'UTF-8') ?>" class="d-inline" data-cat-confirm="Réparer l'index pour cette entrée orpheline ?">
+                                    <form method="post" action="<?= htmlspecialchars($adminBase . '/maintenance/backup/repair', ENT_QUOTES, 'UTF-8') ?>" class="d-inline" data-cat-confirm="<?= htmlspecialchars(__('maintenance.confirm.repair_orphan'), ENT_QUOTES, 'UTF-8') ?>">
                                         <input type="hidden" name="_csrf" value="<?= $csrf ?>">
                                         <input type="hidden" name="backup" value="<?= htmlspecialchars($backupName, ENT_QUOTES, 'UTF-8') ?>">
-                                        <button class="btn btn-sm btn-outline-secondary" type="submit">Réparer l'index</button>
+                                        <button class="btn btn-sm btn-outline-secondary" type="submit"><?= htmlspecialchars(__('maintenance.action.repair_index'), ENT_QUOTES, 'UTF-8') ?></button>
                                     </form>
                                 <?php endif; ?>
                             </td>
@@ -214,40 +214,40 @@ ob_start();
         </div>
 
         <div class="alert alert-warning mt-3 mb-0">
-            <strong>Danger restauration/suppression:</strong> les actions critiques sont journalisées, protégées CSRF, et bloquées en concurrence.
+            <strong><?= htmlspecialchars(__('maintenance.warning.restore_delete_title'), ENT_QUOTES, 'UTF-8') ?>:</strong> <?= htmlspecialchars(__('maintenance.warning.restore_delete_body'), ENT_QUOTES, 'UTF-8') ?>
         </div>
     </div>
 </section>
 
 <section class="card mb-3">
     <div class="card-header bg-transparent border-0 pt-3">
-        <h3 class="h6 mb-0">Diagnostics</h3>
+        <h3 class="h6 mb-0"><?= htmlspecialchars(__('maintenance.diagnostics.title'), ENT_QUOTES, 'UTF-8') ?></h3>
     </div>
     <div class="card-body pt-2">
         <div class="row g-3">
-            <div class="col-12 col-md-6 col-xl-3"><div class="border rounded p-2"><small class="text-body-secondary d-block">Dernière sauvegarde</small><strong><?= htmlspecialchars((string) ($diagnostics['last_backup'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></strong></div></div>
-            <div class="col-12 col-md-6 col-xl-3"><div class="border rounded p-2"><small class="text-body-secondary d-block">Dernière restauration</small><strong><?= htmlspecialchars((string) ($diagnostics['last_restore'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></strong></div></div>
-            <div class="col-12 col-md-6 col-xl-3"><div class="border rounded p-2"><small class="text-body-secondary d-block">Dernier échec</small><strong><?= htmlspecialchars((string) ($diagnostics['last_failure'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></strong></div></div>
-            <div class="col-12 col-md-6 col-xl-3"><div class="border rounded p-2"><small class="text-body-secondary d-block">Taille totale des sauvegardes</small><strong><?= number_format(((int) ($diagnostics['total_size_bytes'] ?? 0)) / (1024 * 1024), 2, '.', ' ') ?> MB</strong></div></div>
-            <div class="col-12 col-md-6 col-xl-3"><div class="border rounded p-2"><small class="text-body-secondary d-block">Format de sauvegarde</small><strong><?= htmlspecialchars((string) ($diagnostics['backup_format_version'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></strong></div></div>
-            <div class="col-12 col-md-6 col-xl-3"><div class="border rounded p-2"><small class="text-body-secondary d-block">Version CATMIN</small><strong><?= htmlspecialchars((string) ($diagnostics['core_version'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></strong></div></div>
-            <div class="col-12 col-md-6 col-xl-3"><div class="border rounded p-2"><small class="text-body-secondary d-block">Stockage sauvegardes</small><strong><?= !empty($diagnostics['storage_ok']) ? 'OK' : 'ERREUR' ?></strong></div></div>
-            <div class="col-12 col-md-6 col-xl-3"><div class="border rounded p-2"><small class="text-body-secondary d-block">Orphelins</small><strong><?= (int) ($diagnostics['orphans'] ?? 0) ?></strong></div></div>
+            <div class="col-12 col-md-6 col-xl-3"><div class="border rounded p-2"><small class="text-body-secondary d-block"><?= htmlspecialchars(__('maintenance.diagnostics.last_backup'), ENT_QUOTES, 'UTF-8') ?></small><strong><?= htmlspecialchars((string) ($diagnostics['last_backup'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></strong></div></div>
+            <div class="col-12 col-md-6 col-xl-3"><div class="border rounded p-2"><small class="text-body-secondary d-block"><?= htmlspecialchars(__('maintenance.diagnostics.last_restore'), ENT_QUOTES, 'UTF-8') ?></small><strong><?= htmlspecialchars((string) ($diagnostics['last_restore'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></strong></div></div>
+            <div class="col-12 col-md-6 col-xl-3"><div class="border rounded p-2"><small class="text-body-secondary d-block"><?= htmlspecialchars(__('maintenance.diagnostics.last_failure'), ENT_QUOTES, 'UTF-8') ?></small><strong><?= htmlspecialchars((string) ($diagnostics['last_failure'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></strong></div></div>
+            <div class="col-12 col-md-6 col-xl-3"><div class="border rounded p-2"><small class="text-body-secondary d-block"><?= htmlspecialchars(__('maintenance.diagnostics.total_size'), ENT_QUOTES, 'UTF-8') ?></small><strong><?= number_format(((int) ($diagnostics['total_size_bytes'] ?? 0)) / (1024 * 1024), 2, '.', ' ') ?> MB</strong></div></div>
+            <div class="col-12 col-md-6 col-xl-3"><div class="border rounded p-2"><small class="text-body-secondary d-block"><?= htmlspecialchars(__('maintenance.diagnostics.backup_format'), ENT_QUOTES, 'UTF-8') ?></small><strong><?= htmlspecialchars((string) ($diagnostics['backup_format_version'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></strong></div></div>
+            <div class="col-12 col-md-6 col-xl-3"><div class="border rounded p-2"><small class="text-body-secondary d-block"><?= htmlspecialchars(__('maintenance.diagnostics.core_version'), ENT_QUOTES, 'UTF-8') ?></small><strong><?= htmlspecialchars((string) ($diagnostics['core_version'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></strong></div></div>
+            <div class="col-12 col-md-6 col-xl-3"><div class="border rounded p-2"><small class="text-body-secondary d-block"><?= htmlspecialchars(__('maintenance.diagnostics.storage'), ENT_QUOTES, 'UTF-8') ?></small><strong><?= !empty($diagnostics['storage_ok']) ? htmlspecialchars(__('maintenance.diagnostics.storage_ok'), ENT_QUOTES, 'UTF-8') : htmlspecialchars(__('maintenance.diagnostics.storage_error'), ENT_QUOTES, 'UTF-8') ?></strong></div></div>
+            <div class="col-12 col-md-6 col-xl-3"><div class="border rounded p-2"><small class="text-body-secondary d-block"><?= htmlspecialchars(__('maintenance.diagnostics.orphans'), ENT_QUOTES, 'UTF-8') ?></small><strong><?= (int) ($diagnostics['orphans'] ?? 0) ?></strong></div></div>
         </div>
     </div>
 </section>
 
 <section class="card mb-3">
     <div class="card-header bg-transparent border-0 pt-3">
-        <h3 class="h6 mb-0">Journal d'audit</h3>
+        <h3 class="h6 mb-0"><?= htmlspecialchars(__('maintenance.audit.title'), ENT_QUOTES, 'UTF-8') ?></h3>
     </div>
     <div class="card-body pt-2">
         <div class="table-responsive">
             <table class="table table-sm align-middle mb-0">
-                <thead><tr><th>Date</th><th>Action</th><th>Résultat</th><th>Auteur</th><th>IP</th><th>Message</th></tr></thead>
+                <thead><tr><th><?= htmlspecialchars(__('maintenance.audit.date'), ENT_QUOTES, 'UTF-8') ?></th><th><?= htmlspecialchars(__('maintenance.audit.action'), ENT_QUOTES, 'UTF-8') ?></th><th><?= htmlspecialchars(__('maintenance.audit.result'), ENT_QUOTES, 'UTF-8') ?></th><th><?= htmlspecialchars(__('maintenance.audit.author'), ENT_QUOTES, 'UTF-8') ?></th><th><?= htmlspecialchars(__('maintenance.audit.ip'), ENT_QUOTES, 'UTF-8') ?></th><th><?= htmlspecialchars(__('maintenance.audit.message'), ENT_QUOTES, 'UTF-8') ?></th></tr></thead>
                 <tbody>
                 <?php if ($audit === []): ?>
-                    <tr><td colspan="6" class="text-body-secondary">Aucun événement audité pour le moment.</td></tr>
+                    <tr><td colspan="6" class="text-body-secondary"><?= htmlspecialchars(__('maintenance.audit.empty'), ENT_QUOTES, 'UTF-8') ?></td></tr>
                 <?php else: ?>
                     <?php foreach ($audit as $event): ?>
                         <tr>

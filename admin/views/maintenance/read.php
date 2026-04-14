@@ -30,19 +30,19 @@ ob_start();
         <div class="row g-3 mb-3">
             <div class="col-12 col-lg-6">
                 <div class="border rounded p-2 bg-body-tertiary small">
-                    <strong>Type exact</strong>: <?= htmlspecialchars((string) ($backupDetails['backup_type'] ?? ($backupManifest['backup_type'] ?? '-')), ENT_QUOTES, 'UTF-8') ?><br>
-                    <strong>Version core</strong>: <?= htmlspecialchars((string) ($backupDetails['core_version'] ?? ($backupManifest['core_version'] ?? '-')), ENT_QUOTES, 'UTF-8') ?><br>
-                    <strong>Format de sauvegarde</strong>: <?= htmlspecialchars((string) ($backupDetails['backup_format_version'] ?? ($backupManifest['backup_format_version'] ?? '-')), ENT_QUOTES, 'UTF-8') ?><br>
-                    <strong>Checksum</strong>: <?= htmlspecialchars((string) (($backupManifest['file']['checksum_sha256'] ?? '-')), ENT_QUOTES, 'UTF-8') ?>
+                    <strong><?= htmlspecialchars(__('maintenance.read.exact_type'), ENT_QUOTES, 'UTF-8') ?></strong>: <?= htmlspecialchars((string) ($backupDetails['backup_type'] ?? ($backupManifest['backup_type'] ?? '-')), ENT_QUOTES, 'UTF-8') ?><br>
+                    <strong><?= htmlspecialchars(__('maintenance.read.core_version'), ENT_QUOTES, 'UTF-8') ?></strong>: <?= htmlspecialchars((string) ($backupDetails['core_version'] ?? ($backupManifest['core_version'] ?? '-')), ENT_QUOTES, 'UTF-8') ?><br>
+                    <strong><?= htmlspecialchars(__('maintenance.read.backup_format'), ENT_QUOTES, 'UTF-8') ?></strong>: <?= htmlspecialchars((string) ($backupDetails['backup_format_version'] ?? ($backupManifest['backup_format_version'] ?? '-')), ENT_QUOTES, 'UTF-8') ?><br>
+                    <strong><?= htmlspecialchars(__('maintenance.read.checksum'), ENT_QUOTES, 'UTF-8') ?></strong>: <?= htmlspecialchars((string) (($backupManifest['file']['checksum_sha256'] ?? '-')), ENT_QUOTES, 'UTF-8') ?>
                 </div>
             </div>
             <div class="col-12 col-lg-6">
                 <div class="border rounded p-2 bg-body-tertiary small">
                     <?php $content = (array) ($backupDetails['content'] ?? []); ?>
-                    <strong>Contenu détecté</strong><br>
-                    SQL: <?= !empty($content['sql_full']) ? 'oui' : 'non' ?> (tables: <?= (int) ($content['sql_tables_count'] ?? 0) ?>)<br>
-                    Fichiers: <?= !empty($content['files']) ? 'oui' : 'non' ?> / Uploads: <?= !empty($content['uploads']) ? 'oui' : 'non' ?><br>
-                    Config: <?= !empty($content['config']) ? 'oui' : 'non' ?> / Assets: <?= !empty($content['assets']) ? 'oui' : 'non' ?> / Modules: <?= !empty($content['modules']) ? 'oui' : 'non' ?>
+                    <strong><?= htmlspecialchars(__('maintenance.read.content_detected'), ENT_QUOTES, 'UTF-8') ?></strong><br>
+                    SQL: <?= !empty($content['sql_full']) ? htmlspecialchars(__('maintenance.read.yes'), ENT_QUOTES, 'UTF-8') : htmlspecialchars(__('maintenance.read.no'), ENT_QUOTES, 'UTF-8') ?> (<?= htmlspecialchars(__('maintenance.read.tables'), ENT_QUOTES, 'UTF-8') ?>: <?= (int) ($content['sql_tables_count'] ?? 0) ?>)<br>
+                    <?= htmlspecialchars(__('maintenance.read.files'), ENT_QUOTES, 'UTF-8') ?>: <?= !empty($content['files']) ? htmlspecialchars(__('maintenance.read.yes'), ENT_QUOTES, 'UTF-8') : htmlspecialchars(__('maintenance.read.no'), ENT_QUOTES, 'UTF-8') ?> / <?= htmlspecialchars(__('maintenance.read.uploads'), ENT_QUOTES, 'UTF-8') ?>: <?= !empty($content['uploads']) ? htmlspecialchars(__('maintenance.read.yes'), ENT_QUOTES, 'UTF-8') : htmlspecialchars(__('maintenance.read.no'), ENT_QUOTES, 'UTF-8') ?><br>
+                    <?= htmlspecialchars(__('maintenance.read.config'), ENT_QUOTES, 'UTF-8') ?>: <?= !empty($content['config']) ? htmlspecialchars(__('maintenance.read.yes'), ENT_QUOTES, 'UTF-8') : htmlspecialchars(__('maintenance.read.no'), ENT_QUOTES, 'UTF-8') ?> / <?= htmlspecialchars(__('maintenance.read.assets'), ENT_QUOTES, 'UTF-8') ?>: <?= !empty($content['assets']) ? htmlspecialchars(__('maintenance.read.yes'), ENT_QUOTES, 'UTF-8') : htmlspecialchars(__('maintenance.read.no'), ENT_QUOTES, 'UTF-8') ?> / <?= htmlspecialchars(__('maintenance.read.modules'), ENT_QUOTES, 'UTF-8') ?>: <?= !empty($content['modules']) ? htmlspecialchars(__('maintenance.read.yes'), ENT_QUOTES, 'UTF-8') : htmlspecialchars(__('maintenance.read.no'), ENT_QUOTES, 'UTF-8') ?>
                 </div>
             </div>
         </div>
@@ -50,7 +50,7 @@ ob_start();
         <?php $warnings = (array) ($backupDetails['warnings'] ?? []); ?>
         <?php if ($warnings !== []): ?>
             <div class="alert alert-warning">
-                <strong>Avertissements compatibilité</strong>
+                <strong><?= htmlspecialchars(__('maintenance.read.compat_warnings'), ENT_QUOTES, 'UTF-8') ?></strong>
                 <ul class="mb-0 mt-2">
                     <?php foreach ($warnings as $warning): ?>
                         <li><?= htmlspecialchars((string) $warning, ENT_QUOTES, 'UTF-8') ?></li>
@@ -60,8 +60,8 @@ ob_start();
         <?php endif; ?>
 
         <div class="alert alert-info">
-            <strong>Stratégies de restauration disponibles</strong><br>
-            Restaurer BDD, restaurer fichiers, restauration complète, simulation (dry-run) avant exécution.
+            <strong><?= htmlspecialchars(__('maintenance.read.restore_strategies_title'), ENT_QUOTES, 'UTF-8') ?></strong><br>
+            <?= htmlspecialchars(__('maintenance.read.restore_strategies_body'), ENT_QUOTES, 'UTF-8') ?>
         </div>
 
         <?php if ($isTextPreview): ?>
