@@ -1,5 +1,16 @@
 [
     {
+        "version": "0.5.0-RC.4",
+        "date": "2026-04-14",
+        "scope": "core",
+        "changes": [
+            "installer precheck now blocks installation if storage/backups, storage/locks, storage/tmp or storage/tmp/zip are not writable",
+            "installer runtime permission gate added to reject unsafe world-writable runtime directories",
+            "backup manager lock path restored to storage/locks to align with production ownership model root:www-data"
+        ],
+        "prompt": "install-runtime-permission-gates-rc4"
+    },
+    {
         "version": "0.5.0-RC.3",
         "date": "2026-04-14",
         "scope": "core",

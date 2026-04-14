@@ -1156,9 +1156,10 @@ final class BackupManager
     private function acquireLock()
     {
         $dir = dirname($this->lockPath);
-        if (!is_dir($dir)) {
-            @mkdir($dir, 0775, true);
+        if (!is_dir($dir) && !@mkdir($dir, 0775, true) && !is_dir($dir)) {
+            return null;
         }
+
         $fp = @fopen($this->lockPath, 'c+');
         if ($fp === false) {
             return null;

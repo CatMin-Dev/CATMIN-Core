@@ -60,6 +60,11 @@ final class InstallerPrecheck
         $this->add($checks, 'system', 'sessions_dir', 'Dossier sessions writable', $this->isWritableOrCreatable(CATMIN_ROOT . '/sessions'), true, 'Chemin attendu: /sessions (racine projet).');
         $this->add($checks, 'system', 'tmp_dir', 'Dossier tmp writable', $this->isWritableOrCreatable(CATMIN_ROOT . '/tmp'), true, 'Chemin attendu: /tmp (racine projet).');
         $this->add($checks, 'system', 'db_dir', 'Dossier db writable', $this->isWritableOrCreatable(CATMIN_ROOT . '/db'), true, 'Chemin attendu: /db (racine projet, sqlite incluse).');
+        $this->add($checks, 'system', 'storage_backups_dir', 'Dossier storage/backups writable', $this->isWritableOrCreatable(CATMIN_STORAGE . '/backups'), true, 'Chemin attendu: /storage/backups (proprietaire root + groupe www-data, mode conseille 2775).');
+        $this->add($checks, 'system', 'storage_locks_dir', 'Dossier storage/locks writable', $this->isWritableOrCreatable(CATMIN_STORAGE . '/locks'), true, 'Chemin attendu: /storage/locks (proprietaire root + groupe www-data, mode conseille 2775).');
+        $this->add($checks, 'system', 'storage_tmp_dir', 'Dossier storage/tmp writable', $this->isWritableOrCreatable(CATMIN_STORAGE . '/tmp'), true, 'Chemin attendu: /storage/tmp (proprietaire root + groupe www-data, mode conseille 2775).');
+        $this->add($checks, 'system', 'storage_tmp_zip_dir', 'Dossier storage/tmp/zip writable', $this->isWritableOrCreatable(CATMIN_STORAGE . '/tmp/zip'), true, 'Chemin attendu: /storage/tmp/zip (proprietaire root + groupe www-data, mode conseille 2775).');
+        $this->add($checks, 'system', 'storage_runtime_safe_mode', 'Permissions runtime sures (pas de 777)', $this->hasSafeRuntimePermissions(), true, 'Les dossiers runtime critiques doivent etre accessibles en ecriture sans world-writable (ex: 775/2775).');
         $this->add($checks, 'system', 'disk_space', 'Espace disque >= 256MB', $this->hasEnoughDiskSpace(), true, 'Espace libre minimal conseille: 256MB.');
 
         $summary = $this->summarize($checks);
@@ -208,6 +213,34 @@ final class InstallerPrecheck
         }
 
         return $bytes >= 268435456; // 256MB
+    }
+
+    private function hasSafeRuntimePermissions(): bool
+    {
+        $paths = [
+            CATMIN_STORAGE . '/backups',
+            CATMIN_STORAGE . '/locks',
+            CATMIN_STORAGE . '/tmp',
+            CATMIN_STORAGE . '/tmp/zip',
+        ];
+
+        foreach ($paths as $path) {
+            if (!is_dir($path)) {
+                continue;
+            }
+
+            $perm = @fileperms($path);
+            if (!is_int($perm)) {
+                return false;
+            }
+
+            // Reject world-writable runtime directories in production setup.
+            if ((($perm & 0x0002) === 0x0002)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
