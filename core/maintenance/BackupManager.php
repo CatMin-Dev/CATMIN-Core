@@ -108,12 +108,12 @@ final class BackupManager
         }
 
         if (!is_dir($this->backupRoot) && !@mkdir($this->backupRoot, 0775, true) && !is_dir($this->backupRoot)) {
-            return ['ok' => false, 'message' => 'Dossier backup indisponible.'];
+            return $this->registerBackupFailure($type, '', [], $context, 'Dossier de sauvegarde indisponible.');
         }
 
         $lock = $this->acquireLock();
         if ($lock === null) {
-            return ['ok' => false, 'message' => 'Operation en cours. Reessaie dans quelques secondes.'];
+            return ['ok' => false, 'message' => 'Opération en cours. Réessaie dans quelques secondes.'];
         }
 
         try {
@@ -133,7 +133,9 @@ final class BackupManager
             }
 
             $zipOk = false;
+            $zipError = '';
             if (class_exists('ZipArchive')) {
+                $this->prepareZipTemporaryDirectory();
                 $zip = new \ZipArchive();
                 $opened = $zip->open($path, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
                 if ($opened === true) {
@@ -142,12 +144,25 @@ final class BackupManager
                         $zip->addFromString('db/dump.sql', $sqlDump);
                     }
                     $this->addContentByType($zip, $type, $manifest);
-                    $zipOk = $zip->close();
+                    // ZipArchive::close can emit warnings when TMP is not writable: avoid breaking flow and fallback safely.
+                    $zipOk = (bool) @($zip->close());
+                    if (!$zipOk) {
+                        $zipError = 'ZipArchive::close impossible (droits dossier temporaire).';
+                    }
+                } else {
+                    $zipError = 'ZipArchive::open code=' . (string) $opened;
                 }
+            } else {
+                $zipError = 'Extension ZipArchive indisponible.';
             }
 
             if (!$zipOk) {
-                return ['ok' => false, 'message' => 'ZipArchive indisponible ou creation archive impossible.'];
+                $fallback = $this->createSqlFallbackBackup($type, $stamp, $sqlDump, $manifest, $context);
+                if (!((bool) ($fallback['ok'] ?? false))) {
+                    return $this->registerBackupFailure($type, $path, $manifest, $context, 'Création archive impossible: ' . $zipError);
+                }
+
+                return $fallback;
             }
 
             $size = (int) (@filesize($path) ?: 0);
@@ -158,9 +173,9 @@ final class BackupManager
             $rowId = $this->insertBackupRow($type, $path, 'success', $checksum, $size, $context, $manifest);
 
             $this->logAudit(
-                'backup.create',
+                    'backup.create',
                 'success',
-                'Backup cree',
+                    'Sauvegarde créée',
                 [
                     'backup_id' => $rowId,
                     'file' => $filename,
@@ -178,11 +193,10 @@ final class BackupManager
                 'size' => $size,
                 'checksum' => $checksum,
                 'manifest' => $manifest,
-                'message' => 'Sauvegarde creee: ' . $filename,
+                'message' => 'Sauvegarde créée: ' . $filename,
             ];
         } catch (Throwable $e) {
-            $this->logAudit('backup.create', 'error', 'Echec creation backup', ['error' => substr($e->getMessage(), 0, 240)], $context);
-            return ['ok' => false, 'message' => 'Echec creation sauvegarde: ' . substr($e->getMessage(), 0, 180)];
+            return $this->registerBackupFailure($type, '', [], $context, 'Échec création sauvegarde: ' . substr($e->getMessage(), 0, 180));
         } finally {
             $this->releaseLock($lock);
         }
@@ -193,7 +207,7 @@ final class BackupManager
     {
         $entry = $this->findByName($name);
         if ($entry === null) {
-            return ['ok' => false, 'message' => 'Backup introuvable.'];
+            return ['ok' => false, 'message' => 'Sauvegarde introuvable.'];
         }
 
         $path = (string) ($entry['file_path'] ?? '');
@@ -201,7 +215,7 @@ final class BackupManager
         if ($real === '' || !str_starts_with($real, $this->backupRoot . '/')) {
             return [
                 'ok' => false,
-                'message' => 'Backup absent du stockage.',
+                'message' => 'Sauvegarde absente du stockage.',
                 'orphan' => true,
                 'entry' => $entry,
             ];
@@ -232,18 +246,18 @@ final class BackupManager
     {
         $entry = $this->findByName($name);
         if ($entry === null) {
-            return ['ok' => false, 'message' => 'Backup introuvable en index.'];
+            return ['ok' => false, 'message' => 'Sauvegarde introuvable en index.'];
         }
 
         $id = (int) ($entry['id'] ?? 0);
         $path = (string) ($entry['file_path'] ?? '');
         if ($id <= 0 || $path === '') {
-            return ['ok' => false, 'message' => 'Entree backup invalide.'];
+            return ['ok' => false, 'message' => 'Entrée backup invalide.'];
         }
 
         $lock = $this->acquireLock();
         if ($lock === null) {
-            return ['ok' => false, 'message' => 'Suppression concurrente detectee.'];
+            return ['ok' => false, 'message' => 'Suppression concurrente détectée.'];
         }
 
         try {
@@ -265,7 +279,7 @@ final class BackupManager
                     $this->logAudit('backup.delete', 'warning', 'Suppression refusee: backup orphelin', ['backup_id' => $id, 'file_path' => $path], $context);
                     return [
                         'ok' => false,
-                        'message' => 'Le fichier est absent physiquement. Lance la reparation de l\'index.',
+                        'message' => 'Le fichier est absent physiquement. Lance la réparation de l\'index.',
                         'orphan' => true,
                     ];
                 }
@@ -275,27 +289,27 @@ final class BackupManager
                 $this->pdo->commit();
 
                 $this->logAudit('backup.orphan.repair', 'success', 'Entree orpheline retiree', ['backup_id' => $id, 'file_path' => $path], $context);
-                return ['ok' => true, 'message' => 'Index repare: entree orpheline supprimee.'];
+                return ['ok' => true, 'message' => 'Index réparé: entrée orpheline supprimée.'];
             }
 
             if (!@unlink($real)) {
                 $this->pdo->rollBack();
                 $this->logAudit('backup.delete', 'error', 'Suppression fichier impossible', ['backup_id' => $id, 'file_path' => $real], $context);
-                return ['ok' => false, 'message' => 'Suppression physique impossible (droits ou lock).'];
+                return ['ok' => false, 'message' => 'Suppression physique impossible (droits ou verrou).'];
             }
 
             $del = $this->pdo->prepare('DELETE FROM ' . $this->backupsTable . ' WHERE id = :id');
             $del->execute(['id' => $id]);
             $this->pdo->commit();
 
-            $this->logAudit('backup.delete', 'success', 'Backup supprime', ['backup_id' => $id, 'file_path' => $real], $context);
-            return ['ok' => true, 'message' => 'Backup supprime: ' . basename($real)];
+            $this->logAudit('backup.delete', 'success', 'Sauvegarde supprimée', ['backup_id' => $id, 'file_path' => $real], $context);
+            return ['ok' => true, 'message' => 'Sauvegarde supprimée: ' . basename($real)];
         } catch (Throwable $e) {
             if ($this->pdo->inTransaction()) {
                 $this->pdo->rollBack();
             }
             $this->logAudit('backup.delete', 'error', 'Echec suppression backup', ['error' => substr($e->getMessage(), 0, 240), 'name' => $name], $context);
-            return ['ok' => false, 'message' => 'Echec suppression: ' . substr($e->getMessage(), 0, 180)];
+            return ['ok' => false, 'message' => 'Échec suppression: ' . substr($e->getMessage(), 0, 180)];
         } finally {
             $this->releaseLock($lock);
         }
@@ -311,7 +325,7 @@ final class BackupManager
 
         $read = $this->readBackup($name);
         if (!((bool) ($read['ok'] ?? false))) {
-            return ['ok' => false, 'message' => (string) ($read['message'] ?? 'Backup introuvable.')];
+            return ['ok' => false, 'message' => (string) ($read['message'] ?? 'Sauvegarde introuvable.')];
         }
 
         $manifest = (array) ($read['manifest'] ?? []);
@@ -333,7 +347,7 @@ final class BackupManager
 
         $lock = $this->acquireLock();
         if ($lock === null) {
-            return ['ok' => false, 'message' => 'Restore concurrent detecte.'];
+            return ['ok' => false, 'message' => 'Restore concurrent détecté.'];
         }
 
         try {
@@ -389,7 +403,7 @@ final class BackupManager
         $lastRestore = '-';
         $lastFailure = '-';
         try {
-            $restoreStmt = $this->pdo->query('SELECT created_at, status, last_error FROM ' . $this->backupsTable . ' WHERE backup_type = \"restore\" ORDER BY created_at DESC LIMIT 1');
+            $restoreStmt = $this->pdo->query("SELECT created_at, status, last_error FROM " . $this->backupsTable . " WHERE backup_type = 'restore' ORDER BY created_at DESC LIMIT 1");
             $restore = $restoreStmt !== false ? $restoreStmt->fetch(PDO::FETCH_ASSOC) : false;
             if (is_array($restore)) {
                 $lastRestore = (string) ($restore['created_at'] ?? '-');
@@ -397,7 +411,30 @@ final class BackupManager
                     $lastFailure = (string) ($restore['last_error'] ?? 'restore.failed');
                 }
             }
+
+            $failureStmt = $this->pdo->query(
+                "SELECT created_at, last_error, status, backup_type FROM " . $this->backupsTable
+                . " WHERE (LOWER(COALESCE(status, '')) IN ('failed','error') OR TRIM(COALESCE(last_error, '')) != '')"
+                . " ORDER BY created_at DESC LIMIT 1"
+            );
+            $failure = $failureStmt !== false ? $failureStmt->fetch(PDO::FETCH_ASSOC) : false;
+            if (is_array($failure)) {
+                $failureDate = (string) ($failure['created_at'] ?? '-');
+                $failureMsg = trim((string) ($failure['last_error'] ?? ''));
+                $failureType = trim((string) ($failure['backup_type'] ?? 'backup'));
+                if ($failureMsg === '') {
+                    $failureMsg = 'statut=' . (string) ($failure['status'] ?? 'failed');
+                }
+                $lastFailure = $failureDate . ' [' . $failureType . '] ' . $failureMsg;
+            }
         } catch (Throwable) {
+        }
+
+        if ($lastFailure === '-') {
+            $logFailure = $this->lastBackupRuntimeFailureFromLogs();
+            if ($logFailure !== '') {
+                $lastFailure = $logFailure;
+            }
         }
 
         $storageOk = is_dir($this->backupRoot) && is_writable($this->backupRoot);
@@ -451,44 +488,111 @@ final class BackupManager
         return [
             [
                 'level' => 0,
-                'label' => 'Niveau 0 - Desactive',
+                'label' => 'Niveau 0 - Désactivé',
                 'access' => 'Tous les flux normaux',
                 'blocked' => 'Aucun blocage maintenance',
-                'allowed' => 'Toutes operations normales',
+                'allowed' => 'Toutes opérations normales',
                 'usage' => 'Exploitation standard',
             ],
             [
                 'level' => 1,
-                'label' => 'Niveau 1 - Maintenance legere',
-                'access' => 'Front bloque, admins autorises selon regles',
+                'label' => 'Niveau 1 - Maintenance légère',
+                'access' => 'Front bloqué, admins autorisés selon règles',
                 'blocked' => 'Front public',
-                'allowed' => 'Operations non destructives admin',
+                'allowed' => 'Opérations non destructives admin',
                 'usage' => 'Intervention courte et preventive',
             ],
             [
                 'level' => 2,
                 'label' => 'Niveau 2 - Maintenance technique',
-                'access' => 'Admins limites selon politique active',
-                'blocked' => 'Front + operations non conformes',
-                'allowed' => 'Backup/restore/migrations controles',
-                'usage' => 'Interventions techniques encadrees',
+                'access' => 'Admins limités selon politique active',
+                'blocked' => 'Front + opérations non conformes',
+                'allowed' => 'Backup/restore/migrations contrôlés',
+                'usage' => 'Interventions techniques encadrées',
             ],
             [
                 'level' => 3,
                 'label' => 'Niveau 3 - Maintenance lourde',
                 'access' => 'Superadmin + whitelists',
-                'blocked' => 'Acces admin general',
-                'allowed' => 'Operations critiques',
-                'usage' => 'Reparations structurelles/DB',
+                'blocked' => 'Accès admin général',
+                'allowed' => 'Opérations critiques',
+                'usage' => 'Réparations structurelles/DB',
             ],
             [
                 'level' => 4,
                 'label' => 'Niveau 4 - Verrouillage total',
-                'access' => 'Superadmin whiteliste uniquement',
+                'access' => 'Superadmin whitelisté uniquement',
                 'blocked' => 'Tout hors exception explicite',
-                'allowed' => 'Intervention critique securisee',
+                'allowed' => 'Intervention critique sécurisée',
                 'usage' => 'Restore complet et incident majeur',
             ],
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function registerBackupFailure(string $type, string $path, array $manifest, array $context, string $message): array
+    {
+        try {
+            $this->insertBackupRow($type, $path, 'failed', '', 0, $context, $manifest, $message);
+        } catch (Throwable) {
+        }
+
+        $this->logAudit('backup.create', 'error', 'Échec création backup', ['error' => substr($message, 0, 240), 'type' => $type, 'path' => $path], $context);
+        return ['ok' => false, 'message' => $message];
+    }
+
+    private function prepareZipTemporaryDirectory(): void
+    {
+        $tmpDir = CATMIN_STORAGE . '/tmp/zip';
+        if (!is_dir($tmpDir)) {
+            @mkdir($tmpDir, 0775, true);
+        }
+
+        if (is_dir($tmpDir) && is_writable($tmpDir)) {
+            @ini_set('sys_temp_dir', $tmpDir);
+            @putenv('TMPDIR=' . $tmpDir);
+            @putenv('TMP=' . $tmpDir);
+            @putenv('TEMP=' . $tmpDir);
+        }
+    }
+
+    /** @return array<string, mixed> */
+    private function createSqlFallbackBackup(string $type, string $stamp, string $sqlDump, array $manifest, array $context): array
+    {
+        if ($sqlDump === '') {
+            return ['ok' => false, 'message' => 'Aucun dump SQL disponible pour fallback.'];
+        }
+
+        $filename = 'catmin-' . $type . '-' . $stamp . '.sql';
+        $path = $this->backupRoot . '/' . $filename;
+
+        $header = '-- Backup fallback (SQL)\n'
+            . '-- backup_format_version: ' . $this->backupFormatVersion . "\n"
+            . '-- core_version: ' . Version::current() . "\n"
+            . '-- generated_at: ' . gmdate('c') . "\n\n";
+
+        $written = @file_put_contents($path, $header . $sqlDump);
+        if ($written === false) {
+            return ['ok' => false, 'message' => 'Fallback SQL impossible (droits écriture).'];
+        }
+
+        $size = (int) (@filesize($path) ?: 0);
+        $checksum = (string) (@hash_file('sha256', $path) ?: '');
+        $manifest['file'] = ['name' => $filename, 'size' => $size, 'checksum_sha256' => $checksum];
+        $manifest['fallback'] = ['mode' => 'sql_file'];
+
+        $rowId = $this->insertBackupRow($type, $path, 'success', $checksum, $size, $context, $manifest);
+        $this->logAudit('backup.create', 'warning', 'Sauvegarde créée via fallback SQL', ['backup_id' => $rowId, 'file' => $filename, 'type' => $type], $context);
+
+        return [
+            'ok' => true,
+            'id' => $rowId,
+            'name' => $filename,
+            'path' => $path,
+            'size' => $size,
+            'checksum' => $checksum,
+            'manifest' => $manifest,
+            'message' => 'Sauvegarde créée (fallback SQL): ' . $filename,
         ];
     }
 
@@ -705,7 +809,7 @@ final class BackupManager
         return null;
     }
 
-    private function insertBackupRow(string $type, string $path, string $status, string $checksum, int $size, array $context, array $manifest): int
+    private function insertBackupRow(string $type, string $path, string $status, string $checksum, int $size, array $context, array $manifest, ?string $lastError = null): int
     {
         $stmt = $this->pdo->prepare(
             'INSERT INTO ' . $this->backupsTable . ' (backup_type, status, file_path, checksum, size_bytes, created_at, backup_format_version, core_version, origin, manifest, integrity_status, is_orphan, created_by_user_id, created_by_username, last_error) '
@@ -726,7 +830,7 @@ final class BackupManager
             'is_orphan' => 0,
             'created_by_user_id' => (int) ($context['user_id'] ?? 0),
             'created_by_username' => (string) ($context['username'] ?? ''),
-            'last_error' => null,
+            'last_error' => $lastError,
         ]);
 
         return (int) $this->pdo->lastInsertId();
@@ -1072,5 +1176,51 @@ final class BackupManager
             @flock($fp, LOCK_UN);
             @fclose($fp);
         }
+    }
+
+    private function lastBackupRuntimeFailureFromLogs(): string
+    {
+        $logFiles = [
+            CATMIN_STORAGE . '/logs/catmin.log',
+            CATMIN_ROOT . '/logs/catmin.log',
+        ];
+
+        foreach ($logFiles as $logFile) {
+            if (!is_file($logFile)) {
+                continue;
+            }
+
+            $lines = @file($logFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            if (!is_array($lines) || $lines === []) {
+                continue;
+            }
+
+            for ($i = count($lines) - 1; $i >= 0; $i--) {
+                $line = (string) $lines[$i];
+                if (stripos($line, '/maintenance/backup/create') === false) {
+                    continue;
+                }
+                if (stripos($line, 'ERROR') === false) {
+                    continue;
+                }
+                $timestamp = '';
+                if (preg_match('/^\[([^\]]+)\]/', $line, $m) === 1) {
+                    $timestamp = trim((string) ($m[1] ?? ''));
+                }
+
+                $runtimeMessage = '';
+                if (preg_match('/"message":"([^"]+)"/', $line, $m) === 1) {
+                    $runtimeMessage = stripcslashes((string) ($m[1] ?? ''));
+                }
+
+                if ($runtimeMessage !== '') {
+                    return ($timestamp !== '' ? ('[' . $timestamp . '] ') : '') . $runtimeMessage;
+                }
+
+                return mb_substr($line, 0, 220);
+            }
+        }
+
+        return '';
     }
 }

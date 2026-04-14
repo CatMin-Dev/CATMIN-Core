@@ -1,5 +1,17 @@
 [
     {
+        "version": "0.5.0-RC.3",
+        "date": "2026-04-14",
+        "scope": "core",
+        "changes": [
+            "maintenance backups diagnostics now surface latest persisted failures and fallback runtime backup/create errors from logs",
+            "backup manager robustness improved for zip temp handling and fallback SQL path with clearer audit trails",
+            "maintenance admin labels and backup messages normalized in French with accents for UI consistency",
+            "backup create/delete flows revalidated end-to-end with syntax and runtime checks"
+        ],
+        "prompt": "catmin-maintenance-hardening-rc3"
+    },
+    {
         "version": "0.5.0-RC.2",
         "date": "2026-04-14",
         "scope": "core",

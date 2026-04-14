@@ -2571,7 +2571,7 @@ $routes = [
                     $coreLogsTable,
                     'system',
                     'warning',
-                    $state['maintenance'] ? 'Maintenance activee' : 'Maintenance desactivee',
+                    $state['maintenance'] ? 'Maintenance activée' : 'Maintenance désactivée',
                     [
                         'level' => (int) ($state['maintenance_level'] ?? 1),
                         'reason' => (string) ($state['maintenance_reason'] ?? ''),
@@ -2580,7 +2580,7 @@ $routes = [
                 );
             }
             return $redirect($adminBase . '/maintenance', [
-                'msg' => $ok ? 'Etat maintenance mis a jour en base.' : 'Echec ecriture etat maintenance en base.',
+                'msg' => $ok ? 'État maintenance mis à jour en base.' : 'Échec écriture état maintenance en base.',
                 'mt' => $ok ? 'success' : 'danger',
             ]);
         },
@@ -2605,13 +2605,13 @@ $routes = [
 
             if ($ok) {
                 $saveSystemState($pdo, $coreSettingsTable, ['last_backup' => date('Y-m-d H:i:s')]);
-                $appendCoreLog($pdo, $coreLogsTable, 'backup', 'info', 'Backup cree', ['file' => (string) ($created['name'] ?? ''), 'type' => $type]);
+                $appendCoreLog($pdo, $coreLogsTable, 'backup', 'info', 'Backup créé', ['file' => (string) ($created['name'] ?? ''), 'type' => $type]);
             } else {
-                $appendCoreLog($pdo, $coreLogsTable, 'backup', 'error', 'Echec creation backup', ['type' => $type]);
+                $appendCoreLog($pdo, $coreLogsTable, 'backup', 'error', 'Échec création backup', ['type' => $type]);
             }
 
             return $redirect($adminBase . '/maintenance', [
-                'msg' => (string) ($created['message'] ?? ($ok ? 'Sauvegarde creee.' : 'Echec creation sauvegarde.')),
+                'msg' => (string) ($created['message'] ?? ($ok ? 'Sauvegarde créée.' : 'Échec création sauvegarde.')),
                 'mt' => $ok ? 'success' : 'danger',
             ]);
         },
@@ -2632,18 +2632,18 @@ $routes = [
             $manager = new \Core\maintenance\BackupManager($pdo, $coreBackupsTable, $coreMaintenanceAuditTable);
             $backup = trim((string) $request->input('backup', ''));
             if ($backup === '') {
-                return $redirect($adminBase . '/maintenance', ['msg' => 'Backup invalide.', 'mt' => 'danger']);
+                return $redirect($adminBase . '/maintenance', ['msg' => 'Sauvegarde invalide.', 'mt' => 'danger']);
             }
 
             $read = $manager->readBackup($backup);
             if (!((bool) ($read['ok'] ?? false))) {
-                return $redirect($adminBase . '/maintenance', ['msg' => 'Backup introuvable.', 'mt' => 'danger']);
+                return $redirect($adminBase . '/maintenance', ['msg' => 'Sauvegarde introuvable.', 'mt' => 'danger']);
             }
 
             $real = (string) ($read['path'] ?? '');
             $content = (string) @file_get_contents($real);
             if ($content === '') {
-                return $redirect($adminBase . '/maintenance', ['msg' => 'Backup vide ou illisible.', 'mt' => 'danger']);
+                return $redirect($adminBase . '/maintenance', ['msg' => 'Sauvegarde vide ou illisible.', 'mt' => 'danger']);
             }
 
             $ext = strtolower((string) pathinfo($real, PATHINFO_EXTENSION));
@@ -2677,12 +2677,12 @@ $routes = [
             $manager = new \Core\maintenance\BackupManager($pdo, $coreBackupsTable, $coreMaintenanceAuditTable);
             $backup = trim((string) $request->input('backup', ''));
             if ($backup === '') {
-                return $redirect($adminBase . '/maintenance', ['msg' => 'Backup invalide.', 'mt' => 'danger']);
+                return $redirect($adminBase . '/maintenance', ['msg' => 'Sauvegarde invalide.', 'mt' => 'danger']);
             }
 
             $read = $manager->readBackup($backup);
             if (!((bool) ($read['ok'] ?? false))) {
-                return $redirect($adminBase . '/maintenance', ['msg' => (string) ($read['message'] ?? 'Backup introuvable.'), 'mt' => 'danger']);
+                return $redirect($adminBase . '/maintenance', ['msg' => (string) ($read['message'] ?? 'Sauvegarde introuvable.'), 'mt' => 'danger']);
             }
 
             return View::make('maintenance.read', [
@@ -2713,18 +2713,18 @@ $routes = [
             $manager = new \Core\maintenance\BackupManager($pdo, $coreBackupsTable, $coreMaintenanceAuditTable);
             $backup = trim((string) $request->input('backup', ''));
             if ($backup === '') {
-                return $redirect($adminBase . '/maintenance', ['msg' => 'Backup invalide.', 'mt' => 'danger']);
+                return $redirect($adminBase . '/maintenance', ['msg' => 'Sauvegarde invalide.', 'mt' => 'danger']);
             }
 
             $repair = ((string) $request->input('repair_orphan', '0')) === '1';
             $result = $manager->deleteBackup($backup, $maintenanceActorContext(), $repair);
             $ok = (bool) ($result['ok'] ?? false);
             if ($ok) {
-                $appendCoreLog($pdo, $coreLogsTable, 'backup', 'warning', 'Backup supprime', ['file' => $backup]);
+                $appendCoreLog($pdo, $coreLogsTable, 'backup', 'warning', 'Backup supprimé', ['file' => $backup]);
             }
 
             return $redirect($adminBase . '/maintenance', [
-                'msg' => (string) ($result['message'] ?? ($ok ? 'Backup supprime.' : 'Echec suppression backup.')),
+                'msg' => (string) ($result['message'] ?? ($ok ? 'Backup supprimé.' : 'Échec suppression backup.')),
                 'mt' => $ok ? 'success' : 'danger',
             ]);
         },
@@ -2768,7 +2768,7 @@ $routes = [
             $manager = new \Core\maintenance\BackupManager($pdo, $coreBackupsTable, $coreMaintenanceAuditTable);
             $backup = trim((string) $request->input('backup', ''));
             if ($backup === '') {
-                return $redirect($adminBase . '/maintenance', ['msg' => 'Backup invalide.', 'mt' => 'danger']);
+                return $redirect($adminBase . '/maintenance', ['msg' => 'Sauvegarde invalide.', 'mt' => 'danger']);
             }
 
             $mode = trim((string) $request->input('restore_mode', 'db_only'));
@@ -2782,11 +2782,11 @@ $routes = [
                 $saveSystemState($pdo, $coreSettingsTable, ['last_restore' => $restoreStamp]);
                 $appendCoreLog($pdo, $coreLogsTable, 'backup', 'warning', 'Restore execute', ['file' => basename($backup), 'mode' => $mode, 'dry_run' => $dryRun]);
             } else {
-                $appendCoreLog($pdo, $coreLogsTable, 'backup', 'error', 'Restore echec', ['file' => basename($backup), 'mode' => $mode]);
+                $appendCoreLog($pdo, $coreLogsTable, 'backup', 'error', 'Restore échec', ['file' => basename($backup), 'mode' => $mode]);
             }
 
             return $redirect($adminBase . '/maintenance', [
-                'msg' => (string) ($result['message'] ?? ($ok ? 'Restore execute.' : 'Restore en echec.')),
+                'msg' => (string) ($result['message'] ?? ($ok ? 'Restore exécuté.' : 'Restore en échec.')),
                 'mt' => $dryRun ? 'warning' : ($ok ? 'success' : 'danger'),
             ]);
         },

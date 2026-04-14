@@ -31,15 +31,15 @@ ob_start();
             <div class="col-12 col-lg-6">
                 <div class="border rounded p-2 bg-body-tertiary small">
                     <strong>Type exact</strong>: <?= htmlspecialchars((string) ($backupDetails['backup_type'] ?? ($backupManifest['backup_type'] ?? '-')), ENT_QUOTES, 'UTF-8') ?><br>
-                    <strong>Core version</strong>: <?= htmlspecialchars((string) ($backupDetails['core_version'] ?? ($backupManifest['core_version'] ?? '-')), ENT_QUOTES, 'UTF-8') ?><br>
-                    <strong>backup_format</strong>: <?= htmlspecialchars((string) ($backupDetails['backup_format_version'] ?? ($backupManifest['backup_format_version'] ?? '-')), ENT_QUOTES, 'UTF-8') ?><br>
+                    <strong>Version core</strong>: <?= htmlspecialchars((string) ($backupDetails['core_version'] ?? ($backupManifest['core_version'] ?? '-')), ENT_QUOTES, 'UTF-8') ?><br>
+                    <strong>Format de sauvegarde</strong>: <?= htmlspecialchars((string) ($backupDetails['backup_format_version'] ?? ($backupManifest['backup_format_version'] ?? '-')), ENT_QUOTES, 'UTF-8') ?><br>
                     <strong>Checksum</strong>: <?= htmlspecialchars((string) (($backupManifest['file']['checksum_sha256'] ?? '-')), ENT_QUOTES, 'UTF-8') ?>
                 </div>
             </div>
             <div class="col-12 col-lg-6">
                 <div class="border rounded p-2 bg-body-tertiary small">
                     <?php $content = (array) ($backupDetails['content'] ?? []); ?>
-                    <strong>Contenu detecte</strong><br>
+                    <strong>Contenu détecté</strong><br>
                     SQL: <?= !empty($content['sql_full']) ? 'oui' : 'non' ?> (tables: <?= (int) ($content['sql_tables_count'] ?? 0) ?>)<br>
                     Fichiers: <?= !empty($content['files']) ? 'oui' : 'non' ?> / Uploads: <?= !empty($content['uploads']) ? 'oui' : 'non' ?><br>
                     Config: <?= !empty($content['config']) ? 'oui' : 'non' ?> / Assets: <?= !empty($content['assets']) ? 'oui' : 'non' ?> / Modules: <?= !empty($content['modules']) ? 'oui' : 'non' ?>
@@ -50,7 +50,7 @@ ob_start();
         <?php $warnings = (array) ($backupDetails['warnings'] ?? []); ?>
         <?php if ($warnings !== []): ?>
             <div class="alert alert-warning">
-                <strong>Avertissements compatibilite</strong>
+                <strong>Avertissements compatibilité</strong>
                 <ul class="mb-0 mt-2">
                     <?php foreach ($warnings as $warning): ?>
                         <li><?= htmlspecialchars((string) $warning, ENT_QUOTES, 'UTF-8') ?></li>
@@ -60,8 +60,8 @@ ob_start();
         <?php endif; ?>
 
         <div class="alert alert-info">
-            <strong>Strategies de restauration disponibles</strong><br>
-            restore DB only, restore files only, restore full, dry-run pre-analyse.
+            <strong>Stratégies de restauration disponibles</strong><br>
+            Restaurer BDD, restaurer fichiers, restauration complète, simulation (dry-run) avant exécution.
         </div>
 
         <?php if ($isTextPreview): ?>

@@ -9,6 +9,7 @@ storage/install/sessions/*
 storage/updates/releases/*
 storage/updates/reports/*
 storage/modules/*
+storage/locks/*
 logs/*.log
 cache/*
 sessions/*
@@ -21,6 +22,7 @@ tmp/*
 !storage/updates/releases/.gitkeep
 !storage/updates/reports/.gitkeep
 !storage/modules/.gitkeep
+!storage/locks/.gitkeep
 !storage/install/sessions/.gitkeep
 !cache/.gitkeep
 !logs/.gitkeep
