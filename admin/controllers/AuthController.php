@@ -34,11 +34,19 @@ final class AuthController
 
     public function showLogin(?string $error = null): Response
     {
+        if ($this->auth->sessions()->isAuthenticated()) {
+            return Response::html('', 302, ['Location' => $this->adminBasePath() . '/']);
+        }
+
         return View::make('auth.login', ['error' => $error, 'adminBase' => $this->adminBasePath()], 'admin');
     }
 
     public function login(Request $request): Response
     {
+        if ($this->auth->sessions()->isAuthenticated()) {
+            return Response::html('', 302, ['Location' => $this->adminBasePath() . '/']);
+        }
+
         $identifier = (string) $request->input('identifier', '');
         $password = (string) $request->input('password', '');
         $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1');

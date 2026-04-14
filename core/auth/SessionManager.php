@@ -31,6 +31,11 @@ final class SessionManager
         session_regenerate_id(true);
         $token = bin2hex(random_bytes(32));
 
+        $table = (string) Config::get('database.prefixes.admin', 'admin_') . 'sessions';
+        // Keep a single active admin session per account to avoid token/session buildup.
+        $cleanup = $this->pdo->prepare('DELETE FROM ' . $table . ' WHERE user_id = :user_id');
+        $cleanup->execute(['user_id' => $userId]);
+
         $_SESSION[self::AUTH_KEY] = [
             'user_id' => $userId,
             'token' => $token,
@@ -42,7 +47,6 @@ final class SessionManager
 
         $_SESSION[self::REAUTH_KEY] = time();
 
-        $table = (string) Config::get('database.prefixes.admin', 'admin_') . 'sessions';
         $stmt = $this->pdo->prepare(
             'INSERT INTO ' . $table . ' (user_id, session_token, ip_address, user_agent, last_activity_at, created_at) VALUES (:user_id, :session_token, :ip_address, :user_agent, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)'
         );
@@ -86,8 +90,11 @@ final class SessionManager
         }
 
         $table = (string) Config::get('database.prefixes.admin', 'admin_') . 'sessions';
-        $exists = $this->pdo->prepare('SELECT id FROM ' . $table . ' WHERE session_token = :session_token LIMIT 1');
-        $exists->execute(['session_token' => (string) $auth['token']]);
+        $exists = $this->pdo->prepare('SELECT id FROM ' . $table . ' WHERE session_token = :session_token AND user_id = :user_id LIMIT 1');
+        $exists->execute([
+            'session_token' => (string) $auth['token'],
+            'user_id' => (int) $auth['user_id'],
+        ]);
         if ($exists->fetchColumn() === false) {
             $this->logout();
             return false;
