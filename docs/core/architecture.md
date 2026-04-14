@@ -23,3 +23,10 @@
 - il valide la version de schéma attendue et les tables critiques.
 - il synchronise l'état runtime des modules avec `core_modules.status`.
 - en cas d'incohérence critique, le boot est bloqué avec journalisation.
+
+## Front Core Loader
+- couche officielle dans `core/front/` avec `FrontCoreLoader`.
+- source modules front: snapshot runtime modules actif/valide/compatible.
+- enforcement: filtrage sécurité + chemins résolus sous `CATMIN_MODULES`.
+- context front unifié injecté: modules, assets front, régions front, bridges front, routes front déclarées.
+- le frontend ne charge pas de module métier directement: il consomme uniquement le contexte produit par le loader core.

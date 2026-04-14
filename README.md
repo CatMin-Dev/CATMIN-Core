@@ -1,8 +1,8 @@
 # CATMIN Core
 
-[![Version](https://img.shields.io/badge/version-0.3.0--rc.5-e23561)](https://github.com/CatMin-Dev/CATMIN-Core/releases/tag/0.3.0-rc.5)
+[![Version](https://img.shields.io/badge/version-0.4.0--RC.22-e23561)](https://github.com/CatMin-Dev/CATMIN-Core/releases/tag/0.4.0-RC.22)
 ![PHP](https://img.shields.io/badge/php-8.3%2B-44403c)
-![DB Schema](https://img.shields.io/badge/db_schema-0.1.0--rc.1-c2234d)
+![DB Schema](https://img.shields.io/badge/db_schema-0.1.0--dev.3-c2234d)
 ![Installer](https://img.shields.io/badge/installer-lock%20enforced-16a34a)
 [![Standalone](https://img.shields.io/badge/Standalone-Download%20Release-0ea5e9?logo=github)](https://github.com/CatMin-Dev/CATMIN-Core/releases)
 
@@ -104,4 +104,4 @@ Artefacts attendus:
 
 ---
 
-CATMIN `0.3.0-rc.5` - base RC publique du core standalone.
+CATMIN `0.4.0-RC.22` - core standalone avec front core loader officiel.

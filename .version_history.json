@@ -1,5 +1,16 @@
 [
     {
+        "version": "0.4.0-RC.22",
+        "date": "2026-04-14",
+        "scope": "core",
+        "changes": [
+            "front core loader architecture introduced with official core/front adapters, resolvers and runtime enforcement",
+            "frontend entrypoint now consumes front context from core loader (modules, assets, regions, bridges, routes)",
+            "front loader naming normalized to lowercase directory convention (core/front)"
+        ],
+        "prompt": "catmin-front-core-loader-architecture"
+    },
+    {
         "version": "0.4.0-RC.21",
         "date": "2026-04-14",
         "scope": "core",
