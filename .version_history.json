@@ -1,5 +1,16 @@
 [
     {
+        "version": "0.5.0-RC.11",
+        "date": "2026-04-15",
+        "scope": "core",
+        "changes": [
+            "monitoring page now translates latest security/core event keys (e.g. auth.login.success) before display",
+            "french locale extended with auth/security event labels used by monitoring widgets",
+            "english locale extended with auth/security event labels used by monitoring widgets"
+        ],
+        "prompt": "monitoring-event-translation-rc11"
+    },
+    {
         "version": "0.5.0-RC.10",
         "date": "2026-04-15",
         "scope": "core",

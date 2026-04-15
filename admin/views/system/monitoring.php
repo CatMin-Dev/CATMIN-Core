@@ -24,14 +24,36 @@ ob_start();
             <div class="card h-100"><div class="card-body">
                 <h3 class="h6 mb-1"><?= htmlspecialchars(__('system.monitoring.critical_errors'), ENT_QUOTES, 'UTF-8') ?></h3>
                 <div class="display-6 mb-2"><?= (int) (($widgets['critical_errors']['count'] ?? 0)) ?></div>
-                <p class="small text-body-secondary mb-0"><?= htmlspecialchars((string) (($widgets['critical_errors']['last'] ?? __('system.monitoring.no_data')) ?: __('system.monitoring.no_data')), ENT_QUOTES, 'UTF-8') ?></p>
+                <p class="small text-body-secondary mb-0"><?php
+                    $lastError = (string) (($widgets['critical_errors']['last'] ?? '-') ?: '-');
+                    $errorDisplay = '-';
+                    if ($lastError !== '-') {
+                        $translationKey = 'event.' . $lastError;
+                        $translated = __($translationKey);
+                        $errorDisplay = $translated !== $translationKey ? $translated : $lastError;
+                    } else {
+                        $errorDisplay = __('system.monitoring.no_data');
+                    }
+                    echo htmlspecialchars((string) $errorDisplay, ENT_QUOTES, 'UTF-8');
+                ?></p>
             </div></div>
         </div>
         <div class="col-12 col-md-6 col-xl-3">
             <div class="card h-100"><div class="card-body">
                 <h3 class="h6 mb-1"><?= htmlspecialchars(__('system.monitoring.security_alerts'), ENT_QUOTES, 'UTF-8') ?></h3>
                 <div class="display-6 mb-2"><?= (int) (($widgets['security_alerts']['count'] ?? 0)) ?></div>
-                <p class="small text-body-secondary mb-0"><?= htmlspecialchars((string) (($widgets['security_alerts']['last'] ?? __('system.monitoring.no_data')) ?: __('system.monitoring.no_data')), ENT_QUOTES, 'UTF-8') ?></p>
+                <p class="small text-body-secondary mb-0"><?php
+                    $lastAlert = (string) (($widgets['security_alerts']['last'] ?? '-') ?: '-');
+                    $alertDisplay = '-';
+                    if ($lastAlert !== '-') {
+                        $translationKey = 'event.' . $lastAlert;
+                        $translated = __($translationKey);
+                        $alertDisplay = $translated !== $translationKey ? $translated : $lastAlert;
+                    } else {
+                        $alertDisplay = __('system.monitoring.no_data');
+                    }
+                    echo htmlspecialchars((string) $alertDisplay, ENT_QUOTES, 'UTF-8');
+                ?></p>
             </div></div>
         </div>
         <div class="col-12 col-md-6 col-xl-3">
