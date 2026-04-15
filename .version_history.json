@@ -1,5 +1,17 @@
 [
     {
+        "version": "0.5.0-RC.10",
+        "date": "2026-04-15",
+        "scope": "core",
+        "changes": [
+            "monitoring page i18n keys added for maintenance state labels (maintenance_on, maintenance_off) and fallback display (no_data)",
+            "monitoring page top cards layout fixed by wrapping row in neutral section to ensure structural alignment with health block below",
+            "french translations unified for monitoring section and common status labels (Sain, Avertissement, Critique, Inconnu)",
+            "english translations completed with explicit monitoring state and fallback labels"
+        ],
+        "prompt": "monitoring-translations-alignment-rc10"
+    },
+    {
         "version": "0.5.0-RC.9",
         "date": "2026-04-15",
         "scope": "core",

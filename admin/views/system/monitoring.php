@@ -18,34 +18,36 @@ $healthSummary = (array) ($health['summary'] ?? []);
 
 ob_start();
 ?>
-<section class="row g-3 mb-3">
-    <div class="col-12 col-md-6 col-xl-3">
-        <div class="card h-100"><div class="card-body">
-            <h3 class="h6 mb-1"><?= htmlspecialchars(__('system.monitoring.critical_errors'), ENT_QUOTES, 'UTF-8') ?></h3>
-            <div class="display-6 mb-2"><?= (int) (($widgets['critical_errors']['count'] ?? 0)) ?></div>
-            <p class="small text-body-secondary mb-0"><?= htmlspecialchars((string) (($widgets['critical_errors']['last'] ?? '-') ?: '-'), ENT_QUOTES, 'UTF-8') ?></p>
-        </div></div>
-    </div>
-    <div class="col-12 col-md-6 col-xl-3">
-        <div class="card h-100"><div class="card-body">
-            <h3 class="h6 mb-1"><?= htmlspecialchars(__('system.monitoring.security_alerts'), ENT_QUOTES, 'UTF-8') ?></h3>
-            <div class="display-6 mb-2"><?= (int) (($widgets['security_alerts']['count'] ?? 0)) ?></div>
-            <p class="small text-body-secondary mb-0"><?= htmlspecialchars((string) (($widgets['security_alerts']['last'] ?? '-') ?: '-'), ENT_QUOTES, 'UTF-8') ?></p>
-        </div></div>
-    </div>
-    <div class="col-12 col-md-6 col-xl-3">
-        <div class="card h-100"><div class="card-body">
-            <h3 class="h6 mb-1"><?= htmlspecialchars(__('system.monitoring.maintenance'), ENT_QUOTES, 'UTF-8') ?></h3>
-            <div class="display-6 mb-2"><?= !empty($widgets['maintenance']['active']) ? 'ON' : 'OFF' ?></div>
-            <p class="small text-body-secondary mb-0"><?= htmlspecialchars((string) (($widgets['maintenance']['meta'] ?? '-') ?: '-'), ENT_QUOTES, 'UTF-8') ?></p>
-        </div></div>
-    </div>
-    <div class="col-12 col-md-6 col-xl-3">
-        <div class="card h-100"><div class="card-body">
-            <h3 class="h6 mb-1"><?= htmlspecialchars(__('system.monitoring.modules_to_check'), ENT_QUOTES, 'UTF-8') ?></h3>
-            <div class="display-6 mb-2"><?= (int) (($widgets['module_issues']['count'] ?? 0)) ?></div>
-            <p class="small text-body-secondary mb-0"><?= htmlspecialchars(__('system.monitoring.modules_hint'), ENT_QUOTES, 'UTF-8') ?></p>
-        </div></div>
+<section class="mb-3">
+    <div class="row g-3">
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="card h-100"><div class="card-body">
+                <h3 class="h6 mb-1"><?= htmlspecialchars(__('system.monitoring.critical_errors'), ENT_QUOTES, 'UTF-8') ?></h3>
+                <div class="display-6 mb-2"><?= (int) (($widgets['critical_errors']['count'] ?? 0)) ?></div>
+                <p class="small text-body-secondary mb-0"><?= htmlspecialchars((string) (($widgets['critical_errors']['last'] ?? __('system.monitoring.no_data')) ?: __('system.monitoring.no_data')), ENT_QUOTES, 'UTF-8') ?></p>
+            </div></div>
+        </div>
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="card h-100"><div class="card-body">
+                <h3 class="h6 mb-1"><?= htmlspecialchars(__('system.monitoring.security_alerts'), ENT_QUOTES, 'UTF-8') ?></h3>
+                <div class="display-6 mb-2"><?= (int) (($widgets['security_alerts']['count'] ?? 0)) ?></div>
+                <p class="small text-body-secondary mb-0"><?= htmlspecialchars((string) (($widgets['security_alerts']['last'] ?? __('system.monitoring.no_data')) ?: __('system.monitoring.no_data')), ENT_QUOTES, 'UTF-8') ?></p>
+            </div></div>
+        </div>
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="card h-100"><div class="card-body">
+                <h3 class="h6 mb-1"><?= htmlspecialchars(__('system.monitoring.maintenance'), ENT_QUOTES, 'UTF-8') ?></h3>
+                <div class="display-6 mb-2"><?= !empty($widgets['maintenance']['active']) ? htmlspecialchars(__('system.monitoring.maintenance_on'), ENT_QUOTES, 'UTF-8') : htmlspecialchars(__('system.monitoring.maintenance_off'), ENT_QUOTES, 'UTF-8') ?></div>
+                <p class="small text-body-secondary mb-0"><?= htmlspecialchars((string) (($widgets['maintenance']['meta'] ?? __('system.monitoring.no_data')) ?: __('system.monitoring.no_data')), ENT_QUOTES, 'UTF-8') ?></p>
+            </div></div>
+        </div>
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="card h-100"><div class="card-body">
+                <h3 class="h6 mb-1"><?= htmlspecialchars(__('system.monitoring.modules_to_check'), ENT_QUOTES, 'UTF-8') ?></h3>
+                <div class="display-6 mb-2"><?= (int) (($widgets['module_issues']['count'] ?? 0)) ?></div>
+                <p class="small text-body-secondary mb-0"><?= htmlspecialchars(__('system.monitoring.modules_hint'), ENT_QUOTES, 'UTF-8') ?></p>
+            </div></div>
+        </div>
     </div>
 </section>
 
