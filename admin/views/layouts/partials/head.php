@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="/assets/vendor/bootstrap/5.3.8/css/bootstrap.min.css">
     <link rel="stylesheet" href="/assets/vendor/bootstrap/5.3.8/css/bootstrap-icons.min.css">
     <link rel="stylesheet" href="/odin-color.css?v=14">
-    <link rel="stylesheet" href="/assets/css/catmin-ui.css?v=28">
+    <link rel="stylesheet" href="/assets/css/catmin-ui.css?v=29">
     <link rel="stylesheet" href="/assets/css/catmin-components.css?v=3">
     <link rel="stylesheet" href="/assets/css/catmin-staff.css?v=2">
     <link rel="stylesheet" href="/assets/css/catmin-roles.css?v=2">

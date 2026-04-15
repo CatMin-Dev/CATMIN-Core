@@ -148,7 +148,7 @@ ob_start();
     </div>
     <div class="card-body pt-2">
         <div class="table-responsive">
-            <table class="table table-sm align-middle mb-0">
+            <table class="table table-sm align-middle mb-0 cat-maintenance-backups-table">
                 <thead>
                 <tr>
                     <th><?= htmlspecialchars(__('maintenance.table.name'), ENT_QUOTES, 'UTF-8') ?></th>
@@ -177,9 +177,15 @@ ob_start();
                             <td><?= htmlspecialchars((string) ($backup['backup_format_version'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                             <td><span class="badge <?= $badgeClass((string) ($backup['integrity'] ?? 'secondary')) ?>"><?= htmlspecialchars((string) ($backup['integrity'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></span></td>
                             <td><?= htmlspecialchars((string) ($backup['origin'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
-                            <td class="text-end">
-                                <a class="btn btn-sm btn-outline-secondary" href="<?= htmlspecialchars($adminBase . '/maintenance/backup/read?backup=' . rawurlencode($backupName), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars(__('maintenance.action.view_details'), ENT_QUOTES, 'UTF-8') ?></a>
-                                <a class="btn btn-sm btn-outline-primary" href="<?= htmlspecialchars($adminBase . '/maintenance/backup/download?backup=' . rawurlencode($backupName), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars(__('maintenance.action.download'), ENT_QUOTES, 'UTF-8') ?></a>
+                            <td class="text-end cat-maintenance-actions">
+                                <a class="btn btn-sm btn-outline-secondary" href="<?= htmlspecialchars($adminBase . '/maintenance/backup/read?backup=' . rawurlencode($backupName), ENT_QUOTES, 'UTF-8') ?>" title="<?= htmlspecialchars(__('maintenance.action.view_details'), ENT_QUOTES, 'UTF-8') ?>" aria-label="<?= htmlspecialchars(__('maintenance.action.view_details'), ENT_QUOTES, 'UTF-8') ?>">
+                                    <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                    <span class="visually-hidden"><?= htmlspecialchars(__('maintenance.action.view_details'), ENT_QUOTES, 'UTF-8') ?></span>
+                                </a>
+                                <a class="btn btn-sm btn-outline-primary" href="<?= htmlspecialchars($adminBase . '/maintenance/backup/download?backup=' . rawurlencode($backupName), ENT_QUOTES, 'UTF-8') ?>" title="<?= htmlspecialchars(__('maintenance.action.download'), ENT_QUOTES, 'UTF-8') ?>" aria-label="<?= htmlspecialchars(__('maintenance.action.download'), ENT_QUOTES, 'UTF-8') ?>">
+                                    <i class="bi bi-download" aria-hidden="true"></i>
+                                    <span class="visually-hidden"><?= htmlspecialchars(__('maintenance.action.download'), ENT_QUOTES, 'UTF-8') ?></span>
+                                </a>
                                 <form method="post" action="<?= htmlspecialchars($adminBase . '/maintenance/restore', ENT_QUOTES, 'UTF-8') ?>" class="d-inline" data-cat-confirm="<?= htmlspecialchars(__('maintenance.confirm.restore_overwrite'), ENT_QUOTES, 'UTF-8') ?>">
                                     <input type="hidden" name="_csrf" value="<?= $csrf ?>">
                                     <input type="hidden" name="backup" value="<?= htmlspecialchars($backupName, ENT_QUOTES, 'UTF-8') ?>">
@@ -190,12 +196,18 @@ ob_start();
                                         <option value="full"><?= htmlspecialchars(__('maintenance.action.restore_full'), ENT_QUOTES, 'UTF-8') ?></option>
                                     </select>
                                     <label class="form-check-label small ms-1"><input class="form-check-input" type="checkbox" name="dry_run" value="1"> <?= htmlspecialchars(__('maintenance.action.simulate'), ENT_QUOTES, 'UTF-8') ?></label>
-                                    <button class="btn btn-sm btn-outline-warning" type="submit"><?= htmlspecialchars(__('maintenance.restore'), ENT_QUOTES, 'UTF-8') ?></button>
+                                    <button class="btn btn-sm btn-outline-warning" type="submit" title="<?= htmlspecialchars(__('maintenance.restore'), ENT_QUOTES, 'UTF-8') ?>" aria-label="<?= htmlspecialchars(__('maintenance.restore'), ENT_QUOTES, 'UTF-8') ?>">
+                                        <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
+                                        <span class="visually-hidden"><?= htmlspecialchars(__('maintenance.restore'), ENT_QUOTES, 'UTF-8') ?></span>
+                                    </button>
                                 </form>
                                 <form method="post" action="<?= htmlspecialchars($adminBase . '/maintenance/backup/delete', ENT_QUOTES, 'UTF-8') ?>" class="d-inline" data-cat-confirm="<?= htmlspecialchars(__('maintenance.confirm.delete_irreversible'), ENT_QUOTES, 'UTF-8') ?>">
                                     <input type="hidden" name="_csrf" value="<?= $csrf ?>">
                                     <input type="hidden" name="backup" value="<?= htmlspecialchars($backupName, ENT_QUOTES, 'UTF-8') ?>">
-                                    <button class="btn btn-sm btn-outline-danger" type="submit"><?= htmlspecialchars(__('common.delete'), ENT_QUOTES, 'UTF-8') ?></button>
+                                    <button class="btn btn-sm btn-outline-danger" type="submit" title="<?= htmlspecialchars(__('common.delete'), ENT_QUOTES, 'UTF-8') ?>" aria-label="<?= htmlspecialchars(__('common.delete'), ENT_QUOTES, 'UTF-8') ?>">
+                                        <i class="bi bi-trash" aria-hidden="true"></i>
+                                        <span class="visually-hidden"><?= htmlspecialchars(__('common.delete'), ENT_QUOTES, 'UTF-8') ?></span>
+                                    </button>
                                 </form>
                                 <?php if (!empty($backup['is_orphan'])): ?>
                                     <form method="post" action="<?= htmlspecialchars($adminBase . '/maintenance/backup/repair', ENT_QUOTES, 'UTF-8') ?>" class="d-inline" data-cat-confirm="<?= htmlspecialchars(__('maintenance.confirm.repair_orphan'), ENT_QUOTES, 'UTF-8') ?>">

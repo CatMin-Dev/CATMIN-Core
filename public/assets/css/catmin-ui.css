@@ -836,6 +836,26 @@ html {
     border-radius: 6px;
 }
 
+.cat-maintenance-backups-table {
+    font-size: 0.9375em;
+}
+
+.cat-maintenance-actions {
+    white-space: nowrap;
+}
+
+.cat-maintenance-actions .btn,
+.cat-maintenance-actions .form-select,
+.cat-maintenance-actions .form-check-label {
+    margin-left: 0.25rem;
+}
+
+.cat-maintenance-actions .form-select {
+    width: auto;
+    vertical-align: middle;
+    min-width: 11.5rem;
+}
+
 .cat-topbar-dropdown-body {
     max-height: 360px;
     overflow: auto;
@@ -1186,7 +1206,6 @@ html {
 .cat-admin-body .form-select {
     border-radius: var(--cat-radius-sm);
     border-color: var(--cat-border-color);
-    min-height: 44px;
 }
 
 .cat-admin-body .form-control:focus,

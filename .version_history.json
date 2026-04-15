@@ -1,5 +1,17 @@
 [
     {
+        "version": "0.5.0-RC.8",
+        "date": "2026-04-15",
+        "scope": "core",
+        "changes": [
+            "maintenance backups table typography tuned to 0.9375em for denser operator readability",
+            "maintenance backup actions switched to icon-first controls (details, download, restore, delete) with accessible labels",
+            "maintenance restore controls returned to inline action row (select + simulation checkbox + restore button) with improved spacing",
+            "forced global admin form-select minimum height removed to avoid oversized select controls"
+        ],
+        "prompt": "maintenance-actions-inline-icons-rc8"
+    },
+    {
         "version": "0.5.0-RC.7",
         "date": "2026-04-14",
         "scope": "core",
