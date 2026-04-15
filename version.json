@@ -1,8 +1,8 @@
 {
-    "version": "0.5.0-RC.12",
+    "version": "0.6.0-RC.1",
     "db_schema": "0.1.0-RC.1",
     "module_manifest": "0.1.0-RC.1",
     "installer_format": "0.1.0-RC.1",
     "backup_format": "0.1.0-RC.1",
-    "updated_at": "2026-04-15T09:40:00Z"
+    "updated_at": "2026-04-15T15:15:00Z"
 }

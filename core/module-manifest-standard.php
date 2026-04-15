@@ -34,6 +34,10 @@ final class CoreModuleManifestStandard
         $dbSupported = $this->normalizeDbSupported($manifest['db_supported'] ?? []);
         $dbConstraints = $this->normalizeDbConstraints($manifest['db_constraints'] ?? []);
         $capabilities = $this->normalizeCapabilities($manifest['capabilities'] ?? []);
+        $zones = $this->normalizeZones($manifest['zones'] ?? []);
+        $adminSidebar = $this->normalizeSidebarItems($manifest['admin_sidebar'] ?? []);
+        $sidebar = $this->normalizeSidebarItems($manifest['sidebar'] ?? []);
+        $sidebarEntries = $this->normalizeSidebarItems($manifest['sidebar_entries'] ?? []);
 
         $normalized = [
             'module_schema_version' => trim((string) ($manifest['module_schema_version'] ?? '1.0.0')),
@@ -69,6 +73,8 @@ final class CoreModuleManifestStandard
             'php_max' => trim((string) ($manifest['php_max'] ?? '')),
             'catmin_min' => trim((string) ($manifest['catmin_min'] ?? '')),
             'catmin_max' => trim((string) ($manifest['catmin_max'] ?? '')),
+            'routes' => trim((string) ($manifest['routes'] ?? '')),
+            'zones' => $zones,
             'db_supported' => $dbSupported,
             'db_constraints' => $dbConstraints,
             'capabilities' => $capabilities,
@@ -81,6 +87,7 @@ final class CoreModuleManifestStandard
                 'migrations' => array_key_exists('migrations', $loadRaw) ? (bool) $loadRaw['migrations'] : true,
                 'hooks' => array_key_exists('hooks', $loadRaw) ? (bool) $loadRaw['hooks'] : true,
                 'translations' => array_key_exists('translations', $loadRaw) ? (bool) $loadRaw['translations'] : true,
+                'widgets' => array_key_exists('widgets', $loadRaw) ? (bool) $loadRaw['widgets'] : true,
                 'permissions' => array_key_exists('permissions', $loadRaw) ? (bool) $loadRaw['permissions'] : true,
                 'settings' => array_key_exists('settings', $loadRaw) ? (bool) $loadRaw['settings'] : true,
             ],
@@ -91,6 +98,9 @@ final class CoreModuleManifestStandard
             ],
             'maintainers' => is_array($manifest['maintainers'] ?? null) ? array_values($manifest['maintainers']) : [],
             'tags' => is_array($manifest['tags'] ?? null) ? array_values(array_filter(array_map(static fn ($v): string => trim((string) $v), (array) $manifest['tags']), static fn (string $v): bool => $v !== '')) : [],
+            'admin_sidebar' => $adminSidebar,
+            'sidebar' => $sidebar,
+            'sidebar_entries' => $sidebarEntries,
         ];
 
         return $normalized;
@@ -315,5 +325,39 @@ final class CoreModuleManifestStandard
         }
 
         return array_values(array_unique($rows));
+    }
+
+    private function normalizeZones(mixed $value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+
+        $allowed = ['core', 'admin', 'front', 'integration', 'driver'];
+        $rows = [];
+        foreach ($value as $entry) {
+            $zone = strtolower(trim((string) $entry));
+            if ($zone !== '' && in_array($zone, $allowed, true)) {
+                $rows[] = $zone;
+            }
+        }
+
+        return array_values(array_unique($rows));
+    }
+
+    private function normalizeSidebarItems(mixed $value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+
+        $rows = [];
+        foreach ($value as $item) {
+            if (is_array($item)) {
+                $rows[] = $item;
+            }
+        }
+
+        return array_values($rows);
     }
 }
