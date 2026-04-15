@@ -1,5 +1,16 @@
 [
     {
+        "version": "0.5.0-RC.12",
+        "date": "2026-04-15",
+        "scope": "core",
+        "changes": [
+            "topbar search now provides live suggestions while typing with route labels and keywords",
+            "topbar search supports keyboard navigation (up/down, enter, escape) and direct navigation to selected results",
+            "search index is now injected by core topbar bridge and rendered client-side with dropdown styling"
+        ],
+        "prompt": "topbar-search-live-suggestions-rc12"
+    },
+    {
         "version": "0.5.0-RC.11",
         "date": "2026-04-15",
         "scope": "core",
