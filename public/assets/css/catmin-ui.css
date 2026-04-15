@@ -682,8 +682,22 @@ html {
     background: var(--cat-bg-surface-raised);
     border: 1px solid var(--cat-border-color);
     border-radius: 10px;
-    overflow: hidden;
+    overflow: visible;
     position: relative;
+}
+
+.cat-search-icon,
+.cat-topbar-search.form-control,
+.cat-search-submit {
+    border-radius: 0;
+}
+
+.cat-search-icon {
+    border-radius: 10px 0 0 10px;
+}
+
+.cat-search-submit {
+    border-radius: 0 10px 10px 0 !important;
 }
 
 .cat-search-icon {
@@ -743,7 +757,14 @@ html {
     padding: 8px 10px;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 3px;
+}
+
+.cat-search-item-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
 }
 
 .cat-search-item:hover,
@@ -762,6 +783,43 @@ html {
     color: var(--cat-text-muted);
     font-size: 0.78rem;
     line-height: 1.2;
+}
+
+.cat-search-item-type {
+    color: var(--cat-text-muted);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.cat-search-item-answer {
+    color: var(--cat-text-main);
+    font-size: 0.76rem;
+    line-height: 1.2;
+    opacity: 0.88;
+}
+
+.cat-search-item-url {
+    color: color-mix(in srgb, var(--cat-accent) 82%, black 18%);
+    font-size: 0.72rem;
+    line-height: 1.2;
+    word-break: break-all;
+}
+
+.cat-search-item-chips {
+    display: inline-flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.cat-search-chip {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 1px 7px;
+    font-size: 0.68rem;
+    background: color-mix(in srgb, var(--cat-accent) 14%, transparent);
+    color: color-mix(in srgb, var(--cat-accent) 76%, var(--cat-text-main) 24%);
 }
 
 .cat-search-empty {

@@ -1,12 +1,6 @@
 (function () {
     'use strict';
 
-    document.querySelectorAll('[data-cat-search-form]').forEach(function (form) {
-        form.addEventListener('submit', function (event) {
-            event.preventDefault();
-        });
-    });
-
     document.querySelectorAll('[data-cat-alert-dismiss]').forEach(function (button) {
         button.addEventListener('click', function () {
             var target = button.closest('.alert');

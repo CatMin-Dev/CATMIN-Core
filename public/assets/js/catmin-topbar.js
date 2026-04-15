@@ -12,12 +12,21 @@
 
     var initTopbarSearch = function () {
         var forms = document.querySelectorAll('[data-cat-search-form]');
+        console.log('[CATMIN SEARCH] Found ' + forms.length + ' search form(s)');
+        
         forms.forEach(function (form) {
             var input = form.querySelector('[data-cat-search-input]');
             var suggest = form.querySelector('[data-cat-search-suggest]');
             if (!input || !suggest) {
+                console.log('[CATMIN SEARCH] Missing input or suggest elements');
                 return;
             }
+
+            var endpoint = (form.getAttribute('data-cat-search-endpoint') || '').trim();
+            var resultsUrl = (form.getAttribute('data-cat-search-results-url') || form.getAttribute('action') || '').trim();
+
+            console.log('[CATMIN SEARCH] Endpoint: ' + endpoint);
+            console.log('[CATMIN SEARCH] Results URL: ' + resultsUrl);
 
             var items = [];
             try {
@@ -29,11 +38,26 @@
                     });
                 }
             } catch (error) {
+                console.log('[CATMIN SEARCH] Error parsing items: ' + error.message);
                 items = [];
             }
+            
+            console.log('[CATMIN SEARCH] Loaded ' + items.length + ' local items');
 
             var activeIndex = -1;
             var visible = [];
+            var requestToken = 0;
+            var debounceTimer = null;
+
+            var escapeHtml = function (value) {
+                return (value || '')
+                    .toString()
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            };
 
             var hideSuggest = function () {
                 suggest.hidden = true;
@@ -71,49 +95,158 @@
                 window.location.assign(item.url);
             };
 
-            var render = function (query) {
-                var q = normalizeText(query);
-                if (q.length < 1) {
-                    hideSuggest();
+            var navigateWithQuery = function (query) {
+                var q = (query || '').toString().trim();
+                if (q === '') {
+                    return;
+                }
+                if (!resultsUrl) {
                     return;
                 }
 
-                visible = items.filter(function (item) {
-                    var haystack = [
-                        item.label || '',
-                        item.description || '',
-                        item.keywords || ''
-                    ].join(' ');
-                    return normalizeText(haystack).indexOf(q) !== -1;
-                }).slice(0, 8);
+                var hasQuery = resultsUrl.indexOf('?') !== -1;
+                var separator = hasQuery ? '&' : '?';
+                window.location.assign(resultsUrl + separator + 'q=' + encodeURIComponent(q));
+            };
 
+            var renderVisible = function () {
                 if (visible.length === 0) {
                     suggest.innerHTML = '<div class="cat-search-empty">Aucun resultat</div>';
                     suggest.hidden = false;
                     activeIndex = -1;
+                    console.log('[CATMIN SEARCH] Showed empty state');
                     return;
                 }
 
                 var html = visible.map(function (item, index) {
-                    var label = (item.label || '').toString();
-                    var description = (item.description || '').toString();
+                    var label = escapeHtml(item.label || '');
+                    var description = escapeHtml(item.description || '');
+                    var type = escapeHtml(item.type || 'page');
+                    var answer = escapeHtml(item.answer || '');
+                    var url = escapeHtml(item.url || '');
+                    var inputs = Array.isArray(item.inputs) ? item.inputs : [];
+                    var inputTags = inputs.slice(0, 4).map(function (name) {
+                        return '<span class="cat-search-chip">' + escapeHtml(name) + '</span>';
+                    }).join('');
+
                     return ''
                         + '<button type="button" class="cat-search-item" data-cat-search-item data-index="' + index + '">'
-                        + '<span class="cat-search-item-label">' + label.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</span>'
-                        + '<span class="cat-search-item-meta">' + description.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</span>'
+                        + '<span class="cat-search-item-top">'
+                        + '<span class="cat-search-item-label">' + label + '</span>'
+                        + '<span class="cat-search-item-type">' + type + '</span>'
+                        + '</span>'
+                        + '<span class="cat-search-item-meta">' + description + '</span>'
+                        + (answer ? ('<span class="cat-search-item-answer">' + answer + '</span>') : '')
+                        + (inputTags ? ('<span class="cat-search-item-chips">' + inputTags + '</span>') : '')
+                        + '<span class="cat-search-item-url">' + url + '</span>'
                         + '</button>';
                 }).join('');
 
                 suggest.innerHTML = html;
                 openSuggest();
                 selectIndex(0);
+                console.log('[CATMIN SEARCH] Rendered ' + visible.length + ' items');
+            };
+
+            var renderFromLocal = function (query) {
+                var q = normalizeText(query);
+                if (q.length < 1) {
+                    hideSuggest();
+                    return;
+                }
+
+                console.log('[CATMIN SEARCH] Rendering from local (query="' + q + '", items=' + items.length + ')');
+
+                visible = items.filter(function (item) {
+                    var haystack = [
+                        item.label || '',
+                        item.description || '',
+                        item.keywords || '',
+                        item.answer || '',
+                        (Array.isArray(item.inputs) ? item.inputs.join(' ') : '')
+                    ].join(' ');
+                    return normalizeText(haystack).indexOf(q) !== -1;
+                }).slice(0, 10);
+
+                console.log('[CATMIN SEARCH] Local filter found ' + visible.length + ' matches');
+                renderVisible();
+            };
+
+            var fetchRemote = function (query) {
+                if (!endpoint) {
+                    console.log('[CATMIN SEARCH] No endpoint, using local fallback');
+                    renderFromLocal(query);
+                    return;
+                }
+
+                requestToken += 1;
+                var token = requestToken;
+                var url = endpoint + (endpoint.indexOf('?') === -1 ? '?' : '&') + 'q=' + encodeURIComponent(query);
+
+                console.log('[CATMIN SEARCH] Fetching: ' + url);
+
+                fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    },
+                    credentials: 'same-origin'
+                }).then(function (response) {
+                    console.log('[CATMIN SEARCH] Response status: ' + response.status);
+                    if (!response.ok) {
+                        throw new Error('Search endpoint failed: ' + response.status);
+                    }
+                    return response.json();
+                }).then(function (payload) {
+                    if (token !== requestToken) {
+                        console.log('[CATMIN SEARCH] Ignoring stale request');
+                        return;
+                    }
+                    console.log('[CATMIN SEARCH] Got payload:', payload);
+                    if (!payload || !Array.isArray(payload.items)) {
+                        console.log('[CATMIN SEARCH] Invalid payload, using local fallback');
+                        renderFromLocal(query);
+                        return;
+                    }
+                    visible = payload.items.filter(function (item) {
+                        return item && typeof item === 'object' && typeof item.url === 'string' && typeof item.label === 'string';
+                    }).slice(0, 10);
+                    console.log('[CATMIN SEARCH] Got ' + visible.length + ' results from API');
+                    renderVisible();
+                }).catch(function (err) {
+                    console.log('[CATMIN SEARCH] Fetch error: ' + err.message);
+                    if (token !== requestToken) {
+                        return;
+                    }
+                    renderFromLocal(query);
+                });
+            };
+
+            var render = function (query) {
+                var q = normalizeText(query);
+                console.log('[CATMIN SEARCH] render() called with query: "' + query + '"');
+                if (q.length < 1) {
+                    console.log('[CATMIN SEARCH] Query empty, hiding suggestions');
+                    hideSuggest();
+                    return;
+                }
+
+                if (debounceTimer) {
+                    window.clearTimeout(debounceTimer);
+                }
+                debounceTimer = window.setTimeout(function () {
+                    console.log('[CATMIN SEARCH] Debounce timer fired');
+                    fetchRemote(query);
+                }, 120);
             };
 
             input.addEventListener('input', function () {
+                console.log('[CATMIN SEARCH] input event fired');
                 render(input.value || '');
             });
 
             input.addEventListener('focus', function () {
+                console.log('[CATMIN SEARCH] focus event fired');
                 if ((input.value || '').trim() !== '') {
                     render(input.value || '');
                 }
@@ -179,7 +312,11 @@
                 if (visible[0]) {
                     event.preventDefault();
                     navigateTo(visible[0]);
+                    return;
                 }
+
+                event.preventDefault();
+                navigateWithQuery(q);
             });
 
             document.addEventListener('click', function (event) {

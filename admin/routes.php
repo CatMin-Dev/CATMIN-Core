@@ -21,6 +21,7 @@ require_once CATMIN_CORE . '/notifications-bridge.php';
 require_once CATMIN_CORE . '/notifications-dispatcher.php';
 require_once CATMIN_CORE . '/apps-repository.php';
 require_once CATMIN_CORE . '/apps-validator.php';
+require_once CATMIN_CORE . '/topbar-bridge.php';
 require_once CATMIN_CORE . '/db-upgrade-runner.php';
 require_once CATMIN_CORE . '/updater.php';
 require_once CATMIN_CORE . '/market-engine.php';
@@ -1271,6 +1272,44 @@ $routes = [
                 'versionInfo' => $versionInfo,
                 'monitoring' => $monitoringSnapshot,
                 'updatesSnapshot' => $updatesSnapshot,
+            ], 'admin');
+        },
+        'middleware' => [$authRequired],
+    ],
+
+    [
+        'method' => 'GET',
+        'path' => '/search/suggest',
+        'handler' => static function (Request $request): Response {
+            $controller = new AuthController();
+            $adminBase = $controller->adminBasePath();
+
+            $q = trim((string) $request->input('q', ''));
+            $limit = max(1, min(20, (int) $request->input('limit', 10)));
+            $items = (new CoreTopbarBridge())->searchResults($adminBase, $q, $limit);
+
+            return Response::json([
+                'q' => $q,
+                'count' => count($items),
+                'items' => $items,
+            ]);
+        },
+        'middleware' => [$authRequired],
+    ],
+
+    [
+        'method' => 'GET',
+        'path' => '/search',
+        'handler' => static function (Request $request): Response {
+            $controller = new AuthController();
+            $adminBase = $controller->adminBasePath();
+            $q = trim((string) $request->input('q', ''));
+            $items = (new CoreTopbarBridge())->searchResults($adminBase, $q, 50);
+
+            return View::make('search.index', [
+                'adminBase' => $adminBase,
+                'query' => $q,
+                'items' => $items,
             ], 'admin');
         },
         'middleware' => [$authRequired],

@@ -4,14 +4,18 @@ $searchPlaceholder = (string) ($search['placeholder'] ?? __('topbar.search_place
 $searchButton = (string) ($search['button'] ?? __('topbar.search_button'));
 $searchItems = array_values(array_filter((array) ($search['items'] ?? []), static fn (mixed $item): bool => is_array($item)));
 $adminBase = isset($adminBase) ? (string) $adminBase : '/admin';
+$searchEndpoint = trim((string) ($search['endpoint'] ?? ($adminBase . '/search/suggest')));
+$searchResultsUrl = trim((string) ($search['results_url'] ?? ($adminBase . '/search')));
 ?>
 <form
     class="cat-search-form"
     role="search"
     data-cat-search-form
     data-cat-search-items="<?= htmlspecialchars((string) json_encode($searchItems, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), ENT_QUOTES, 'UTF-8') ?>"
+    data-cat-search-endpoint="<?= htmlspecialchars($searchEndpoint, ENT_QUOTES, 'UTF-8') ?>"
+    data-cat-search-results-url="<?= htmlspecialchars($searchResultsUrl, ENT_QUOTES, 'UTF-8') ?>"
     method="get"
-    action="<?= htmlspecialchars($adminBase . '/', ENT_QUOTES, 'UTF-8') ?>"
+    action="<?= htmlspecialchars($searchResultsUrl, ENT_QUOTES, 'UTF-8') ?>"
     autocomplete="off"
 >
     <span class="cat-search-icon"><i class="bi bi-search" aria-hidden="true"></i></span>
