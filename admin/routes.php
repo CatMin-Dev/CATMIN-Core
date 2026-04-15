@@ -84,6 +84,114 @@ $consumeFlash = static function (): array {
     ];
 };
 
+$collectModuleSidebarEntries = static function (): array {
+    $locale = function_exists('catmin_locale')
+        ? strtolower((string) catmin_locale())
+        : strtolower((string) config('app.locale', 'fr'));
+    if (!in_array($locale, ['fr', 'en'], true)) {
+        $locale = 'fr';
+    }
+
+    $resolveLabel = static function (array $item, string $fallback, string $activeLocale): string {
+        $labelI18n = $item['label_i18n'] ?? null;
+        if (is_array($labelI18n)) {
+            $localized = trim((string) ($labelI18n[$activeLocale] ?? ''));
+            if ($localized !== '') {
+                return $localized;
+            }
+        }
+
+        $localizedKey = 'label_' . $activeLocale;
+        $localized = trim((string) ($item[$localizedKey] ?? ''));
+        if ($localized !== '') {
+            return $localized;
+        }
+
+        $label = trim((string) ($item['label'] ?? ''));
+        return $label !== '' ? $label : $fallback;
+    };
+
+    $entries = [];
+    $groups = [];
+    $groupKeys = [];
+    $entryKeys = [];
+
+    try {
+        $snapshot = new CoreModuleRuntimeSnapshot();
+        foreach ($snapshot->modules() as $moduleRow) {
+            if (!((bool) ($moduleRow['valid'] ?? false)) || !((bool) ($moduleRow['compatible'] ?? false)) || !((bool) ($moduleRow['enabled'] ?? false))) {
+                continue;
+            }
+
+            $manifest = is_array($moduleRow['manifest'] ?? null) ? $moduleRow['manifest'] : [];
+            $moduleType = strtolower(trim((string) ($manifest['type'] ?? '')));
+            if ($moduleType !== 'admin' && $moduleType !== 'core') {
+                continue;
+            }
+
+            $slug = strtolower(trim((string) ($manifest['slug'] ?? basename((string) ($moduleRow['path'] ?? 'module')))));
+            $items = $manifest['admin_sidebar'] ?? $manifest['sidebar'] ?? $manifest['sidebar_entries'] ?? [];
+            if (!is_array($items)) {
+                continue;
+            }
+
+            foreach ($items as $item) {
+                if (!is_array($item)) {
+                    continue;
+                }
+
+                $group = strtolower(trim((string) ($item['group'] ?? 'modules')));
+                if ($group === '') {
+                    $group = 'modules';
+                }
+
+                $label = $resolveLabel($item, '', $locale);
+                if ($label === '') {
+                    continue;
+                }
+
+                $itemKey = strtolower(trim((string) ($item['key'] ?? ($slug . '-' . md5($label)))));
+                if ($itemKey === '') {
+                    continue;
+                }
+
+                $entryKey = $group . '.' . $itemKey;
+                if (isset($entries[$entryKey])) {
+                    continue;
+                }
+
+                $groupKeys[$group] = true;
+                $entryKeys[$entryKey] = true;
+                $groups[$group] = [
+                    'key' => $group,
+                    'source' => $slug !== '' ? $slug : 'module',
+                ];
+                $entries[$entryKey] = [
+                    'key' => $entryKey,
+                    'group' => $group,
+                    'label' => $label,
+                    'source' => $slug !== '' ? $slug : 'module',
+                    'order' => (int) ($item['order'] ?? 100),
+                ];
+            }
+        }
+    } catch (Throwable) {
+        return [
+            'groups' => [],
+            'entries' => [],
+            'group_keys' => [],
+            'entry_keys' => [],
+        ];
+    }
+
+    return [
+        'groups' => array_values($groups),
+        'entries' => array_values($entries),
+        'group_keys' => array_keys($groupKeys),
+        'entry_keys' => array_keys($entryKeys),
+    ];
+};
+
 $canManageMaintenance = static function (): bool {
     if (!function_exists('auth_can')) {
         return true;
@@ -1407,7 +1515,7 @@ $routes = [
         'method' => 'GET',
         'path' => '/settings/{section}',
         'where' => ['section' => 'general|appearance|sidebar|mail|performance|security|advanced|apps|module-repositories'],
-        'handler' => static function (Request $request, string $section) use ($consumeFlash, $appsRepository): Response {
+        'handler' => static function (Request $request, string $section) use ($consumeFlash, $appsRepository, $collectModuleSidebarEntries): Response {
             $controller = new AuthController();
             $adminBase = $controller->adminBasePath();
             $engine = new CoreSettingsEngine();
@@ -1470,12 +1578,26 @@ $routes = [
                 ['key' => 'modules.module-market', 'group' => 'modules', 'label' => __('nav.module_market'), 'source' => 'core', 'order' => 30],
                 ['key' => 'modules.trust-center', 'group' => 'modules', 'label' => __('nav.trust_center'), 'source' => 'core', 'order' => 40],
             ];
+            $moduleSidebar = $collectModuleSidebarEntries();
+            foreach ((array) ($moduleSidebar['entries'] ?? []) as $moduleEntry) {
+                if (!is_array($moduleEntry)) {
+                    continue;
+                }
+                $sidebarEntries[] = $moduleEntry;
+            }
 
             $coreSidebarGroups = ['dashboard', 'organization', 'system', 'modules', 'settings'];
             $coreSidebarEntryKeys = array_values(array_map(
                 static fn (array $entry): string => (string) ($entry['key'] ?? ''),
                 $sidebarEntries
             ));
+            $coreSidebarGroups = array_values(array_unique(array_merge(
+                $coreSidebarGroups,
+                array_values(array_filter(array_map(
+                    static fn ($value): string => strtolower(trim((string) $value)),
+                    (array) ($moduleSidebar['group_keys'] ?? [])
+                ), static fn (string $value): bool => $value !== ''))
+            )));
 
             $sidebarOrder = array_values(array_filter(
                 $sidebarOrder,
@@ -1540,7 +1662,7 @@ $routes = [
     [
         'method' => 'POST',
         'path' => '/settings',
-        'handler' => static function (Request $request) use ($upsertCoreSetting, $redirect, $coreSettingsTable, $appendCoreLog, $coreLogsTable): Response {
+        'handler' => static function (Request $request) use ($upsertCoreSetting, $redirect, $coreSettingsTable, $appendCoreLog, $coreLogsTable, $collectModuleSidebarEntries): Response {
             $controller = new AuthController();
             $adminBase = $controller->adminBasePath();
             $pdo = (new ConnectionManager())->connection();
@@ -1593,6 +1715,7 @@ $routes = [
                 'username' => trim((string) ($post['email_username'] ?? ($mailSource['username'] ?? ''))),
             ];
             $postedSidebarOrderIds = is_array($post['sidebar_order_ids'] ?? null) ? (array) $post['sidebar_order_ids'] : [];
+            $moduleSidebar = $collectModuleSidebarEntries();
             $allowedSidebarGroups = ['dashboard', 'organization', 'system', 'modules', 'settings'];
             $allowedSidebarEntries = [
                 'organization.staff',
@@ -1610,6 +1733,20 @@ $routes = [
                 'modules.module-market',
                 'modules.trust-center',
             ];
+            $allowedSidebarGroups = array_values(array_unique(array_merge(
+                $allowedSidebarGroups,
+                array_values(array_filter(array_map(
+                    static fn ($value): string => strtolower(trim((string) $value)),
+                    (array) ($moduleSidebar['group_keys'] ?? [])
+                ), static fn (string $value): bool => $value !== ''))
+            )));
+            $allowedSidebarEntries = array_values(array_unique(array_merge(
+                $allowedSidebarEntries,
+                array_values(array_filter(array_map(
+                    static fn ($value): string => strtolower(trim((string) $value)),
+                    (array) ($moduleSidebar['entry_keys'] ?? [])
+                ), static fn (string $value): bool => $value !== ''))
+            )));
             $normalizedSidebarOrderIds = [];
             foreach ($postedSidebarOrderIds as $groupKey => $id) {
                 $groupKey = strtolower(trim((string) $groupKey));
@@ -1701,7 +1838,7 @@ $routes = [
         'method' => 'POST',
         'path' => '/settings/{section}',
         'where' => ['section' => 'general|appearance|sidebar|mail|performance|security|advanced|apps|module-repositories'],
-        'handler' => static function (Request $request, string $section) use ($upsertCoreSetting, $redirect, $coreSettingsTable, $appendCoreLog, $coreLogsTable, $appsValidator, $appsRepository, $notificationsRepository): Response {
+        'handler' => static function (Request $request, string $section) use ($upsertCoreSetting, $redirect, $coreSettingsTable, $appendCoreLog, $coreLogsTable, $appsValidator, $appsRepository, $notificationsRepository, $collectModuleSidebarEntries): Response {
             $controller = new AuthController();
             $adminBase = $controller->adminBasePath();
             $pdo = (new ConnectionManager())->connection();
@@ -1849,6 +1986,7 @@ $routes = [
                 'username' => trim((string) ($post['email_username'] ?? ($mailSource['username'] ?? ''))),
             ];
             $postedSidebarOrderIds = is_array($post['sidebar_order_ids'] ?? null) ? (array) $post['sidebar_order_ids'] : [];
+            $moduleSidebar = $collectModuleSidebarEntries();
             $allowedSidebarGroups = ['dashboard', 'organization', 'system', 'modules', 'settings'];
             $allowedSidebarEntries = [
                 'organization.staff',
@@ -1866,6 +2004,20 @@ $routes = [
                 'modules.module-market',
                 'modules.trust-center',
             ];
+            $allowedSidebarGroups = array_values(array_unique(array_merge(
+                $allowedSidebarGroups,
+                array_values(array_filter(array_map(
+                    static fn ($value): string => strtolower(trim((string) $value)),
+                    (array) ($moduleSidebar['group_keys'] ?? [])
+                ), static fn (string $value): bool => $value !== ''))
+            )));
+            $allowedSidebarEntries = array_values(array_unique(array_merge(
+                $allowedSidebarEntries,
+                array_values(array_filter(array_map(
+                    static fn ($value): string => strtolower(trim((string) $value)),
+                    (array) ($moduleSidebar['entry_keys'] ?? [])
+                ), static fn (string $value): bool => $value !== ''))
+            )));
             $normalizedSidebarOrderIds = [];
             foreach ($postedSidebarOrderIds as $groupKey => $id) {
                 $groupKey = strtolower(trim((string) $groupKey));
