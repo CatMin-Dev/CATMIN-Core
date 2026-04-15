@@ -3,7 +3,7 @@
 <script src="/assets/js/catmin-topbar.js?v=2"></script>
 <script src="/assets/js/catmin-theme.js?v=1"></script>
 <script src="/assets/js/catmin-confirm.js?v=1"></script>
-<script src="/assets/js/catmin-components.js?v=8"></script>
+<script src="/assets/js/catmin-components.js?v=9"></script>
 <?php
 $renderInlineScripts = static function (mixed $value): void {
 	if (!is_string($value)) {

@@ -74,7 +74,7 @@ ob_start();
         </div>
         <div class="mt-3">
             <small class="text-body-secondary d-block mb-1"><?= htmlspecialchars(__('updates.core.changelog'), ENT_QUOTES, 'UTF-8') ?></small>
-            <pre class="small border rounded p-3 mb-0 bg-body-tertiary" style="max-height: 220px; overflow:auto;"><?= htmlspecialchars((string) ($coreRelease['body'] ?? __('updates.core.changelog_empty')), ENT_QUOTES, 'UTF-8') ?></pre>
+            <pre class="small border rounded p-3 mb-0 bg-body-tertiary cat-scroll-block-sm"><?= htmlspecialchars((string) ($coreRelease['body'] ?? __('updates.core.changelog_empty')), ENT_QUOTES, 'UTF-8') ?></pre>
         </div>
     </div>
 </section>

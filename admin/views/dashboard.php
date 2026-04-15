@@ -29,7 +29,7 @@ ob_start();
 ?>
 <section class="row g-3">
     <div class="col-12 col-xl-4">
-        <article class="card h-100 border-2" style="border-color:#d6d3d1;">
+        <article class="card h-100 border-2 cat-theme-card cat-theme-card-light">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <h3 class="h6 mb-0">LIGHT</h3>
@@ -37,33 +37,33 @@ ob_start();
                 </div>
                 <p class="small text-body-secondary mb-2">Mode clair base rose + stone.</p>
                 <div class="d-flex flex-wrap gap-2">
-                    <span class="badge rounded-pill" style="background:#e23561;color:#fff;">rose-500</span>
-                    <span class="badge rounded-pill" style="background:#c2234d;color:#fff;">rose-600</span>
-                    <span class="badge rounded-pill border" style="background:#fafaf9;color:#44403c;border-color:#d6d3d1 !important;">stone-50</span>
-                    <span class="badge rounded-pill" style="background:#78716c;color:#fff;">stone-500</span>
+                    <span class="badge rounded-pill cat-theme-chip cat-theme-chip-rose-500">rose-500</span>
+                    <span class="badge rounded-pill cat-theme-chip cat-theme-chip-rose-600">rose-600</span>
+                    <span class="badge rounded-pill border cat-theme-chip cat-theme-chip-stone-50">stone-50</span>
+                    <span class="badge rounded-pill cat-theme-chip cat-theme-chip-stone-500">stone-500</span>
                 </div>
             </div>
         </article>
     </div>
     <div class="col-12 col-xl-4">
-        <article class="card h-100 border-2" style="border-color:#44403c;background:#1c1917;color:#f5f5f4;">
+        <article class="card h-100 border-2 cat-theme-card cat-theme-card-dark">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <h3 class="h6 mb-0">DARK</h3>
                     <button type="button" class="btn btn-sm btn-outline-light" data-theme-set="dark">Appliquer</button>
                 </div>
-                <p class="small mb-2" style="color:#d6d3d1;">Mode sombre stone profond + accents rose.</p>
+                <p class="small mb-2 cat-theme-card-dark-text">Mode sombre stone profond + accents rose.</p>
                 <div class="d-flex flex-wrap gap-2">
-                    <span class="badge rounded-pill" style="background:#e23561;color:#fff;">rose-500</span>
-                    <span class="badge rounded-pill" style="background:#9a1b3d;color:#fff;">rose-700</span>
-                    <span class="badge rounded-pill" style="background:#44403c;color:#fff;">stone-700</span>
-                    <span class="badge rounded-pill" style="background:#1c1917;color:#fafaf9;border:1px solid #57534e;">stone-900</span>
+                    <span class="badge rounded-pill cat-theme-chip cat-theme-chip-rose-500">rose-500</span>
+                    <span class="badge rounded-pill cat-theme-chip cat-theme-chip-rose-700">rose-700</span>
+                    <span class="badge rounded-pill cat-theme-chip cat-theme-chip-stone-700">stone-700</span>
+                    <span class="badge rounded-pill cat-theme-chip cat-theme-chip-stone-900">stone-900</span>
                 </div>
             </div>
         </article>
     </div>
     <div class="col-12 col-xl-4">
-        <article class="card h-100 border-2" style="border-color:#e23561;">
+        <article class="card h-100 border-2 cat-theme-card cat-theme-card-corporate">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <h3 class="h6 mb-0">CORPORATE</h3>
@@ -71,10 +71,10 @@ ob_start();
                 </div>
                 <p class="small text-body-secondary mb-2">Mode pro equilibre pour production.</p>
                 <div class="d-flex flex-wrap gap-2">
-                    <span class="badge rounded-pill" style="background:#e23561;color:#fff;">rose-500</span>
-                    <span class="badge rounded-pill" style="background:#70142d;color:#fff;">rose-800</span>
-                    <span class="badge rounded-pill border" style="background:#f5f5f4;color:#44403c;border-color:#d6d3d1 !important;">stone-100</span>
-                    <span class="badge rounded-pill" style="background:#57534e;color:#fff;">stone-600</span>
+                    <span class="badge rounded-pill cat-theme-chip cat-theme-chip-rose-500">rose-500</span>
+                    <span class="badge rounded-pill cat-theme-chip cat-theme-chip-rose-800">rose-800</span>
+                    <span class="badge rounded-pill border cat-theme-chip cat-theme-chip-stone-100">stone-100</span>
+                    <span class="badge rounded-pill cat-theme-chip cat-theme-chip-stone-600">stone-600</span>
                 </div>
             </div>
         </article>

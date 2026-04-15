@@ -50,7 +50,7 @@ ob_start();
                     </div>
                     <div class="cat-password-strength mt-2" data-password-meter data-password-source="#password">
                         <div class="progress" role="progressbar" aria-label="Force du mot de passe" aria-valuemin="0" aria-valuemax="100">
-                            <div class="progress-bar" data-password-meter-bar style="width: 0%"></div>
+                            <div class="progress-bar cat-password-meter-bar" data-password-meter-bar></div>
                         </div>
                         <small class="text-secondary" data-password-meter-label>Force: faible</small>
                     </div>

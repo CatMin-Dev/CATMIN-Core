@@ -69,7 +69,7 @@ ob_start();
                 <small class="text-body-secondary">· <?= htmlspecialchars((string) $release['published_at'], ENT_QUOTES, 'UTF-8') ?></small>
             <?php endif; ?>
         </p>
-        <pre class="small border rounded p-3 mb-0 bg-body-tertiary" style="max-height: 260px; overflow:auto;"><?= htmlspecialchars((string) ($release['body'] ?? __('update.release_notes_empty')), ENT_QUOTES, 'UTF-8') ?></pre>
+        <pre class="small border rounded p-3 mb-0 bg-body-tertiary cat-scroll-block-md"><?= htmlspecialchars((string) ($release['body'] ?? __('update.release_notes_empty')), ENT_QUOTES, 'UTF-8') ?></pre>
     </div>
 </section>
 

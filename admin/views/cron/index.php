@@ -159,6 +159,10 @@ ob_start();
                 <?php else: ?>
                     <?php foreach ($tasks as $task): ?>
                         <?php $isActive = ((int) ($task['is_active'] ?? 0)) === 1; ?>
+                        <?php $taskId = (int) ($task['id'] ?? 0); ?>
+                        <?php $runFormId = 'cat-cron-run-' . $taskId; ?>
+                        <?php $toggleFormId = 'cat-cron-toggle-' . $taskId; ?>
+                        <?php $deleteFormId = 'cat-cron-delete-' . $taskId; ?>
                         <tr>
                             <td><?= htmlspecialchars((string) ($task['name'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                             <td><code><?= htmlspecialchars((string) ($task['script_path'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></code></td>
@@ -171,23 +175,37 @@ ob_start();
                             </td>
                             <td><?= htmlspecialchars((string) ($task['last_run_at'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                             <td class="text-end">
-                                <div class="d-inline-flex gap-1">
-                                    <form method="post" action="<?= htmlspecialchars($adminBase . '/cron/run', ENT_QUOTES, 'UTF-8') ?>" class="d-inline">
+                                <div class="d-none" aria-hidden="true">
+                                    <form id="<?= htmlspecialchars($runFormId, ENT_QUOTES, 'UTF-8') ?>" method="post" action="<?= htmlspecialchars($adminBase . '/cron/run', ENT_QUOTES, 'UTF-8') ?>">
                                         <input type="hidden" name="_csrf" value="<?= $csrf ?>">
-                                        <input type="hidden" name="id" value="<?= (int) ($task['id'] ?? 0) ?>">
-                                        <button class="btn btn-sm btn-outline-primary" type="submit"><?= htmlspecialchars(__('cron.action.run'), ENT_QUOTES, 'UTF-8') ?></button>
+                                        <input type="hidden" name="id" value="<?= $taskId ?>">
+                                        <button type="submit" data-cat-submitter><?= htmlspecialchars(__('cron.action.run'), ENT_QUOTES, 'UTF-8') ?></button>
                                     </form>
-                                    <form method="post" action="<?= htmlspecialchars($adminBase . '/cron/toggle', ENT_QUOTES, 'UTF-8') ?>" class="d-inline">
+                                    <form id="<?= htmlspecialchars($toggleFormId, ENT_QUOTES, 'UTF-8') ?>" method="post" action="<?= htmlspecialchars($adminBase . '/cron/toggle', ENT_QUOTES, 'UTF-8') ?>">
                                         <input type="hidden" name="_csrf" value="<?= $csrf ?>">
-                                        <input type="hidden" name="id" value="<?= (int) ($task['id'] ?? 0) ?>">
+                                        <input type="hidden" name="id" value="<?= $taskId ?>">
                                         <input type="hidden" name="active" value="<?= $isActive ? '0' : '1' ?>">
-                                        <button class="btn btn-sm btn-outline-secondary" type="submit"><?= htmlspecialchars($isActive ? __('common.disable') : __('common.enable'), ENT_QUOTES, 'UTF-8') ?></button>
+                                        <button type="submit" data-cat-submitter><?= htmlspecialchars($isActive ? __('common.disable') : __('common.enable'), ENT_QUOTES, 'UTF-8') ?></button>
                                     </form>
-                                    <form method="post" action="<?= htmlspecialchars($adminBase . '/cron/delete', ENT_QUOTES, 'UTF-8') ?>" class="d-inline" data-cat-confirm="<?= htmlspecialchars(__('cron.confirm_delete'), ENT_QUOTES, 'UTF-8') ?>">
+                                    <form id="<?= htmlspecialchars($deleteFormId, ENT_QUOTES, 'UTF-8') ?>" method="post" action="<?= htmlspecialchars($adminBase . '/cron/delete', ENT_QUOTES, 'UTF-8') ?>" data-cat-confirm="<?= htmlspecialchars(__('cron.confirm_delete'), ENT_QUOTES, 'UTF-8') ?>">
                                         <input type="hidden" name="_csrf" value="<?= $csrf ?>">
-                                        <input type="hidden" name="id" value="<?= (int) ($task['id'] ?? 0) ?>">
-                                        <button class="btn btn-sm btn-outline-danger" type="submit"><?= htmlspecialchars(__('common.delete'), ENT_QUOTES, 'UTF-8') ?></button>
+                                        <input type="hidden" name="id" value="<?= $taskId ?>">
+                                        <button type="submit" data-cat-submitter><?= htmlspecialchars(__('common.delete'), ENT_QUOTES, 'UTF-8') ?></button>
                                     </form>
+                                </div>
+                                <div class="input-group input-group-sm cat-row-actions-group">
+                                    <button class="btn btn-sm btn-outline-primary" type="button" data-cat-submit-form="<?= htmlspecialchars($runFormId, ENT_QUOTES, 'UTF-8') ?>" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="<?= htmlspecialchars(__('cron.action.run'), ENT_QUOTES, 'UTF-8') ?>" aria-label="<?= htmlspecialchars(__('cron.action.run'), ENT_QUOTES, 'UTF-8') ?>">
+                                        <i class="bi bi-play-fill" aria-hidden="true"></i>
+                                        <span class="visually-hidden"><?= htmlspecialchars(__('cron.action.run'), ENT_QUOTES, 'UTF-8') ?></span>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary" type="button" data-cat-submit-form="<?= htmlspecialchars($toggleFormId, ENT_QUOTES, 'UTF-8') ?>" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="<?= htmlspecialchars($isActive ? __('common.disable') : __('common.enable'), ENT_QUOTES, 'UTF-8') ?>" aria-label="<?= htmlspecialchars($isActive ? __('common.disable') : __('common.enable'), ENT_QUOTES, 'UTF-8') ?>">
+                                        <i class="bi <?= $isActive ? 'bi-pause-fill' : 'bi-play-circle' ?>" aria-hidden="true"></i>
+                                        <span class="visually-hidden"><?= htmlspecialchars($isActive ? __('common.disable') : __('common.enable'), ENT_QUOTES, 'UTF-8') ?></span>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" type="button" data-cat-submit-form="<?= htmlspecialchars($deleteFormId, ENT_QUOTES, 'UTF-8') ?>" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="<?= htmlspecialchars(__('common.delete'), ENT_QUOTES, 'UTF-8') ?>" aria-label="<?= htmlspecialchars(__('common.delete'), ENT_QUOTES, 'UTF-8') ?>">
+                                        <i class="bi bi-trash" aria-hidden="true"></i>
+                                        <span class="visually-hidden"><?= htmlspecialchars(__('common.delete'), ENT_QUOTES, 'UTF-8') ?></span>
+                                    </button>
                                 </div>
                             </td>
                         </tr>

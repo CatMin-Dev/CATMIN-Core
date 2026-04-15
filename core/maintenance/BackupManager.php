@@ -166,9 +166,15 @@ final class BackupManager
             }
 
             $size = (int) (@filesize($path) ?: 0);
-            $checksum = (string) (@hash_file('sha256', $path) ?: '');
-            $manifest['file'] = ['name' => $filename, 'size' => $size, 'checksum_sha256' => $checksum];
+
+            // Avoid recursive checksum paradox: do not embed the ZIP file hash inside the ZIP manifest itself.
+            $manifest['file'] = ['name' => $filename, 'size' => $size];
             $this->injectManifestIntoZip($path, $manifest);
+
+            // Compute and persist checksum only after the archive has reached its final state on disk.
+            $size = (int) (@filesize($path) ?: $size);
+            $checksum = (string) (@hash_file('sha256', $path) ?: '');
+            $manifest['file']['checksum_sha256'] = $checksum;
 
             $rowId = $this->insertBackupRow($type, $path, 'success', $checksum, $size, $context, $manifest);
 

@@ -421,6 +421,89 @@
         });
     });
 
+    (function initTooltips() {
+        if (typeof window.bootstrap === 'undefined' || !window.bootstrap || !window.bootstrap.Tooltip) {
+            return;
+        }
+
+        var nodes = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        nodes.forEach(function (node) {
+            if (!node.hasAttribute('data-cat-tooltip-ready')) {
+                new window.bootstrap.Tooltip(node);
+                node.setAttribute('data-cat-tooltip-ready', '1');
+            }
+        });
+    }());
+
+    (function initFormTriggers() {
+        var submitForm = function (form) {
+            if (!(form instanceof HTMLFormElement)) {
+                return;
+            }
+
+            var submitter = form.querySelector('[data-cat-submitter]');
+            if (typeof form.requestSubmit === 'function') {
+                if (submitter) {
+                    form.requestSubmit(submitter);
+                    return;
+                }
+                form.requestSubmit();
+                return;
+            }
+
+            var tempSubmit = document.createElement('button');
+            tempSubmit.type = 'submit';
+            tempSubmit.hidden = true;
+            form.appendChild(tempSubmit);
+            tempSubmit.click();
+            tempSubmit.remove();
+        };
+
+        document.addEventListener('click', function (event) {
+            var target = event.target;
+            if (!(target instanceof Element)) {
+                return;
+            }
+
+            var directButton = target.closest('[data-cat-submit-form]');
+            if (directButton instanceof HTMLElement) {
+                var formId = (directButton.getAttribute('data-cat-submit-form') || '').trim();
+                if (formId !== '') {
+                    var directForm = document.getElementById(formId);
+                    if (directForm instanceof HTMLFormElement) {
+                        submitForm(directForm);
+                    }
+                }
+                return;
+            }
+
+            var selectButton = target.closest('[data-cat-submit-form-from-select]');
+            if (!(selectButton instanceof HTMLElement)) {
+                return;
+            }
+
+            var selectId = (selectButton.getAttribute('data-cat-submit-form-from-select') || '').trim();
+            if (selectId === '') {
+                return;
+            }
+
+            var select = document.getElementById(selectId);
+            if (!(select instanceof HTMLSelectElement)) {
+                return;
+            }
+
+            var selectedFormId = (select.value || '').trim();
+            if (selectedFormId === '') {
+                return;
+            }
+
+            var selectedForm = document.getElementById(selectedFormId);
+            if (selectedForm instanceof HTMLFormElement) {
+                submitForm(selectedForm);
+            }
+        });
+    }());
+
     document.querySelectorAll('[data-cat-toast]').forEach(function (toastEl) {
         var delay = parseInt(toastEl.getAttribute('data-cat-toast-delay') || '4200', 10);
         if (!Number.isFinite(delay) || delay < 1000) {

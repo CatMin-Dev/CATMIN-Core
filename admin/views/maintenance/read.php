@@ -65,7 +65,7 @@ ob_start();
         </div>
 
         <?php if ($isTextPreview): ?>
-            <pre class="small border rounded p-3 bg-body-tertiary mb-0" style="max-height: 60vh; overflow: auto;"><?= htmlspecialchars($previewText, ENT_QUOTES, 'UTF-8') ?></pre>
+            <pre class="small border rounded p-3 bg-body-tertiary mb-0 cat-scroll-block-lg"><?= htmlspecialchars($previewText, ENT_QUOTES, 'UTF-8') ?></pre>
         <?php else: ?>
             <div class="alert alert-info mb-0"><?= htmlspecialchars(__('maintenance.read.no_text_preview'), ENT_QUOTES, 'UTF-8') ?></div>
         <?php endif; ?>

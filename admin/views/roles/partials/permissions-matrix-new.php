@@ -68,8 +68,8 @@ usort($sortedMatrix, static function (array $a, array $b): int {
             </div>
         <?php else: ?>
             <!-- Tabs Navigation -->
-            <div class="border-bottom" style="overflow-x: auto;">
-                <ul class="nav nav-tabs flex-nowrap m-0 px-3" role="tablist" style="white-space: nowrap;">
+            <div class="border-bottom cat-permissions-tabs-wrap">
+                <ul class="nav nav-tabs flex-nowrap m-0 px-3 cat-permissions-tabs" role="tablist">
                     <?php foreach ($sortedMatrix as $idx => $group): ?>
                         <?php $moduleName = (string) ($group['module'] ?? 'core'); ?>
                         <?php $moduleId = preg_replace('/[^a-z0-9-]/i', '-', $moduleName); ?>
@@ -145,7 +145,7 @@ usort($sortedMatrix, static function (array $a, array $b): int {
                                     <?php $permId = (int) ($permission['id'] ?? 0); ?>
                                     <?php $isSelected = in_array($permId, $selectedPermissions, true); ?>
                                     <div class="col-12 col-sm-6 col-md-4">
-                                        <div class="form-check-card <?= $isSelected ? 'selected' : '' ?>" style="border: 1px solid #dee2e6; border-radius: 0.375rem; padding: 0.75rem; cursor: pointer; transition: all 0.2s;">
+                                        <div class="form-check-card cat-permission-card <?= $isSelected ? 'selected' : '' ?>">
                                             <input
                                                 class="form-check-input permission-checkbox"
                                                 type="checkbox"
@@ -154,9 +154,9 @@ usort($sortedMatrix, static function (array $a, array $b): int {
                                                 id="perm-<?= $permId ?>"
                                                 data-module="<?= htmlspecialchars($moduleName, ENT_QUOTES, 'UTF-8') ?>"
                                                 <?= $isSelected ? 'checked' : '' ?>
-                                                style="cursor: pointer;"
+                                                
                                             >
-                                            <label for="perm-<?= $permId ?>" class="form-check-label d-flex align-items-start gap-2 mb-0" style="cursor: pointer;">
+                                            <label for="perm-<?= $permId ?>" class="form-check-label d-flex align-items-start gap-2 mb-0 cat-permission-label">
                                                 <span class="flex-grow-1">
                                                     <small class="fw-semibold d-block">
                                                         <?= htmlspecialchars((string) ($permission['slug'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
@@ -182,34 +182,6 @@ usort($sortedMatrix, static function (array $a, array $b): int {
         <?php endif; ?>
     </div>
 </section>
-
-<style>
-    .form-check-card {
-        background: white;
-    }
-    
-    .form-check-card.selected {
-        background: rgba(13, 110, 253, 0.05);
-        border-color: #0d6efd !important;
-    }
-    
-    .form-check-card:hover {
-        background: rgba(0, 0, 0, 0.02);
-    }
-    
-    .form-check-card.selected:hover {
-        background: rgba(13, 110, 253, 0.08);
-    }
-    
-    .permission-module-label {
-        text-transform: capitalize;
-        letter-spacing: 0.5px;
-    }
-    
-    .bg-gradient {
-        background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
-    }
-</style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {

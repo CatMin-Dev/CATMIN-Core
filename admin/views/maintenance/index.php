@@ -133,17 +133,19 @@ ob_start();
 <section class="card mb-3">
     <div class="card-header bg-transparent border-0 pt-3 d-flex justify-content-between align-items-center">
         <h3 class="h6 mb-0"><?= htmlspecialchars(__('maintenance.backups'), ENT_QUOTES, 'UTF-8') ?></h3>
-        <form method="post" action="<?= htmlspecialchars($adminBase . '/maintenance/backup/create', ENT_QUOTES, 'UTF-8') ?>" class="d-flex gap-2">
+        <form method="post" action="<?= htmlspecialchars($adminBase . '/maintenance/backup/create', ENT_QUOTES, 'UTF-8') ?>" class="cat-maintenance-create-form">
             <input type="hidden" name="_csrf" value="<?= $csrf ?>">
-            <select class="form-select form-select-sm" name="backup_type">
-                <option value="db_only"><?= htmlspecialchars(__('maintenance.backup.types.db_only'), ENT_QUOTES, 'UTF-8') ?></option>
-                <option value="files_only"><?= htmlspecialchars(__('maintenance.backup.types.files_only'), ENT_QUOTES, 'UTF-8') ?></option>
-                <option value="db_files"><?= htmlspecialchars(__('maintenance.backup.types.db_files'), ENT_QUOTES, 'UTF-8') ?></option>
-                <option value="full_instance"><?= htmlspecialchars(__('maintenance.backup.types.full_instance'), ENT_QUOTES, 'UTF-8') ?></option>
-                <option value="pre_update_snapshot"><?= htmlspecialchars(__('maintenance.backup.types.pre_update_snapshot'), ENT_QUOTES, 'UTF-8') ?></option>
-                <option value="pre_restore_snapshot"><?= htmlspecialchars(__('maintenance.backup.types.pre_restore_snapshot'), ENT_QUOTES, 'UTF-8') ?></option>
-            </select>
-            <button class="btn btn-sm btn-primary" type="submit" data-loading-text="<?= htmlspecialchars(__('maintenance.loading.creating'), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars(__('maintenance.create_backup'), ENT_QUOTES, 'UTF-8') ?></button>
+            <div class="input-group input-group-sm flex-nowrap cat-maintenance-create-group">
+                <select class="form-select" name="backup_type">
+                    <option value="db_only"><?= htmlspecialchars(__('maintenance.backup.types.db_only'), ENT_QUOTES, 'UTF-8') ?></option>
+                    <option value="files_only"><?= htmlspecialchars(__('maintenance.backup.types.files_only'), ENT_QUOTES, 'UTF-8') ?></option>
+                    <option value="db_files"><?= htmlspecialchars(__('maintenance.backup.types.db_files'), ENT_QUOTES, 'UTF-8') ?></option>
+                    <option value="full_instance"><?= htmlspecialchars(__('maintenance.backup.types.full_instance'), ENT_QUOTES, 'UTF-8') ?></option>
+                    <option value="pre_update_snapshot"><?= htmlspecialchars(__('maintenance.backup.types.pre_update_snapshot'), ENT_QUOTES, 'UTF-8') ?></option>
+                    <option value="pre_restore_snapshot"><?= htmlspecialchars(__('maintenance.backup.types.pre_restore_snapshot'), ENT_QUOTES, 'UTF-8') ?></option>
+                </select>
+                <button class="btn btn-primary" type="button" data-cat-submit-action="create" data-loading-text="<?= htmlspecialchars(__('maintenance.loading.creating'), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars(__('maintenance.create_backup'), ENT_QUOTES, 'UTF-8') ?></button>
+            </div>
         </form>
     </div>
     <div class="card-body pt-2">
@@ -166,8 +168,10 @@ ob_start();
                 <?php if ($backups === []): ?>
                     <tr><td colspan="9" class="text-body-secondary"><?= htmlspecialchars(__('maintenance.empty_backups'), ENT_QUOTES, 'UTF-8') ?></td></tr>
                 <?php else: ?>
-                    <?php foreach ($backups as $backup): ?>
+                    <?php foreach ($backups as $rowIndex => $backup): ?>
                         <?php $backupName = (string) ($backup['name'] ?? ''); ?>
+                        <?php $restoreFormId = 'cat-maint-restore-' . (int) $rowIndex; ?>
+                        <?php $deleteFormId = 'cat-maint-delete-' . (int) $rowIndex; ?>
                         <tr>
                             <td><?= htmlspecialchars($backupName !== '' ? $backupName : '-', ENT_QUOTES, 'UTF-8') ?></td>
                             <td><span class="badge text-bg-info"><?= htmlspecialchars((string) ($backup['type'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></span></td>
@@ -178,37 +182,47 @@ ob_start();
                             <td><span class="badge <?= $badgeClass((string) ($backup['integrity'] ?? 'secondary')) ?>"><?= htmlspecialchars((string) ($backup['integrity'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></span></td>
                             <td><?= htmlspecialchars((string) ($backup['origin'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                             <td class="text-end cat-maintenance-actions">
-                                <a class="btn btn-sm btn-outline-secondary" href="<?= htmlspecialchars($adminBase . '/maintenance/backup/read?backup=' . rawurlencode($backupName), ENT_QUOTES, 'UTF-8') ?>" title="<?= htmlspecialchars(__('maintenance.action.view_details'), ENT_QUOTES, 'UTF-8') ?>" aria-label="<?= htmlspecialchars(__('maintenance.action.view_details'), ENT_QUOTES, 'UTF-8') ?>">
+                                <div class="d-none" aria-hidden="true">
+                                    <form id="<?= htmlspecialchars($restoreFormId, ENT_QUOTES, 'UTF-8') ?>" method="post" action="<?= htmlspecialchars($adminBase . '/maintenance/restore', ENT_QUOTES, 'UTF-8') ?>" data-cat-confirm="<?= htmlspecialchars(__('maintenance.confirm.restore_overwrite'), ENT_QUOTES, 'UTF-8') ?>">
+                                        <input type="hidden" name="_csrf" value="<?= $csrf ?>">
+                                        <input type="hidden" name="backup" value="<?= htmlspecialchars($backupName, ENT_QUOTES, 'UTF-8') ?>">
+                                        <input type="hidden" name="auto_snapshot" value="1">
+                                        <input type="hidden" name="restore_mode" value="db_only" data-cat-restore-mode-value>
+                                        <input type="hidden" name="dry_run" value="" data-cat-restore-dry-value>
+                                        <button type="submit" data-cat-submitter><?= htmlspecialchars(__('maintenance.restore'), ENT_QUOTES, 'UTF-8') ?></button>
+                                    </form>
+                                    <form id="<?= htmlspecialchars($deleteFormId, ENT_QUOTES, 'UTF-8') ?>" method="post" action="<?= htmlspecialchars($adminBase . '/maintenance/backup/delete', ENT_QUOTES, 'UTF-8') ?>" data-cat-confirm="<?= htmlspecialchars(__('maintenance.confirm.delete_irreversible'), ENT_QUOTES, 'UTF-8') ?>">
+                                        <input type="hidden" name="_csrf" value="<?= $csrf ?>">
+                                        <input type="hidden" name="backup" value="<?= htmlspecialchars($backupName, ENT_QUOTES, 'UTF-8') ?>">
+                                        <button type="submit" data-cat-submitter><?= htmlspecialchars(__('common.delete'), ENT_QUOTES, 'UTF-8') ?></button>
+                                    </form>
+                                </div>
+                                <div class="input-group input-group-sm cat-maintenance-actions-group" data-cat-maintenance-actions data-cat-restore-form="<?= htmlspecialchars($restoreFormId, ENT_QUOTES, 'UTF-8') ?>" data-cat-delete-form="<?= htmlspecialchars($deleteFormId, ENT_QUOTES, 'UTF-8') ?>">
+                                <a class="btn btn-sm btn-outline-secondary" href="<?= htmlspecialchars($adminBase . '/maintenance/backup/read?backup=' . rawurlencode($backupName), ENT_QUOTES, 'UTF-8') ?>" title="<?= htmlspecialchars(__('maintenance.action.view_details'), ENT_QUOTES, 'UTF-8') ?>" aria-label="<?= htmlspecialchars(__('maintenance.action.view_details'), ENT_QUOTES, 'UTF-8') ?>" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="<?= htmlspecialchars(__('maintenance.action.view_details'), ENT_QUOTES, 'UTF-8') ?>">
                                     <i class="bi bi-info-circle" aria-hidden="true"></i>
                                     <span class="visually-hidden"><?= htmlspecialchars(__('maintenance.action.view_details'), ENT_QUOTES, 'UTF-8') ?></span>
                                 </a>
-                                <a class="btn btn-sm btn-outline-primary" href="<?= htmlspecialchars($adminBase . '/maintenance/backup/download?backup=' . rawurlencode($backupName), ENT_QUOTES, 'UTF-8') ?>" title="<?= htmlspecialchars(__('maintenance.action.download'), ENT_QUOTES, 'UTF-8') ?>" aria-label="<?= htmlspecialchars(__('maintenance.action.download'), ENT_QUOTES, 'UTF-8') ?>">
+                                <a class="btn btn-sm btn-outline-primary" href="<?= htmlspecialchars($adminBase . '/maintenance/backup/download?backup=' . rawurlencode($backupName), ENT_QUOTES, 'UTF-8') ?>" title="<?= htmlspecialchars(__('maintenance.action.download'), ENT_QUOTES, 'UTF-8') ?>" aria-label="<?= htmlspecialchars(__('maintenance.action.download'), ENT_QUOTES, 'UTF-8') ?>" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="<?= htmlspecialchars(__('maintenance.action.download'), ENT_QUOTES, 'UTF-8') ?>">
                                     <i class="bi bi-download" aria-hidden="true"></i>
                                     <span class="visually-hidden"><?= htmlspecialchars(__('maintenance.action.download'), ENT_QUOTES, 'UTF-8') ?></span>
                                 </a>
-                                <form method="post" action="<?= htmlspecialchars($adminBase . '/maintenance/restore', ENT_QUOTES, 'UTF-8') ?>" class="d-inline" data-cat-confirm="<?= htmlspecialchars(__('maintenance.confirm.restore_overwrite'), ENT_QUOTES, 'UTF-8') ?>">
-                                    <input type="hidden" name="_csrf" value="<?= $csrf ?>">
-                                    <input type="hidden" name="backup" value="<?= htmlspecialchars($backupName, ENT_QUOTES, 'UTF-8') ?>">
-                                    <input type="hidden" name="auto_snapshot" value="1">
-                                    <select class="form-select form-select-sm d-inline-block" style="width:auto" name="restore_mode">
+                                    <select class="form-select" name="restore_mode" data-cat-restore-mode>
                                         <option value="db_only"><?= htmlspecialchars(__('maintenance.action.restore_db'), ENT_QUOTES, 'UTF-8') ?></option>
                                         <option value="files_only"><?= htmlspecialchars(__('maintenance.action.restore_files'), ENT_QUOTES, 'UTF-8') ?></option>
                                         <option value="full"><?= htmlspecialchars(__('maintenance.action.restore_full'), ENT_QUOTES, 'UTF-8') ?></option>
                                     </select>
-                                    <label class="form-check-label small ms-1"><input class="form-check-input" type="checkbox" name="dry_run" value="1"> <?= htmlspecialchars(__('maintenance.action.simulate'), ENT_QUOTES, 'UTF-8') ?></label>
-                                    <button class="btn btn-sm btn-outline-warning" type="submit" title="<?= htmlspecialchars(__('maintenance.restore'), ENT_QUOTES, 'UTF-8') ?>" aria-label="<?= htmlspecialchars(__('maintenance.restore'), ENT_QUOTES, 'UTF-8') ?>">
+                                    <span class="input-group-text" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="<?= htmlspecialchars(__('maintenance.action.simulate'), ENT_QUOTES, 'UTF-8') ?>">
+                                        <input class="form-check-input mt-0" type="checkbox" value="1" data-cat-restore-dry-run aria-label="<?= htmlspecialchars(__('maintenance.action.simulate'), ENT_QUOTES, 'UTF-8') ?>">
+                                    </span>
+                                    <button class="btn btn-sm btn-outline-warning" type="button" title="<?= htmlspecialchars(__('maintenance.restore'), ENT_QUOTES, 'UTF-8') ?>" aria-label="<?= htmlspecialchars(__('maintenance.restore'), ENT_QUOTES, 'UTF-8') ?>" data-cat-submit-action="restore" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="<?= htmlspecialchars(__('maintenance.restore'), ENT_QUOTES, 'UTF-8') ?>">
                                         <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
                                         <span class="visually-hidden"><?= htmlspecialchars(__('maintenance.restore'), ENT_QUOTES, 'UTF-8') ?></span>
                                     </button>
-                                </form>
-                                <form method="post" action="<?= htmlspecialchars($adminBase . '/maintenance/backup/delete', ENT_QUOTES, 'UTF-8') ?>" class="d-inline" data-cat-confirm="<?= htmlspecialchars(__('maintenance.confirm.delete_irreversible'), ENT_QUOTES, 'UTF-8') ?>">
-                                    <input type="hidden" name="_csrf" value="<?= $csrf ?>">
-                                    <input type="hidden" name="backup" value="<?= htmlspecialchars($backupName, ENT_QUOTES, 'UTF-8') ?>">
-                                    <button class="btn btn-sm btn-outline-danger" type="submit" title="<?= htmlspecialchars(__('common.delete'), ENT_QUOTES, 'UTF-8') ?>" aria-label="<?= htmlspecialchars(__('common.delete'), ENT_QUOTES, 'UTF-8') ?>">
+                                    <button class="btn btn-sm btn-outline-danger" type="button" title="<?= htmlspecialchars(__('common.delete'), ENT_QUOTES, 'UTF-8') ?>" aria-label="<?= htmlspecialchars(__('common.delete'), ENT_QUOTES, 'UTF-8') ?>" data-cat-submit-action="delete" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="<?= htmlspecialchars(__('common.delete'), ENT_QUOTES, 'UTF-8') ?>">
                                         <i class="bi bi-trash" aria-hidden="true"></i>
                                         <span class="visually-hidden"><?= htmlspecialchars(__('common.delete'), ENT_QUOTES, 'UTF-8') ?></span>
                                     </button>
-                                </form>
+                                </div>
                                 <?php if (!empty($backup['is_orphan'])): ?>
                                     <form method="post" action="<?= htmlspecialchars($adminBase . '/maintenance/backup/repair', ENT_QUOTES, 'UTF-8') ?>" class="d-inline" data-cat-confirm="<?= htmlspecialchars(__('maintenance.confirm.repair_orphan'), ENT_QUOTES, 'UTF-8') ?>">
                                         <input type="hidden" name="_csrf" value="<?= $csrf ?>">
@@ -245,30 +259,13 @@ ob_start();
             <div class="col-12 col-md-6 col-xl-3"><div class="border rounded p-2"><small class="text-body-secondary d-block"><?= htmlspecialchars(__('maintenance.diagnostics.storage'), ENT_QUOTES, 'UTF-8') ?></small><strong><?= !empty($diagnostics['storage_ok']) ? htmlspecialchars(__('maintenance.diagnostics.storage_ok'), ENT_QUOTES, 'UTF-8') : htmlspecialchars(__('maintenance.diagnostics.storage_error'), ENT_QUOTES, 'UTF-8') ?></strong></div></div>
             <div class="col-12 col-md-6 col-xl-3"><div class="border rounded p-2"><small class="text-body-secondary d-block"><?= htmlspecialchars(__('maintenance.diagnostics.orphans'), ENT_QUOTES, 'UTF-8') ?></small><strong><?= (int) ($diagnostics['orphans'] ?? 0) ?></strong></div></div>
         </div>
-        <div class="mt-2 small">
+        <div class="mt-2">
             <a href="<?= htmlspecialchars($adminBase . '/logs', ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars(__('maintenance.diagnostics.open_logs'), ENT_QUOTES, 'UTF-8') ?></a>
         </div>
     </div>
 </section>
 
-<script>
-document.addEventListener('submit', function (event) {
-    var form = event.target;
-    if (!(form instanceof HTMLFormElement)) {
-        return;
-    }
-    var buttons = form.querySelectorAll('button[type="submit"]');
-    buttons.forEach(function (button) {
-        button.disabled = true;
-        var loadingText = button.getAttribute('data-loading-text');
-        if (loadingText) {
-            button.dataset.originalText = button.textContent || '';
-            button.textContent = loadingText;
-        }
-    });
-});
-</script>
-
 <?php
+$inlineScripts = '<script src="/assets/js/catmin-maintenance-actions.js?v=2"></script>';
 $content = (string) ob_get_clean();
 require CATMIN_ADMIN . '/views/layouts/admin.php';

@@ -1,6 +1,6 @@
 # CATMIN Core
 
-[![Version](https://img.shields.io/badge/version-0.5.0--RC.8-e23561)](https://github.com/CatMin-Dev/CATMIN-Core/releases/tag/0.5.0-RC.8)
+[![Version](https://img.shields.io/badge/version-0.5.0--RC.9-e23561)](https://github.com/CatMin-Dev/CATMIN-Core/releases/tag/0.5.0-RC.9)
 ![PHP](https://img.shields.io/badge/php-8.3%2B-44403c)
 ![DB Schema](https://img.shields.io/badge/db_schema-0.1.0--RC.1-c2234d)
 ![Installer](https://img.shields.io/badge/installer-lock%20enforced-16a34a)
@@ -104,4 +104,4 @@ Artefacts attendus:
 
 ---
 
-CATMIN `0.5.0-RC.8` - polish maintenance backups actions (icones + ligne inline), densite tableau ajustee et select admin normalize.
+CATMIN `0.5.0-RC.9` - harmonisation globale actions admin en input-group icones/tooltips, nettoyage CSS inline et fix integrite backup.
