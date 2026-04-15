@@ -38,6 +38,7 @@ final class CoreModuleManifestStandard
         $adminSidebar = $this->normalizeSidebarItems($manifest['admin_sidebar'] ?? []);
         $sidebar = $this->normalizeSidebarItems($manifest['sidebar'] ?? []);
         $sidebarEntries = $this->normalizeSidebarItems($manifest['sidebar_entries'] ?? []);
+        $settingsSidebar = $this->normalizeSidebarItems($manifest['settings_sidebar'] ?? []);
 
         $normalized = [
             'module_schema_version' => trim((string) ($manifest['module_schema_version'] ?? '1.0.0')),
@@ -101,6 +102,7 @@ final class CoreModuleManifestStandard
             'admin_sidebar' => $adminSidebar,
             'sidebar' => $sidebar,
             'sidebar_entries' => $sidebarEntries,
+            'settings_sidebar' => $settingsSidebar,
         ];
 
         return $normalized;

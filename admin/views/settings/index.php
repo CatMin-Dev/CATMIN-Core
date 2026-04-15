@@ -48,6 +48,7 @@ $sidebarOrder = isset($sidebarOrder) && is_array($sidebarOrder) ? $sidebarOrder 
 $sidebarOrderIds = isset($sidebarOrderIds) && is_array($sidebarOrderIds) ? $sidebarOrderIds : [];
 $sidebarEntries = isset($sidebarEntries) && is_array($sidebarEntries) ? $sidebarEntries : [];
 $sidebarItemOrder = isset($sidebarItemOrder) && is_array($sidebarItemOrder) ? $sidebarItemOrder : [];
+$settingsModuleLinks = isset($settingsModuleLinks) && is_array($settingsModuleLinks) ? $settingsModuleLinks : [];
 $timezones = \DateTimeZone::listIdentifiers();
 
 ob_start();
@@ -59,6 +60,24 @@ $inlineMessage = '';
             <?php foreach ($sections as $key => $label): ?>
                 <a class="list-group-item list-group-item-action <?= $section === $key ? 'active' : '' ?>" href="<?= htmlspecialchars($adminBase . '/settings/' . $key, ENT_QUOTES, 'UTF-8') ?>">
                     <?= htmlspecialchars((string) $label, ENT_QUOTES, 'UTF-8') ?>
+                </a>
+            <?php endforeach; ?>
+            <?php foreach ($settingsModuleLinks as $entry): ?>
+                <?php
+                $href = trim((string) ($entry['href'] ?? ''));
+                if ($href === '') {
+                    continue;
+                }
+                if ($href[0] !== '/') {
+                    $href = rtrim($adminBase, '/') . '/' . ltrim($href, '/');
+                }
+                $label = trim((string) ($entry['label'] ?? ''));
+                if ($label === '') {
+                    continue;
+                }
+                ?>
+                <a class="list-group-item list-group-item-action" href="<?= htmlspecialchars($href, ENT_QUOTES, 'UTF-8') ?>">
+                    <?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?>
                 </a>
             <?php endforeach; ?>
         </div>

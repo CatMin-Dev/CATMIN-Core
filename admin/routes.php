@@ -55,8 +55,9 @@ $coreMaintenanceAuditTable = $corePrefix . 'maintenance_audit';
 $coreCronTasksTable = $corePrefix . 'cron_tasks';
 
 $corePermissionsWhere = static function (string $alias = ''): string {
-    $prefix = $alias !== '' ? $alias . '.' : '';
-    return '(' . $prefix . "slug LIKE 'admin.%' OR " . $prefix . "slug LIKE 'core.%')";
+    // Load all module permissions (admin, core, addons) for matrix display.
+    // buildPermissionsMatrix will categorize them by module automatically.
+    return '1=1';
 };
 
 $pushFlash = static function (string $message, string $type = 'success'): void {
@@ -131,7 +132,17 @@ $collectModuleSidebarEntries = static function (): array {
 
             $slug = strtolower(trim((string) ($manifest['slug'] ?? basename((string) ($moduleRow['path'] ?? 'module')))));
             $items = $manifest['admin_sidebar'] ?? $manifest['sidebar'] ?? $manifest['sidebar_entries'] ?? [];
+            $settingsItems = $manifest['settings_sidebar'] ?? [];
             if (!is_array($items)) {
+                $items = [];
+            }
+            if (!is_array($settingsItems)) {
+                $settingsItems = [];
+            }
+            if ($settingsItems !== []) {
+                $items = array_merge($items, $settingsItems);
+            }
+            if ($items === []) {
                 continue;
             }
 
@@ -172,6 +183,7 @@ $collectModuleSidebarEntries = static function (): array {
                     'label' => $label,
                     'source' => $slug !== '' ? $slug : 'module',
                     'order' => (int) ($item['order'] ?? 100),
+                    'href' => (string) ($item['href'] ?? ($item['route'] ?? '')),
                 ];
             }
         }
@@ -1654,6 +1666,10 @@ $routes = [
                 'message' => (string) ($flash['message'] ?? ''),
                 'messageType' => (string) ($flash['type'] ?? 'success'),
                 'activeSettingsNav' => 'settings',
+                'settingsModuleLinks' => array_values(array_filter(
+                    (array) ($moduleSidebar['entries'] ?? []),
+                    static fn (array $entry): bool => ((string) ($entry['group'] ?? '')) === 'settings' && trim((string) ($entry['href'] ?? '')) !== ''
+                )),
             ], 'admin');
         },
         'middleware' => [$authRequired],

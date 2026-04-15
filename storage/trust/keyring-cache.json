@@ -1,14 +1,48 @@
 {
-    "updated_at": "2026-04-09T11:19:26+00:00",
+    "updated_at": "2026-04-15T14:48:24+00:00",
     "last_sync_at": null,
     "last_sync_status": "disabled",
     "last_sync_message": "registry distant non configure",
-    "last_import_at": null,
-    "last_import_status": "never",
-    "last_import_message": "",
+    "last_import_at": "2026-04-15T14:48:24+00:00",
+    "last_import_status": "ok",
+    "last_import_message": "Import manuel keyring officiel terminé.",
     "remote_keys": [],
-    "imported_official_keys": [],
-    "local_keys": [],
+    "imported_official_keys": [
+        {
+            "key_id": "catmin-local-trusted-20260415",
+            "publisher": "local-admin",
+            "owner": "local-admin",
+            "algorithm": "rsa-sha256",
+            "scope": "trusted",
+            "status": "active",
+            "source": "imported_manual",
+            "public_key": "-----BEGIN PUBLIC KEY-----\nMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAmn/dukej2vlt74dhLCzV\ncDjma8AtOoy9/qJSW1iJaSMgtHqCt5k2ybWDucHI818C/UgcVHNWBXNk1sG9o9EQ\nHEcm4/mxuXLJ6MjLyRXodCLywPTLnj7kSEFMeLw1+A9X7B7Rv2I8dVw0zMAPb5bD\nMB6taV15ym/d3F1jNJFvw4/IqwFf7CIyfed673xSb7HnhS0ZNjitMUjCZva/oOxT\nXJab89lu/9XXOc5ZteKswksD4El3VUuHTmL6MxAtOMazsRLmdobGAnrQKRfkgIPm\nqN8aPl///RpOmp88tKtlZVXWPkkBg/ic/PN2aYcsFQJ2N9vO+6XnmQHh3xPXa4I4\nnQIAPcYYaX3dbEungjMGeQviRIl71aWExn1AeyQfJVbNwE7vGmfN7yMsyBKtCnk6\ni5wMZkA5EhkveE/587ffsxo1g08cGsXVTPHhBKoH29/OUjPqdU0vzSllhruid/lw\neHYoA0J8MvXGiyzAJu7OXRe0qyNU0yLatX/Qi4qVLAJLoO75TgpeCVLYRIvylOHs\nMjPss+kKCX5v4bWqql/o0CrrM3qSATRZioPKe+FyJmWgDfcFbopRpHEc6p7eCrV1\n2O5mfIXtbMTM13+dYlh1vYt5qSYnTZQ1tbDvEE9ozQigDw41nlRM6ryGprIpHnYm\noQdtPXJZPDeLl4fQ0wR+U3ECAwEAAQ==\n-----END PUBLIC KEY-----",
+            "fingerprint": "f3361fcdd9c242e88430429e77bf7a8781b35aa879634b4db1398d62500539c8",
+            "editable": false,
+            "revoked": false,
+            "created_at": "",
+            "updated_at": "",
+            "deprecated_at": null,
+            "revoked_at": null
+        }
+    ],
+    "local_keys": [
+        {
+            "key_id": "catmin-local-media-20260415",
+            "publisher": "local-admin",
+            "owner": "local-admin",
+            "algorithm": "rsa-sha256",
+            "scope": "local_only",
+            "status": "local_only",
+            "source": "local_admin",
+            "public_key": "-----BEGIN PUBLIC KEY-----\nMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAmn/dukej2vlt74dhLCzV\ncDjma8AtOoy9/qJSW1iJaSMgtHqCt5k2ybWDucHI818C/UgcVHNWBXNk1sG9o9EQ\nHEcm4/mxuXLJ6MjLyRXodCLywPTLnj7kSEFMeLw1+A9X7B7Rv2I8dVw0zMAPb5bD\nMB6taV15ym/d3F1jNJFvw4/IqwFf7CIyfed673xSb7HnhS0ZNjitMUjCZva/oOxT\nXJab89lu/9XXOc5ZteKswksD4El3VUuHTmL6MxAtOMazsRLmdobGAnrQKRfkgIPm\nqN8aPl///RpOmp88tKtlZVXWPkkBg/ic/PN2aYcsFQJ2N9vO+6XnmQHh3xPXa4I4\nnQIAPcYYaX3dbEungjMGeQviRIl71aWExn1AeyQfJVbNwE7vGmfN7yMsyBKtCnk6\ni5wMZkA5EhkveE/587ffsxo1g08cGsXVTPHhBKoH29/OUjPqdU0vzSllhruid/lw\neHYoA0J8MvXGiyzAJu7OXRe0qyNU0yLatX/Qi4qVLAJLoO75TgpeCVLYRIvylOHs\nMjPss+kKCX5v4bWqql/o0CrrM3qSATRZioPKe+FyJmWgDfcFbopRpHEc6p7eCrV1\n2O5mfIXtbMTM13+dYlh1vYt5qSYnTZQ1tbDvEE9ozQigDw41nlRM6ryGprIpHnYm\noQdtPXJZPDeLl4fQ0wR+U3ECAwEAAQ==\n-----END PUBLIC KEY-----",
+            "created_at": "2026-04-15T14:46:38+00:00",
+            "updated_at": "2026-04-15T14:46:38+00:00",
+            "deprecated_at": null,
+            "revoked_at": null,
+            "revoked": false
+        }
+    ],
     "revocations": [],
     "revoked": []
 }
