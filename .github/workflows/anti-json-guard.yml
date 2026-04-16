@@ -1,0 +1,17 @@
+name: Anti JSON BDD Guard
+
+"on":
+  push:
+  pull_request:
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run anti-JSON guard
+        run: |
+          chmod +x guard-no-json-pseudo-bdd.sh
+          ./guard-no-json-pseudo-bdd.sh

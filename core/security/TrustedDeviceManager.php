@@ -8,10 +8,15 @@ final class TrustedDeviceManager
 {
     private const COOKIE_NAME = 'catmin_trusted_device';
 
+    public function __construct(
+        private readonly ?TrustedDeviceRepository $repository = null
+    ) {
+    }
+
     public function issue(int $userId): string
     {
         $token = bin2hex(random_bytes(32));
-        $fingerprint = hash('sha256', $token . '|' . $userId);
+        $fingerprint = $this->fingerprintHash($token, $userId);
 
         setcookie(self::COOKIE_NAME, $token, [
             'expires' => time() + (60 * 60 * 24 * 30),
@@ -21,7 +26,7 @@ final class TrustedDeviceManager
             'samesite' => 'Lax',
         ]);
 
-        $this->storeFingerprint($userId, $fingerprint);
+        $this->repository()->trustDevice($userId, $fingerprint, '', $this->clientIp(), $this->userAgent());
 
         return $token;
     }
@@ -33,45 +38,61 @@ final class TrustedDeviceManager
             return false;
         }
 
-        $fingerprint = hash('sha256', $token . '|' . $userId);
-        $trusted = $this->loadTrusted();
+        $fingerprint = $this->fingerprintHash($token, $userId);
+        $trusted = $this->repository()->findActiveDevice($userId, $fingerprint);
+        if (!is_array($trusted)) {
+            return false;
+        }
 
-        return in_array($fingerprint, $trusted[(string) $userId] ?? [], true);
+        $this->repository()->touchLastSeen($userId, $fingerprint, $this->clientIp(), $this->userAgent());
+
+        return true;
     }
 
-    private function storeFingerprint(int $userId, string $fingerprint): void
+    public function revokeCurrent(int $userId): bool
     {
-        $trusted = $this->loadTrusted();
-        $key = (string) $userId;
-        $trusted[$key] = $trusted[$key] ?? [];
-
-        if (!in_array($fingerprint, $trusted[$key], true)) {
-            $trusted[$key][] = $fingerprint;
+        $token = $_COOKIE[self::COOKIE_NAME] ?? null;
+        if (!is_string($token) || $token === '') {
+            return false;
         }
 
-        $path = CATMIN_STORAGE . '/security/trusted-devices.json';
-        $dir = dirname($path);
-        if (!is_dir($dir)) {
-            mkdir($dir, 0775, true);
-        }
-
-        file_put_contents($path, json_encode($trusted, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        return $this->revokeByToken($userId, $token);
     }
 
-    private function loadTrusted(): array
+    public function revokeByToken(int $userId, string $token): bool
     {
-        $path = CATMIN_STORAGE . '/security/trusted-devices.json';
-        if (!is_file($path)) {
-            return [];
+        $token = trim($token);
+        if ($token === '') {
+            return false;
         }
 
-        $raw = file_get_contents($path);
-        if ($raw === false) {
-            return [];
+        return $this->repository()->revokeDevice($userId, $this->fingerprintHash($token, $userId));
+    }
+
+    private function fingerprintHash(string $token, int $userId): string
+    {
+        return hash('sha256', $token . '|' . $userId);
+    }
+
+    private function repository(): TrustedDeviceRepository
+    {
+        return $this->repository ?? new TrustedDeviceRepository();
+    }
+
+    private function clientIp(): ?string
+    {
+        $ip = $_SERVER['REMOTE_ADDR'] ?? null;
+        return is_string($ip) && trim($ip) !== '' ? trim($ip) : null;
+    }
+
+    private function userAgent(): ?string
+    {
+        $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? null;
+        if (!is_string($userAgent)) {
+            return null;
         }
 
-        $decoded = json_decode($raw, true);
-
-        return is_array($decoded) ? $decoded : [];
+        $userAgent = trim($userAgent);
+        return $userAgent !== '' ? mb_substr($userAgent, 0, 255) : null;
     }
 }

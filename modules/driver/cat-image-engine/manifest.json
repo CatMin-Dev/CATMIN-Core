@@ -1,0 +1,71 @@
+{
+    "module_schema_version": "1.0.0",
+    "name": "CAT Image Engine",
+    "display_name": "Image Engine",
+    "slug": "cat-image-engine",
+    "type": "driver",
+    "version": "0.1.0",
+    "description": "Moteur de traitement image serveur centralisé avec drivers Imagick et fallback.",
+    "summary": "Addon moteur image avec traitement serveur, crop, resize, conversion format.",
+    "author": "CATMIN",
+    "homepage": "https://github.com/CatMin-Dev/modules",
+    "support_url": "https://github.com/CatMin-Dev/modules/issues",
+    "docs_url": "https://github.com/CatMin-Dev/modules",
+    "readme_url": "https://github.com/CatMin-Dev/modules",
+    "changelog_url": "https://github.com/CatMin-Dev/modules",
+    "keywords": ["image", "engine", "processing", "imagick", "crop", "resize"],
+    "category": "media",
+    "icon": "bi bi-image",
+    "enabled": true,
+    "enabled_by_default": true,
+    "installable": true,
+    "autoload": true,
+    "show_in_manager": true,
+    "show_in_market": false,
+    "release_channel": "stable",
+    "lifecycle_status": "active",
+    "maintenance_status": "maintained",
+    "php_min": "8.3",
+    "catmin_min": "0.6.0",
+    "catmin_max": "0.x",
+    "db_supported": ["sqlite", "mysql", "mariadb"],
+    "capabilities": [
+        "imageengine.view",
+        "imageengine.settings",
+        "imageengine.diagnostics"
+    ],
+    "trusted_module": true,
+    "routes": "routes/admin.php",
+    "load": {
+        "routes": true,
+        "views": true,
+        "assets": true,
+        "migrations": false,
+        "hooks": false,
+        "translations": true,
+        "widgets": false,
+        "permissions": true,
+        "settings": true
+    },
+    "dependencies": {
+        "requires": [],
+        "conflicts": [],
+        "replaces": []
+    },
+    "admin_sidebar": [],
+    "settings_sidebar": [
+        {
+            "group": "settings",
+            "key": "cat-image-engine.settings",
+            "label": "Image Engine settings",
+            "label_i18n": {
+                "fr": "Parametres moteur image",
+                "en": "Image Engine settings"
+            },
+            "href": "settings/image-engine",
+            "order": 92,
+            "permissions": ["image-engine.settings"]
+        }
+    ],
+    "tags": ["cat-image-engine", "addon", "image-processing"]
+}

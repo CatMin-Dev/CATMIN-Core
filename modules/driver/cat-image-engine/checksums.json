@@ -1,0 +1,29 @@
+{
+    "schema_version": "1.0.0",
+    "algorithm": "sha256",
+    "module_slug": "cat-image-engine",
+    "module_version": "0.1.0-dev",
+    "generated_at": "2026-04-16T16:45:33+00:00",
+    "files": {
+        "bootstrap.php": "16d9eca225e685df9faeebaf0405a9ea680e922628bf58d43630ccf894b57aa2",
+        "config/image_engine.php": "64f96b08eb872a7789498899bff92d39318a3c87e6c25a5d19b003f449d2e450",
+        "manifest.json": "71b09ff6a38f970696d43b22ce4b877f91cb9159505f3c0f6d49b65961783bc9",
+        "src/Shared/Contracts/ImageProcessorInterface.php": "dcd0a7114af1727a49a7d956c724c9ff1bc5b959a93872821e65be4e303165df",
+        "src/Shared/DTO/CropInstructionDto.php": "1ac7c1af476387ca50e5f6482af103d8a8514f8f8d5a0fb934df496200dc0640",
+        "src/Shared/DTO/ImageMetadataDto.php": "23be5a34bd68a111fd40a407a3ac543b9dd56e5aa464312268aec0e65f5fbb7e",
+        "src/Shared/DTO/ResizeInstructionDto.php": "c8c500258779ff9ae90c17c0424756434503772a91a2af2395d925dbceb5e10c",
+        "src/Shared/DTO/TransformResultDto.php": "730d11768ed13b74de375c1e2410037487be1ea326a3dc22f26e4176c00689ae",
+        "src/Shared/DTO/VariantPresetDto.php": "f88ce3e57d40ce3642d381f47a8ad7af043244ef48b0e86322ee5717c5b96f90",
+        "src/Shared/Services/ImageMetadataService.php": "d7c3849cc45856bd694d64b53eb8adc1b604fe2d27a1139461766266ff995cc6",
+        "src/Shared/Services/ImageTransformService.php": "a11bb04b0b5655d8adfac4ba91bebb4d8b59ee82b70ec7efd7af305cb260da21",
+        "src/Shared/Services/ImageVariantService.php": "7693c62675afb23e499ae411ba10cf41d38ec0e45519d5ae598e3629b82cc8bb",
+        "src/Support/Drivers/BasicImageProcessor.php": "c014e5455dfff4b1a1184d1c7f5f0fa57c88cf947e7c98082fd59e27c7122c9b",
+        "src/Support/Drivers/ImagickImageProcessor.php": "fd7df46e438ca4f339cc6d73e0eca1db111073c0221eda7db1e876628f396cbb",
+        "src/Support/ImageProcessorResolver.php": "57fbb4c8fd2664d4047e9eecce535363efc364d34e3f1c90efe07c4650d75d29",
+        "tests/Unit/DTOTest.php": "89c8cdd5350202aad06a4e9749c14d78e2ee18ea769fbc5c4b3446343e3dd0e1",
+        "tests/Unit/ImageProcessorResolverTest.php": "e7d1994de5298aad930bdc7d1e80ce10ebd4ecac65fdff1aec51e6ee4190aaa0",
+        "tests/Unit/ImageProcessorTest.php": "1602a1f352c9ff99c1a3f801da3a8baa18303723e99732a223ecb85bb1d388be",
+        "tests/Unit/ServiceInstantiationTest.php": "019b2cb735684209141cc97ae3c28601bb3357940eb78ae59e1c9574da324604"
+    },
+    "module_hash": "a1f842a7202612c015df98f4e46c0aaf73f22290b499442bc2a918b6b072ad2e"
+}
