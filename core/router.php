@@ -186,6 +186,9 @@ final class Router
             }
             $slug = strtolower(trim((string) ($module['manifest']['slug'] ?? '')));
             $routes = require $routesFile;
+            if (is_array($routes)) {
+                $routes = $this->applyZoneBaseMiddleware($routes, $zone);
+            }
             $this->ingestRoutes($routes, $zone, $slug !== '' ? $slug : null);
         }
     }
@@ -215,5 +218,33 @@ final class Router
         }
 
         return $candidate;
+    }
+
+    /**
+     * For admin-zone module routes, prepend the admin auth middleware automatically.
+     * This is a generic zone-level protection applied to ALL admin-zone module routes.
+     *
+     * @param array<int,array<string,mixed>> $routes
+     * @return array<int,array<string,mixed>>
+     */
+    private function applyZoneBaseMiddleware(array $routes, string $zone): array
+    {
+        if ($zone !== 'admin') {
+            return $routes;
+        }
+
+        $adminAuth = static function (\Core\http\Request $request, callable $next): \Core\http\Response {
+            $controller = new \Admin\controllers\AuthController();
+            if (!$controller->requiresAuth()) {
+                return \Core\http\Response::html('', 302, ['Location' => $controller->adminBasePath() . '/login']);
+            }
+            return $next($request);
+        };
+
+        return array_map(static function (array $route) use ($adminAuth): array {
+            $existing = is_array($route['middleware'] ?? null) ? $route['middleware'] : [];
+            $route['middleware'] = array_merge([$adminAuth], $existing);
+            return $route;
+        }, $routes);
     }
 }

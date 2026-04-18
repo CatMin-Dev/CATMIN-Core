@@ -1,0 +1,144 @@
+{
+  "schema_version": "1.0",
+  "module_id": "cat-contract-demo",
+  "name": "CAT Contract Demo",
+  "description": "Module exemple general pour valider les contrats CORE <-> MODULES.",
+  "version": "1.0.0-RC.1",
+  "type": "admin",
+  "category": "custom",
+  "authors": [
+    {
+      "name": "CATMIN",
+      "role": "core-team"
+    }
+  ],
+  "compatibility": {
+    "core": {
+      "min": "0.7.0-RC.1",
+      "max": null
+    },
+    "php": {
+      "min": "8.1.0",
+      "max": null
+    }
+  },
+  "bootstrap": {
+    "provider": "module.php",
+    "services": [
+      "services/ContractDemoService.php",
+      "services/ContractDemoRegistry.php"
+    ]
+  },
+  "routes": {
+    "admin": "routes/admin.php",
+    "settings": "routes/settings.php"
+  },
+  "permissions": {
+    "file": "permissions.php",
+    "namespace": "example"
+  },
+  "settings": {
+    "file": "settings.php",
+    "section": "example_module"
+  },
+  "navigation": {
+    "sidebar": [
+      {
+        "target": "sidebar.main",
+        "group": "demo",
+        "group_label_i18n": {
+          "fr": "Démo",
+          "en": "Demo"
+        },
+        "group_icon": "bezier2",
+        "group_order": 65,
+        "label": "Contract Demo",
+        "icon": "bi bi-box-seam",
+        "route": "contract-demo",
+        "order": 200,
+        "permission": "example.read"
+      }
+    ],
+    "settings_sidebar": [
+      {
+        "target": "sidebar.settings",
+        "label": "Contract Demo",
+        "icon": "bi bi-sliders",
+        "route": "settings/contract-demo",
+        "order": 210,
+        "permission": "example.settings"
+      }
+    ]
+  },
+  "ui": {
+    "inject": []
+  },
+  "events": {
+    "listen": [
+      "system.booted",
+      "admin.dashboard.rendered"
+    ],
+    "dispatch": [
+      "example.record.created",
+      "example.record.updated"
+    ]
+  },
+  "notifications": {
+    "channels": [
+      "admin"
+    ],
+    "provider": "notifications/provider.php"
+  },
+  "assets": {
+    "admin": {
+      "css": [
+        "assets/admin/css/example.css"
+      ],
+      "js": [
+        "assets/admin/js/example.js"
+      ]
+    },
+    "front": {
+      "css": [
+        "assets/front/css/example-front.css"
+      ],
+      "js": [
+        "assets/front/js/example-front.js"
+      ]
+    }
+  },
+  "database": {
+    "migrations": [
+      "database/migrations/001_create_example_tables.php"
+    ],
+    "seeders": []
+  },
+  "dependencies": {
+    "required": [],
+    "optional": [],
+    "conflicts": []
+  },
+  "healthchecks": {
+    "provider": "health/provider.php"
+  },
+  "docs": {
+    "index": "docs/README.md"
+  },
+  "tests": {
+    "smoke": [
+      "tests/Smoke/ModuleBootTest.php"
+    ]
+  },
+  "release": {
+    "checksums": "release/checksums.json",
+    "signature": "release/signature.json",
+    "versioning": {
+      "strategy": "semver",
+      "changelog": "docs/CHANGELOG.md"
+    }
+  },
+  "enabled_by_default": false,
+  "zones": [
+    "admin"
+  ]
+}

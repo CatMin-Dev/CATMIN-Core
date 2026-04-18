@@ -1,6 +1,6 @@
 # CATMIN Core
 
-[![Version](https://img.shields.io/badge/version-0.7.0--DEV.1-f59e0b)](https://github.com/CatMin-Dev/core)
+[![Version](https://img.shields.io/badge/version-0.7.0--RC.1-f59e0b)](https://github.com/CatMin-Dev/CATMIN-Core)
 ![PHP](https://img.shields.io/badge/php-8.3%2B-44403c)
 ![DB Schema](https://img.shields.io/badge/db_schema-0.1.0--RC.1-c2234d)
 ![Installer](https://img.shields.io/badge/installer-lock%20enforced-16a34a)
@@ -9,6 +9,7 @@
 CATMIN est un panel PHP standalone orienté administration, sécurité et exploitation terrain:
 - installateur guidé avec lock final
 - core modulaire + market/repository policy
+- module socle intégré `cat-contract-demo` pour duplication propre et tests de portabilité
 - gestion admins/roles/permissions
 - monitoring, logs, maintenance, cron, backup
 - support i18n (`fr` / `en`)
@@ -97,11 +98,14 @@ Artefacts attendus:
 - `docs/modules/market-trust-policy.md`
 - `docs/modules/community-signing-trust-admission.md`
 
+## Publication
+
+- Dépôt privé de travail core: `https://github.com/CatMin-Dev/core`
+- Dépôt public de distribution core: `https://github.com/CatMin-Dev/CATMIN-Core`
+- Le module socle `cat-contract-demo` est embarqué dans le core et peut être publié séparément sur le dépôt privé `https://github.com/CatMin-Dev/modules`
+- La publication publique du module démo sur `https://github.com/CatMin-Dev/CATMIN-Modules` reste volontairement différée jusqu'au test d'installation clean en ligne et au test de portabilité `DEMO -> DEMO2`
+
 ## Dépôts
 
 - Release public (core): `https://github.com/CatMin-Dev/CATMIN-Core`
 - Release public (modules): `https://github.com/CatMin-Dev/CATMIN-Modules`
-
----
-
-CATMIN `0.5.0-RC.9` - harmonisation globale actions admin en input-group icones/tooltips, nettoyage CSS inline et fix integrite backup.

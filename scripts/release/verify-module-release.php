@@ -74,14 +74,19 @@ if (!(bool) ($manifestState['ok'] ?? false)) {
     exit(1);
 }
 
-$checksumState = (new CoreModuleChecksumValidator())->validate($moduleRoot);
+$manifest = is_array($manifestState['manifest'] ?? null) ? $manifestState['manifest'] : [];
+$release = is_array($manifest['release'] ?? null) ? $manifest['release'] : [];
+$checksumsRelativePath = (string) ($release['checksums'] ?? '');
+$signatureRelativePath = (string) ($release['signature'] ?? '');
+
+$checksumState = (new CoreModuleChecksumValidator())->validate($moduleRoot, $checksumsRelativePath);
 if (!((bool) ($checksumState['valid'] ?? false))) {
     fwrite(STDERR, "Checksums validation failed: " . implode(' | ', (array) ($checksumState['errors'] ?? [])) . "\n");
     exit(1);
 }
 
 $checksums = is_array($checksumState['checksums'] ?? null) ? $checksumState['checksums'] : [];
-$signatureState = (new CoreModuleSignatureValidator())->validate($moduleRoot, $checksums);
+$signatureState = (new CoreModuleSignatureValidator())->validate($moduleRoot, $signatureRelativePath, $checksums);
 
 if ($requireSignature && $publicKeyPath !== '') {
     if (!is_file($publicKeyPath)) {
@@ -89,6 +94,12 @@ if ($requireSignature && $publicKeyPath !== '') {
         exit(1);
     }
     $signaturePath = rtrim($moduleRoot, '/') . '/signature.json';
+    if ($signatureRelativePath !== '') {
+        $candidate = $moduleRoot . '/' . ltrim(str_replace('\\', '/', $signatureRelativePath), '/');
+        if (is_file($candidate)) {
+            $signaturePath = $candidate;
+        }
+    }
     $signature = json_decode((string) file_get_contents($signaturePath), true);
     if (!is_array($signature)) {
         fwrite(STDERR, "Signature validation failed: signature.json invalide\n");

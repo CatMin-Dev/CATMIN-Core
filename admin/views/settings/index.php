@@ -56,31 +56,11 @@ $inlineMessage = '';
 ?>
 <div class="row g-4">
     <div class="col-12 col-lg-3">
-        <div class="list-group cat-settings-nav">
-            <?php foreach ($sections as $key => $label): ?>
-                <a class="list-group-item list-group-item-action <?= $section === $key ? 'active' : '' ?>" href="<?= htmlspecialchars($adminBase . '/settings/' . $key, ENT_QUOTES, 'UTF-8') ?>">
-                    <?= htmlspecialchars((string) $label, ENT_QUOTES, 'UTF-8') ?>
-                </a>
-            <?php endforeach; ?>
-            <?php foreach ($settingsModuleLinks as $entry): ?>
-                <?php
-                $href = trim((string) ($entry['href'] ?? ''));
-                if ($href === '') {
-                    continue;
-                }
-                if ($href[0] !== '/') {
-                    $href = rtrim($adminBase, '/') . '/' . ltrim($href, '/');
-                }
-                $label = trim((string) ($entry['label'] ?? ''));
-                if ($label === '') {
-                    continue;
-                }
-                ?>
-                <a class="list-group-item list-group-item-action" href="<?= htmlspecialchars($href, ENT_QUOTES, 'UTF-8') ?>">
-                    <?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?>
-                </a>
-            <?php endforeach; ?>
-        </div>
+        <?php
+        $activeSection = $section;
+        $activeModuleHref = '';
+        require __DIR__ . '/partials/settings-nav.php';
+        ?>
     </div>
 
     <div class="col-12 col-lg-9">
@@ -255,7 +235,8 @@ $inlineMessage = '';
                                                     <?= $groupKey === 'dashboard' ? 'disabled' : '' ?>
                                                 >
                                             </span>
-                                            <span class="badge text-bg-secondary"><?= $groupKey === 'dashboard' ? 'core+locked' : 'core' ?></span>
+                                            <?php $groupSource = strtolower(trim((string) ($group['source'] ?? 'core'))); ?>
+                                            <span class="badge text-bg-secondary"><?= $groupKey === 'dashboard' ? 'core+locked' : htmlspecialchars($groupSource !== '' ? $groupSource : 'core', ENT_QUOTES, 'UTF-8') ?></span>
                                         </div>
                                     <?php endforeach; ?>
                                 </div>
@@ -334,7 +315,8 @@ $inlineMessage = '';
                                                     <span class="cat-sidebar-order-handle">⋮⋮</span>
                                                     <span class="text-body-secondary">&nbsp;&nbsp;└</span>
                                                     <span class="text-body-secondary"><?= htmlspecialchars((string) ($entry['label'] ?? ''), ENT_QUOTES, 'UTF-8') ?></span>
-                                                    <span class="badge text-bg-secondary ms-auto">core</span>
+                                                    <?php $entrySource = strtolower(trim((string) ($entry['source'] ?? 'core'))); ?>
+                                                    <span class="badge text-bg-secondary ms-auto"><?= htmlspecialchars($entrySource !== '' ? $entrySource : 'core', ENT_QUOTES, 'UTF-8') ?></span>
                                                 </div>
                                             <?php endforeach; ?>
                                         </div>

@@ -9,7 +9,7 @@ final class CoreModuleSignature
 {
     public function verify(string $modulePath, string $moduleSlug = '', ?array $checksums = null): array
     {
-        $result = (new CoreModuleSignatureValidator())->validate($modulePath, $checksums);
+        $result = (new CoreModuleSignatureValidator())->validate($modulePath, '', $checksums);
         (new CoreModuleSignatureLogger())->log(
             $moduleSlug !== '' ? $moduleSlug : basename($modulePath),
             (string) ($result['status'] ?? 'unknown'),

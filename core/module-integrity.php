@@ -10,9 +10,17 @@ final class CoreModuleIntegrity
 {
     public function verify(string $modulePath, array $manifest): array
     {
-        $checksumState = (new CoreModuleChecksumValidator())->validate($modulePath);
+        $release = is_array($manifest['release'] ?? null) ? $manifest['release'] : [];
+        $checksumState = (new CoreModuleChecksumValidator())->validate(
+            $modulePath,
+            (string) ($release['checksums'] ?? '')
+        );
         $checksums = is_array($checksumState['checksums'] ?? null) ? $checksumState['checksums'] : null;
-        $signatureState = (new CoreModuleSignatureValidator())->validate($modulePath, $checksums);
+        $signatureState = (new CoreModuleSignatureValidator())->validate(
+            $modulePath,
+            (string) ($release['signature'] ?? ''),
+            $checksums
+        );
         $trust = (new CoreModuleTrustPolicy())->evaluate($manifest, $signatureState, $checksumState);
 
         return [

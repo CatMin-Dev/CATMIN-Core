@@ -6,6 +6,7 @@ require_once CATMIN_CORE . '/module-runtime-snapshot.php';
 require_once CATMIN_CORE . '/module-activation-guard.php';
 require_once CATMIN_CORE . '/module-state-store.php';
 require_once CATMIN_CORE . '/module-mandatory-dependencies.php';
+require_once CATMIN_CORE . '/PermissionsLoader.php';
 
 final class CoreModuleActivator
 {
@@ -98,6 +99,18 @@ final class CoreModuleActivator
             (string) ($manifest['schema_version'] ?? ($manifest['module_schema_version'] ?? '')),
             ''
         );
+
+        // Keep permissions registry aligned with runtime activation state.
+        try {
+            $permissionsLoader = new Core\PermissionsLoader();
+            if ($enabled) {
+                $permissionsLoader->registerModulePermissions($path);
+            } else {
+                $permissionsLoader->unregisterModulePermissions($path);
+            }
+        } catch (\Throwable) {
+            // Non-blocking: permissions are also re-synced during admin bootstrap.
+        }
 
         Core\logs\Logger::info($enabled ? 'Module activé' : 'Module désactivé', ['scope' => $scope, 'slug' => $slug]);
 

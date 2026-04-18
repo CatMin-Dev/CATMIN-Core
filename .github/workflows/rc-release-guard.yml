@@ -1,0 +1,65 @@
+name: RC Release Guard
+
+"on":
+  push:
+  pull_request:
+
+jobs:
+  contract-guard:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+
+      - name: Verify core/demo version alignment
+        run: |
+          php -r '
+          $core = json_decode((string) file_get_contents("version.json"), true);
+          $manifest = json_decode((string) file_get_contents("modules/admin/cat-contract-demo/manifest.json"), true);
+          $checksums = json_decode((string) file_get_contents("modules/admin/cat-contract-demo/release/checksums.json"), true);
+          $signature = json_decode((string) file_get_contents("modules/admin/cat-contract-demo/release/signature.json"), true);
+          if (!is_array($core) || !is_array($manifest) || !is_array($checksums) || !is_array($signature)) {
+              fwrite(STDERR, "Invalid version metadata files\n");
+              exit(1);
+          }
+          if (($manifest["compatibility"]["core"]["min"] ?? "") !== ($core["version"] ?? "")) {
+              fwrite(STDERR, "Core version and demo compatibility min are out of sync\n");
+              exit(1);
+          }
+          if (($checksums["module_version"] ?? "") !== ($manifest["version"] ?? "")) {
+              fwrite(STDERR, "Demo checksums module_version is out of sync\n");
+              exit(1);
+          }
+          if (($signature["module_version"] ?? "") !== ($manifest["version"] ?? "")) {
+              fwrite(STDERR, "Demo signature module_version is out of sync\n");
+              exit(1);
+          }
+          '
+
+      - name: Verify README badge matches version.json
+        run: |
+          CORE_VERSION="$(php -r 'echo json_decode((string) file_get_contents("version.json"), true)["version"];')"
+          README_BADGE_VERSION="${CORE_VERSION//-/--}"
+          grep -F "version-${README_BADGE_VERSION}" README.md >/dev/null
+
+      - name: Run demo socle smoke
+        run: php scripts/tests/module-socle-smoke.php modules/admin/cat-contract-demo
+
+      - name: Run demo manifest contract smoke
+        run: php scripts/tests/module-contract-v1-smoke.php
+
+      - name: Run demo boot smoke
+        run: php modules/admin/cat-contract-demo/tests/Smoke/ModuleBootTest.php
+
+      - name: Build standalone RC package
+        run: bash scripts/release/build-standalone-zip.sh
+
+      - name: Verify standalone RC package
+        run: |
+          CORE_VERSION="$(php -r 'echo json_decode((string) file_get_contents("version.json"), true)["version"];')"
+          bash scripts/release/verify-standalone-package.sh "../release/catmin-${CORE_VERSION}-standalone.zip"

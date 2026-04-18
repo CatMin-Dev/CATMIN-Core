@@ -19,7 +19,8 @@ final class FrontRouteResolver
             }
 
             $entrypoints = is_array($manifest['entrypoints'] ?? null) ? $manifest['entrypoints'] : [];
-            $frontRoutes = trim((string) ($entrypoints['front_routes'] ?? ''));
+            $routesMap = is_array($manifest['routes_map'] ?? null) ? $manifest['routes_map'] : [];
+            $frontRoutes = trim((string) ($routesMap['front'] ?? ($entrypoints['front_routes'] ?? '')));
             if ($frontRoutes === '') {
                 continue;
             }

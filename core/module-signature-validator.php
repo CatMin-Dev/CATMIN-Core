@@ -6,9 +6,9 @@ require_once CATMIN_CORE . '/module-public-keyring.php';
 
 final class CoreModuleSignatureValidator
 {
-    public function validate(string $modulePath, ?array $checksums = null): array
+    public function validate(string $modulePath, string $signatureRelativePath = '', ?array $checksums = null): array
     {
-        $signaturePath = rtrim($modulePath, '/') . '/signature.json';
+        $signaturePath = $this->resolveSignaturePath($modulePath, $signatureRelativePath);
         if (!is_file($signaturePath)) {
             return [
                 'status' => 'unsigned',
@@ -132,6 +132,40 @@ final class CoreModuleSignatureValidator
             'key_source' => $keySource,
             'key_status' => $keyStatus,
         ];
+    }
+
+    private function resolveSignaturePath(string $modulePath, string $signatureRelativePath): string
+    {
+        $moduleRoot = rtrim($modulePath, '/');
+        $candidate = trim($signatureRelativePath);
+        if ($candidate !== '' && $this->isSafeRelativePath($candidate)) {
+            $resolved = $moduleRoot . '/' . ltrim(str_replace('\\', '/', $candidate), '/');
+            if (is_file($resolved)) {
+                return $resolved;
+            }
+        }
+
+        return $moduleRoot . '/signature.json';
+    }
+
+    private function isSafeRelativePath(string $path): bool
+    {
+        $path = trim($path);
+        if ($path === '' || str_contains($path, "\0")) {
+            return false;
+        }
+
+        if (str_starts_with($path, '/') || preg_match('/^[A-Za-z]:[\\\\\/]/', $path) === 1) {
+            return false;
+        }
+
+        foreach (explode('/', str_replace('\\', '/', $path)) as $segment) {
+            if ($segment === '' || $segment === '.' || $segment === '..') {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
 

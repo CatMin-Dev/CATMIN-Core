@@ -18,6 +18,52 @@ if (!function_exists('catmin_is_superadmin_slug')) {
     }
 }
 
+if (!function_exists('catmin_current_admin_user_id')) {
+    function catmin_current_admin_user_id(): ?int
+    {
+        $userId = null;
+
+        // Try framework session wrapper first when available.
+        if (function_exists('session') && is_callable('session')) {
+            try {
+                $sess = call_user_func('session');
+                if ($sess && is_object($sess) && method_exists($sess, 'get')) {
+                    $legacyUserId = $sess->get('admin_user_id');
+                    if (is_numeric($legacyUserId) && (int) $legacyUserId > 0) {
+                        return (int) $legacyUserId;
+                    }
+
+                    $authPayload = $sess->get('catmin_admin_auth');
+                    if (is_array($authPayload) && isset($authPayload['user_id']) && is_numeric($authPayload['user_id'])) {
+                        $userId = (int) $authPayload['user_id'];
+                    }
+                }
+            } catch (\Throwable) {
+                // Fall through to $_SESSION.
+            }
+        }
+
+        if (($userId === null || $userId <= 0) && isset($_SESSION['admin_user_id']) && is_numeric($_SESSION['admin_user_id'])) {
+            $userId = (int) $_SESSION['admin_user_id'];
+        }
+
+        if (($userId === null || $userId <= 0)
+            && isset($_SESSION['catmin_admin_auth'])
+            && is_array($_SESSION['catmin_admin_auth'])
+            && isset($_SESSION['catmin_admin_auth']['user_id'])
+            && is_numeric($_SESSION['catmin_admin_auth']['user_id'])
+        ) {
+            $userId = (int) $_SESSION['catmin_admin_auth']['user_id'];
+        }
+
+        if ($userId === null || $userId <= 0) {
+            return null;
+        }
+
+        return $userId;
+    }
+}
+
 if (!function_exists('auth_can')) {
     /**
      * Check if the current user has a specific permission
@@ -27,27 +73,8 @@ if (!function_exists('auth_can')) {
      */
     function auth_can(string $permission): bool
     {
-        // Get user ID from session
-        $userId = null;
-        
-        // Try session manager first
-        if (function_exists('session') && is_callable('session')) {
-            try {
-                $sess = session();
-                if ($sess && is_object($sess) && method_exists($sess, 'get')) {
-                    $userId = $sess->get('admin_user_id');
-                }
-            } catch (\Throwable) {
-                // Fall through to $_SESSION
-            }
-        }
-        
-        // Fall back to $_SESSION directly
-        if (!$userId && isset($_SESSION['admin_user_id'])) {
-            $userId = $_SESSION['admin_user_id'];
-        }
-        
-        if (!$userId) {
+        $userId = catmin_current_admin_user_id();
+        if ($userId === null) {
             return false;
         }
 
@@ -141,26 +168,8 @@ if (!function_exists('user_role')) {
     function user_role(): ?string
     {
         try {
-            $userId = null;
-            
-            // Try session manager first
-            if (function_exists('session') && is_callable('session')) {
-                try {
-                    $sess = session();
-                    if ($sess && is_object($sess) && method_exists($sess, 'get')) {
-                        $userId = $sess->get('admin_user_id');
-                    }
-                } catch (\Throwable) {
-                    // Fall through to $_SESSION
-                }
-            }
-            
-            // Fall back to $_SESSION directly
-            if (!$userId && isset($_SESSION['admin_user_id'])) {
-                $userId = $_SESSION['admin_user_id'];
-            }
-            
-            if (!$userId) {
+            $userId = catmin_current_admin_user_id();
+            if ($userId === null) {
                 return null;
             }
 

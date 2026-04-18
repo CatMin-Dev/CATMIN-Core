@@ -18,11 +18,38 @@ mkdir -p "${STAGE_DIR}"
 MODULE_TRUST_MODE="$(php -r '$cfg=require $argv[1]; echo (string)($cfg["mode"] ?? "recommended");' "${ROOT_DIR}/config/module-trust.php" 2>/dev/null || echo "recommended")"
 if [ -x "${ROOT_DIR}/scripts/release/sign-all-modules.sh" ] && [ -d "${ROOT_DIR}/modules/admin" ]; then
   if [ "${MODULE_TRUST_MODE}" = "strict" ]; then
-    if [ -z "${RELEASE_SIGNING_KEY:-}" ] || [ -z "${RELEASE_SIGNING_KEY_ID:-}" ] || [ ! -f "${RELEASE_SIGNING_KEY}" ]; then
-      echo "ERROR: strict trust mode requires RELEASE_SIGNING_KEY + RELEASE_SIGNING_KEY_ID for standalone build." >&2
-      exit 1
+    if [ -n "${RELEASE_SIGNING_KEY:-}" ] && [ -n "${RELEASE_SIGNING_KEY_ID:-}" ] && [ -f "${RELEASE_SIGNING_KEY}" ]; then
+      "${ROOT_DIR}/scripts/release/sign-all-modules.sh" "${ROOT_DIR}/modules/admin" "${RELEASE_SIGNING_KEY}" "${RELEASE_SIGNING_KEY_ID}"
+    else
+      for m in "${ROOT_DIR}"/modules/admin/*; do
+        [ -d "${m}" ] || continue
+        php -r '
+        $root = $argv[1];
+        $moduleDir = $argv[2];
+        require_once $root . "/bootstrap.php";
+        require_once CATMIN_CORE . "/module-checksum-validator.php";
+        require_once CATMIN_CORE . "/module-signature-validator.php";
+        $manifestPath = $moduleDir . "/manifest.json";
+        $manifest = is_file($manifestPath) ? json_decode((string) file_get_contents($manifestPath), true) : null;
+        if (!is_array($manifest)) {
+            fwrite(STDERR, "Invalid manifest for strict module verification: {$moduleDir}\n");
+            exit(1);
+        }
+        $release = is_array($manifest["release"] ?? null) ? $manifest["release"] : [];
+        $checksumState = (new CoreModuleChecksumValidator())->validate($moduleDir, (string) ($release["checksums"] ?? ""));
+        if (!((bool) ($checksumState["valid"] ?? false))) {
+            fwrite(STDERR, "Strict module checksum verification failed for {$moduleDir}: " . implode(" | ", (array) ($checksumState["errors"] ?? [])) . "\n");
+            exit(1);
+        }
+        $checksums = is_array($checksumState["checksums"] ?? null) ? $checksumState["checksums"] : [];
+        $signatureState = (new CoreModuleSignatureValidator())->validate($moduleDir, (string) ($release["signature"] ?? ""), $checksums);
+        if (!((bool) ($signatureState["valid"] ?? false))) {
+            fwrite(STDERR, "Strict module signature verification failed for {$moduleDir}: " . implode(" | ", (array) ($signatureState["errors"] ?? [])) . "\n");
+            exit(1);
+        }
+        ' "${ROOT_DIR}" "${m}"
+      done
     fi
-    "${ROOT_DIR}/scripts/release/sign-all-modules.sh" "${ROOT_DIR}/modules/admin" "${RELEASE_SIGNING_KEY}" "${RELEASE_SIGNING_KEY_ID}"
   else
     if [ -n "${RELEASE_SIGNING_KEY:-}" ] && [ -n "${RELEASE_SIGNING_KEY_ID:-}" ] && [ -f "${RELEASE_SIGNING_KEY}" ]; then
       "${ROOT_DIR}/scripts/release/sign-all-modules.sh" "${ROOT_DIR}/modules/admin" "${RELEASE_SIGNING_KEY}" "${RELEASE_SIGNING_KEY_ID}"
@@ -107,12 +134,17 @@ fi
 find "${STAGE_DIR}" -type d \( -name '.git' -o -name '.vscode' -o -name 'node_modules' -o -name 'tests' \) -prune -exec rm -rf {} +
 find "${STAGE_DIR}" -type f \( -name '*.log' -o -name '*.map' -o -name '*.tmp' \) -delete
 rm -f "${STAGE_DIR}/.env" "${STAGE_DIR}/.env.local" "${STAGE_DIR}/.env.production" || true
+rm -f "${STAGE_DIR}/storage/install.lock" || true
 rm -f "${STAGE_DIR}/storage/logs/"*.log || true
 rm -f "${STAGE_DIR}/logs/"*.log || true
+rm -rf "${STAGE_DIR}/storage/logs" || true
+rm -rf "${STAGE_DIR}/storage/backups" || true
 rm -rf "${STAGE_DIR}/storage/install" || true
 rm -rf "${STAGE_DIR}/storage/updates/releases" || true
 rm -rf "${STAGE_DIR}/storage/updates/reports" || true
 rm -rf "${STAGE_DIR}/storage/modules" || true
+rm -rf "${STAGE_DIR}/storage/trust/local-signing" || true
+find "${STAGE_DIR}" -type f \( -name '*.key' -o -name '*.pem' -o -name '*.p12' -o -name '*.pfx' \) -delete
 rm -f "${STAGE_DIR}/db/database.sqlite" || true
 rm -f "${STAGE_DIR}/database.sqlite" || true
 

@@ -20,8 +20,12 @@ final class CoreModuleLoader
         'drivers' => 5,
     ];
 
+    /** @var array<string, bool> */
+    private array $seenModuleIds = [];
+
     public function scan(): array
     {
+        $this->seenModuleIds = [];
         $registry = new CoreModuleRegistry();
         $validator = new CoreModuleValidator();
         $compat = new CoreModuleCompatibilityChecker();
@@ -35,9 +39,9 @@ final class CoreModuleLoader
             }
 
             foreach (glob($scopeDir . '/*', GLOB_ONLYDIR) ?: [] as $moduleDir) {
-                $manifestPath = is_file($moduleDir . '/manifest.json') ? ($moduleDir . '/manifest.json') : ($moduleDir . '/module.json');
+                $manifestPath = $moduleDir . '/manifest.json';
                 if (!is_file($manifestPath)) {
-                    Core\logs\Logger::error('Module détecté sans manifest', ['path' => $moduleDir]);
+                    Core\logs\Logger::error('Module détecté sans manifest.json', ['path' => $moduleDir]);
                     continue;
                 }
 
@@ -52,6 +56,16 @@ final class CoreModuleLoader
                 $normalized = is_array($validation['normalized'] ?? null) ? $validation['normalized'] : $manifest;
                 $compatibility = $compat->check($normalized);
                 $slug = strtolower(trim((string) ($normalized['slug'] ?? basename($moduleDir))));
+
+                $moduleId = strtolower(trim((string) ($normalized['module_id'] ?? '')));
+                if ($moduleId !== '') {
+                    if (isset($this->seenModuleIds[$moduleId])) {
+                        Core\logs\Logger::error('Collision critique module_id', ['module_id' => $moduleId, 'path' => $moduleDir]);
+                        continue;
+                    }
+                    $this->seenModuleIds[$moduleId] = true;
+                }
+
                 $enabled = (bool) ($normalized['enabled_by_default'] ?? false);
                 if (isset($stateBySlug[$slug]['status'])) {
                     $enabled = (string) $stateBySlug[$slug]['status'] === 'active';
@@ -176,21 +190,56 @@ final class CoreModuleLoader
                 }
             }
 
-            $routesFile = (string) ($manifest['routes'] ?? '');
-            if ($routesFile !== '') {
-                $candidate = str_starts_with($routesFile, '/') ? $routesFile : ($module['path'] . '/' . ltrim($routesFile, '/'));
-            } else {
-                $candidate = $module['path'] . '/routes.php';
-            }
-            $real = realpath($candidate);
-            if (!is_string($real) || $real === '' || !str_starts_with($real, CATMIN_MODULES . '/') || !is_file($real)) {
-                continue;
+            $routesMap = is_array($manifest['routes_map'] ?? null) ? $manifest['routes_map'] : [];
+            $logicalZones = $this->logicalZonesForRuntimeZone($zone);
+            $routeFiles = [];
+
+            foreach ($logicalZones as $logicalZone) {
+                $candidateRelative = trim((string) ($routesMap[$logicalZone] ?? ''));
+                if ($candidateRelative === '') {
+                    continue;
+                }
+                $candidate = str_starts_with($candidateRelative, '/')
+                    ? $candidateRelative
+                    : ($module['path'] . '/' . ltrim($candidateRelative, '/'));
+                $real = realpath($candidate);
+                if (!is_string($real) || $real === '' || !str_starts_with($real, CATMIN_MODULES . '/') || !is_file($real)) {
+                    continue;
+                }
+                $routeFiles[$real] = true;
             }
 
-            $module['routes_file'] = $real;
-            $loadable[] = $module;
+            if ($routeFiles === []) {
+                $routesFile = trim((string) ($manifest['routes'] ?? ''));
+                $candidate = $routesFile !== ''
+                    ? (str_starts_with($routesFile, '/') ? $routesFile : ($module['path'] . '/' . ltrim($routesFile, '/')))
+                    : ($module['path'] . '/routes.php');
+
+                $real = realpath($candidate);
+                if (!is_string($real) || $real === '' || !str_starts_with($real, CATMIN_MODULES . '/') || !is_file($real)) {
+                    continue;
+                }
+
+                $routeFiles[$real] = true;
+            }
+
+            foreach (array_keys($routeFiles) as $real) {
+                $row = $module;
+                $row['routes_file'] = $real;
+                $loadable[] = $row;
+            }
         }
 
         return $loadable;
+    }
+
+    /** @return array<int, string> */
+    private function logicalZonesForRuntimeZone(string $runtimeZone): array
+    {
+        return match ($runtimeZone) {
+            'admin' => ['admin', 'settings'],
+            'front' => ['front', 'api', 'ajax', 'tools'],
+            default => [$runtimeZone],
+        };
     }
 }

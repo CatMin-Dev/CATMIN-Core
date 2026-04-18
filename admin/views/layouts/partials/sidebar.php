@@ -152,6 +152,25 @@ $resolveSidebarLabel = static function (array $item, string $fallback, string $l
     return $label !== '' ? $label : $fallback;
 };
 
+$resolveGroupLabel = static function (array $item, string $fallback, string $locale): string {
+    $labelI18n = $item['group_label_i18n'] ?? null;
+    if (is_array($labelI18n)) {
+        $localized = trim((string) ($labelI18n[$locale] ?? ''));
+        if ($localized !== '') {
+            return $localized;
+        }
+    }
+
+    $localizedKey = 'group_label_' . $locale;
+    $localized = trim((string) ($item[$localizedKey] ?? ''));
+    if ($localized !== '') {
+        return $localized;
+    }
+
+    $label = trim((string) ($item['group_label'] ?? ''));
+    return $label !== '' ? $label : $fallback;
+};
+
 $moduleNavEntries = [];
 try {
     require_once CATMIN_CORE . '/module-runtime-snapshot.php';
@@ -170,7 +189,7 @@ try {
         $slug = strtolower(trim((string) ($manifest['slug'] ?? basename((string) ($moduleRow['path'] ?? 'module')))));
 
         $items = $manifest['admin_sidebar'] ?? $manifest['sidebar'] ?? $manifest['sidebar_entries'] ?? [];
-        if (!is_array($items)) {
+        if (!is_array($items) || $items === []) {
             continue;
         }
 
@@ -191,6 +210,9 @@ try {
             $href = trim((string) ($item['href'] ?? ($item['route'] ?? '')));
             if ($href === '') {
                 $href = '#';
+            } elseif ($href === '/admin' || str_starts_with($href, '/admin/')) {
+                $suffix = substr($href, strlen('/admin'));
+                $href = rtrim($adminBase, '/') . ($suffix !== false ? $suffix : '');
             } elseif ($href[0] !== '/') {
                 $href = rtrim($adminBase, '/') . '/' . ltrim($href, '/');
             }
@@ -203,6 +225,9 @@ try {
 
             $moduleNavEntries[] = [
                 'group' => $group !== '' ? $group : 'modules',
+                'group_label' => $resolveGroupLabel($item, ucfirst($group), $sidebarLocale),
+                'group_icon' => trim((string) ($item['group_icon'] ?? 'chat')),
+                'group_order' => (int) ($item['group_order'] ?? 35),
                 'key' => strtolower(trim((string) ($item['key'] ?? ($slug . '-' . md5($label))))),
                 'label' => $label,
                 'href' => $href,
@@ -242,11 +267,14 @@ if ($moduleNavEntries !== []) {
 
         if (!$inserted) {
             $meta = $groupMeta[$groupKey] ?? null;
+            $groupLabel = trim((string) ($entry['group_label'] ?? ''));
+            $groupIcon = trim((string) ($entry['group_icon'] ?? ''));
+            $groupOrder = (int) ($entry['group_order'] ?? 35);
             $navGroups[] = [
                 'key' => $groupKey,
-                'label' => $meta !== null ? (string) ($meta['label'] ?? ucfirst($groupKey)) : ucfirst($groupKey),
-                'icon' => $meta !== null ? (string) ($meta['icon'] ?? 'chat') : 'chat',
-                'order' => (int) ($meta['order'] ?? 35),
+                'label' => $meta !== null ? (string) ($meta['label'] ?? ucfirst($groupKey)) : ($groupLabel !== '' ? $groupLabel : ucfirst($groupKey)),
+                'icon' => $meta !== null ? (string) ($meta['icon'] ?? 'chat') : ($groupIcon !== '' ? $groupIcon : 'chat'),
+                'order' => $meta !== null ? (int) ($meta['order'] ?? 35) : $groupOrder,
                 'permissions' => [],
                 'children' => [[
                     'key' => (string) $entry['key'],

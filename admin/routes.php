@@ -113,7 +113,43 @@ $collectModuleSidebarEntries = static function (): array {
         return $label !== '' ? $label : $fallback;
     };
 
+    $resolveGroupLabel = static function (array $item, string $fallback, string $activeLocale): string {
+        $labelI18n = $item['group_label_i18n'] ?? null;
+        if (is_array($labelI18n)) {
+            $localized = trim((string) ($labelI18n[$activeLocale] ?? ''));
+            if ($localized !== '') {
+                return $localized;
+            }
+        }
+
+        $localizedKey = 'group_label_' . $activeLocale;
+        $localized = trim((string) ($item[$localizedKey] ?? ''));
+        if ($localized !== '') {
+            return $localized;
+        }
+
+        $label = trim((string) ($item['group_label'] ?? ''));
+        return $label !== '' ? $label : $fallback;
+    };
+
+    $normalizeHref = static function (array $item): string {
+        $href = trim((string) ($item['href'] ?? ($item['route'] ?? '')));
+        $adminBase = '/' . trim((string) config('security.admin_path', 'admin'), '/');
+
+        if ($href === '/admin' || str_starts_with($href, '/admin/')) {
+            $suffix = substr($href, strlen('/admin'));
+            return rtrim($adminBase, '/') . ($suffix !== false ? $suffix : '');
+        }
+
+        if ($href !== '' && $href[0] !== '/') {
+            return rtrim($adminBase, '/') . '/' . ltrim($href, '/');
+        }
+
+        return $href;
+    };
+
     $entries = [];
+    $settingsEntries = [];
     $groups = [];
     $groupKeys = [];
     $entryKeys = [];
@@ -139,12 +175,6 @@ $collectModuleSidebarEntries = static function (): array {
             }
             if (!is_array($settingsItems)) {
                 $settingsItems = [];
-            }
-            if ($settingsItems !== []) {
-                $items = array_merge($items, $settingsItems);
-            }
-            if ($items === []) {
-                continue;
             }
 
             foreach ($items as $item) {
@@ -177,14 +207,42 @@ $collectModuleSidebarEntries = static function (): array {
                 $groups[$group] = [
                     'key' => $group,
                     'source' => $slug !== '' ? $slug : 'module',
+                    'label' => $resolveGroupLabel($item, ucfirst($group), $locale),
+                    'icon' => trim((string) ($item['group_icon'] ?? 'chat')),
+                    'order' => (int) ($item['group_order'] ?? 35),
                 ];
+
                 $entries[$entryKey] = [
                     'key' => $entryKey,
                     'group' => $group,
                     'label' => $label,
                     'source' => $slug !== '' ? $slug : 'module',
                     'order' => (int) ($item['order'] ?? 100),
-                    'href' => (string) ($item['href'] ?? ($item['route'] ?? '')),
+                    'href' => $normalizeHref($item),
+                ];
+            }
+
+            foreach ($settingsItems as $item) {
+                if (!is_array($item)) {
+                    continue;
+                }
+
+                $label = $resolveLabel($item, '', $locale);
+                if ($label === '') {
+                    continue;
+                }
+
+                $key = strtolower(trim((string) ($item['key'] ?? ($slug . '-settings-' . md5($label)))));
+                if ($key === '') {
+                    continue;
+                }
+
+                $settingsEntries[$key] = [
+                    'key' => $key,
+                    'label' => $label,
+                    'source' => $slug !== '' ? $slug : 'module',
+                    'order' => (int) ($item['order'] ?? 100),
+                    'href' => $normalizeHref($item),
                 ];
             }
         }
@@ -194,6 +252,7 @@ $collectModuleSidebarEntries = static function (): array {
             'entries' => [],
             'group_keys' => [],
             'entry_keys' => [],
+            'settings_entries' => [],
         ];
     }
 
@@ -202,6 +261,7 @@ $collectModuleSidebarEntries = static function (): array {
         'entries' => array_values($entries),
         'group_keys' => array_keys($groupKeys),
         'entry_keys' => array_keys($entryKeys),
+        'settings_entries' => array_values($settingsEntries),
     ];
 };
 
@@ -1630,6 +1690,25 @@ $routes = [
                 ['key' => 'modules.trust-center', 'group' => 'modules', 'label' => __('nav.trust_center'), 'source' => 'core', 'order' => 40],
             ];
             $moduleSidebar = $collectModuleSidebarEntries();
+            $moduleSidebarGroups = [];
+            foreach ((array) ($moduleSidebar['groups'] ?? []) as $group) {
+                if (!is_array($group)) {
+                    continue;
+                }
+
+                $groupKey = strtolower(trim((string) ($group['key'] ?? '')));
+                if ($groupKey === '') {
+                    continue;
+                }
+
+                $moduleSidebarGroups[$groupKey] = [
+                    'label' => (string) ($group['label'] ?? ucfirst($groupKey)),
+                    'icon' => (string) ($group['icon'] ?? 'chat'),
+                    'order' => (int) ($group['order'] ?? 99),
+                    'source' => (string) ($group['source'] ?? 'module'),
+                ];
+            }
+
             foreach ((array) ($moduleSidebar['entries'] ?? []) as $moduleEntry) {
                 if (!is_array($moduleEntry)) {
                     continue;
@@ -1680,13 +1759,16 @@ $routes = [
 
             $sidebarGroups = [];
             foreach ($coreSidebarGroups as $key) {
-                $meta = $sidebarGroupMeta[$key] ?? [];
+                $meta = $sidebarGroupMeta[$key] ?? ($moduleSidebarGroups[$key] ?? []);
+                $source = isset($sidebarGroupMeta[$key])
+                    ? 'core'
+                    : (string) (($moduleSidebarGroups[$key]['source'] ?? 'module'));
                 $sidebarGroups[$key] = [
                     'key' => $key,
                     'label' => (string) ($meta['label'] ?? ucfirst($key)),
                     'icon' => (string) ($meta['icon'] ?? 'chat'),
                     'order' => (int) ($meta['order'] ?? 99),
-                    'source' => 'core',
+                    'source' => $source,
                 ];
             }
 
@@ -1706,8 +1788,8 @@ $routes = [
                 'messageType' => (string) ($flash['type'] ?? 'success'),
                 'activeSettingsNav' => 'settings',
                 'settingsModuleLinks' => array_values(array_filter(
-                    (array) ($moduleSidebar['entries'] ?? []),
-                    static fn (array $entry): bool => ((string) ($entry['group'] ?? '')) === 'settings' && trim((string) ($entry['href'] ?? '')) !== ''
+                    (array) ($moduleSidebar['settings_entries'] ?? []),
+                    static fn (array $entry): bool => trim((string) ($entry['href'] ?? '')) !== ''
                 )),
             ], 'admin');
         },

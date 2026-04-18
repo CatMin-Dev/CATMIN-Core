@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+require_once CATMIN_CORE . '/module-ui-anchor-registry.php';
+
 final class CoreModuleManifestStandard
 {
     private const TYPE_ENUM = ['core', 'admin', 'front', 'integration', 'driver'];
@@ -14,6 +16,15 @@ final class CoreModuleManifestStandard
 
     public function normalize(array $manifest): array
     {
+        $schemaVersion = trim((string) ($manifest['schema_version'] ?? ($manifest['module_schema_version'] ?? '1.0.0')));
+        $moduleId = strtolower(trim((string) ($manifest['module_id'] ?? '')));
+        $legacySlug = strtolower(trim((string) ($manifest['slug'] ?? '')));
+        $slug = $legacySlug !== '' ? $legacySlug : str_replace('_', '-', $moduleId);
+
+        $compatibility = is_array($manifest['compatibility'] ?? null) ? $manifest['compatibility'] : [];
+        $phpCompat = is_array($compatibility['php'] ?? null) ? $compatibility['php'] : [];
+        $coreCompat = is_array($compatibility['core'] ?? null) ? $compatibility['core'] : [];
+
         $dependenciesRaw = $manifest['dependencies'] ?? [];
         if (is_array($dependenciesRaw) && array_is_list($dependenciesRaw)) {
             $dependenciesRaw = [
@@ -26,25 +37,41 @@ final class CoreModuleManifestStandard
             $dependenciesRaw = ['requires' => [], 'conflicts' => [], 'replaces' => []];
         }
 
+        $requiredDeps = $dependenciesRaw['required'] ?? ($dependenciesRaw['requires'] ?? []);
+        $optionalDeps = $dependenciesRaw['optional'] ?? [];
+        $conflictDeps = $dependenciesRaw['conflicts'] ?? [];
+
         $loadRaw = $manifest['load'] ?? [];
         if (!is_array($loadRaw)) {
             $loadRaw = [];
         }
 
+        $routeMap = $this->normalizeRoutes($manifest['routes'] ?? []);
+
         $dbSupported = $this->normalizeDbSupported($manifest['db_supported'] ?? []);
         $dbConstraints = $this->normalizeDbConstraints($manifest['db_constraints'] ?? []);
         $capabilities = $this->normalizeCapabilities($manifest['capabilities'] ?? []);
         $zones = $this->normalizeZones($manifest['zones'] ?? []);
-        $adminSidebar = $this->normalizeSidebarItems($manifest['admin_sidebar'] ?? []);
+        $navigation = is_array($manifest['navigation'] ?? null) ? $manifest['navigation'] : [];
+        $adminSidebar = $this->normalizeSidebarItems($manifest['admin_sidebar'] ?? ($navigation['sidebar'] ?? []));
         $sidebar = $this->normalizeSidebarItems($manifest['sidebar'] ?? []);
         $sidebarEntries = $this->normalizeSidebarItems($manifest['sidebar_entries'] ?? []);
-        $settingsSidebar = $this->normalizeSidebarItems($manifest['settings_sidebar'] ?? []);
+        $settingsSidebar = $this->normalizeSidebarItems($manifest['settings_sidebar'] ?? ($navigation['settings_sidebar'] ?? []));
+        $uiInject = $this->normalizeUiInject($manifest['ui']['inject'] ?? []);
+
+        $permissions = is_array($manifest['permissions'] ?? null) ? $manifest['permissions'] : [];
+        $settings = is_array($manifest['settings'] ?? null) ? $manifest['settings'] : [];
+        $bootstrap = is_array($manifest['bootstrap'] ?? null) ? $manifest['bootstrap'] : [];
+        $release = is_array($manifest['release'] ?? null) ? $manifest['release'] : [];
+        $releaseVersioning = is_array($release['versioning'] ?? null) ? $release['versioning'] : [];
 
         $normalized = [
-            'module_schema_version' => trim((string) ($manifest['module_schema_version'] ?? '1.0.0')),
+            'module_schema_version' => $schemaVersion,
+            'schema_version' => $schemaVersion,
+            'module_id' => $moduleId,
             'name' => trim((string) ($manifest['name'] ?? '')),
             'display_name' => trim((string) ($manifest['display_name'] ?? ($manifest['name'] ?? ''))),
-            'slug' => strtolower(trim((string) ($manifest['slug'] ?? ''))),
+            'slug' => $slug,
             'type' => strtolower(trim((string) ($manifest['type'] ?? ''))),
             'version' => trim((string) ($manifest['version'] ?? '')),
             'description' => trim((string) ($manifest['description'] ?? '')),
@@ -70,11 +97,12 @@ final class CoreModuleManifestStandard
             'replacement_slug' => strtolower(trim((string) ($manifest['replacement_slug'] ?? ''))),
             'deprecation_message' => trim((string) ($manifest['deprecation_message'] ?? '')),
             'maintenance_status' => strtolower(trim((string) ($manifest['maintenance_status'] ?? 'maintained'))),
-            'php_min' => trim((string) ($manifest['php_min'] ?? '')),
-            'php_max' => trim((string) ($manifest['php_max'] ?? '')),
-            'catmin_min' => trim((string) ($manifest['catmin_min'] ?? '')),
-            'catmin_max' => trim((string) ($manifest['catmin_max'] ?? '')),
-            'routes' => trim((string) ($manifest['routes'] ?? '')),
+            'php_min' => trim((string) ($manifest['php_min'] ?? ($phpCompat['min'] ?? ''))),
+            'php_max' => trim((string) ($manifest['php_max'] ?? ($phpCompat['max'] ?? ''))),
+            'catmin_min' => trim((string) ($manifest['catmin_min'] ?? ($coreCompat['min'] ?? ''))),
+            'catmin_max' => trim((string) ($manifest['catmin_max'] ?? ($coreCompat['max'] ?? ''))),
+            'routes' => $routeMap['admin'] !== '' ? $routeMap['admin'] : ($routeMap['front'] !== '' ? $routeMap['front'] : trim((string) ($manifest['routes'] ?? ''))),
+            'routes_map' => $routeMap,
             'zones' => $zones,
             'db_supported' => $dbSupported,
             'db_constraints' => $dbConstraints,
@@ -93,8 +121,9 @@ final class CoreModuleManifestStandard
                 'settings' => array_key_exists('settings', $loadRaw) ? (bool) $loadRaw['settings'] : true,
             ],
             'dependencies' => [
-                'requires' => $this->normalizeSlugList($dependenciesRaw['requires'] ?? []),
-                'conflicts' => $this->normalizeSlugList($dependenciesRaw['conflicts'] ?? []),
+                'requires' => $this->normalizeSlugList($requiredDeps),
+                'optional' => $this->normalizeSlugList($optionalDeps),
+                'conflicts' => $this->normalizeSlugList($conflictDeps),
                 'replaces' => $this->normalizeSlugList($dependenciesRaw['replaces'] ?? []),
             ],
             'maintainers' => is_array($manifest['maintainers'] ?? null) ? array_values($manifest['maintainers']) : [],
@@ -103,6 +132,44 @@ final class CoreModuleManifestStandard
             'sidebar' => $sidebar,
             'sidebar_entries' => $sidebarEntries,
             'settings_sidebar' => $settingsSidebar,
+            'permissions' => [
+                'file' => trim((string) ($permissions['file'] ?? 'permissions.php')),
+                'namespace' => strtolower(trim((string) ($permissions['namespace'] ?? ''))),
+            ],
+            'settings' => [
+                'file' => trim((string) ($settings['file'] ?? 'settings.php')),
+                'section' => trim((string) ($settings['section'] ?? '')),
+            ],
+            'bootstrap' => [
+                'provider' => trim((string) ($bootstrap['provider'] ?? 'module.php')),
+                'services' => is_array($bootstrap['services'] ?? null) ? array_values($bootstrap['services']) : [],
+            ],
+            'compatibility' => [
+                'core' => [
+                    'min' => trim((string) ($coreCompat['min'] ?? ($manifest['catmin_min'] ?? ''))),
+                    'max' => $coreCompat['max'] ?? ($manifest['catmin_max'] ?? null),
+                ],
+                'php' => [
+                    'min' => trim((string) ($phpCompat['min'] ?? ($manifest['php_min'] ?? ''))),
+                    'max' => $phpCompat['max'] ?? ($manifest['php_max'] ?? null),
+                ],
+            ],
+            'ui' => ['inject' => $uiInject],
+            'events' => is_array($manifest['events'] ?? null) ? $manifest['events'] : ['listen' => [], 'dispatch' => []],
+            'notifications' => is_array($manifest['notifications'] ?? null) ? $manifest['notifications'] : ['channels' => [], 'provider' => ''],
+            'assets' => is_array($manifest['assets'] ?? null) ? $manifest['assets'] : [],
+            'database' => is_array($manifest['database'] ?? null) ? $manifest['database'] : ['migrations' => [], 'seeders' => []],
+            'healthchecks' => is_array($manifest['healthchecks'] ?? null) ? $manifest['healthchecks'] : ['provider' => ''],
+            'docs' => is_array($manifest['docs'] ?? null) ? $manifest['docs'] : ['index' => ''],
+            'tests' => is_array($manifest['tests'] ?? null) ? $manifest['tests'] : ['smoke' => []],
+            'release' => [
+                'checksums' => trim((string) ($release['checksums'] ?? '')),
+                'signature' => trim((string) ($release['signature'] ?? '')),
+                'versioning' => [
+                    'strategy' => strtolower(trim((string) ($releaseVersioning['strategy'] ?? ''))),
+                    'changelog' => trim((string) ($releaseVersioning['changelog'] ?? '')),
+                ],
+            ],
         ];
 
         return $normalized;
@@ -112,9 +179,36 @@ final class CoreModuleManifestStandard
     {
         $errors = [];
 
-        foreach (['name', 'slug', 'type', 'version', 'description', 'author', 'php_min', 'catmin_min'] as $required) {
+        foreach (['name', 'slug', 'type', 'version'] as $required) {
             if (trim((string) ($normalized[$required] ?? '')) === '') {
                 $errors[] = 'Champ manifest manquant: ' . $required;
+            }
+        }
+
+        if ((string) ($normalized['schema_version'] ?? '') === '1.0') {
+            foreach (['module_id', 'compatibility', 'bootstrap', 'routes_map', 'permissions', 'settings', 'dependencies', 'docs', 'release'] as $requiredV1) {
+                if (!array_key_exists($requiredV1, $normalized)) {
+                    $errors[] = 'Champ manifest V1 manquant: ' . $requiredV1;
+                }
+            }
+        }
+
+        if ((string) ($normalized['schema_version'] ?? '') === '1.0') {
+            $release = is_array($normalized['release'] ?? null) ? $normalized['release'] : [];
+            if (trim((string) ($release['checksums'] ?? '')) === '') {
+                $errors[] = 'release.checksums manquant';
+            }
+            if (trim((string) ($release['signature'] ?? '')) === '') {
+                $errors[] = 'release.signature manquant';
+            }
+
+            $versioning = is_array($release['versioning'] ?? null) ? $release['versioning'] : [];
+            $strategy = strtolower(trim((string) ($versioning['strategy'] ?? '')));
+            if (!in_array($strategy, ['semver', 'calendar', 'custom'], true)) {
+                $errors[] = 'release.versioning.strategy invalide';
+            }
+            if (trim((string) ($versioning['changelog'] ?? '')) === '') {
+                $errors[] = 'release.versioning.changelog manquant';
             }
         }
 
@@ -202,7 +296,63 @@ final class CoreModuleManifestStandard
             }
         }
 
+        $anchorRegistry = new CoreModuleUiAnchorRegistry();
+        $uiInject = (array) ($normalized['ui']['inject'] ?? []);
+        $injectIds = [];
+        foreach ($uiInject as $idx => $inject) {
+            if (!is_array($inject)) {
+                $errors[] = 'ui.inject[' . $idx . '] invalide';
+                continue;
+            }
+
+            $id = strtolower(trim((string) ($inject['id'] ?? '')));
+            $target = strtolower(trim((string) ($inject['target'] ?? '')));
+            if ($id === '') {
+                $errors[] = 'ui.inject[' . $idx . '].id manquant';
+            } elseif (isset($injectIds[$id])) {
+                $errors[] = 'ui.inject id duplique: ' . $id;
+            } else {
+                $injectIds[$id] = true;
+            }
+
+            if (!$anchorRegistry->isAllowed($target)) {
+                $errors[] = 'ui.inject target invalide: ' . $target;
+            }
+        }
+
         return ['valid' => $errors === [], 'errors' => $errors];
+    }
+
+    /** @return array<string,string> */
+    private function normalizeRoutes(mixed $value): array
+    {
+        $out = [
+            'admin' => '',
+            'front' => '',
+            'api' => '',
+            'ajax' => '',
+            'settings' => '',
+            'tools' => '',
+        ];
+
+        if (is_string($value)) {
+            $candidate = trim($value);
+            if ($candidate !== '') {
+                $out['admin'] = $candidate;
+                $out['front'] = $candidate;
+            }
+            return $out;
+        }
+
+        if (!is_array($value)) {
+            return $out;
+        }
+
+        foreach (array_keys($out) as $zone) {
+            $out[$zone] = trim((string) ($value[$zone] ?? ''));
+        }
+
+        return $out;
     }
 
     private function normalizeSlugList(mixed $value): array
@@ -361,5 +511,30 @@ final class CoreModuleManifestStandard
         }
 
         return array_values($rows);
+    }
+
+    private function normalizeUiInject(mixed $value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+
+        $rows = [];
+        foreach ($value as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+
+            $rows[] = [
+                'id' => strtolower(trim((string) ($item['id'] ?? ''))),
+                'target' => strtolower(trim((string) ($item['target'] ?? ''))),
+                'view' => trim((string) ($item['view'] ?? '')),
+                'file' => trim((string) ($item['file'] ?? '')),
+                'order' => (int) ($item['order'] ?? 100),
+                'permission' => trim((string) ($item['permission'] ?? '')),
+            ];
+        }
+
+        return $rows;
     }
 }

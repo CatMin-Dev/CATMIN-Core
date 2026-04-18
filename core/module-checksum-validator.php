@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 final class CoreModuleChecksumValidator
 {
-    public function validate(string $modulePath): array
+    public function validate(string $modulePath, string $checksumsRelativePath = ''): array
     {
-        $checksumsPath = rtrim($modulePath, '/') . '/checksums.json';
+        $checksumsPath = $this->resolveChecksumsPath($modulePath, $checksumsRelativePath);
         if (!is_file($checksumsPath)) {
             return [
                 'status' => 'missing_checksums',
@@ -92,6 +92,40 @@ final class CoreModuleChecksumValidator
             'module_hash' => $computedModuleHash,
             'checksums' => $decoded,
         ];
+    }
+
+    private function resolveChecksumsPath(string $modulePath, string $checksumsRelativePath): string
+    {
+        $moduleRoot = rtrim($modulePath, '/');
+        $candidate = trim($checksumsRelativePath);
+        if ($candidate !== '' && $this->isSafeRelativePath($candidate)) {
+            $resolved = $moduleRoot . '/' . ltrim(str_replace('\\', '/', $candidate), '/');
+            if (is_file($resolved)) {
+                return $resolved;
+            }
+        }
+
+        return $moduleRoot . '/checksums.json';
+    }
+
+    private function isSafeRelativePath(string $path): bool
+    {
+        $path = trim($path);
+        if ($path === '' || str_contains($path, "\0")) {
+            return false;
+        }
+
+        if (str_starts_with($path, '/') || preg_match('/^[A-Za-z]:[\\\\\/]/', $path) === 1) {
+            return false;
+        }
+
+        foreach (explode('/', str_replace('\\', '/', $path)) as $segment) {
+            if ($segment === '' || $segment === '.' || $segment === '..') {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
 

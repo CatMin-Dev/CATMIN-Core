@@ -51,6 +51,8 @@ final class CoreEnv
             }
         });
 
+        require_once CATMIN_CORE . '/rbac-helpers.php';
+
         $envManager = new Core\config\EnvManager();
         $envManager->loadFile(CATMIN_ROOT . '/.env', false);
 

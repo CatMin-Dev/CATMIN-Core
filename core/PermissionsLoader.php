@@ -55,13 +55,8 @@ class PermissionsLoader
      */
     public function registerModulePermissions(string $modulePath): int
     {
-        $permFile = $modulePath . '/permissions.php';
-        if (!is_file($permFile)) {
-            return 0;
-        }
-
-        $permissions = require $permFile;
-        if (!is_array($permissions) || $permissions === []) {
+        $permissions = $this->loadModulePermissions($modulePath);
+        if ($permissions === []) {
             return 0;
         }
 
@@ -94,6 +89,36 @@ class PermissionsLoader
         }
 
         return $registered;
+    }
+
+    /**
+     * Remove permissions declared by a specific module.
+     */
+    public function unregisterModulePermissions(string $modulePath): int
+    {
+        $permissions = $this->loadModulePermissions($modulePath);
+        if ($permissions === []) {
+            return 0;
+        }
+
+        $slugs = [];
+        foreach ($permissions as $slug => $definition) {
+            if (is_string($slug) && trim($slug) !== '') {
+                $slugs[] = trim($slug);
+                continue;
+            }
+
+            if (is_array($definition) && isset($definition['slug']) && trim((string) $definition['slug']) !== '') {
+                $slugs[] = trim((string) $definition['slug']);
+            }
+        }
+
+        $slugs = array_values(array_unique(array_filter($slugs, static fn (string $slug): bool => $slug !== '')));
+        if ($slugs === []) {
+            return 0;
+        }
+
+        return $this->deletePermissionsBySlugs($slugs);
     }
 
     /**
@@ -173,6 +198,53 @@ class PermissionsLoader
             return (bool) $exists;
         } catch (\Throwable) {
             return false;
+        }
+    }
+
+    /** @return array<string|int, mixed> */
+    private function loadModulePermissions(string $modulePath): array
+    {
+        $permFile = rtrim($modulePath, '/') . '/permissions.php';
+        if (!is_file($permFile)) {
+            return [];
+        }
+
+        $permissions = require $permFile;
+        return is_array($permissions) ? $permissions : [];
+    }
+
+    /** @param array<int, string> $slugs */
+    private function deletePermissionsBySlugs(array $slugs): int
+    {
+        $placeholders = implode(', ', array_fill(0, count($slugs), '?'));
+
+        try {
+            $this->db->beginTransaction();
+
+            $stmt = $this->db->prepare('SELECT id FROM admin_permissions WHERE slug IN (' . $placeholders . ')');
+            $stmt->execute($slugs);
+            $permissionIds = $stmt->fetchAll(PDO::FETCH_COLUMN) ?: [];
+            $permissionIds = array_values(array_map('intval', $permissionIds));
+
+            if ($permissionIds !== []) {
+                $idPlaceholders = implode(', ', array_fill(0, count($permissionIds), '?'));
+                $stmt = $this->db->prepare('DELETE FROM admin_role_permissions WHERE permission_id IN (' . $idPlaceholders . ')');
+                $stmt->execute($permissionIds);
+            }
+
+            $stmt = $this->db->prepare('DELETE FROM admin_permissions WHERE slug IN (' . $placeholders . ')');
+            $stmt->execute($slugs);
+            $deleted = (int) $stmt->rowCount();
+
+            $this->db->commit();
+
+            return $deleted;
+        } catch (\Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            error_log('PermissionsLoader cleanup error: ' . $e->getMessage());
+            return 0;
         }
     }
 

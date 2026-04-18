@@ -96,22 +96,58 @@ final class CoreModuleRuntimeSnapshot
                 }
             }
 
-            $routesFile = (string) ($manifest['routes'] ?? '');
-            if ($routesFile !== '') {
-                $candidate = str_starts_with($routesFile, '/') ? $routesFile : ((string) ($module['path'] ?? '') . '/' . ltrim($routesFile, '/'));
-            } else {
-                $candidate = (string) ($module['path'] ?? '') . '/routes.php';
+            $routesMap = is_array($manifest['routes_map'] ?? null) ? $manifest['routes_map'] : [];
+            $logicalZones = $this->logicalZonesForRuntimeZone($zone);
+            $routeFiles = [];
+
+            foreach ($logicalZones as $logicalZone) {
+                $candidateRelative = trim((string) ($routesMap[$logicalZone] ?? ''));
+                if ($candidateRelative === '') {
+                    continue;
+                }
+
+                $candidate = str_starts_with($candidateRelative, '/')
+                    ? $candidateRelative
+                    : ((string) ($module['path'] ?? '') . '/' . ltrim($candidateRelative, '/'));
+                $real = realpath($candidate);
+                if (!is_string($real) || $real === '' || !str_starts_with($real, CATMIN_MODULES . '/') || !is_file($real)) {
+                    continue;
+                }
+
+                $routeFiles[$real] = true;
             }
 
-            $real = realpath($candidate);
-            if (!is_string($real) || $real === '' || !str_starts_with($real, CATMIN_MODULES . '/') || !is_file($real)) {
-                continue;
+            if ($routeFiles === []) {
+                $routesFile = trim((string) ($manifest['routes'] ?? ''));
+                $candidate = $routesFile !== ''
+                    ? (str_starts_with($routesFile, '/') ? $routesFile : ((string) ($module['path'] ?? '') . '/' . ltrim($routesFile, '/')))
+                    : ((string) ($module['path'] ?? '') . '/routes.php');
+
+                $real = realpath($candidate);
+                if (!is_string($real) || $real === '' || !str_starts_with($real, CATMIN_MODULES . '/') || !is_file($real)) {
+                    continue;
+                }
+
+                $routeFiles[$real] = true;
             }
 
-            $module['routes_file'] = $real;
-            $loadable[] = $module;
+            foreach (array_keys($routeFiles) as $real) {
+                $row = $module;
+                $row['routes_file'] = $real;
+                $loadable[] = $row;
+            }
         }
 
         return $loadable;
+    }
+
+    /** @return array<int, string> */
+    private function logicalZonesForRuntimeZone(string $runtimeZone): array
+    {
+        return match ($runtimeZone) {
+            'admin' => ['admin', 'settings'],
+            'front' => ['front', 'api', 'ajax', 'tools'],
+            default => [$runtimeZone],
+        };
     }
 }
