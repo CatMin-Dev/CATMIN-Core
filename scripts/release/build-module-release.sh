@@ -25,11 +25,17 @@ MODULE_JSON="$(php -r '
 $m = json_decode((string) file_get_contents($argv[1]), true);
 if (!is_array($m)) { exit(2); }
 $slug = strtolower(trim((string)($m["slug"] ?? "")));
+if ($slug === "") {
+  $slug = str_replace("_", "-", strtolower(trim((string) ($m["module_id"] ?? ""))));
+}
 $version = trim((string)($m["version"] ?? ""));
 if ($slug === "" || $version === "") { exit(3); }
 $channel = strtolower(trim((string)($m["release_channel"] ?? "stable")));
 if ($channel === "") { $channel = "stable"; }
-echo $slug . "|" . $version . "|" . $channel;
+$release = is_array($m["release"] ?? null) ? $m["release"] : [];
+$checksums = trim((string) ($release["checksums"] ?? "release/checksums.json"));
+$signature = trim((string) ($release["signature"] ?? "release/signature.json"));
+echo $slug . "|" . $version . "|" . $channel . "|" . $checksums . "|" . $signature;
 ' "${SOURCE_DIR}/manifest.json")" || {
   echo "Invalid manifest.json (missing slug/version/release_channel)" >&2
   exit 1
@@ -37,7 +43,11 @@ echo $slug . "|" . $version . "|" . $channel;
 MODULE_SLUG="${MODULE_JSON%%|*}"
 MODULE_REST="${MODULE_JSON#*|}"
 MODULE_VERSION="${MODULE_REST%%|*}"
-MODULE_CHANNEL="${MODULE_REST##*|}"
+MODULE_REST="${MODULE_REST#*|}"
+MODULE_CHANNEL="${MODULE_REST%%|*}"
+MODULE_REST="${MODULE_REST#*|}"
+MODULE_CHECKSUMS_RELATIVE="${MODULE_REST%%|*}"
+MODULE_SIGNATURE_RELATIVE="${MODULE_REST#*|}"
 
 RELEASE_TARGET="${CATMIN_RELEASE_TARGET:-dev}"
 REQUIRE_SIGNATURE="0"
@@ -110,7 +120,8 @@ if [ ! -d "${FINAL_MODULE_DIR}" ]; then
   exit 1
 fi
 
-php "${ROOT_DIR}/scripts/release/generate-module-checksums.php" "${FINAL_MODULE_DIR}" "${FINAL_MODULE_DIR}/checksums.json"
+mkdir -p "$(dirname "${FINAL_MODULE_DIR}/${MODULE_CHECKSUMS_RELATIVE}")"
+php "${ROOT_DIR}/scripts/release/generate-module-checksums.php" "${FINAL_MODULE_DIR}" "${FINAL_MODULE_DIR}/${MODULE_CHECKSUMS_RELATIVE}"
 
 if [ "${REQUIRE_SIGNATURE}" = "1" ] && [ -z "${MODULE_SIGNING_KEY:-}" ]; then
   echo "Signing is mandatory for RELEASE/stable builds (set MODULE_SIGNING_KEY and MODULE_SIGNING_KEY_ID)." >&2
@@ -127,10 +138,10 @@ if [ -n "${MODULE_SIGNING_KEY:-}" ]; then
     exit 1
   fi
   php "${ROOT_DIR}/scripts/release/generate-module-signature.php" \
-    "${FINAL_MODULE_DIR}/checksums.json" \
+    "${FINAL_MODULE_DIR}/${MODULE_CHECKSUMS_RELATIVE}" \
     "${MODULE_SIGNING_KEY}" \
     "${MODULE_SIGNING_KEY_ID}" \
-    "${FINAL_MODULE_DIR}/signature.json"
+    "${FINAL_MODULE_DIR}/${MODULE_SIGNATURE_RELATIVE}"
 fi
 
 cp -a "${FINAL_MODULE_DIR}" "${STAGE_ROOT}/"
@@ -141,9 +152,9 @@ cp -a "${FINAL_MODULE_DIR}" "${STAGE_ROOT}/"
 )
 
 cp "${STAGE_MODULE}/manifest.json" "${RELEASE_DIR}/manifest.json"
-cp "${STAGE_MODULE}/checksums.json" "${RELEASE_DIR}/checksums.json"
-if [ -f "${STAGE_MODULE}/signature.json" ]; then
-  cp "${STAGE_MODULE}/signature.json" "${RELEASE_DIR}/signature.json"
+cp "${FINAL_MODULE_DIR}/${MODULE_CHECKSUMS_RELATIVE}" "${RELEASE_DIR}/checksums.json"
+if [ -f "${FINAL_MODULE_DIR}/${MODULE_SIGNATURE_RELATIVE}" ]; then
+  cp "${FINAL_MODULE_DIR}/${MODULE_SIGNATURE_RELATIVE}" "${RELEASE_DIR}/signature.json"
 fi
 
 php "${ROOT_DIR}/scripts/release/generate-module-release-metadata.php" "${RELEASE_DIR}"
