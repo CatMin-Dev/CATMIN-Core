@@ -285,6 +285,7 @@ final class CoreUpdaterRunner
             'storage/sessions',
             'storage/tmp',
             'storage/updates',
+            'sessions',
             'db/database.sqlite',
             '.env',
         ];

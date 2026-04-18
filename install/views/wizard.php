@@ -168,6 +168,7 @@ if (is_file(CATMIN_ROOT . '/version.json')) {
 $gitMeta = install_git_head_meta(CATMIN_ROOT);
 $installerVersion = (string) ($versionPayload['version'] ?? 'unknown');
 $installerDbSchema = (string) ($versionPayload['db_schema'] ?? '-');
+$installRoot = isset($installRoot) && is_string($installRoot) && $installRoot !== '' ? rtrim($installRoot, '/') : '/install';
 $buildMeta = is_array($versionPayload['build'] ?? null) ? $versionPayload['build'] : [];
 $publicCommit = (string) ($buildMeta['public_commit'] ?? '-');
 $embeddedCommit = (string) ($buildMeta['commit'] ?? '-');
@@ -278,7 +279,7 @@ if ($step === 'precheck') {
                         ?>
                         <li class="<?= htmlspecialchars($classes, ENT_QUOTES, 'UTF-8') ?>">
                             <?php if ($isDone || $isCurrent): ?>
-                                <a class="text-decoration-none text-reset d-inline-flex flex-column align-items-center" href="/install/step/<?= htmlspecialchars((string) $knownStep, ENT_QUOTES, 'UTF-8') ?>">
+                                <a class="text-decoration-none text-reset d-inline-flex flex-column align-items-center" href="<?= htmlspecialchars($installRoot, ENT_QUOTES, 'UTF-8') ?>/step/<?= htmlspecialchars((string) $knownStep, ENT_QUOTES, 'UTF-8') ?>">
                                     <span class="progress-node"><?= install_icon((string) $knownStep) ?></span>
                                     <span class="progress-label"><?= htmlspecialchars((string) ($stepTitles[$knownStep] ?? $knownStep), ENT_QUOTES, 'UTF-8') ?></span>
                                 </a>
@@ -303,7 +304,7 @@ if ($step === 'precheck') {
                 <div class="alert alert-danger" role="alert"><?= htmlspecialchars((string) $error, ENT_QUOTES, 'UTF-8') ?></div>
             <?php endif; ?>
 
-            <form method="post" action="/install/step" class="row g-3 js-install-submit" id="<?= htmlspecialchars((string) ($step . '-form'), ENT_QUOTES, 'UTF-8') ?>">
+            <form method="post" action="<?= htmlspecialchars($installRoot, ENT_QUOTES, 'UTF-8') ?>/step" data-install-root="<?= htmlspecialchars($installRoot, ENT_QUOTES, 'UTF-8') ?>" class="row g-3 js-install-submit" id="<?= htmlspecialchars((string) ($step . '-form'), ENT_QUOTES, 'UTF-8') ?>">
                 <input type="hidden" name="_step" value="<?= htmlspecialchars((string) $step, ENT_QUOTES, 'UTF-8') ?>">
                 <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrf, ENT_QUOTES, 'UTF-8') ?>">
 
@@ -351,7 +352,7 @@ if ($step === 'precheck') {
                     <div class="col-12">
                         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
                             <p class="precheck-hint mb-0">Référentiel principal: PHP 8.3.0</p>
-                            <a href="/install/step/precheck" class="btn btn-outline-secondary btn-sm">Refresh</a>
+                            <a href="<?= htmlspecialchars($installRoot, ENT_QUOTES, 'UTF-8') ?>/step/precheck" class="btn btn-outline-secondary btn-sm">Refresh</a>
                         </div>
                     </div>
                     <div class="col-12">
@@ -490,7 +491,7 @@ if ($step === 'precheck') {
                         <div class="profile-modules-panel">
                             <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
                                 <strong>Template personnalisé: modules</strong>
-                                <a href="/install/step/profile?profile_phase=select" class="btn btn-outline-secondary btn-sm js-profile-back">Retour template</a>
+                                <a href="<?= htmlspecialchars($installRoot, ENT_QUOTES, 'UTF-8') ?>/step/profile?profile_phase=select" class="btn btn-outline-secondary btn-sm js-profile-back">Retour template</a>
                             </div>
                             <p class="small text-secondary mb-2">Choisis les modules à installer. <strong>core</strong> est obligatoire.</p>
                             <div class="row g-2 module-pick-grid">
@@ -724,7 +725,7 @@ if ($step === 'precheck') {
 
                 <div class="col-12 d-flex flex-wrap gap-2 pt-2 install-actions">
                     <button class="btn btn-catmin js-continue-btn" type="submit"><?= install_icon('execution', 'inline-icon') ?><span class="btn-label">Continuer</span></button>
-                    <a class="btn btn-outline-secondary" href="/install/report"><?= install_icon('report', 'inline-icon') ?>Rapport</a>
+                    <a class="btn btn-outline-secondary" href="<?= htmlspecialchars($installRoot, ENT_QUOTES, 'UTF-8') ?>/report"><?= install_icon('report', 'inline-icon') ?>Rapport</a>
                     <button class="btn btn-outline-danger" type="submit" form="install-reset-form">Recommencer</button>
                 </div>
             </form>
@@ -739,7 +740,7 @@ if ($step === 'precheck') {
     </footer>
     </div>
 </div>
-<form method="post" action="/install/reset" id="install-reset-form" class="d-none">
+<form method="post" action="<?= htmlspecialchars($installRoot, ENT_QUOTES, 'UTF-8') ?>/reset" id="install-reset-form" class="d-none">
     <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrf, ENT_QUOTES, 'UTF-8') ?>">
 </form>
 <?php if ($step === 'precheck' && $precheckCategoryModals !== []): ?>
@@ -797,6 +798,6 @@ if ($step === 'precheck') {
 <?php endif; ?>
 <script src="/assets/vendor/bootstrap/5.3.8/js/bootstrap.bundle.min.js"></script>
 <script src="/assets/js/catmin-components.js?v=8"></script>
-<script src="/assets/js/install-wizard.js?v=6"></script>
+<script src="/assets/js/install-wizard.js?v=8"></script>
 </body>
 </html>

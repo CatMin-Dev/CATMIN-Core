@@ -25,13 +25,13 @@ final class InstallerController
         $this->state = new InstallerStateMachine();
     }
 
-    public function root(): Response
+    public function root(Request $request): Response
     {
         if ($this->engine->isLocked()) {
             return $this->redirectToAdminLogin();
         }
 
-        return Response::html('', 302, ['Location' => $this->stepUrl($this->engine->firstAccessibleStep())]);
+        return Response::html('', 302, ['Location' => $this->stepUrl($this->engine->firstAccessibleStep(), $request)]);
     }
 
     public function showStep(Request $request): Response
@@ -44,12 +44,12 @@ final class InstallerController
         $firstAccessible = $this->engine->firstAccessibleStep();
 
         if (!$this->state->hasStep($requested)) {
-            return Response::html('', 302, ['Location' => $this->stepUrl($firstAccessible)]);
+            return Response::html('', 302, ['Location' => $this->stepUrl($firstAccessible, $request)]);
         }
 
         $context = $this->engine->context();
         if (!$this->state->canAccess($requested, $context)) {
-            return Response::html('', 302, ['Location' => $this->stepUrl($firstAccessible)]);
+            return Response::html('', 302, ['Location' => $this->stepUrl($firstAccessible, $request)]);
         }
 
         $definition = require CATMIN_INSTALL . '/steps/' . $requested . '.php';
@@ -61,6 +61,7 @@ final class InstallerController
             'steps' => InstallerStateMachine::STEPS,
             'error' => null,
             'adminPath' => '/' . trim((string) config('security.admin_path', 'admin'), '/'),
+            'installRoot' => $this->installRoot($request),
         ], 'install');
     }
 
@@ -87,6 +88,7 @@ final class InstallerController
                 'steps' => InstallerStateMachine::STEPS,
                 'error' => (string) ($result['message'] ?? 'Validation error.'),
                 'adminPath' => '/' . trim((string) config('security.admin_path', 'admin'), '/'),
+                'installRoot' => $this->installRoot($request),
             ], 'install', 422);
         }
 
@@ -97,13 +99,13 @@ final class InstallerController
         }
 
         if ($next === 'report') {
-            return Response::html('', 302, ['Location' => '/install/report']);
+            return Response::html('', 302, ['Location' => $this->reportUrl($request)]);
         }
 
-        return Response::html('', 302, ['Location' => $this->stepUrl($next)]);
+        return Response::html('', 302, ['Location' => $this->stepUrl($next, $request)]);
     }
 
-    public function showReport(): Response
+    public function showReport(Request $request): Response
     {
         if ($this->engine->isLocked()) {
             return $this->redirectToAdminLogin();
@@ -114,6 +116,7 @@ final class InstallerController
         return View::make('report', [
             'context' => $context,
             'adminPath' => '/' . trim((string) config('security.admin_path', 'admin'), '/'),
+            'installRoot' => $this->installRoot($request),
         ], 'install');
     }
 
@@ -145,7 +148,7 @@ final class InstallerController
 
         $this->engine->resetProgress();
 
-        return Response::html('', 302, ['Location' => $this->stepUrl('precheck')]);
+        return Response::html('', 302, ['Location' => $this->stepUrl('precheck', $request)]);
     }
 
     public function downloadInitialBackup(Request $request): Response
@@ -215,8 +218,30 @@ final class InstallerController
         return $this->engine->firstAccessibleStep();
     }
 
-    private function stepUrl(string $step): string
+    private function stepUrl(string $step, ?Request $request = null): string
     {
-        return '/install/step/' . rawurlencode($step);
+        return $this->installRoot($request) . '/step/' . rawurlencode($step);
+    }
+
+    private function reportUrl(?Request $request = null): string
+    {
+        return $this->installRoot($request) . '/report';
+    }
+
+    private function installRoot(?Request $request = null): string
+    {
+        $path = $request?->path() ?? (string) parse_url((string) ($_SERVER['REQUEST_URI'] ?? '/install'), PHP_URL_PATH);
+
+        $pos = strpos($path, '/install');
+        if ($pos === false) {
+            return '/install';
+        }
+
+        $prefix = rtrim(substr($path, 0, $pos), '/');
+        if ($prefix === '' || $prefix === '/') {
+            return '/install';
+        }
+
+        return $prefix . '/install';
     }
 }

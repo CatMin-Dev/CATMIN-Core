@@ -19,6 +19,7 @@ if (!function_exists('install_icon')) {
 $completed = is_object($context) && method_exists($context, 'completed') ? $context->completed() : [];
 $completed = is_array($completed) ? $completed : [];
 $metaReport = is_object($context) && method_exists($context, 'meta') ? $context->meta('report_path', '') : '';
+$installRoot = isset($installRoot) && is_string($installRoot) && $installRoot !== '' ? rtrim($installRoot, '/') : '/install';
 ?><!doctype html>
 <html lang="fr">
 <head>
@@ -72,8 +73,8 @@ $metaReport = is_object($context) && method_exists($context, 'meta') ? $context-
             <?php endif; ?>
 
             <div class="d-flex flex-wrap gap-2 install-actions">
-                <a class="btn btn-catmin" href="/install/step/lock"><?= install_icon('lock', 'inline-icon') ?>Passer au Lock Final</a>
-                <a class="btn btn-outline-secondary" href="/install/step/report"><?= install_icon('report', 'inline-icon') ?>Retour Wizard</a>
+                <a class="btn btn-catmin" href="<?= htmlspecialchars($installRoot, ENT_QUOTES, 'UTF-8') ?>/step/lock"><?= install_icon('lock', 'inline-icon') ?>Passer au Lock Final</a>
+                <a class="btn btn-outline-secondary" href="<?= htmlspecialchars($installRoot, ENT_QUOTES, 'UTF-8') ?>/step/report"><?= install_icon('report', 'inline-icon') ?>Retour Wizard</a>
                 <a class="btn btn-outline-dark" href="<?= htmlspecialchars((string) $adminPath . '/login', ENT_QUOTES, 'UTF-8') ?>"><?= install_icon('superadmin', 'inline-icon') ?>Login Admin</a>
             </div>
         </div>

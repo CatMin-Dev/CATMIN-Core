@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', function () {
     var form = document.querySelector('.js-install-submit');
     if (!form) return;
+    var installRoot = form.dataset.installRoot || '/install';
     var stepInput = form.querySelector('input[name="_step"]');
     var isProfileStep = stepInput && stepInput.value === 'profile';
     var profilePhaseInput = form.querySelector('.js-profile-phase');
@@ -141,7 +142,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (dbTestBtn && csrfInput) {
         dbTestBtn.addEventListener('click', function () {
             var formData = new FormData(form);
-            fetch('/install/db-test', {
+            fetch(installRoot + '/db-test', {
                 method: 'POST',
                 body: formData,
                 credentials: 'same-origin'
@@ -298,13 +299,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        if (form.dataset.submitting === '1') {
-            return;
-        }
-
-        form.dataset.submitting = '1';
-        event.preventDefault();
-
         var frame = document.querySelector('.install-frame');
         if (frame) {
             frame.classList.add('is-submitting');
@@ -315,9 +309,5 @@ document.addEventListener('DOMContentLoaded', function () {
             button.disabled = true;
             button.classList.add('is-loading');
         }
-
-        window.setTimeout(function () {
-            form.submit();
-        }, 180);
     });
 });

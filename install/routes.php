@@ -16,7 +16,7 @@ $routes = [
     [
         'method' => 'GET',
         'path' => '/',
-        'handler' => static fn (): Response => (new InstallerController())->root(),
+        'handler' => static fn (Request $request): Response => (new InstallerController())->root($request),
         'middleware' => [$installAvailability],
     ],
     [
@@ -60,7 +60,7 @@ $routes[] = [
 $routes[] = [
     'method' => 'GET',
     'path' => '/report',
-    'handler' => static fn (): Response => (new InstallerController())->showReport(),
+    'handler' => static fn (Request $request): Response => (new InstallerController())->showReport($request),
     'middleware' => [$installAvailability],
 ];
 

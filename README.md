@@ -1,6 +1,6 @@
 # CATMIN Core
 
-[![Version](https://img.shields.io/badge/version-0.6.0-2ecc71)](https://github.com/CatMin-Dev/CATMIN-Core/releases/tag/0.6.0)
+[![Version](https://img.shields.io/badge/version-0.7.0--DEV.1-f59e0b)](https://github.com/CatMin-Dev/core)
 ![PHP](https://img.shields.io/badge/php-8.3%2B-44403c)
 ![DB Schema](https://img.shields.io/badge/db_schema-0.1.0--RC.1-c2234d)
 ![Installer](https://img.shields.io/badge/installer-lock%20enforced-16a34a)

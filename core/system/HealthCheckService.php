@@ -156,21 +156,52 @@ final class HealthCheckService
 
     private function addStorageChecks(array &$checks): void
     {
-        $checks[] = $this->mk('storage.root', 'storage writable', is_writable(CATMIN_STORAGE) ? 'healthy' : 'critical', CATMIN_STORAGE);
+        $checks[] = $this->mk(
+            'storage.root',
+            'storage writable',
+            is_writable(CATMIN_STORAGE) ? 'healthy' : 'critical',
+            $this->displayPath(CATMIN_STORAGE)
+        );
 
         $folders = [
             'logs' => CATMIN_STORAGE . '/logs',
             'cache' => CATMIN_ROOT . '/cache',
-            'sessions' => CATMIN_STORAGE . '/sessions',
+            'sessions' => CATMIN_ROOT . '/sessions',
             'backups' => CATMIN_STORAGE . '/backups',
         ];
         foreach ($folders as $label => $path) {
             if (!is_dir($path)) {
-                $checks[] = $this->mk('storage.' . $label, ucfirst($label) . ' writable', 'warning', 'Dossier absent: ' . $path);
+                $checks[] = $this->mk(
+                    'storage.' . $label,
+                    ucfirst($label) . ' writable',
+                    'warning',
+                    'Dossier absent: ' . $this->displayPath($path)
+                );
                 continue;
             }
-            $checks[] = $this->mk('storage.' . $label, ucfirst($label) . ' writable', is_writable($path) ? 'healthy' : 'critical', $path);
+            $checks[] = $this->mk(
+                'storage.' . $label,
+                ucfirst($label) . ' writable',
+                is_writable($path) ? 'healthy' : 'critical',
+                $this->displayPath($path)
+            );
         }
+    }
+
+    private function displayPath(string $path): string
+    {
+        $normalizedRoot = rtrim((string) CATMIN_ROOT, '/');
+        $normalizedPath = str_replace('\\', '/', $path);
+
+        if ($normalizedPath === $normalizedRoot) {
+            return '/';
+        }
+
+        if (str_starts_with($normalizedPath, $normalizedRoot . '/')) {
+            return '/' . ltrim(substr($normalizedPath, strlen($normalizedRoot)), '/');
+        }
+
+        return $path;
     }
 
     private function addModulesChecks(array &$checks): void
