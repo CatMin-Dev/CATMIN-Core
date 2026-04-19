@@ -14,6 +14,15 @@ fi
 
 ZIP_ENTRIES="$(unzip -Z1 "$ZIP_FILE")"
 
+has_pattern() {
+  local pattern="$1"
+  if command -v rg >/dev/null 2>&1; then
+    rg -q "$pattern" <<<"$ZIP_ENTRIES"
+  else
+    grep -Eq "$pattern" <<<"$ZIP_ENTRIES"
+  fi
+}
+
 required=(
   "admin/"
   "config/"
@@ -35,19 +44,19 @@ required=(
 )
 
 for path in "${required[@]}"; do
-  if ! rg -q "^[^/]+/${path}" <<<"$ZIP_ENTRIES"; then
+  if ! has_pattern "^[^/]+/${path}"; then
     echo "MISSING: $path"
     exit 1
   fi
 done
 
-if rg -q '/\.env($|[^a-zA-Z0-9_.-])' <<<"$ZIP_ENTRIES"; then
+if has_pattern '/\.env($|[^a-zA-Z0-9_.-])'; then
   echo "FORBIDDEN FOUND: .env"
   exit 1
 fi
 
 for forbidden in ".git/" ".github/" ".vscode/" "node_modules/" "tests/"; do
-  if rg -q "/${forbidden}" <<<"$ZIP_ENTRIES"; then
+  if has_pattern "/${forbidden}"; then
     echo "FORBIDDEN FOUND: $forbidden"
     exit 1
   fi
@@ -59,7 +68,7 @@ for forbiddenPath in \
   '/storage/install/reports/' \
   '/storage/updates/releases/.*-standalone\.zip$' \
   '/db/database.sqlite$'; do
-  if rg -q "${forbiddenPath}" <<<"$ZIP_ENTRIES"; then
+  if has_pattern "${forbiddenPath}"; then
     echo "FORBIDDEN FOUND: ${forbiddenPath}"
     exit 1
   fi
