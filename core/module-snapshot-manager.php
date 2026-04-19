@@ -32,7 +32,8 @@ final class CoreModuleSnapshotManager
         $moduleRow = null;
         foreach ((array) ($scan['modules'] ?? []) as $module) {
             $m = is_array($module['manifest'] ?? null) ? $module['manifest'] : [];
-            if (strtolower((string) ($m['slug'] ?? '')) === $slug && strtolower((string) ($m['type'] ?? '')) === $scope) {
+            $mScope = strtolower(trim((string) ($module['scope'] ?? ($m['type'] ?? ''))));
+            if (strtolower((string) ($m['slug'] ?? '')) === $slug && $mScope === $scope) {
                 $moduleRow = $module;
                 break;
             }

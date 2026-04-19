@@ -439,7 +439,7 @@ $scanModules = static function (): array {
     foreach ((array) ($snapshot['modules'] ?? []) as $module) {
         $manifest = (array) ($module['manifest'] ?? []);
         $slug = strtolower(trim((string) ($manifest['slug'] ?? '')));
-        $scope = strtolower(trim((string) ($manifest['type'] ?? '')));
+        $scope = strtolower(trim((string) ($module['scope'] ?? ($manifest['type'] ?? ''))));
         $deps = $manifest['dependencies'] ?? [];
         $requires = [];
         if (is_array($deps)) {
@@ -3214,7 +3214,7 @@ $routes = [
             $adminBase = $controller->adminBasePath();
             $scope = strtolower(trim((string) $request->input('scope', '')));
             $slug = strtolower(trim((string) $request->input('slug', '')));
-            $policy = strtolower(trim((string) $request->input('data_policy', 'keep_data')));
+            $policy = strtolower(trim((string) $request->input('data_policy', 'drop_data')));
             $confirmed = (string) $request->input('confirm', '0') === '1';
             $destructiveConfirmed = (string) $request->input('confirm_destructive', '0') === '1';
             if (!$confirmed) {

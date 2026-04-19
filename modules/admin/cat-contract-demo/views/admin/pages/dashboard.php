@@ -7,10 +7,9 @@ declare(strict_types=1);
     <div class="col-12">
         <div class="card">
             <div class="card-body">
-                <h2 class="h5 mb-1">Contract Demo — Tableau de bord</h2>
+                <h2 class="h5 mb-1"><?= htmlspecialchars(__('module.cat-contract-demo.dashboard.heading'), ENT_QUOTES, 'UTF-8') ?></h2>
                 <p class="text-body-secondary mb-0">
-                    Ce module valide le contrat d'intégration CORE/MODULE CATMIN.
-                    Routes, vues, layout, permissions et sidebar sont tous opérationnels.
+                    <?= htmlspecialchars(__('module.cat-contract-demo.dashboard.intro'), ENT_QUOTES, 'UTF-8') ?>
                 </p>
             </div>
         </div>
@@ -19,10 +18,10 @@ declare(strict_types=1);
     <div class="col-12 col-md-4">
         <div class="card h-100">
             <div class="card-body">
-                <h3 class="h6 mb-2"><i class="bi bi-check-circle-fill text-success me-1"></i> Route admin</h3>
+                <h3 class="h6 mb-2"><i class="bi bi-check-circle-fill text-success me-1"></i> <?= htmlspecialchars(__('module.cat-contract-demo.dashboard.card.admin_route_title'), ENT_QUOTES, 'UTF-8') ?></h3>
                 <code class="small">GET /contract-demo</code>
                 <p class="text-body-secondary small mt-2 mb-0">
-                    Route chargée via le contrat module, zone admin, avec layout et permission <code>example.read</code>.
+                    <?= htmlspecialchars(__('module.cat-contract-demo.dashboard.card.admin_route_desc', ['permission' => 'example.read']), ENT_QUOTES, 'UTF-8') ?>
                 </p>
             </div>
         </div>
@@ -31,10 +30,10 @@ declare(strict_types=1);
     <div class="col-12 col-md-4">
         <div class="card h-100">
             <div class="card-body">
-                <h3 class="h6 mb-2"><i class="bi bi-shield-check text-primary me-1"></i> Authentification</h3>
-                <span class="badge text-bg-success">Authentifié</span>
+                <h3 class="h6 mb-2"><i class="bi bi-shield-check text-primary me-1"></i> <?= htmlspecialchars(__('module.cat-contract-demo.dashboard.card.auth_title'), ENT_QUOTES, 'UTF-8') ?></h3>
+                <span class="badge text-bg-success"><?= htmlspecialchars(__('module.cat-contract-demo.dashboard.card.auth_badge'), ENT_QUOTES, 'UTF-8') ?></span>
                 <p class="text-body-secondary small mt-2 mb-0">
-                    Accès protégé par le middleware d'authentification admin automatique.
+                    <?= htmlspecialchars(__('module.cat-contract-demo.dashboard.card.auth_desc'), ENT_QUOTES, 'UTF-8') ?>
                 </p>
             </div>
         </div>
@@ -43,10 +42,10 @@ declare(strict_types=1);
     <div class="col-12 col-md-4">
         <div class="card h-100">
             <div class="card-body">
-                <h3 class="h6 mb-2"><i class="bi bi-person-lock text-warning me-1"></i> Permission</h3>
+                <h3 class="h6 mb-2"><i class="bi bi-person-lock text-warning me-1"></i> <?= htmlspecialchars(__('module.cat-contract-demo.dashboard.card.permission_title'), ENT_QUOTES, 'UTF-8') ?></h3>
                 <code class="small">example.read</code>
                 <p class="text-body-secondary small mt-2 mb-0">
-                    Droits vérifiés via <code>auth_can()</code>. Assignés automatiquement au rôle super-admin à l'activation.
+                    <?= htmlspecialchars(__('module.cat-contract-demo.dashboard.card.permission_desc'), ENT_QUOTES, 'UTF-8') ?>
                 </p>
             </div>
         </div>

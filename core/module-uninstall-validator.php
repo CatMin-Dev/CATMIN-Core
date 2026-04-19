@@ -12,7 +12,7 @@ final class CoreModuleUninstallValidator
     {
         $analysis = (new CoreModuleUninstallImpactAnalyzer())->analyze($scope, $slug);
         if (!(bool) ($analysis['ok'] ?? false)) {
-            return ['ok' => false, 'impact' => [], 'policy' => 'keep_data', 'errors' => (array) ($analysis['errors'] ?? ['analysis_failed'])];
+            return ['ok' => false, 'impact' => [], 'policy' => 'drop_data', 'errors' => (array) ($analysis['errors'] ?? ['analysis_failed'])];
         }
 
         $impact = (array) ($analysis['impact'] ?? []);

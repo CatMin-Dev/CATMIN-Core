@@ -44,7 +44,7 @@ final class CoreModuleUninstaller
             ];
         }
 
-        $result = (new CoreModuleUninstallRunner())->run((array) ($valid['impact'] ?? []), (string) ($valid['policy'] ?? 'keep_data'));
+        $result = (new CoreModuleUninstallRunner())->run((array) ($valid['impact'] ?? []), (string) ($valid['policy'] ?? 'drop_data'));
         catmin_event_emit((bool) ($result['ok'] ?? false) ? 'module.uninstalled' : 'module.uninstall.failed', [
             'scope' => $scope,
             'slug' => $slug,

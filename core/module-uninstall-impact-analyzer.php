@@ -21,7 +21,7 @@ final class CoreModuleUninstallImpactAnalyzer
         foreach ((array) ($scan['modules'] ?? []) as $module) {
             $manifest = is_array($module['manifest'] ?? null) ? $module['manifest'] : [];
             $mSlug = strtolower(trim((string) ($manifest['slug'] ?? '')));
-            $mScope = strtolower(trim((string) ($manifest['type'] ?? '')));
+            $mScope = strtolower(trim((string) ($module['scope'] ?? ($manifest['type'] ?? ''))));
             if ($mSlug === $slug && $mScope === $scope) {
                 $target = $module;
             }

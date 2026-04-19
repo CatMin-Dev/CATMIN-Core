@@ -101,6 +101,27 @@ class PermissionsLoader
             return 0;
         }
 
+        $slugs = $this->extractPermissionSlugs($permissions);
+        if ($slugs === []) {
+            return 0;
+        }
+
+        // Keep shared permissions if another enabled module still declares them.
+        $slugsDeclaredByOthers = $this->collectSlugsFromOtherEnabledModules($modulePath);
+        $removable = array_values(array_filter($slugs, static function (string $slug) use ($slugsDeclaredByOthers): bool {
+            return !in_array($slug, $slugsDeclaredByOthers, true);
+        }));
+
+        if ($removable === []) {
+            return 0;
+        }
+
+        return $this->deletePermissionsBySlugs($removable);
+    }
+
+    /** @param array<string|int, mixed> $permissions @return array<int, string> */
+    private function extractPermissionSlugs(array $permissions): array
+    {
         $slugs = [];
         foreach ($permissions as $slug => $definition) {
             if (is_string($slug) && trim($slug) !== '') {
@@ -113,12 +134,43 @@ class PermissionsLoader
             }
         }
 
-        $slugs = array_values(array_unique(array_filter($slugs, static fn (string $slug): bool => $slug !== '')));
-        if ($slugs === []) {
-            return 0;
+        return array_values(array_unique(array_filter($slugs, static fn (string $slug): bool => $slug !== '')));
+    }
+
+    /** @return array<int, string> */
+    private function collectSlugsFromOtherEnabledModules(string $excludedModulePath): array
+    {
+        require_once CATMIN_CORE . '/module-runtime-snapshot.php';
+
+        $excludedReal = realpath($excludedModulePath);
+        $snapshot = new \CoreModuleRuntimeSnapshot();
+        $modules = $snapshot->modules();
+        $slugs = [];
+
+        foreach ($modules as $module) {
+            if (!((bool) ($module['valid'] ?? false)) || !((bool) ($module['compatible'] ?? false)) || !((bool) ($module['enabled'] ?? false))) {
+                continue;
+            }
+
+            $path = (string) ($module['path'] ?? '');
+            if ($path === '' || !is_dir($path)) {
+                continue;
+            }
+
+            $pathReal = realpath($path);
+            if (is_string($excludedReal) && is_string($pathReal) && $excludedReal !== '' && $pathReal === $excludedReal) {
+                continue;
+            }
+
+            $permissions = $this->loadModulePermissions($path);
+            if ($permissions === []) {
+                continue;
+            }
+
+            $slugs = array_merge($slugs, $this->extractPermissionSlugs($permissions));
         }
 
-        return $this->deletePermissionsBySlugs($slugs);
+        return array_values(array_unique($slugs));
     }
 
     /**

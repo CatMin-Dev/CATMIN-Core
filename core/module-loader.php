@@ -13,6 +13,7 @@ final class CoreModuleLoader
     private const TYPE_ORDER = [
         'core' => 1,
         'admin' => 2,
+        'addons' => 3,
         'front' => 3,
         'integration' => 4,
         'integrations' => 4,
@@ -72,6 +73,7 @@ final class CoreModuleLoader
                 }
 
                 $module = [
+                    'scope' => $type,
                     'path' => $moduleDir,
                     'manifest_path' => $manifestPath,
                     'manifest' => $normalized,

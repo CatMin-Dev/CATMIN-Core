@@ -19,19 +19,19 @@ return [
 
             // Then check permissions
             if (!auth_can('example.read')) {
-                return Response::html('Accès non autorisé.', 403);
+                return Response::html(__('module.cat-contract-demo.auth.required'), 403);
             }
 
             $controller  = new \Admin\controllers\AuthController();
             $adminBase   = $controller->adminBasePath();
             $user        = $controller->currentUser() ?? [];
 
-            $pageTitle       = 'Contract Demo';
-            $pageDescription = 'Module exemple CATMIN — validation du contrat CORE/MODULE.';
+            $pageTitle       = __('module.cat-contract-demo.admin.page_title');
+            $pageDescription = __('module.cat-contract-demo.admin.page_description');
             $activeNav       = 'contract-demo';
             $breadcrumbs     = [
                 ['label' => 'Admin', 'href' => $adminBase . '/'],
-                ['label' => 'Contract Demo'],
+                ['label' => __('module.cat-contract-demo.admin.breadcrumb_label')],
             ];
             $pageActions = [];
 

@@ -55,9 +55,12 @@ ob_start();
                 <div class="col-12 col-lg-4">
                     <label class="form-label">Politique données</label>
                     <select class="form-select" name="data_policy">
-                        <option value="keep_data">keep_data (safe)</option>
-                        <option value="drop_data">drop_data (destructif)</option>
+                        <option value="drop_data" selected>drop_data (destructif par defaut)</option>
+                        <option value="keep_data">keep_data (conserver uniquement les donnees, pas les fichiers module)</option>
                     </select>
+                    <small class="text-body-secondary d-block mt-2">
+                        Les fichiers du module sont supprimes dans tous les cas. La politique ci-dessus ne concerne que les donnees DB.
+                    </small>
                 </div>
                 <div class="col-12">
                     <label class="form-check">

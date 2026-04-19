@@ -2,9 +2,9 @@
     "schema_version": "1.0.0",
     "algorithm": "rsa-sha256",
     "module_slug": "cat-contract-demo",
-    "module_version": "1.0.0-RC.1",
-    "signed_hash": "aabaf7bfd7262940a5d8c5599a2a1db4cc8fab1b3c8cee9a919a379386f7e0c6",
-    "signature": "Hghi00g2RcazZGqNU/mJo4aZuX4wHPiVRhzEWj48j78uweLoR9lOKSS6lPHsKoE3kCXROzo1pxTXximgHTGZasZ2d4oVeiAk98u/yoVoBcqy0DlwC9pSMAd7NKsIPVsCqvdSi8e0BEoPOWauF/xVijFWIoX3xh+jbpQCj368PBZ65lmVu07o9i4Z+LHPUtTqfqLh4FEPj/w2Err1Xg5lGmEnSX9JjoVj6Q93HPTluzQ2ME5rzwAZtvh8P94legkQCPnFoTsvRlfjAivM87UH78RIN/ykIyXF7PjZyD7XAySl4NI4usVIDeRWeSfyWBMF4DMGPFTWEjXllTkhN5voc9bhUwXDX5PgUl5OYIYgLeS5tdEHLmhKxf9o3PkmGQ+zWd2g/iwoJRrkCTJUpPwbrpiTYyFH+duROdJ+HvGzHoblNvdL9wXQEs2GjN1wNz9DJUhlaLtQFAC/K4PX9uK8WRFREIWTabTzMXISNVUG86Jx02gJPR24PdMOfig276slaay+dwi2KEAqTXvsKFl8lrSe1K3HqJUIYb6rXPJ+c8EUKRl9euthaadAC0c84UmqDWZ9cU3oMBP5bogvuxanlg2oSdw89kr/vnITJwapz9WFTdj30wwXgj+vV4yVNOqeRMJMfzkWSTknh8Oximl/Kxcg+yp52PSH9/nhymZ6Vy8=",
+    "module_version": "0.2.5-dev",
+    "signed_hash": "dc3783947b7eb76f2d083159634c1b9ed25eca08fab7cac32e3b127bbb145bc5",
+    "signature": "KI/RBY+LVQNeVuELbmjmLV9YA4O4Ou88FYxXqfoH+4nRCJVe1rKiEzR+Gyv1+qLZ2jAoS4fqDqGMzY/aRNnfEqNgUhAp8SeSYSXowxOgtBNKixt1J8Cu+ZLOKm8+yhdoj5bn9n7twbeMQcM2sMhCo+eibKTjQ1OqFpt8SthlJfXvtu+4Gck/oCgU/dai+YJsQC4KNHtkBDeIcw0rHcTn0Jkc947apGVJ10F/m6JSBoB4w5+MhNpf5LBBWJhY27ZBPOK+OUWx5tWSrhcRY6xJmtpRwdfvDGF3sPyrzkZe8okmN3Fbx+a7WyFFdzhWN4EplM1PzgkiMMEfUTjkZkCWeZyWo0v5Vc9YUU3Ho+rMH3eI9iB5zGQHLRHfd6g/lrbGncsgvPx79v13nJ34fG9x/uatSGAB46oayOl6khQvwhVofQxkHOCIgma0F7xpNri8HjulvMni1HGYUGS3wQ2nx67zOxKPQtayLqGwA5StSEL8NLvC4AGk/ZHZTMtrRYeivujjF5TbQEa3d9GHCDLL5b9Nm9tBp8JlSGAtU8xtb76HmtaMy9gwk6jTflZtLenG8XeQ7J+qGyflXhYDjvuNXiTA/IQeNeB0rDLMzRPPRSFy8EPTQCFobEClR88DTPYzWHO9aKMmRQGV2SzmuHCXN0k05wP04OYyghMbeahj5Sw=",
     "key_id": "catmin-local-media-20260415",
-    "signed_at": "2026-04-18T21:48:25+00:00"
+    "signed_at": "2026-04-19T20:45:02+00:00"
 }

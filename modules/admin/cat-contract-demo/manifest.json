@@ -3,7 +3,7 @@
   "module_id": "cat-contract-demo",
   "name": "CAT Contract Demo",
   "description": "Module exemple general pour valider les contrats CORE <-> MODULES.",
-  "version": "1.0.0-RC.1",
+  "version": "0.2.5-dev",
   "type": "admin",
   "category": "custom",
   "authors": [
@@ -52,7 +52,12 @@
         },
         "group_icon": "bezier2",
         "group_order": 65,
+        "key": "contract-demo",
         "label": "Contract Demo",
+        "label_i18n": {
+          "fr": "Contract Demo",
+          "en": "Contract Demo"
+        },
         "icon": "bi bi-box-seam",
         "route": "contract-demo",
         "order": 200,
@@ -62,7 +67,12 @@
     "settings_sidebar": [
       {
         "target": "sidebar.settings",
+        "key": "contract-demo-settings",
         "label": "Contract Demo",
+        "label_i18n": {
+          "fr": "Contract Demo",
+          "en": "Contract Demo"
+        },
         "icon": "bi bi-sliders",
         "route": "settings/contract-demo",
         "order": 210,
@@ -109,7 +119,7 @@
   },
   "database": {
     "migrations": [
-      "database/migrations/001_create_example_tables.php"
+      "migrations/001_create_example_tables.php"
     ],
     "seeders": []
   },
